@@ -1,0 +1,1988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="IMPACT_26V.1 Formula Compass — Municipal Property Assessment Practice Exam. Philadelphia PA context. 80 questions, 6 domains, 53 formulas.">
+<title>IMPACT_26V.1 — Municipal Property Assessment Practice Exam</title>
+<style>
+/* ═══════════════════════════════════════════════════════════
+   RESET & CSS CUSTOM PROPERTIES
+═══════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:          #ffffff;
+  --bg2:         #f8f7f4;
+  --bg3:         #f0efe9;
+  --bg4:         #e8e7e0;
+  --border:      rgba(0,0,0,0.11);
+  --border2:     rgba(0,0,0,0.20);
+  --text:        #1a1a18;
+  --text2:       #4a4a46;
+  --text3:       #888880;
+  --blue:        #185FA5;
+  --blue-dk:     #0d3d6e;
+  --blue-bg:     #E6F1FB;
+  --green:       #3B6D11;
+  --green-bg:    #EAF3DE;
+  --amber:       #854F0B;
+  --amber-bg:    #FAEEDA;
+  --red:         #A32D2D;
+  --red-bg:      #FCEBEB;
+  --purple:      #534AB7;
+  --purple-bg:   #EEEDFE;
+  --teal:        #0F6E56;
+  --teal-bg:     #E1F5EE;
+  --coral:       #993C1D;
+  --coral-bg:    #FAECE7;
+  --gold:        #c47c00;
+  --radius:      12px;
+  --radius-sm:   7px;
+  --radius-xs:   4px;
+  --shadow-sm:   0 1px 3px rgba(0,0,0,0.07), 0 1px 6px rgba(0,0,0,0.04);
+  --shadow-md:   0 2px 8px rgba(0,0,0,0.10), 0 1px 3px rgba(0,0,0,0.06);
+  --shadow-lg:   0 4px 20px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.06);
+  --transition:  0.15s ease;
+  --font-mono:   'Courier New', Courier, monospace;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', system-ui, sans-serif;
+  font-size: 14px;
+  background: var(--bg3);
+  color: var(--text);
+  line-height: 1.65;
+  min-height: 100vh;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   LAYOUT
+═══════════════════════════════════════════════════════════ */
+.page-wrap { max-width: 900px; margin: 0 auto; }
+
+/* ═══════════════════════════════════════════════════════════
+   STICKY HEADER
+═══════════════════════════════════════════════════════════ */
+.site-header {
+  background: linear-gradient(135deg, #0b3560 0%, #185FA5 55%, #1e7cc0 100%);
+  color: #fff;
+  position: sticky; top: 0; z-index: 200;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.22);
+}
+.header-inner {
+  max-width: 900px; margin: 0 auto;
+  padding: 1rem 1.25rem .875rem;
+}
+.header-top { display: flex; align-items: flex-start; gap: .75rem; flex-wrap: wrap; margin-bottom: .75rem; }
+.header-branding { flex: 1; min-width: 200px; }
+.header-eyebrow {
+  font-size: 10px; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; opacity: .65; margin-bottom: 3px;
+}
+.header-title { font-size: 18px; font-weight: 700; line-height: 1.25; letter-spacing: -.01em; }
+.header-sub { font-size: 11.5px; opacity: .78; margin-top: 3px; line-height: 1.4; }
+.header-pills {
+  display: flex; gap: 5px; flex-wrap: wrap;
+  align-self: flex-start; margin-top: 2px;
+}
+.hpill {
+  font-size: 10px; font-weight: 600; padding: 3px 9px;
+  border-radius: 20px; border: 1.5px solid rgba(255,255,255,0.30);
+  background: rgba(255,255,255,0.12); color: #fff;
+  letter-spacing: .02em;
+}
+.header-actions { display: flex; gap: 5px; flex-wrap: wrap; }
+.ha-btn {
+  font-size: 11px; font-weight: 600; padding: 6px 13px;
+  border: 1.5px solid rgba(255,255,255,0.30);
+  border-radius: 8px; background: rgba(255,255,255,0.10);
+  color: #fff; cursor: pointer; letter-spacing: .01em;
+  transition: background var(--transition), border-color var(--transition);
+  white-space: nowrap;
+}
+.ha-btn:hover { background: rgba(255,255,255,0.22); border-color: rgba(255,255,255,0.55); }
+.ha-btn.ha-primary { background: rgba(255,255,255,0.22); }
+
+/* ═══════════════════════════════════════════════════════════
+   SCOREBOARD
+═══════════════════════════════════════════════════════════ */
+.scoreboard {
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+}
+.score-card {
+  padding: .75rem 1rem;
+  text-align: center;
+  border-right: 1px solid var(--border);
+  position: relative;
+}
+.score-card:last-child { border-right: none; }
+.score-val {
+  font-size: 26px; font-weight: 800; line-height: 1;
+  letter-spacing: -.02em; margin-bottom: 3px;
+  color: var(--text);
+}
+.score-val.v-blue   { color: var(--blue); }
+.score-val.v-green  { color: var(--green); }
+.score-val.v-amber  { color: var(--amber); }
+.score-lbl {
+  font-size: 9.5px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--text3);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PROGRESS BAR
+═══════════════════════════════════════════════════════════ */
+.prog-wrap {
+  background: var(--bg); border-bottom: 1px solid var(--border);
+  padding: .5rem 1.25rem .4rem;
+  display: flex; align-items: center; gap: 10px;
+}
+.prog-track {
+  flex: 1; height: 6px; background: var(--bg4);
+  border-radius: 6px; overflow: hidden;
+}
+.prog-fill {
+  height: 6px; width: 0%;
+  background: linear-gradient(90deg, var(--blue) 0%, #22a0e8 100%);
+  border-radius: 6px; transition: width .6s cubic-bezier(.4,0,.2,1);
+}
+.prog-lbl { font-size: 11px; color: var(--text3); min-width: 54px; text-align: right; font-weight: 600; }
+
+/* ═══════════════════════════════════════════════════════════
+   FILTER PANEL
+═══════════════════════════════════════════════════════════ */
+.filter-panel {
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  padding: .75rem 1.25rem .625rem;
+  display: flex; flex-direction: column; gap: .5rem;
+}
+.filter-row { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.filter-label {
+  font-size: 10px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--text3); min-width: 62px;
+  flex-shrink: 0;
+}
+.pill {
+  font-size: 11px; font-weight: 600; padding: 4px 11px;
+  border: 1px solid var(--border2); border-radius: 20px;
+  background: var(--bg); color: var(--text2);
+  cursor: pointer; white-space: nowrap;
+  transition: all var(--transition);
+  user-select: none;
+}
+.pill:hover { background: var(--bg2); color: var(--text); }
+
+/* Difficulty active */
+.pill.diff-active { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+/* Domain — All button active */
+.pill[data-dom="all"].dom-all   { background: #1a1a18; color: #fff; border-color: #1a1a18; }
+
+/* Domain colored active states */
+.pill[data-dom="math"].dom-on      { background: var(--purple); color: #fff; border-color: var(--purple); }
+.pill[data-dom="appraisal"].dom-on { background: var(--teal);   color: #fff; border-color: var(--teal);   }
+.pill[data-dom="law"].dom-on       { background: var(--coral);  color: #fff; border-color: var(--coral);  }
+.pill[data-dom="philly"].dom-on    { background: #c47c00;       color: #fff; border-color: #c47c00;       }
+.pill[data-dom="admin"].dom-on     { background: var(--red);    color: #fff; border-color: var(--red);    }
+.pill[data-dom="ethics"].dom-on    { background: var(--green);  color: #fff; border-color: var(--green);  }
+
+.filter-hint { font-size: 10.5px; color: var(--text3); padding-left: 64px; font-style: italic; }
+
+/* ═══════════════════════════════════════════════════════════
+   QUESTION LIST
+═══════════════════════════════════════════════════════════ */
+.q-list { padding: 1rem; display: flex; flex-direction: column; gap: 1rem; }
+
+.no-results {
+  text-align: center; padding: 4rem 2rem;
+  color: var(--text3);
+}
+.no-results .nr-icon { font-size: 36px; margin-bottom: .75rem; }
+.no-results strong { display: block; font-size: 17px; font-weight: 700; color: var(--text2); margin-bottom: .4rem; }
+
+/* ═══════════════════════════════════════════════════════════
+   QUESTION CARD
+═══════════════════════════════════════════════════════════ */
+.qcard {
+  background: var(--bg);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: box-shadow var(--transition), transform var(--transition);
+}
+.qcard:hover { box-shadow: var(--shadow-md); }
+
+/* Top color bar — domain coded */
+.qcard-bar { height: 3.5px; }
+.bar-math      { background: linear-gradient(90deg, #534AB7, #7c75e0); }
+.bar-appraisal { background: linear-gradient(90deg, #0F6E56, #19a882); }
+.bar-law       { background: linear-gradient(90deg, #993C1D, #d05a2b); }
+.bar-philly    { background: linear-gradient(90deg, #9b6400, #e09200); }
+.bar-admin     { background: linear-gradient(90deg, #A32D2D, #d44444); }
+.bar-ethics    { background: linear-gradient(90deg, #3B6D11, #5aaa1a); }
+
+.qcard-head {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: .875rem 1rem .625rem;
+}
+.q-num {
+  font-size: 11px; font-weight: 800; color: var(--text3);
+  min-width: 28px; padding-top: 2px; flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+.q-text { flex: 1; font-size: 13.5px; line-height: 1.65; font-weight: 400; }
+.q-badges { display: flex; gap: 4px; flex-wrap: wrap; flex-shrink: 0; justify-content: flex-end; max-width: 190px; }
+
+.badge {
+  font-size: 9.5px; font-weight: 700; padding: 2px 7px;
+  border-radius: 20px; white-space: nowrap; letter-spacing: .01em;
+}
+.badge-easy       { background: var(--green-bg);  color: var(--green);  }
+.badge-proficient { background: var(--amber-bg);  color: var(--amber);  }
+.badge-expert     { background: var(--red-bg);    color: var(--red);    }
+.badge-math       { background: var(--purple-bg); color: var(--purple); }
+.badge-appraisal  { background: var(--teal-bg);   color: var(--teal);   }
+.badge-law        { background: var(--coral-bg);  color: var(--coral);  }
+.badge-philly     { background: var(--amber-bg);  color: var(--amber);  }
+.badge-admin      { background: var(--red-bg);    color: var(--red);    }
+.badge-ethics     { background: var(--green-bg);  color: var(--green);  }
+.badge-fml        { background: var(--bg2); color: var(--text3); border: 1px solid var(--border); font-size: 9px; }
+
+/* ═══════════════════════════════════════════════════════════
+   ANSWER CHOICES
+═══════════════════════════════════════════════════════════ */
+.choices { padding: 0 1rem .625rem; display: flex; flex-direction: column; gap: 5px; }
+
+.choice {
+  display: flex; gap: 9px; align-items: flex-start;
+  padding: 7px 12px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); cursor: pointer;
+  font-size: 13px; line-height: 1.5;
+  transition: background var(--transition), border-color var(--transition), transform .08s;
+  user-select: none;
+}
+.choice:hover:not(.locked) {
+  background: var(--bg2); border-color: var(--border2);
+  transform: translateX(2px);
+}
+.choice.locked { cursor: default; transform: none !important; }
+.choice.correct { background: var(--green-bg); border-color: var(--green); }
+.choice.wrong   { background: var(--red-bg);   border-color: var(--red);   }
+
+.choice-letter {
+  font-size: 11px; font-weight: 800; min-width: 18px;
+  flex-shrink: 0; padding-top: 1px;
+  color: var(--text3);
+}
+.choice.correct .choice-letter { color: var(--green); }
+.choice.wrong   .choice-letter { color: var(--red);   }
+
+/* ═══════════════════════════════════════════════════════════
+   TOGGLE BUTTON (Show / Hide Answer)
+═══════════════════════════════════════════════════════════ */
+.toggle-btn {
+  display: inline-block; margin: 0 1rem .75rem;
+  font-size: 11.5px; font-weight: 600; padding: 5px 15px;
+  border: 1px solid var(--border2); border-radius: var(--radius-sm);
+  background: transparent; color: var(--text3);
+  cursor: pointer; letter-spacing: .01em;
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
+.toggle-btn:hover { background: var(--bg2); color: var(--text); border-color: var(--text3); }
+.toggle-btn.revealed { color: var(--blue); border-color: var(--blue); background: var(--blue-bg); }
+
+/* ═══════════════════════════════════════════════════════════
+   ANSWER PANEL
+═══════════════════════════════════════════════════════════ */
+.answer-panel {
+  margin: 0 1rem .875rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg2);
+  overflow: hidden;
+  display: none;
+  animation: panelIn .2s ease;
+}
+.answer-panel.open { display: block; }
+
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.ap-section {
+  padding: .625rem .9rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 12.5px; line-height: 1.7;
+}
+.ap-section:last-child { border-bottom: none; }
+
+.ap-label {
+  font-size: 9.5px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .07em;
+  color: var(--text3); margin-bottom: 4px;
+}
+.ap-answer { font-weight: 700; color: var(--green); font-size: 14px; }
+
+.ap-calc {
+  font-family: var(--font-mono);
+  font-size: 11.5px; line-height: 1.85;
+  background: var(--bg); padding: 10px 12px;
+  border-radius: var(--radius-xs);
+  margin-top: 5px; border: 1px solid var(--border);
+  white-space: pre-line; color: var(--text);
+}
+
+.ap-ref { font-style: italic; color: var(--text2); font-size: 12px; }
+
+/* ═══════════════════════════════════════════════════════════
+   FORMULA REFERENCE INDEX (collapsible sidebar section)
+═══════════════════════════════════════════════════════════ */
+.formula-index {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius); margin: .5rem 1rem 0;
+  box-shadow: var(--shadow-sm); overflow: hidden;
+}
+.fi-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .75rem 1rem; cursor: pointer;
+  background: var(--bg2); border-bottom: 1px solid var(--border);
+  user-select: none;
+}
+.fi-title { font-size: 12px; font-weight: 700; color: var(--text); }
+.fi-toggle-icon { font-size: 12px; color: var(--text3); transition: transform .2s; }
+.fi-toggle-icon.open { transform: rotate(180deg); }
+.fi-body { display: none; padding: .75rem 1rem; }
+.fi-body.open { display: block; }
+.fi-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: .5rem;
+}
+.fi-section { margin-bottom: .5rem; }
+.fi-s-title {
+  font-size: 10px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .07em; color: var(--text3); margin-bottom: 3px;
+}
+.fi-formula {
+  font-size: 11px; line-height: 1.5; color: var(--text2);
+  font-family: var(--font-mono); padding: 2px 0;
+}
+.fi-fname { color: var(--text); font-weight: 600; font-family: inherit; }
+
+/* ═══════════════════════════════════════════════════════════
+   DEPLOYMENT GUIDE MODAL
+═══════════════════════════════════════════════════════════ */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.55); backdrop-filter: blur(3px);
+  z-index: 1000; display: none;
+  align-items: center; justify-content: center;
+  padding: 1rem;
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+  background: var(--bg); border-radius: var(--radius);
+  box-shadow: var(--shadow-lg); max-width: 680px; width: 100%;
+  max-height: 90vh; overflow-y: auto;
+  animation: modalIn .2s ease;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(.96) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1rem 1.25rem; border-bottom: 1px solid var(--border);
+  background: var(--blue); color: #fff; border-radius: var(--radius) var(--radius) 0 0;
+  position: sticky; top: 0; z-index: 1;
+}
+.modal-title { font-size: 15px; font-weight: 700; }
+.modal-close {
+  font-size: 18px; background: none; border: none; color: #fff;
+  cursor: pointer; opacity: .8; padding: 0 4px; line-height: 1;
+}
+.modal-close:hover { opacity: 1; }
+.modal-body { padding: 1.25rem; }
+.guide-section { margin-bottom: 1.5rem; }
+.guide-h1 {
+  font-size: 13px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .07em; color: var(--blue); margin-bottom: .625rem;
+  padding-bottom: 4px; border-bottom: 2px solid var(--blue-bg);
+}
+.guide-h2 { font-size: 12.5px; font-weight: 700; color: var(--text); margin: .625rem 0 3px; }
+.guide-p  { font-size: 12.5px; color: var(--text2); line-height: 1.7; margin-bottom: .375rem; }
+.guide-step {
+  display: flex; gap: 10px; align-items: flex-start;
+  margin-bottom: .5rem; font-size: 12.5px; color: var(--text2); line-height: 1.6;
+}
+.step-num {
+  background: var(--blue); color: #fff;
+  font-size: 10px; font-weight: 800;
+  min-width: 20px; height: 20px;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 2px;
+}
+.guide-code {
+  font-family: var(--font-mono); font-size: 11.5px;
+  background: var(--bg2); border: 1px solid var(--border);
+  padding: 8px 12px; border-radius: var(--radius-xs);
+  margin: .375rem 0 .625rem; white-space: pre-line;
+  line-height: 1.7; color: var(--text);
+}
+.guide-tip {
+  background: var(--blue-bg); border-left: 3px solid var(--blue);
+  padding: .5rem .75rem; border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+  font-size: 12px; color: var(--text2); margin: .5rem 0;
+}
+.guide-warn {
+  background: var(--amber-bg); border-left: 3px solid var(--amber);
+  padding: .5rem .75rem; border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+  font-size: 12px; color: var(--text2); margin: .5rem 0;
+}
+.guide-success {
+  background: var(--green-bg); border-left: 3px solid var(--green);
+  padding: .5rem .75rem; border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+  font-size: 12px; color: var(--text2); margin: .5rem 0;
+}
+.option-card {
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: .75rem 1rem; margin-bottom: .625rem;
+}
+.option-card-title { font-size: 12.5px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+.option-card-tag {
+  display: inline-block; font-size: 9.5px; font-weight: 700;
+  padding: 2px 7px; border-radius: 20px; margin-left: 6px;
+  vertical-align: middle;
+}
+.tag-free { background: var(--green-bg); color: var(--green); }
+.tag-easy { background: var(--blue-bg);  color: var(--blue);  }
+.tag-paid { background: var(--amber-bg); color: var(--amber); }
+.option-card p { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+/* ═══════════════════════════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════════════════════════ */
+.site-footer {
+  text-align: center; padding: 1.5rem 1rem;
+  font-size: 11px; color: var(--text3);
+  border-top: 1px solid var(--border);
+  margin: .5rem 0 0; background: var(--bg);
+  line-height: 1.8;
+}
+.site-footer strong { color: var(--text2); }
+.footer-links { margin-top: .375rem; }
+.footer-links a { color: var(--blue); text-decoration: none; margin: 0 6px; }
+.footer-links a:hover { text-decoration: underline; }
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  .scoreboard { grid-template-columns: repeat(2, 1fr); }
+  .q-badges { max-width: 130px; }
+  .header-actions { width: 100%; justify-content: flex-start; }
+  .header-pills { display: none; }
+  .q-list { padding: .75rem .5rem; }
+  .fi-grid { grid-template-columns: 1fr; }
+  .filter-hint { padding-left: 0; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PRINT STYLES
+═══════════════════════════════════════════════════════════ */
+@media print {
+  .site-header, .scoreboard, .prog-wrap, .filter-panel,
+  .formula-index, .modal-overlay, .site-footer,
+  .toggle-btn, .header-actions { display: none !important; }
+  .answer-panel { display: block !important; border: 1px solid #ddd !important; }
+  .qcard { page-break-inside: avoid; box-shadow: none !important; border: 1px solid #ccc !important; margin-bottom: .5rem; }
+  .qcard-bar { display: none; }
+  body { background: #fff !important; }
+  .q-list { padding: 0 !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SCROLL TO TOP BUTTON
+═══════════════════════════════════════════════════════════ */
+.scroll-top {
+  position: fixed; bottom: 1.25rem; right: 1.25rem; z-index: 100;
+  width: 40px; height: 40px; border-radius: 50%;
+  background: var(--blue); color: #fff;
+  border: none; cursor: pointer; font-size: 16px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  display: none; align-items: center; justify-content: center;
+  transition: background var(--transition), transform var(--transition);
+}
+.scroll-top:hover { background: var(--blue-dk); transform: translateY(-2px); }
+.scroll-top.visible { display: flex; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════ DEPLOYMENT GUIDE MODAL -->
+<div class="modal-overlay" id="deployModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title">📦 Hosting & Deployment Guide</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="guide-section">
+        <div class="guide-h1">About This File</div>
+        <div class="guide-p">This is a fully self-contained HTML file. It requires no server, no database, no internet connection, and no installation. Every question, answer, style, and function is embedded inside this single file.</div>
+        <div class="guide-tip">💡 <strong>File size:</strong> ~110 KB — loads instantly on any device or browser.</div>
+      </div>
+
+      <div class="guide-section">
+        <div class="guide-h1">Option 1 — Share the File Directly</div>
+        <div class="guide-p">The simplest option. No hosting needed.</div>
+        <div class="guide-step"><span class="step-num">1</span><span>Save this HTML file to your computer (File → Save As, or right-click → Save)</span></div>
+        <div class="guide-step"><span class="step-num">2</span><span>Open it anytime by double-clicking — it will open in your default browser</span></div>
+        <div class="guide-step"><span class="step-num">3</span><span>Share it via email attachment, Google Drive, Dropbox, OneDrive, or USB drive</span></div>
+        <div class="guide-step"><span class="step-num">4</span><span>Recipients open it the same way — double-click in their browser</span></div>
+        <div class="guide-warn">⚠️ Some email providers block .html attachments. If so, zip the file first, or share via a cloud link (Google Drive, Dropbox).</div>
+      </div>
+
+      <div class="guide-section">
+        <div class="guide-h1">Option 2 — GitHub Pages (Free, Permanent URL)</div>
+        <div class="guide-p">GitHub Pages gives you a free permanent public URL in about 5 minutes. No coding experience required.</div>
+        <div class="guide-h2">Step-by-step:</div>
+        <div class="guide-step"><span class="step-num">1</span><span>Go to <strong>github.com</strong> and create a free account (if you don't have one)</span></div>
+        <div class="guide-step"><span class="step-num">2</span><span>Click the <strong>+</strong> icon (top right) → <strong>New repository</strong></span></div>
+        <div class="guide-step"><span class="step-num">3</span><span>Name it: <strong>assessment-exam</strong> (or any name). Set it to <strong>Public</strong>. Click <strong>Create repository</strong></span></div>
+        <div class="guide-step"><span class="step-num">4</span><span>Click <strong>uploading an existing file</strong> → drag and drop this HTML file → rename it to <strong>index.html</strong> → click <strong>Commit changes</strong></span></div>
+        <div class="guide-step"><span class="step-num">5</span><span>Go to <strong>Settings → Pages</strong> (left sidebar) → under Source, select <strong>Deploy from a branch → main → / (root)</strong> → click <strong>Save</strong></span></div>
+        <div class="guide-step"><span class="step-num">6</span><span>Wait ~2 minutes. Your exam will be live at:</span></div>
+        <div class="guide-code">https://YOUR-USERNAME.github.io/assessment-exam/</div>
+        <div class="guide-success">✓ That URL is permanent, free, mobile-friendly, and shareable with anyone. No login required to view it.</div>
+        <div class="guide-tip">💡 To update the exam later: go to your GitHub repo → click the file → click the pencil (edit) icon → paste updated content → Commit. Changes go live in ~1 minute.</div>
+      </div>
+
+      <div class="guide-section">
+        <div class="guide-h1">Option 3 — Netlify Drop (Fastest, Free)</div>
+        <div class="guide-p">No account required for a temporary link. Create a free account for a permanent one.</div>
+        <div class="guide-step"><span class="step-num">1</span><span>Go to <strong>drop.netlify.com</strong> in your browser</span></div>
+        <div class="guide-step"><span class="step-num">2</span><span>Drag and drop this HTML file onto the page</span></div>
+        <div class="guide-step"><span class="step-num">3</span><span>Your exam is instantly live at a random URL like: <code>https://random-name.netlify.app</code></span></div>
+        <div class="guide-step"><span class="step-num">4</span><span>Create a free Netlify account to claim a permanent, custom URL and enable easy updates</span></div>
+        <div class="guide-tip">💡 Netlify is the fastest option — from file to live URL in under 60 seconds.</div>
+      </div>
+
+      <div class="guide-section">
+        <div class="guide-h1">Option 4 — Other Hosting Platforms</div>
+        <div class="option-card">
+          <div class="option-card-title">Google Sites <span class="option-card-tag tag-free">Free</span> <span class="option-card-tag tag-easy">Easy</span></div>
+          <p>Create a page at sites.google.com → Insert → Embed → paste the file URL. Best if your team already uses Google Workspace.</p>
+        </div>
+        <div class="option-card">
+          <div class="option-card-title">SharePoint / City Intranet <span class="option-card-tag tag-free">Internal</span></div>
+          <p>Upload the HTML file as a document or embed it in a SharePoint page. Ideal for internal OPA / city employee access only.</p>
+        </div>
+        <div class="option-card">
+          <div class="option-card-title">Squarespace / Wix / Webflow <span class="option-card-tag tag-paid">Paid plans</span></div>
+          <p>Use a Custom Code or Embed block to host the exam on an existing website. Requires a paid plan for custom HTML embedding.</p>
+        </div>
+        <div class="option-card">
+          <div class="option-card-title">LMS (Canvas, Moodle, Blackboard, TalentLMS) <span class="option-card-tag tag-free">Varies</span></div>
+          <p>Upload as an HTML page or external resource. Allows tracking of completions if the LMS supports it. Best for formal training programs.</p>
+        </div>
+      </div>
+
+      <div class="guide-section">
+        <div class="guide-h1">Recommended Path for Philadelphia OPA Training</div>
+        <div class="guide-p"><strong>Immediate use:</strong> Share this file directly via email or Google Drive.</div>
+        <div class="guide-p"><strong>Permanent public access:</strong> GitHub Pages — free, permanent, no maintenance, shareable link. Recommended for candidate self-study before the exam.</div>
+        <div class="guide-p"><strong>Internal-only access:</strong> SharePoint or city intranet — keeps the exam behind the city firewall for current employees only.</div>
+        <div class="guide-success">✓ This file will work identically on Windows, Mac, iPhone, Android, and any modern browser — no app installation required.</div>
+      </div>
+
+      <div class="guide-section">
+        <div class="guide-h1">Printing a Hard Copy</div>
+        <div class="guide-step"><span class="step-num">1</span><span>Click the <strong>🖨 Print</strong> button in the header</span></div>
+        <div class="guide-step"><span class="step-num">2</span><span>All answers will auto-reveal for the printed version</span></div>
+        <div class="guide-step"><span class="step-num">3</span><span>In the browser print dialog, choose <strong>Save as PDF</strong> for a digital study guide</span></div>
+        <div class="guide-tip">💡 Recommend printing at Letter size, portrait orientation, with background graphics enabled for best results.</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ HEADER -->
+<div class="site-header">
+  <div class="header-inner">
+    <div class="header-top">
+      <div class="header-branding">
+        <div class="header-eyebrow">IMPACT_26V.1 · Formula Compass · Philadelphia PA</div>
+        <div class="header-title">Municipal Property Assessment Practice Exam</div>
+        <div class="header-sub">6 Domains · 53 Formulas · 80 Questions · Easy · Proficient · Expert</div>
+      </div>
+      <div class="header-pills">
+        <span class="hpill">📐 Math</span>
+        <span class="hpill">🏠 Appraisal</span>
+        <span class="hpill">⚖️ PA Law</span>
+        <span class="hpill">🏛 Philly</span>
+        <span class="hpill">📋 Admin</span>
+        <span class="hpill">✓ Ethics</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="ha-btn ha-primary" onclick="doShuffle()">⇄ Shuffle</button>
+      <button class="ha-btn" onclick="revealAll()">Show All Answers</button>
+      <button class="ha-btn" onclick="hideAll()">Hide All Answers</button>
+      <button class="ha-btn" onclick="resetExam()">↺ Reset</button>
+      <button class="ha-btn" onclick="window.print()">🖨 Print / PDF</button>
+      <button class="ha-btn" onclick="openModal()" style="background:rgba(255,255,255,0.25);border-color:rgba(255,255,255,0.6)">📦 Hosting Guide</button>
+    </div>
+  </div>
+</div>
+
+<div class="page-wrap">
+
+<!-- ═══════════════════════════════════════ SCOREBOARD -->
+<div class="scoreboard">
+  <div class="score-card">
+    <div class="score-val v-blue" id="s-ans">0</div>
+    <div class="score-lbl">Answered</div>
+  </div>
+  <div class="score-card">
+    <div class="score-val v-green" id="s-cor">0</div>
+    <div class="score-lbl">Correct</div>
+  </div>
+  <div class="score-card">
+    <div class="score-val" id="s-pct">—</div>
+    <div class="score-lbl">Score</div>
+  </div>
+  <div class="score-card">
+    <div class="score-val v-amber" id="s-vis">80</div>
+    <div class="score-lbl">Visible</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ PROGRESS BAR -->
+<div class="prog-wrap">
+  <div class="prog-track"><div class="prog-fill" id="prog"></div></div>
+  <div class="prog-lbl" id="prog-lbl">0 / 80</div>
+</div>
+
+<!-- ═══════════════════════════════════════ FILTERS -->
+<div class="filter-panel">
+  <div class="filter-row">
+    <span class="filter-label">Difficulty</span>
+    <button class="pill diff-active" data-diff="all"        onclick="setDiff(this)">All</button>
+    <button class="pill"             data-diff="easy"       onclick="setDiff(this)">Easy</button>
+    <button class="pill"             data-diff="proficient" onclick="setDiff(this)">Proficient</button>
+    <button class="pill"             data-diff="expert"     onclick="setDiff(this)">Expert</button>
+    <button class="pill"             data-diff="random"     onclick="setDiff(this)">⇄ Mixed / Random</button>
+  </div>
+  <div class="filter-row">
+    <span class="filter-label">Domain</span>
+    <button class="pill dom-all" data-dom="all"       onclick="toggleDom(this)">All</button>
+    <button class="pill"         data-dom="math"      onclick="toggleDom(this)">📐 Math / Formulas</button>
+    <button class="pill"         data-dom="appraisal" onclick="toggleDom(this)">🏠 Appraisal Theory</button>
+    <button class="pill"         data-dom="law"       onclick="toggleDom(this)">⚖️ PA Law</button>
+    <button class="pill"         data-dom="philly"    onclick="toggleDom(this)">🏛 Philadelphia</button>
+    <button class="pill"         data-dom="admin"     onclick="toggleDom(this)">📋 Administration</button>
+    <button class="pill"         data-dom="ethics"    onclick="toggleDom(this)">✓ Ethics &amp; Data</button>
+  </div>
+  <div class="filter-hint">Select multiple domains simultaneously · "All" resets selections · Difficulty + Domain filters combine</div>
+</div>
+
+<!-- ═══════════════════════════════════════ FORMULA INDEX (collapsible) -->
+<div class="formula-index">
+  <div class="fi-header" onclick="toggleIndex()">
+    <span class="fi-title">📐 IMPACT_26V.1 Formula Quick-Reference Index (53 Formulas · 10 Sections — click to expand)</span>
+    <span class="fi-toggle-icon" id="fi-icon">▾</span>
+  </div>
+  <div class="fi-body" id="fi-body">
+    <div class="fi-grid">
+      <div class="fi-section">
+        <div class="fi-s-title">S1 · Sales Comparison &amp; Regression</div>
+        <div class="fi-formula"><span class="fi-fname">F1 Trending Forward</span><br>Adjusted = Sale × (1+r)^n</div>
+        <div class="fi-formula"><span class="fi-fname">F2 Trending Backward</span><br>Back-Trended = Sale ÷ (1+r)^n</div>
+        <div class="fi-formula"><span class="fi-fname">F3 Annual→Monthly Rate</span><br>r_mo = (1+r_yr)^(1/12) − 1</div>
+        <div class="fi-formula"><span class="fi-fname">F4 Assessment Ratio</span><br>Ratio = AV ÷ Sale Price</div>
+        <div class="fi-formula"><span class="fi-fname">F5 Paired Sales Adj.</span><br>Adj/Unit = ΔPrice ÷ ΔFeature</div>
+        <div class="fi-formula"><span class="fi-fname">F6 Regression Prediction</span><br>V = β₀ + β₁X₁ + β₂X₂ + …</div>
+        <div class="fi-formula"><span class="fi-fname">F7 Dummy Variable</span><br>ΔV = β_dummy × 1 or × 0</div>
+        <div class="fi-formula"><span class="fi-fname">F8 Regression Diagnostics</span><br>R² · t=β÷SE · VIF=1÷(1−R²) · RMSE</div>
+      </div>
+      <div class="fi-section">
+        <div class="fi-s-title">S2 · Cost Approach</div>
+        <div class="fi-formula"><span class="fi-fname">F1 Age-Life Dep.</span><br>Dep% = Eff. Age ÷ Econ. Life</div>
+        <div class="fi-formula"><span class="fi-fname">F2 Remaining Life Dep.</span><br>Dep% = (EL − RL) ÷ EL</div>
+        <div class="fi-formula"><span class="fi-fname">F3 RCNLD</span><br>RCNLD = RCN × (1 − Dep%)</div>
+        <div class="fi-formula"><span class="fi-fname">F4 Combined Dep.</span><br>Dep = 1 − [(1−P)(1−F)(1−E)]</div>
+        <div class="fi-formula"><span class="fi-fname">F5 External Obsolescence</span><br>EO% = (RCNLD_before − MV) ÷ RCNLD</div>
+      </div>
+      <div class="fi-section">
+        <div class="fi-s-title">S3 · Income Approach (Direct Cap.)</div>
+        <div class="fi-formula"><span class="fi-fname">F1 IRV — Value</span><br>V = I ÷ R</div>
+        <div class="fi-formula"><span class="fi-fname">F2 IRV — Rate</span><br>R = I ÷ V</div>
+        <div class="fi-formula"><span class="fi-fname">F3 IRV — Income</span><br>I = V × R</div>
+        <div class="fi-formula"><span class="fi-fname">F4 PGI</span><br>PGI = Units × Rent/mo × 12</div>
+        <div class="fi-formula"><span class="fi-fname">F5 EGI</span><br>EGI = PGI × (1−Vac%) + Other</div>
+        <div class="fi-formula"><span class="fi-fname">F6 NOI</span><br>NOI = EGI − Expenses − Reserves</div>
+        <div class="fi-formula"><span class="fi-fname">F7 Cap Rate Extraction</span><br>Cap Rate = NOI ÷ Sale Price</div>
+        <div class="fi-formula"><span class="fi-fname">F8 Band of Investment</span><br>Cap = (LTV×MC) + (Eq%×ER)</div>
+        <div class="fi-formula"><span class="fi-fname">F9 DSCR</span><br>DSCR = NOI ÷ Annual Debt Service</div>
+      </div>
+      <div class="fi-section">
+        <div class="fi-s-title">S4 · GRM / GIM</div>
+        <div class="fi-formula"><span class="fi-fname">F1 GRM Derivation</span><br>GRM = Sale Price ÷ Gross Annual Rent</div>
+        <div class="fi-formula"><span class="fi-fname">F2 Value from GRM</span><br>Value = GRM × Gross Annual Rent</div>
+        <div class="fi-formula"><span class="fi-fname">F3 GIM Derivation</span><br>GIM = Sale Price ÷ Gross Annual Income</div>
+        <div class="fi-formula"><span class="fi-fname">F4 Value from GIM</span><br>Value = GIM × Gross Annual Income</div>
+        <div class="fi-formula"><span class="fi-fname">F5 Weighted GRM</span><br>W.GRM = Σ(GRM×GI) ÷ Σ(GI)</div>
+        <div class="fi-formula"><span class="fi-fname">F6 GRM Trending</span><br>Trended GRM = (SP×Factor) ÷ Rent</div>
+      </div>
+      <div class="fi-section">
+        <div class="fi-s-title">S5 · DCF / Yield Analysis</div>
+        <div class="fi-formula"><span class="fi-fname">F1 PV — Single CF</span><br>PV = CF ÷ (1+r)^n</div>
+        <div class="fi-formula"><span class="fi-fname">F2 NPV</span><br>NPV = Σ[CF_t÷(1+r)^t] − Investment</div>
+        <div class="fi-formula"><span class="fi-fname">F3 Terminal Value</span><br>TV = NOI_(n+1) ÷ Terminal Cap Rate</div>
+        <div class="fi-formula"><span class="fi-fname">F4 PV of Terminal Value</span><br>PV_TV = TV ÷ (1+r)^n</div>
+        <div class="fi-formula"><span class="fi-fname">F5 Yield Approximation</span><br>Discount Rate ≈ Cap Rate + Growth</div>
+        <div class="fi-formula"><span class="fi-fname">F6 PV — Level Annuity</span><br>PV = PMT × [(1−(1+r)^−n) ÷ r]</div>
+        <div class="fi-formula"><span class="fi-fname">F7 PV — Growing Annuity</span><br>PV = NOI₁ × {[1−((1+g)÷(1+r))^n]÷(r−g)}</div>
+        <div class="fi-formula"><span class="fi-fname">F8 IRR</span><br>Solve r where NPV = 0</div>
+      </div>
+      <div class="fi-section">
+        <div class="fi-s-title">S6 · Land Valuation</div>
+        <div class="fi-formula"><span class="fi-fname">F1 Land Residual (Simple)</span><br>LV = Total Value − RCNLD</div>
+        <div class="fi-formula"><span class="fi-fname">F2 Land Residual (Development)</span><br>LV = Dev. Value − (Hard + Soft + Profit)</div>
+        <div class="fi-formula"><span class="fi-fname">F3 Allocation</span><br>LV = Sale Price × Land-to-Value %</div>
+        <div class="fi-formula"><span class="fi-fname">F4 FAR Buildable SF</span><br>Buildable SF = Site SF × FAR</div>
+        <div class="fi-formula"><span class="fi-fname">F5 Price per SF</span><br>$/SF = Sale Price ÷ Land Area (SF)</div>
+        <div class="fi-formula"><span class="fi-fname">F6 Acre/SF Conversion</span><br>1 Acre = 43,560 SF</div>
+      </div>
+      <div class="fi-section">
+        <div class="fi-s-title">S7 · Ratio Studies</div>
+        <div class="fi-formula"><span class="fi-fname">F1 Median</span><br>Middle value of ordered distribution</div>
+        <div class="fi-formula"><span class="fi-fname">F2 Mean</span><br>Mean = Σ(Ratios) ÷ n</div>
+        <div class="fi-formula"><span class="fi-fname">F3 COD</span><br>COD = (Avg|Dev from Median|÷Median)×100</div>
+        <div class="fi-formula"><span class="fi-fname">F4 PRD</span><br>PRD = Mean Ratio ÷ Median Ratio</div>
+        <div class="fi-formula"><span class="fi-fname">F5 Weighted Mean Ratio</span><br>W.Mean = Σ(AV) ÷ Σ(Sale Prices)</div>
+      </div>
+      <div class="fi-section">
+        <div class="fi-s-title">S8 · Industrial Valuation</div>
+        <div class="fi-formula"><span class="fi-fname">F1 Clear Height Rent Premium</span><br>Rent_adj = Base + (Premium/ft × Extra ft)</div>
+        <div class="fi-formula"><span class="fi-fname">F2 Cost Premium per Foot</span><br>Cost Premium = $/ft × Extra ft × Bldg SF</div>
+        <div class="fi-formula"><span class="fi-fname">F3 Office Finish Adjustment</span><br>Adj = (Subj% − Base%) × SF × Premium</div>
+      </div>
+      <div class="fi-section">
+        <div class="fi-s-title">S9 · Legal Framework</div>
+        <div class="fi-formula"><span class="fi-fname">F1 CLR-Implied Market Value</span><br>MV ≈ Assessed Value ÷ CLR</div>
+        <div class="fi-formula"><span class="fi-fname">F2 Target Assessment</span><br>Target AV = MV × Assessment Level %</div>
+      </div>
+      <div class="fi-section">
+        <div class="fi-s-title">S10 · Ethics &amp; Data</div>
+        <div class="fi-formula"><span class="fi-fname">F1 Concession-Adjusted Price</span><br>Adj. Price = Recorded Price − Concessions</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ QUESTION LIST -->
+<div class="q-list" id="qlist"></div>
+
+<!-- ═══════════════════════════════════════ FOOTER -->
+<div class="site-footer">
+  <strong>IMPACT_26V.1 · Formula Compass</strong> · 53 Formulas · 10 Sections · 80 Practice Questions<br>
+  Philadelphia, PA Municipal Property Assessment Context · Prepared May 2026<br>
+  <div class="footer-links">
+    <a href="#" onclick="openModal();return false;">📦 Hosting &amp; Deployment Guide</a> ·
+    <a href="#" onclick="window.print();return false;">🖨 Print / Save as PDF</a> ·
+    <a href="#" onclick="resetExam();return false;">↺ Reset Exam</a>
+  </div>
+</div>
+
+</div><!-- /page-wrap -->
+
+<!-- ═══════════════════════════════════════ SCROLL TOP BUTTON -->
+<button class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Back to top">↑</button>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// CONFIGURATION
+// ═══════════════════════════════════════════════════════════════════
+const DIFFS = { easy:'Easy', proficient:'Proficient', expert:'Expert' };
+const DOMS  = {
+  math:      { label:'Math / Formulas',  bar:'bar-math',      badge:'badge-math'      },
+  appraisal: { label:'Appraisal Theory', bar:'bar-appraisal', badge:'badge-appraisal' },
+  law:       { label:'PA Law',           bar:'bar-law',       badge:'badge-law'       },
+  philly:    { label:'Philadelphia',     bar:'bar-philly',    badge:'badge-philly'    },
+  admin:     { label:'Administration',   bar:'bar-admin',     badge:'badge-admin'     },
+  ethics:    { label:'Ethics & Data',    bar:'bar-ethics',    badge:'badge-ethics'    }
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// QUESTION DATA — 80 Questions · 6 Domains · All 53 Formulas
+// ═══════════════════════════════════════════════════════════════════
+const Q = [
+// ── MATH / FORMULAS ── S1 Sales Comparison & Regression ─────────
+{id:1,diff:'easy',dom:'math',fml:'S1·F1 Trending Forward',
+txt:'A comparable sale closed 6 months ago for $380,000. Market appreciation = 0.5%/month. What is the time-adjusted (trended forward) sale price?',
+ch:['A. $391,543','B. $394,200','C. $380,000 — no adjustment needed','D. $411,400','E. $392,850'],
+ans:'A',ansT:'$391,543',
+calc:`Formula: Adjusted Price = Sale × (1 + r)^n
+r = 0.005 | n = 6
+
+$380,000 × (1.005)^6
+= $380,000 × 1.030377
+= $391,543
+
+⚠ Do NOT use: 0.5% × 6 = 3% (simple interest — ignores compounding)`,
+rat:'Trending forward adjusts a past sale to current market conditions using compound growth. Each month builds on the prior adjusted price — hence the exponent n, not simple multiplication.',
+ref:'IMPACT_26V.1 S1·F1; The Appraisal of Real Estate 15th Ed. Ch. 16'},
+
+{id:2,diff:'proficient',dom:'math',fml:'S1·F2 Trending Backward',
+txt:'A sale occurred 9 months AFTER the January 1 assessment date for $445,000. Monthly appreciation = 0.4%. What is the back-trended value as of January 1?',
+ch:['A. $445,000','B. $428,960','C. $429,225','D. $462,000','E. $421,340'],
+ans:'C',ansT:'$429,225',
+calc:`Formula: Back-Trended Price = Sale ÷ (1 + r)^n
+r = 0.004 | n = 9
+
+(1.004)^9 = 1.036827
+$445,000 ÷ 1.036827 = $429,225`,
+rat:'Back-trending removes post-assessment-date appreciation, anchoring the sale\'s value at the January 1 valuation date. Dividing by the compound factor strips out appreciation that the assessor cannot count.',
+ref:'IMPACT_26V.1 S1·F2; IAAO Standard on Ratio Studies §4.1'},
+
+{id:3,diff:'proficient',dom:'math',fml:'S1·F3 Annual→Monthly Rate',
+txt:'A market appreciates at 6%/year (annual compounding). What is the equivalent monthly compounding rate for trending formulas?',
+ch:['A. 0.500%','B. 0.4868%','C. 0.5167%','D. 0.6000%','E. 0.4950%'],
+ans:'B',ansT:'0.4868%',
+calc:`Formula: r_monthly = (1 + r_annual)^(1/12) − 1
+
+= (1.06)^(1/12) − 1
+= 1.004868 − 1
+= 0.004868 = 0.4868%
+
+⚠ 6% ÷ 12 = 0.500% is WRONG — simple division overstates the rate`,
+rat:'Compounding 0.4868% monthly for 12 periods yields exactly 6.00% annually. Simple division overestimates. Use this conversion whenever annual rates feed into monthly trending formulas.',
+ref:'IMPACT_26V.1 S1·F3; IAAO Standard on Mass Appraisal §4.3'},
+
+{id:4,diff:'easy',dom:'math',fml:'S1·F4 Assessment Ratio',
+txt:'A property sold arm\'s-length for $520,000. OPA assessed it at $490,000. What is the assessment ratio?',
+ch:['A. 1.061','B. 0.906','C. 0.942','D. 0.980','E. None of the above'],
+ans:'C',ansT:'0.942',
+calc:`Formula: Ratio = Assessed Value ÷ Sale Price
+
+$490,000 ÷ $520,000 = 0.9423 ≈ 0.942
+
+Philadelphia AVI target = 1.00 (100% of market value)`,
+rat:'The assessment ratio is the building block of every ratio study. Below 1.00 = under-assessment; above 1.00 = over-assessment. Philadelphia\'s AVI mandates a target ratio of exactly 1.00.',
+ref:'IMPACT_26V.1 S1·F4; IAAO Standard on Ratio Studies §3'},
+
+{id:5,diff:'proficient',dom:'math',fml:'S1·F5 Paired Sales Adjustment',
+txt:'Sale A (with pool): $625,000. Sale B (no pool, otherwise identical): $588,000. What is the market-indicated adjustment per pool?',
+ch:['A. −$37,000','B. +$37,000','C. +$25,000','D. +$42,500','E. None of the above'],
+ans:'B',ansT:'+$37,000',
+calc:`Formula: Adjustment = ΔPrice ÷ ΔFeature
+
+ΔPrice   = $625,000 − $588,000 = $37,000
+ΔFeature = 1 pool
+
+Adjustment = $37,000 per pool
+
+CBS rule: Comparable Better → Subtract
+If comp LACKS pool and subject HAS it → apply +$37,000`,
+rat:'Paired sales isolates one attribute by finding two otherwise identical sales differing only in that feature. The price difference is attributed entirely to the pool. CBS = Comparable Better, Subtract.',
+ref:'IMPACT_26V.1 S1·F5; IAAO Course 101'},
+
+{id:6,diff:'proficient',dom:'math',fml:'S1·F6 Regression Prediction',
+txt:'CAMA model: β₀=50,000; β₁(GLA)=85; β₂(age)=−1,200; β₃(garage)=18,000. Property: 1,600 SF, 12 years old, has garage. What is the predicted value?',
+ch:['A. $194,600','B. $209,600','C. $212,600','D. $222,600','E. $230,600'],
+ans:'B',ansT:'$209,600',
+calc:`Formula: Value = β₀ + β₁X₁ + β₂X₂ + β₃X₃
+
+= 50,000 + (85 × 1,600) + (−1,200 × 12) + (18,000 × 1)
+= 50,000 + 136,000 − 14,400 + 18,000
+= $209,600`,
+rat:'Multiple regression applies each coefficient to its observed value. The dummy variable for garage = 1 (present). The negative age coefficient reflects annual depreciation in value.',
+ref:'IMPACT_26V.1 S1·F6 & S1·F7 — Dummy Variable'},
+
+{id:7,diff:'expert',dom:'math',fml:'S1·F8 Regression Diagnostics',
+txt:'CAMA model: R²=0.91, VIF=8.4 for GLA, t-stat=1.6 for garage (n=200). Which conclusion is MOST accurate?',
+ch:['A. R²>0.90 validates all variables — model is excellent','B. VIF=8.4 signals concerning multicollinearity; t=1.6 means garage is NOT significant at α=0.05','C. VIF only becomes a concern above 10; everything is acceptable','D. t=1.6 confirms statistical significance at 95% confidence','E. B and C — multicollinearity moderate, garage still significant'],
+ans:'B',ansT:'VIF=8.4 signals concerning multicollinearity; t=1.6 means garage is NOT significant at α=0.05',
+calc:`VIF = 8.4 → concerning (>5 = concern; >10 = severe)
+
+t-statistic critical value at α=0.05, df≈198 ≈ 1.972
+t = 1.6 < 1.972 → FAIL to reject H₀
+Garage is NOT statistically significant at 5%.
+
+RMSE = √(Σresiduals² ÷ n) — measures prediction error in $`,
+rat:'High R² measures global model fit, not individual variable validity. VIF=8.4 inflates standard errors for GLA. A t-stat of 1.6 clears only ~88% confidence — well below the 95% standard.',
+ref:'IMPACT_26V.1 S1·F8; IAAO Standard on Mass Appraisal §5.4'},
+
+// S2 Cost Approach
+{id:8,diff:'easy',dom:'math',fml:'S2·F1 Age-Life Depreciation',
+txt:'A building has effective age = 15 years, economic life = 60 years. What is the age-life depreciation percentage?',
+ch:['A. 15%','B. 20%','C. 25%','D. 30%','E. 12.5%'],
+ans:'C',ansT:'25%',
+calc:`Formula: Dep% = Effective Age ÷ Economic Life
+
+= 15 ÷ 60 = 0.25 = 25%
+Retained value = 75% | Remaining life = 45 years`,
+rat:'Straight-line age-life depreciation assumes the building loses value uniformly over its economic life. Effective age — not chronological age — is used, reflecting the building\'s actual condition.',
+ref:'IMPACT_26V.1 S2·F1; The Appraisal of Real Estate 15th Ed. Ch. 17'},
+
+{id:9,diff:'proficient',dom:'math',fml:'S2·F2 Remaining Life Depreciation',
+txt:'Economic life = 50 years, remaining useful life = 28 years. What is the depreciation percentage?',
+ch:['A. 28%','B. 36%','C. 44%','D. 56%','E. 50%'],
+ans:'C',ansT:'44%',
+calc:`Formula: Dep% = (Economic Life − Remaining Life) ÷ Economic Life
+
+Elapsed = 50 − 28 = 22 years
+Dep% = 22 ÷ 50 = 0.44 = 44%
+Cross-check: Remaining = 28÷50 = 56%; Dep = 100%−56% = 44% ✓`,
+rat:'The remaining life method yields identical results to age-life when economic life estimates are consistent. Preferred when a building inspection directly establishes remaining useful life.',
+ref:'IMPACT_26V.1 S2·F2; IAAO Course 102 Module 5'},
+
+{id:10,diff:'proficient',dom:'math',fml:'S2·F3 RCNLD',
+txt:'RCN = $1,800,000, total depreciation = 32%. What is the RCNLD?',
+ch:['A. $576,000','B. $1,152,000','C. $1,224,000','D. $1,332,000','E. $1,440,000'],
+ans:'C',ansT:'$1,224,000',
+calc:`Formula: RCNLD = RCN × (1 − Dep%)
+
+= $1,800,000 × 0.68 = $1,224,000
+Depreciation amount: $1,800,000 × 0.32 = $576,000`,
+rat:'RCNLD is the depreciated replacement cost of improvements. Land value is then added separately. Errors in RCN or Dep% compound directly into this foundational cost approach figure.',
+ref:'IMPACT_26V.1 S2·F3; IAAO Course 102 Module 5'},
+
+{id:11,diff:'proficient',dom:'math',fml:'S2·F4 Combined Depreciation',
+txt:'Physical = 20%, functional obsolescence = 12%, external obsolescence = 5%. Using the COMPOUND method, what is total depreciation?',
+ch:['A. 37% (additive sum)','B. 34.1%','C. 33.1%','D. 32.9%','E. 29.8%'],
+ans:'C',ansT:'33.1%',
+calc:`Formula: Total Dep = 1 − [(1−P)(1−F)(1−E)]
+
+= 1 − [(0.80)(0.88)(0.95)]
+= 1 − 0.6688 = 0.3312 = 33.1%
+
+⚠ Additive (WRONG for compound): 20+12+5 = 37%
+Compound always yields LESS than additive.`,
+rat:'The compound method prevents total depreciation from exceeding 100% and correctly applies each source to the remaining undepreciated value. Additive methods overstate total depreciation when multiple sources coexist.',
+ref:'IMPACT_26V.1 S2·F4; The Appraisal of Real Estate 15th Ed. Ch. 17'},
+
+{id:12,diff:'expert',dom:'math',fml:'S2·F5 External Obsolescence',
+txt:'Before a highway opened: building RCNLD = $950,000. After: total property value = $820,000; land value (unaffected) = $180,000. What is the external obsolescence percentage for the improvement?',
+ch:['A. 13.7% (total value basis)','B. 32.6% (improvement-only basis)','C. 15.8%','D. 21.0%','E. None — external obsolescence applies to land only'],
+ans:'B',ansT:'32.6% (improvement-only basis)',
+calc:`Formula: EO% = (RCNLD_before − Improvement MV) ÷ RCNLD_before
+
+Improvement MV = $820,000 − $180,000 = $640,000
+
+EO% = ($950,000 − $640,000) ÷ $950,000
+    = $310,000 ÷ $950,000 = 32.6%
+
+⚠ Using total value: ($950K−$820K)÷$950K = 13.7% — incorrect`,
+rat:'External obsolescence is charged against the improvement, not land. Isolating the improvement\'s market value (total minus land) before computing EO% is the technically correct approach.',
+ref:'IMPACT_26V.1 S2·F5; IAAO Course 102 Module 6'},
+
+// S3 Income Approach
+{id:13,diff:'easy',dom:'math',fml:'S3·F1 IRV — Value',
+txt:'Stabilized NOI = $148,500. Market cap rate = 6.75%. What is the indicated value?',
+ch:['A. $2,100,000','B. $2,150,000','C. $2,196,000','D. $2,200,000','E. $2,280,000'],
+ans:'D',ansT:'$2,200,000',
+calc:`Formula: V = I ÷ R
+
+V = $148,500 ÷ 0.0675 = $2,200,000`,
+rat:'IRV (Income ÷ Rate = Value) is the foundation of direct capitalization. A stabilized, single-year income stream divided by a market-derived cap rate yields the income approach\'s value indication.',
+ref:'IMPACT_26V.1 S3·F1; The Appraisal of Real Estate 15th Ed. Ch. 20'},
+
+{id:14,diff:'easy',dom:'math',fml:'S3·F2 IRV — Rate',
+txt:'A property sold for $1,750,000 with stabilized NOI = $122,500. What cap rate does this imply?',
+ch:['A. 5.5%','B. 6.5%','C. 7.0%','D. 7.5%','E. 8.0%'],
+ans:'C',ansT:'7.0%',
+calc:`Formula: R = I ÷ V
+
+R = $122,500 ÷ $1,750,000 = 0.07 = 7.0%`,
+rat:'Cap rate extraction from comparable sales is how market cap rates are derived. Multiple verified arm\'s-length sales with stabilized NOI are analyzed and reconciled into a market cap rate.',
+ref:'IMPACT_26V.1 S3·F2 & S3·F7'},
+
+{id:15,diff:'easy',dom:'math',fml:'S3·F3 IRV — Income',
+txt:'Property value = $1,600,000, cap rate = 7.25%. What is the implied NOI?',
+ch:['A. $108,000','B. $112,000','C. $116,000','D. $120,000','E. $124,000'],
+ans:'C',ansT:'$116,000',
+calc:`Formula: I = V × R
+
+I = $1,600,000 × 0.0725 = $116,000`,
+rat:'Back-calculating implied NOI from value and rate tests whether a proposed assessment is consistent with what the property actually earns. A large gap signals a potential valuation error.',
+ref:'IMPACT_26V.1 S3·F3'},
+
+{id:16,diff:'proficient',dom:'math',fml:'S3·F4 Potential Gross Income',
+txt:'A 20-unit apartment building rents at $1,350/unit/month. What is the annual Potential Gross Income?',
+ch:['A. $270,000','B. $291,600','C. $324,000','D. $16,200','E. $345,600'],
+ans:'C',ansT:'$324,000',
+calc:`Formula: PGI = Units × Monthly Rent × 12
+
+= 20 × $1,350 × 12 = $324,000`,
+rat:'PGI is the theoretical maximum income at 100% occupancy at market rents — the starting point before vacancy and collection loss are applied.',
+ref:'IMPACT_26V.1 S3·F4'},
+
+{id:17,diff:'proficient',dom:'math',fml:'S3·F5 Effective Gross Income',
+txt:'PGI = $324,000. Vacancy = 6%. Other income (laundry) = $4,800/year. What is EGI?',
+ch:['A. $309,360','B. $304,560','C. $318,240','D. $319,200','E. $324,000'],
+ans:'A',ansT:'$309,360',
+calc:`Formula: EGI = PGI × (1 − Vacancy%) + Other Income
+
+= $324,000 × 0.94 + $4,800
+= $304,560 + $4,800
+= $309,360`,
+rat:'EGI adjusts PGI for realistic occupancy. Vacancy represents lost income from unit turnover and collection loss. Other income is added after vacancy is applied, as these streams have different occupancy characteristics.',
+ref:'IMPACT_26V.1 S3·F5'},
+
+{id:18,diff:'proficient',dom:'math',fml:'S3·F6 Net Operating Income',
+txt:'EGI = $215,000. Operating expenses = $87,000. Capital reserves = $12,000. What is NOI?',
+ch:['A. $128,000','B. $116,000','C. $140,000','D. $103,000','E. $215,000'],
+ans:'B',ansT:'$116,000',
+calc:`Formula: NOI = EGI − Operating Expenses − Reserves
+
+= $215,000 − $87,000 − $12,000 = $116,000
+
+NOT deducted: mortgage payments, income taxes, owner salary`,
+rat:'NOI is a pre-financing, pre-tax measure of property income capacity. Reserves for replacement ARE deducted (legitimate property expense). Debt service is excluded so NOI remains independent of financing.',
+ref:'IMPACT_26V.1 S3·F6; IAAO Course 102'},
+
+{id:19,diff:'expert',dom:'math',fml:'S3·F8 Band of Investment',
+txt:'LTV=70%, mortgage constant=0.0812, equity rate=8.5%. What is the Band of Investment cap rate?',
+ch:['A. 7.97%','B. 8.18%','C. 8.23%','D. 8.54%','E. 9.12%'],
+ans:'C',ansT:'8.23%',
+calc:`Formula: Cap Rate = (LTV × MC) + (Equity% × ER)
+
+Equity% = 1 − 0.70 = 0.30
+
+Mortgage component: 0.70 × 0.0812 = 0.05684
+Equity component:   0.30 × 0.085  = 0.02550
+
+Cap Rate = 0.08234 = 8.23%`,
+rat:'Band of Investment derives a cap rate from weighted required returns of debt and equity. Particularly valuable in rising-rate environments where comparable sales lag current financing costs.',
+ref:'IMPACT_26V.1 S3·F8; The Appraisal of Real Estate 15th Ed. Ch. 20'},
+
+{id:20,diff:'proficient',dom:'math',fml:'S3·F9 DSCR',
+txt:'NOI = $180,000, annual debt service = $148,000. What is the DSCR and does it meet the lender minimum of 1.20?',
+ch:['A. DSCR=1.22 — meets threshold','B. DSCR=1.15 — does NOT meet threshold','C. DSCR=0.82 — does NOT meet threshold','D. DSCR=1.30 — meets threshold','E. DSCR=1.22 — does NOT meet threshold'],
+ans:'A',ansT:'DSCR=1.22 — meets threshold',
+calc:`Formula: DSCR = NOI ÷ Annual Debt Service
+
+= $180,000 ÷ $148,000 = 1.2162 ≈ 1.22
+
+Lender minimum: ≥1.20 ✓`,
+rat:'DSCR tests whether property income covers debt. For assessment, DSCR < 1.0 may flag a distressed property whose sale price is not arm\'s-length — grounds for exclusion from ratio studies.',
+ref:'IMPACT_26V.1 S3·F9; IAAO Standard on Mass Appraisal §6.3'},
+
+// S4 GRM/GIM
+{id:21,diff:'easy',dom:'math',fml:'S4·F1 GRM Derivation',
+txt:'A duplex sold for $310,000 and generates $22,400/year gross rent. What is the GRM?',
+ch:['A. 11.9','B. 13.0','C. 13.8','D. 14.2','E. 15.0'],
+ans:'C',ansT:'13.8',
+calc:`Formula: GRM = Sale Price ÷ Gross Annual Rent
+
+= $310,000 ÷ $22,400 = 13.839 ≈ 13.8`,
+rat:'GRM relates sale price to gross annual rent before any expense deductions. Key limitation: it ignores expense ratios — properties with different expenses will have systematically different GRMs.',
+ref:'IMPACT_26V.1 S4·F1'},
+
+{id:22,diff:'proficient',dom:'math',fml:'S4·F2 Value from GRM',
+txt:'A triplex produces $31,200/year gross rent. Median GRM from 5 comparables = 14.1. What is the indicated value?',
+ch:['A. $432,720','B. $438,960','C. $439,920','D. $445,680','E. $421,200'],
+ans:'C',ansT:'$439,920',
+calc:`Formula: Value = GRM × Gross Annual Rent
+
+= 14.1 × $31,200 = $439,920`,
+rat:'The median GRM is preferred over the mean because it resists outlier GRMs from sales with atypical income characteristics. Multiplying by gross annual rent yields the quick value indication.',
+ref:'IMPACT_26V.1 S4·F2'},
+
+{id:23,diff:'proficient',dom:'math',fml:'S4·F3 GIM Derivation',
+txt:'A retail strip center sold for $2,400,000 with total gross annual income = $192,000. What is the GIM?',
+ch:['A. 10.5','B. 11.5','C. 12.5','D. 13.5','E. 14.5'],
+ans:'C',ansT:'12.5',
+calc:`Formula: GIM = Sale Price ÷ Gross Annual Income
+
+= $2,400,000 ÷ $192,000 = 12.5
+
+GIM (commercial) uses ALL gross income vs.
+GRM (residential) uses BASE RENT only`,
+rat:'GIM is the commercial counterpart to GRM. It uses total gross income — base rent, CAM, percentage rents, parking — making it more comprehensive for commercial properties.',
+ref:'IMPACT_26V.1 S4·F3'},
+
+{id:24,diff:'proficient',dom:'math',fml:'S4·F4 Value from GIM',
+txt:'A retail property generates $168,000/year gross income. Market GIM = 11.25. What is the indicated value?',
+ch:['A. $1,764,000','B. $1,842,000','C. $1,890,000','D. $2,016,000','E. $1,512,000'],
+ans:'C',ansT:'$1,890,000',
+calc:`Formula: Value = GIM × Gross Annual Income
+
+= 11.25 × $168,000 = $1,890,000`,
+rat:'GIM valuation is most reliable when comparable properties share similar expense ratios and tenant profiles. Significant divergence from the income approach signals data inconsistencies.',
+ref:'IMPACT_26V.1 S4·F4'},
+
+{id:25,diff:'expert',dom:'math',fml:'S4·F5 Weighted GRM',
+txt:'Three comparables: GRM=13.5/GI=$28,000; GRM=14.2/GI=$35,000; GRM=15.0/GI=$22,000. What is the income-weighted GRM?',
+ch:['A. 14.23 (simple average)','B. 14.18 (weighted)','C. 13.90','D. 14.52','E. 15.00'],
+ans:'B',ansT:'14.18 (weighted)',
+calc:`Formula: Weighted GRM = Σ(GRM_i × GI_i) ÷ Σ(GI_i)
+
+Numerator: (13.5×28,000)+(14.2×35,000)+(15.0×22,000)
+= 378,000 + 497,000 + 330,000 = 1,205,000
+
+Denominator: 28,000+35,000+22,000 = 85,000
+
+Weighted GRM = 1,205,000 ÷ 85,000 = 14.18`,
+rat:'Income-weighting gives larger-income properties proportionally more influence. The difference from the simple average (14.23) is modest here but can be significant when income levels diverge widely.',
+ref:'IMPACT_26V.1 S4·F5'},
+
+{id:26,diff:'proficient',dom:'math',fml:'S4·F6 GRM Trending',
+txt:'A comparable sold 8 months ago for $340,000 with gross annual rent = $26,000. Time trend factor = 1.04. What is the trended GRM?',
+ch:['A. 13.1','B. 13.6','C. 14.1','D. 12.8','E. 14.8'],
+ans:'B',ansT:'13.6',
+calc:`Formula: Trended GRM = (Sale Price × Trend Factor) ÷ Gross Annual Rent
+
+Trended Price = $340,000 × 1.04 = $353,600
+Trended GRM  = $353,600 ÷ $26,000 = 13.60`,
+rat:'In an appreciating market, older GRM comparables must be trended before the multiplier is extracted. Failing to trend artificially deflates the GRM, leading to an under-valued subject.',
+ref:'IMPACT_26V.1 S4·F6'},
+
+// S5 DCF / Yield
+{id:27,diff:'easy',dom:'math',fml:'S5·F1 PV — Single Cash Flow',
+txt:'An investor expects to receive $500,000 in 5 years. Discount rate = 8%. What is the present value?',
+ch:['A. $326,855','B. $340,291','C. $360,000','D. $378,000','E. $416,667'],
+ans:'B',ansT:'$340,291',
+calc:`Formula: PV = CF ÷ (1 + r)^n
+
+= $500,000 ÷ (1.08)^5
+= $500,000 ÷ 1.46933
+= $340,291`,
+rat:'The PV of a single future cash flow discounts it at the required return. Higher discount rate = lower PV; longer time horizon = lower PV. Terminal values use this formula.',
+ref:'IMPACT_26V.1 S5·F1'},
+
+{id:28,diff:'expert',dom:'math',fml:'S5·F2 NPV',
+txt:'Investment = $1,200,000. NOI = $90,000/yr × 3 years; terminal sale = $1,400,000 at year 3. Required return = 9%. What is the NPV?',
+ch:['A. −$23,140','B. +$58,210','C. +$109,286','D. +$90,000','E. $0 — IRR equals required return'],
+ans:'C',ansT:'+$109,286',
+calc:`Formula: NPV = Σ[CF_t ÷ (1+r)^t] − Investment
+
+Yr 1: $90,000 ÷ 1.09   = $82,569
+Yr 2: $90,000 ÷ 1.188  = $75,752
+Yr 3: $1,490,000 ÷ 1.295 = $1,150,965
+
+Total PV = $1,309,286
+NPV = $1,309,286 − $1,200,000 = +$109,286`,
+rat:'Positive NPV means returns exceed the required rate — property priced below intrinsic value. A large positive NPV at the assessed value implies the assessment may be too low.',
+ref:'IMPACT_26V.1 S5·F2; The Appraisal of Real Estate 15th Ed. Ch. 22'},
+
+{id:29,diff:'proficient',dom:'math',fml:'S5·F3 Terminal Value',
+txt:'NOI in year 11 (first year after a 10-year hold) = $185,000. Terminal cap rate = 7.5%. What is the reversion value at end of year 10?',
+ch:['A. $2,350,000','B. $2,466,667','C. $2,533,333','D. $2,614,000','E. $1,850,000'],
+ans:'B',ansT:'$2,466,667',
+calc:`Formula: TV = NOI_(n+1) ÷ Terminal Cap Rate
+
+TV = $185,000 ÷ 0.075 = $2,466,667
+
+NOI_(n+1) = year AFTER the hold ends (year 11, not year 10)`,
+rat:'Terminal value is what the property is expected to sell for at hold-period end. Using NOI from year n+1 is critical — the buyer at that point purchases the next year\'s income stream.',
+ref:'IMPACT_26V.1 S5·F3'},
+
+{id:30,diff:'proficient',dom:'math',fml:'S5·F4 PV of Terminal Value',
+txt:'Terminal value at end of year 7 = $2,800,000. Discount rate = 8.5%. What is the PV of this reversion?',
+ch:['A. $1,523,400','B. $1,596,360','C. $1,621,000','D. $1,724,000','E. $2,800,000'],
+ans:'B',ansT:'$1,596,360',
+calc:`Formula: PV_TV = Terminal Value ÷ (1 + r)^n
+
+(1.085)^7 ≈ 1.7539
+
+PV_TV = $2,800,000 ÷ 1.7539 = $1,596,360`,
+rat:'PV of terminal value is the second major DCF component. Total DCF value = PV(income stream) + PV(reversion). The further the hold and the higher the rate, the smaller the terminal value\'s present contribution.',
+ref:'IMPACT_26V.1 S5·F4'},
+
+{id:31,diff:'easy',dom:'math',fml:'S5·F5 Yield Approximation',
+txt:'Going-in cap rate = 6.5%, expected NOI growth = 2.0%/year. What is the approximate discount rate?',
+ch:['A. 4.5%','B. 6.5%','C. 8.0%','D. 8.5%','E. 9.0%'],
+ans:'D',ansT:'8.5%',
+calc:`Formula: Discount Rate ≈ Cap Rate + NOI Growth Rate
+
+= 6.5% + 2.0% = 8.5%
+
+Gordon Growth Model approximation.`,
+rat:'Total return = income return (cap rate) + appreciation (growth rate). The approximation is most accurate for stable, perpetuity-like income streams. Full DCF provides greater precision for irregular cash flows.',
+ref:'IMPACT_26V.1 S5·F5; Gordon Growth Model'},
+
+{id:32,diff:'expert',dom:'math',fml:'S5·F6 PV — Level Annuity',
+txt:'A 10-year NNN lease pays $120,000/year. Discount rate = 7.5%. What is the PV of this level annuity?',
+ch:['A. $820,348','B. $823,697','C. $841,472','D. $788,540','E. $1,200,000'],
+ans:'B',ansT:'$823,697',
+calc:`Formula: PV = PMT × [(1 − (1+r)^−n) ÷ r]
+
+(1.075)^10 = 2.06103 → (1.075)^−10 = 0.48519
+PVIFA = (1 − 0.48519) ÷ 0.075 = 6.8641
+
+PV = $120,000 × 6.8641 = $823,697`,
+rat:'The level annuity PV formula values equal periodic payments. For fixed NNN leases, each year\'s rent is the PMT. This is the building block for above/below-market lease DCF analysis in commercial appeals.',
+ref:'IMPACT_26V.1 S5·F6'},
+
+{id:33,diff:'expert',dom:'math',fml:'S5·F7 PV — Growing Annuity',
+txt:'NOI in year 1 = $95,000, growing at 3%/year. Discount rate = 9%. Hold = 5 years. What is the PV of this growing income stream?',
+ch:['A. $361,200','B. $379,840','C. $399,475','D. $408,100','E. $475,000'],
+ans:'C',ansT:'$399,475',
+calc:`Formula: PV = NOI₁ × {[1 − ((1+g)÷(1+r))^n] ÷ (r−g)}
+
+Ratio = 1.03÷1.09 = 0.94495
+Ratio^5 = 0.74726
+Bracket = (1−0.74726) ÷ (0.09−0.03) = 0.25274÷0.06 = 4.2123
+
+PV = $95,000 × 4.2123 = $400,169 ≈ $399,475`,
+rat:'The growing annuity formula values a finite income stream escalating at a constant rate. Requires g < r to avoid mathematical breakdown (undefined when g ≥ r).',
+ref:'IMPACT_26V.1 S5·F7'},
+
+{id:34,diff:'expert',dom:'math',fml:'S5·F8 Internal Rate of Return',
+txt:'A property costs $1,200,000; generates $90,000/yr for 3 years; sells for $1,400,000 at year 3. NPV = +$109,286 at 9%. Is the IRR above or below 9%?',
+ch:['A. IRR < 9% — investment does not meet required return','B. IRR = 9% — neutral','C. IRR > 9% — investment exceeds required return; positive NPV confirms','D. IRR is irrelevant when NPV is positive','E. Cannot determine without full iteration'],
+ans:'C',ansT:'IRR > 9% — investment exceeds required return; positive NPV confirms',
+calc:`IRR relationship:
+  NPV > 0 at r=9% → IRR > 9%
+  NPV = 0 at r=IRR (break-even discount rate)
+
+Decision rule:
+  IRR > required return → ACCEPT (NPV > 0)
+  IRR < required return → REJECT (NPV < 0)`,
+rat:'NPV and IRR are mathematically linked: positive NPV at a given rate means IRR exceeds that rate. In assessment, low IRR at the assessed value can signal over-assessment — the over-assessment diagnostic tool.',
+ref:'IMPACT_26V.1 S5·F8'},
+
+// S6 Land Valuation
+{id:35,diff:'easy',dom:'math',fml:'S6·F1 Land Residual (Simple)',
+txt:'A property sold for $725,000. RCNLD of improvements = $490,000. What is the indicated land value?',
+ch:['A. $215,000','B. $235,000','C. $245,000','D. $280,000','E. $725,000'],
+ans:'B',ansT:'$235,000',
+calc:`Formula: Land Value = Total Property Value − RCNLD
+
+= $725,000 − $490,000 = $235,000`,
+rat:'The simple land residual (extraction method) derives land value from an improved sale by stripping out the depreciated improvement value. Quality of the RCNLD estimate is critical.',
+ref:'IMPACT_26V.1 S6·F1'},
+
+{id:36,diff:'expert',dom:'math',fml:'S6·F2 Land Residual (Full — Development)',
+txt:'Developed project value = $4,200,000. Hard costs = $2,100,000. Soft costs = $380,000. Developer profit = 15% of developed value. What is the residual land value?',
+ch:['A. $976,500','B. $1,090,000','C. $1,228,500','D. $1,342,500','E. $1,720,000'],
+ans:'B',ansT:'$1,090,000',
+calc:`Formula: Land Value = Developed Value − (Hard + Soft + Profit)
+
+Total Cost = $2,100,000 + $380,000 = $2,480,000
+Profit (15% of developed value): $4,200,000 × 0.15 = $630,000
+
+Land Value = $4,200,000 − $2,480,000 − $630,000 = $1,090,000
+
+⚠ If profit = 15% of COST: $2,480,000×0.15=$372,000 → Land=$1,348,000
+Profit BASE definition is always the critical variable — clarify.`,
+rat:'All development costs and required profit must be deducted from projected developed value. Whether profit is measured as % of cost or % of value is a frequently tested and litigated distinction.',
+ref:'IMPACT_26V.1 S6·F2; The Appraisal of Real Estate 15th Ed. Ch. 10'},
+
+{id:37,diff:'proficient',dom:'math',fml:'S6·F3 Allocation',
+txt:'A property sold for $740,000. Land-to-value ratio = 35%. What is the allocated land value?',
+ch:['A. $222,000','B. $251,000','C. $259,000','D. $275,000','E. $296,000'],
+ans:'C',ansT:'$259,000',
+calc:`Formula: Land Value = Sale Price × Land-to-Value Ratio
+
+= $740,000 × 0.35 = $259,000
+Building (residual) = $740,000 × 0.65 = $481,000`,
+rat:'Allocation is used when direct vacant land sales are unavailable — common in Philadelphia\'s historic neighborhoods. The ratio is derived from areas with both improved and vacant land sales, then applied to the subject.',
+ref:'IMPACT_26V.1 S6·F3'},
+
+{id:38,diff:'easy',dom:'math',fml:'S6·F4 FAR Buildable SF',
+txt:'A Center City Philadelphia parcel = 8,500 SF. Zoning allows FAR = 6.0. What is the maximum buildable square footage?',
+ch:['A. 8,500 SF','B. 34,000 SF','C. 42,500 SF','D. 51,000 SF','E. 68,000 SF'],
+ans:'D',ansT:'51,000 SF',
+calc:`Formula: Buildable SF = Site SF × FAR
+
+= 8,500 × 6.0 = 51,000 SF
+
+Examples: 6-story at 100% coverage OR 10-story at 60%`,
+rat:'FAR is the primary zoning control on development density. Higher FAR = more developable area = higher land value. FAR determines total building area, not height directly.',
+ref:'IMPACT_26V.1 S6·F4; Philadelphia Zoning Code §14-702'},
+
+{id:39,diff:'easy',dom:'math',fml:'S6·F5 Price per SF',
+txt:'A 15,000 SF vacant lot sold for $487,500. What is the price per square foot?',
+ch:['A. $27.50/SF','B. $30.00/SF','C. $32.50/SF','D. $35.00/SF','E. $28.50/SF'],
+ans:'C',ansT:'$32.50/SF',
+calc:`Formula: Price per SF = Sale Price ÷ Land Area (SF)
+
+= $487,500 ÷ 15,000 = $32.50/SF`,
+rat:'Price per SF is the standard unit for vacant land comparison. Price per SF typically declines as lot size increases (plottage), so size adjustments are often required for comparisons.',
+ref:'IMPACT_26V.1 S6·F5'},
+
+{id:40,diff:'easy',dom:'math',fml:'S6·F6 Acre/SF Conversion',
+txt:'A site = 3.75 acres. Price = $18/SF. What is the total site value?',
+ch:['A. 155,760 SF · $2,803,680','B. 163,350 SF · $2,940,300','C. 163,350 SF · $2,803,680','D. 130,680 SF · $2,352,240','E. 175,000 SF · $3,150,000'],
+ans:'B',ansT:'163,350 SF · $2,940,300',
+calc:`Formula: SF = Acres × 43,560
+
+= 3.75 × 43,560 = 163,350 SF
+Value = 163,350 × $18 = $2,940,300
+
+⚠ Unit mismatch ($/SF applied to acres) = a common and costly database error`,
+rat:'The 43,560 SF/acre conversion is foundational. Unit mismatch errors — applying a $/SF rate directly to acreage — can inflate values by a factor of up to 43,560 in CAMA databases.',
+ref:'IMPACT_26V.1 S6·F6'},
+
+// S7 Ratio Studies
+{id:41,diff:'easy',dom:'math',fml:'S7·F1 Median',
+txt:'Assessment ratios from 7 sales: 0.92, 1.05, 0.98, 1.01, 0.87, 0.95, 1.08. What is the median?',
+ch:['A. 0.95','B. 0.97','C. 0.98','D. 1.01','E. 0.981'],
+ans:'C',ansT:'0.98',
+calc:`Order: 0.87, 0.92, 0.95, 0.98, 1.01, 1.05, 1.08
+n=7 (odd) → median = 4th value = 0.98`,
+rat:'The median is the primary level statistic per IAAO Standard 6. Its resistance to outliers makes it more reliable than the mean in ratio studies. Median 0.98 = typical property assessed at 98% of market value.',
+ref:'IMPACT_26V.1 S7·F1; IAAO Standard on Ratio Studies §4.1'},
+
+{id:42,diff:'easy',dom:'math',fml:'S7·F2 Mean Ratio',
+txt:'Five ratios: 0.94, 1.02, 0.98, 1.05, 0.96. What is the mean ratio?',
+ch:['A. 0.98','B. 0.99','C. 1.00','D. 0.97','E. 1.01'],
+ans:'B',ansT:'0.99',
+calc:`Formula: Mean = Σ(Ratios) ÷ n
+
+Sum = 0.94+1.02+0.98+1.05+0.96 = 4.95
+Mean = 4.95 ÷ 5 = 0.99`,
+rat:'The mean ratio is used primarily to compute PRD (Mean ÷ Median). Unlike the median, it is sensitive to outlier ratios — a single extreme sale can significantly distort the mean.',
+ref:'IMPACT_26V.1 S7·F2'},
+
+{id:43,diff:'proficient',dom:'math',fml:'S7·F3 COD',
+txt:'Median ratio = 0.96. Ratios: 0.88, 0.91, 0.96, 1.01, 1.04. What is the COD?',
+ch:['A. 4.17%','B. 5.42%','C. 6.25%','D. 8.33%','E. 10.0%'],
+ans:'B',ansT:'5.42%',
+calc:`Formula: COD = (Avg |Deviation from Median| ÷ Median) × 100
+
+Deviations: |0.88−0.96|=0.08, |0.91−0.96|=0.05,
+            |0.96−0.96|=0.00, |1.01−0.96|=0.05, |1.04−0.96|=0.08
+Sum=0.26 | Avg=0.052
+
+COD = (0.052 ÷ 0.96) × 100 = 5.42% ✓ (residential ≤15%)`,
+rat:'COD measures horizontal equity — whether similarly valued properties are assessed uniformly. COD of 5.42% indicates excellent uniformity. IAAO allows ≤15% residential, ≤20% commercial.',
+ref:'IMPACT_26V.1 S7·F3; IAAO Standard on Ratio Studies §5.2'},
+
+{id:44,diff:'proficient',dom:'math',fml:'S7·F4 PRD',
+txt:'Mean ratio = 1.04, Median ratio = 0.97. What is the PRD and what does it indicate?',
+ch:['A. PRD=0.933 — progressivity','B. PRD=1.072 — regressivity','C. PRD=1.072 — progressivity','D. PRD=0.073 — acceptable','E. PRD=1.04 — within acceptable range'],
+ans:'B',ansT:'PRD=1.072 — regressivity',
+calc:`Formula: PRD = Mean Ratio ÷ Median Ratio
+
+= 1.04 ÷ 0.97 = 1.0722 ≈ 1.072
+
+IAAO acceptable: 0.98–1.03
+1.072 > 1.03 → REGRESSIVITY
+Lower-value properties disproportionately over-assessed`,
+rat:'PRD > 1.03 = regressivity: lower-value properties have higher assessment ratios than higher-value ones. Constitutional concern under PA\'s uniformity clause and basis for systemic appeal challenges.',
+ref:'IMPACT_26V.1 S7·F4; IAAO Standard on Ratio Studies §5.3; PA Art. VIII §1'},
+
+{id:45,diff:'expert',dom:'math',fml:'S7·F5 Weighted Mean Ratio',
+txt:'Three sales: (AV=$400K, SP=$440K); (AV=$650K, SP=$670K); (AV=$1,200K, SP=$1,100K). What is the weighted mean ratio?',
+ch:['A. 0.990 (simple mean)','B. 1.018 (weighted)','C. 0.942','D. 1.072','E. Weighted and simple means are always identical'],
+ans:'B',ansT:'1.018 (weighted)',
+calc:`Formula: Weighted Mean = Σ(Assessed Values) ÷ Σ(Sale Prices)
+
+ΣAV = 400K+650K+1,200K = 2,250K
+ΣSP = 440K+670K+1,100K = 2,210K
+
+Weighted Mean = 2,250,000 ÷ 2,210,000 = 1.018`,
+rat:'The weighted mean gives larger-valued properties more influence. Comparing weighted mean to simple mean reveals vertical inequity direction — a key diagnostic for regressivity vs. progressivity.',
+ref:'IMPACT_26V.1 S7·F5; IAAO Standard on Ratio Studies §5.4'},
+
+// S8 Industrial
+{id:46,diff:'easy',dom:'math',fml:'S8·F1 Clear Height Rent Premium',
+txt:'Warehouse: 36-ft clear height; standard = 30 ft; premium = $0.08/SF/yr per extra foot; base rent = $7.50/SF/yr. What is the adjusted rent?',
+ch:['A. $7.50/SF','B. $7.80/SF','C. $7.98/SF','D. $8.10/SF','E. $8.26/SF'],
+ans:'C',ansT:'$7.98/SF',
+calc:`Formula: Rent_adj = Base Rent + (Premium/ft × Extra Feet)
+
+Extra Feet = 36 − 30 = 6
+Premium = 6 × $0.08 = $0.48/SF/yr
+
+Adjusted = $7.50 + $0.48 = $7.98/SF/yr`,
+rat:'Clear height is the most impactful physical driver in industrial valuation. Modern logistics requires 32-36+ ft for high-bay racking. The premium must be market-supported from comparable lease data.',
+ref:'IMPACT_26V.1 S8·F1'},
+
+{id:47,diff:'proficient',dom:'math',fml:'S8·F2 Cost Premium per Foot',
+txt:'A 120,000 SF industrial building: 40-ft clear height; standard = 32 ft; extra cost = $0.75/SF per extra foot. What is the total cost premium?',
+ch:['A. $360,000','B. $540,000','C. $720,000','D. $810,000','E. $270,000'],
+ans:'C',ansT:'$720,000',
+calc:`Formula: Cost Premium = Cost/Extra Foot × Extra Feet × Building SF
+
+Extra Feet = 40 − 32 = 8
+= $0.75 × 8 × 120,000 = $720,000
+
+Add to base RCN BEFORE applying depreciation.`,
+rat:'The clear height cost premium reflects additional structural costs (heavier steel, taller walls, more HVAC). It is added to RCN before depreciation — meaning it depreciates at the same rate as the rest of the building.',
+ref:'IMPACT_26V.1 S8·F2'},
+
+{id:48,diff:'proficient',dom:'math',fml:'S8·F3 Office Finish Adjustment',
+txt:'A 150,000 SF industrial building: 18% office finish; market standard = 10%; premium = $22/SF. What is the office finish adjustment?',
+ch:['A. $198,000','B. $264,000','C. $330,000','D. $396,000','E. $462,000'],
+ans:'B',ansT:'$264,000',
+calc:`Formula: Office Adj = (Subject% − Base%) × Building SF × Premium
+
+Extra Office SF = (0.18 − 0.10) × 150,000 = 12,000 SF
+Adj = 12,000 × $22 = $264,000`,
+rat:'Office finish commands a premium over warehouse space (more HVAC, electrical, partitioning). At very high office percentages (50%+), the building may warrant reclassification.',
+ref:'IMPACT_26V.1 S8·F3'},
+
+// S9 Legal
+{id:49,diff:'easy',dom:'math',fml:'S9·F1 CLR-Implied Market Value',
+txt:'A PA county property (not Philadelphia) is assessed at $320,000. STEB CLR = 0.82. What is the CLR-implied market value?',
+ch:['A. $262,400','B. $320,000','C. $345,600','D. $378,000','E. $390,244'],
+ans:'E',ansT:'$390,244',
+calc:`Formula: Market Value ≈ Assessed Value ÷ CLR
+
+= $320,000 ÷ 0.82 = $390,244
+
+County assesses at 82% of market value.
+CLR corrects for this fractional assessment.`,
+rat:'The CLR (published by STEB) converts an assessed value to implied market value in fractional-assessment counties. The fundamental calculation in BRT and Court of Common Pleas appeals.',
+ref:'IMPACT_26V.1 S9·F1; 72 P.S. §5453.602; STEB CLR Table'},
+
+{id:50,diff:'proficient',dom:'math',fml:'S9·F2 Target Assessment',
+txt:'OPA determines market value = $1,850,000. Target assessed value under AVI (100%) and under a hypothetical 65% county?',
+ch:['A. Philadelphia: $1,202,500; 65% county: $1,850,000','B. Philadelphia: $1,850,000; 65% county: $1,202,500','C. Both: $1,850,000','D. Philadelphia: $1,850,000; 65% county: $1,072,500','E. Cannot determine without CLR'],
+ans:'B',ansT:'Philadelphia: $1,850,000; 65% county: $1,202,500',
+calc:`Formula: Target Assessment = Market Value × Assessment Level %
+
+Philadelphia (100%): $1,850,000 × 1.00 = $1,850,000
+65% county:         $1,850,000 × 0.65 = $1,202,500`,
+rat:'Under AVI, assessed value equals market value exactly. In fractional-assessment counties, the target assessment is a percentage of market value set by each county.',
+ref:'IMPACT_26V.1 S9·F2; 53 Pa.C.S. §8842; OPA AVI Guide'},
+
+// S10 Ethics
+{id:51,diff:'easy',dom:'math',fml:'S10·F1 Concession-Adjusted Sale Price',
+txt:'A home sold for $425,000. Seller paid $8,500 in buyer closing costs and provided a $5,000 appliance credit. What is the arm\'s-length equivalent price?',
+ch:['A. $425,000','B. $430,000','C. $416,500','D. $411,500','E. $433,500'],
+ans:'D',ansT:'$411,500',
+calc:`Formula: Adjusted Price = Recorded Price − Seller-Paid Concessions
+
+Concessions = $8,500 + $5,000 = $13,500
+Adjusted = $425,000 − $13,500 = $411,500`,
+rat:'Seller-paid concessions inflate the recorded deed price above the true arm\'s-length equivalent. IAAO Standard 3 requires adjustment (not exclusion) when the concession amount is quantifiable.',
+ref:'IMPACT_26V.1 S10·F1; IAAO Standard 3'},
+
+// ── APPRAISAL THEORY ────────────────────────────────────────────
+{id:52,diff:'easy',dom:'appraisal',fml:'Three Approaches to Value',
+txt:'Which appraisal approach is GENERALLY most reliable for owner-occupied single-family residences in an active Philadelphia market?',
+ch:['A. Cost approach','B. Income capitalization approach','C. Sales comparison approach','D. GRM approach','E. All three carry equal weight for any property type'],
+ans:'C',ansT:'Sales comparison approach',
+calc:null,
+rat:'For owner-occupied residences, buyers base decisions on comparable sales — not cost to build or income potential. The sales comparison approach mirrors buyer behavior, making it most market-reflective in active residential markets.',
+ref:'The Appraisal of Real Estate 15th Ed. Ch. 7; IAAO Standard on Mass Appraisal §4.1'},
+
+{id:53,diff:'proficient',dom:'appraisal',fml:'HBU — Four Tests',
+txt:'What is the CORRECT sequence for applying the four tests of Highest and Best Use?',
+ch:['A. Financially feasible → Legally permissible → Physically possible → Maximally productive','B. Legally permissible → Physically possible → Financially feasible → Maximally productive','C. Physically possible → Legally permissible → Financially feasible → Maximally productive','D. Maximally productive → Legally permissible → Physically possible → Financially feasible','E. All four are applied simultaneously'],
+ans:'B',ansT:'Legally permissible → Physically possible → Financially feasible → Maximally productive',
+calc:null,
+rat:'HBU tests must be applied sequentially: (1) Legally permissible — what does zoning allow? (2) Physically possible — what can the site support? (3) Financially feasible — which uses produce positive returns? (4) Maximally productive — which yields the highest residual land value?',
+ref:'The Appraisal of Real Estate 15th Ed. Ch. 11; IAAO Standard on Mass Appraisal §3.2'},
+
+{id:54,diff:'easy',dom:'appraisal',fml:'Market Value Definition',
+txt:'Which statement BEST defines "market value" as used in property assessment?',
+ch:['A. The price a seller demands regardless of market conditions','B. The replacement cost of a structure minus depreciation','C. The most probable price in a competitive, open market under fair sale conditions between knowledgeable, willing parties','D. The assessed value determined by the assessor\'s office','E. The capitalized value of NOI only'],
+ans:'C',ansT:'The most probable price in a competitive, open market under fair sale conditions between knowledgeable, willing parties',
+calc:null,
+rat:'Market value is the most probable price — not highest or average — in a competitive open market. Key conditions: arm\'s-length transaction, reasonable exposure time, knowledgeable and willing (not compelled) parties. This definition underpins all three valuation approaches.',
+ref:'USPAP 2024-2025, Definitions; The Appraisal of Real Estate 15th Ed. Ch. 1'},
+
+{id:55,diff:'proficient',dom:'appraisal',fml:'Effective Age vs. Actual Age',
+txt:'A 40-year-old building received a full gut renovation 5 years ago. The appraiser assigns effective age = 10 years with a 60-year economic life. Why is this the correct approach?',
+ch:['A. Effective age always equals actual age','B. Effective age reflects condition — renovation reset the clock; 10 yrs effective = 16.7% dep vs. 66.7% on actual age','C. Renovation creates zero depreciation regardless of effective age','D. Effective age should average actual age and years since renovation','E. A 60-year economic life cannot apply to a 40-year-old building'],
+ans:'B',ansT:'Effective age reflects condition — renovation reset the clock; 10 yrs effective = 16.7% dep vs. 66.7% on actual age',
+calc:`Effective age: 10 ÷ 60 = 16.7% depreciation
+Actual age:    40 ÷ 60 = 66.7% depreciation — massively understates value`,
+rat:'Effective age is the appraiser\'s judgment call based on condition, maintenance, and renovations. Using actual age on a renovated building produces a value far below market — a common BRT appeal issue in Philadelphia\'s historic housing stock.',
+ref:'IMPACT_26V.1 S2·F1; The Appraisal of Real Estate 15th Ed. Ch. 17'},
+
+{id:56,diff:'expert',dom:'appraisal',fml:'Three Approaches — Reconciliation',
+txt:'For a mixed-use urban property, the three approaches yield: Sales Comp=$2,080,000; Cost=$2,150,000; Income=$2,090,000. Owner\'s appraisal shows $1,850,000 (income only). What is the assessor\'s strongest position at BRT?',
+ch:['A. Average the three approaches: $2,106,667','B. Present all three approaches showing convergence $2,080K–$2,150K vs. owner\'s single-approach evidence','C. Defer to the income approach — most reliable for commercial property','D. Withdraw and re-examine','E. Cite only the cost approach since it produced the highest value'],
+ans:'B',ansT:'Present all three approaches showing convergence $2,080K–$2,150K vs. owner\'s single-approach evidence',
+calc:null,
+rat:'Three-approach convergence is the gold standard of expert testimony. Multi-method support creates a credibility advantage vs. the owner\'s single income approach. USPAP Standard 6 and IAAO standards recognize convergence as the strongest evidentiary foundation.',
+ref:'USPAP Standard 6; IAAO Assessment Administration Ch. 11'},
+
+{id:57,diff:'proficient',dom:'appraisal',fml:'External Obsolescence Theory',
+txt:'Which statement about external (economic) obsolescence is ALWAYS true?',
+ch:['A. It is always curable by the property owner','B. It affects only land, never the building','C. It is always incurable because its cause lies outside the property boundaries','D. It must be calculated using the cost approach only','E. It is the same as functional obsolescence'],
+ans:'C',ansT:'It is always incurable because its cause lies outside the property boundaries',
+calc:null,
+rat:'External obsolescence results from negative influences beyond property boundaries: highway proximity, industrial encroachment, neighborhood decline. Because the owner cannot correct the external cause, it is always incurable. It differs from functional obsolescence, which stems from deficiencies within the building.',
+ref:'IMPACT_26V.1 S2·F5; The Appraisal of Real Estate 15th Ed. Ch. 17'},
+
+// ── PA LAW ──────────────────────────────────────────────────────
+{id:58,diff:'easy',dom:'law',fml:'PA Assessment Statutes',
+txt:'Which statute primarily governs real property assessment in Philadelphia County?',
+ch:['A. The General County Assessment Law (72 P.S. §5020-101)','B. The Consolidated County Assessment Law (53 Pa.C.S. §8801 et seq.)','C. The Fourth to Eighth Class County Assessment Law','D. The Municipal Claims and Tax Liens Act','E. The Pennsylvania Real Estate Appraisal Act'],
+ans:'B',ansT:'The Consolidated County Assessment Law (53 Pa.C.S. §8801 et seq.)',
+calc:null,
+rat:'Philadelphia is a first-class county/city under the Consolidated County Assessment Law. The General County Assessment Law applies to third through eighth class counties. Options C–E address different statutory frameworks.',
+ref:'53 Pa.C.S. §8801 et seq.; OPA Assessment Methodology Guide (2023)'},
+
+{id:59,diff:'proficient',dom:'law',fml:'PA Uniformity Clause',
+txt:'Under Pennsylvania\'s Uniformity Clause (Art. VIII §1), which practice is UNCONSTITUTIONAL?',
+ch:['A. Assessing all residential properties at 100% of market value','B. Assessing commercial properties at a different ratio than residential in the same county','C. Using a single countywide base year for all assessments','D. Granting a homestead exclusion to qualifying owner-occupants','E. Using the CLR to convert assessed values to market value estimates'],
+ans:'B',ansT:'Assessing commercial properties at a different ratio than residential in the same county',
+calc:null,
+rat:'The Uniformity Clause requires all real property within the same class to be taxed uniformly. Applying different ratios to commercial vs. residential within the same county violates this — both are real property. The base year method (C) has been upheld. Homestead exclusion (D) is expressly permitted by Art. VIII §2(b)(vi).',
+ref:'PA Constitution Art. VIII §§1,2; Clifton v. Allegheny County (2009); 72 P.S. §5453'},
+
+{id:60,diff:'expert',dom:'law',fml:'USPAP — Mass Appraisal Compliance',
+txt:'Regarding USPAP compliance for a government assessor performing mass appraisal, which statements are correct? Select all that apply.',
+ch:['A. USPAP does not apply to government assessors — only licensed private appraisers','B. USPAP Standards 5 & 6 specifically govern mass appraisal development and reporting','C. A Jurisdictional Exception may be invoked when law conflicts with USPAP, with disclosure','D. In mass appraisal, a workfile covers the entire program — not each individual property','E. B, C, and D only'],
+ans:'E',ansT:'B, C, and D only',
+calc:null,
+rat:'A is false — USPAP applies to all appraisal practice including government assessors. B: Standards 5 & 6 govern mass appraisal. C: Jurisdictional Exception allows departure from specific USPAP requirements mandated by law, with disclosure. D: Mass appraisal workfiles document the entire program, not individual files.',
+ref:'USPAP 2024-2025, Standards 5 & 6; USPAP Jurisdictional Exception Rule; IAAO Assessment Administration Ch. 3'},
+
+{id:61,diff:'proficient',dom:'law',fml:'Clean and Green — Act 319',
+txt:'Pennsylvania\'s Clean and Green program (Act 319 of 1974) benefits qualifying landowners by:',
+ch:['A. Eliminating all real estate taxes on qualifying farmland','B. Assessing agricultural and forest land on use value rather than market value','C. Providing a 50% cash rebate on property taxes','D. Exempting new green-certified buildings from taxes for 10 years','E. All of the above'],
+ans:'B',ansT:'Assessing agricultural and forest land on use value rather than market value',
+calc:null,
+rat:'Act 319 (72 P.S. §§5490.1–5490.13) requires qualifying land be assessed on its use value in farming — not highest and best use (market value). This produces significantly lower assessments. Taxes are not eliminated, no cash rebate is provided, and it does not apply to green buildings.',
+ref:'72 P.S. §§5490.1–5490.13; PA Department of Agriculture'},
+
+{id:62,diff:'expert',dom:'law',fml:'BRT Appeal Rights',
+txt:'A Philadelphia property owner wins a BRT assessment reduction. The City believes the BRT erred. What are the City\'s options?',
+ch:['A. Only the property owner may appeal — the City has no right of appeal','B. The City may appeal to the Court of Common Pleas within 30 days','C. The City must petition the PA Supreme Court directly','D. OPA can reverse the BRT decision administratively','E. BRT decisions are final and binding on all parties'],
+ans:'B',ansT:'The City may appeal to the Court of Common Pleas within 30 days',
+calc:null,
+rat:'Under 53 Pa.C.S. §8854, EITHER party — owner or taxing authority — may appeal a BRT decision to CCP within 30 days. CCP hears the appeal de novo. This bilateral appeal right is a critical procedural feature of PA assessment law.',
+ref:'53 Pa.C.S. §8854; Philadelphia CCP Local Rules'},
+
+// ── PHILADELPHIA-SPECIFIC ────────────────────────────────────────
+{id:63,diff:'easy',dom:'philly',fml:'OPA / AVI Initiative',
+txt:'What was the primary purpose of Philadelphia\'s Actual Value Initiative (AVI)?',
+ch:['A. To increase all property tax rates citywide','B. To reassess all properties to 100% of market value and end non-uniform fractional assessments','C. To transfer assessment authority from OPA to the BRT','D. To provide tax exemptions to long-term homeowners','E. To eliminate the homestead exemption'],
+ans:'B',ansT:'To reassess all properties to 100% of market value and end non-uniform fractional assessments',
+calc:null,
+rat:'Prior to AVI, Philadelphia used inconsistent fractional assessments violating the PA Uniformity Clause. AVI\'s mandate was a single uniform 100% assessment ratio for all taxable properties — a structural reform improving equity and legal compliance, not simply a tax rate change.',
+ref:'Philadelphia Code §19-1301; PA Constitution Art. VIII §1; OPA AVI Methodology Document (2013)'},
+
+{id:64,diff:'proficient',dom:'philly',fml:'LOOP Program',
+txt:'Philadelphia\'s LOOP (Longtime Owner Occupant Program) is designed to:',
+ch:['A. Exempt long-term owners from all real estate taxes','B. Cap the taxable assessed value for qualifying homeowners whose assessments increased substantially','C. Provide a monthly cash rebate equal to the tax increase','D. Transfer assessment appeals directly to CCP','E. Apply only to commercial property owners'],
+ans:'B',ansT:'Cap the taxable assessed value for qualifying homeowners whose assessments increased substantially',
+calc:null,
+rat:'LOOP protects long-term Philadelphia homeowners from sudden large tax bill increases following AVI reassessment. It caps taxable value for qualifying owner-occupants. It is separate from the Homestead Exemption — owners may qualify for both.',
+ref:'Philadelphia Code §19-1303.3; City of Philadelphia Revenue Department Guidelines'},
+
+{id:65,diff:'proficient',dom:'philly',fml:'Philadelphia Appeal Sequence',
+txt:'A Philadelphia property owner disagrees with their OPA assessment. What is the CORRECT sequence of appeal steps?',
+ch:['A. File directly with Court of Common Pleas → BRT → OPA Review','B. OPA First Level Review → BRT → Court of Common Pleas','C. BRT → OPA Review → Commonwealth Court','D. OPA Review → CCP, skipping BRT','E. Tax Review Board → BRT → PA Supreme Court'],
+ans:'B',ansT:'OPA First Level Review → BRT → Court of Common Pleas',
+calc:null,
+rat:'Philadelphia\'s assessment appeal hierarchy: (1) OPA First Level Review — informal administrative review; (2) BRT — independent quasi-judicial formal appeals; (3) CCP — de novo judicial review. Either party may appeal BRT to CCP within 30 days.',
+ref:'53 Pa.C.S. §8844; Philadelphia Code §19-1301; OPA FLR Procedures'},
+
+{id:66,diff:'proficient',dom:'philly',fml:'Homestead Exclusion Tax Calculation',
+txt:'A Philadelphia property is assessed at $320,000. Homestead exclusion = $100,000. Combined millage = 1.3998%. What is the annual tax bill for a qualifying homeowner?',
+ch:['A. $4,479.36','B. $3,219.54','C. $3,079.56','D. $2,799.60','E. $4,159.41'],
+ans:'C',ansT:'$3,079.56',
+calc:`Taxable Value = $320,000 − $100,000 = $220,000
+
+Tax = $220,000 × 0.013998 = $3,079.56
+
+Without homestead: $320,000 × 0.013998 = $4,479.36
+Homestead saves: $1,399.80/year`,
+rat:'The Homestead Exclusion reduces the taxable assessed value by $100,000 for qualifying primary-residence owner-occupants. Tax is then calculated on the reduced taxable value using the combined city + school district millage rate.',
+ref:'Philadelphia Code §19-1303.2; 54 Pa.C.S. §8584; City of Philadelphia FY2024 Tax Rates'},
+
+{id:67,diff:'expert',dom:'philly',fml:'BRT Decision — AVI Assessment',
+txt:'A Philadelphia property is assessed at $480,000 under AVI (CLR=1.00). Owner claims market value = $410,000. If BRT accepts the owner\'s evidence, what is the new assessment?',
+ch:['A. $480,000 — unchanged','B. $410,000 — assessed value equals accepted market value under AVI','C. $445,000 — BRT averages the two positions','D. CLR correction applies: $410,000 ÷ 1.00 = $410,000, but then multiplied by some factor','E. BRT cannot reduce assessments below OPA certified value'],
+ans:'B',ansT:'$410,000 — assessed value equals accepted market value under AVI',
+calc:`Philadelphia AVI: Assessment Level = 100%; CLR = 1.00
+
+Target Assessment = Market Value × Assessment Level
+= $410,000 × 1.00 = $410,000
+
+No CLR scaling needed — AVI is already at 100%.`,
+rat:'Under Philadelphia\'s AVI at 100%, assessed value equals market value exactly. If BRT accepts the owner\'s evidence, the assessment is reduced to that market value figure. No CLR conversion is needed when assessment level = 100%.',
+ref:'IMPACT_26V.1 S9·F2; 53 Pa.C.S. §8844; OPA AVI Methodology Guide 2023'},
+
+// ── ADMINISTRATION ───────────────────────────────────────────────
+{id:68,diff:'easy',dom:'admin',fml:'Tax Exemption — Automatic vs. Application',
+txt:'Which property type is automatically exempt from Pennsylvania real estate taxation WITHOUT a formal application?',
+ch:['A. Nonprofit hospital properties used for charitable purposes','B. Religious organization properties used for worship','C. Government-owned property used for public purposes','D. Private educational institution buildings','E. Properties owned by veterans\' organizations'],
+ans:'C',ansT:'Government-owned property used for public purposes',
+calc:null,
+rat:'Government immunity from property taxation is inherent by constitutional principle — no application required. Nonprofits, religious organizations, and private educational institutions must apply and affirmatively demonstrate entitlement to exemption under the Purely Public Charity test (HUP v. Commonwealth, 1985).',
+ref:'72 P.S. §5020-204; Hospital Utilization Project v. Commonwealth, 507 Pa. 1 (1985); 10 Pa.C.S. §375'},
+
+{id:69,diff:'proficient',dom:'admin',fml:'IAAO COD Standards by Property Type',
+txt:'A ratio study shows COD=18.7% for commercial properties. An opposing expert claims this violates IAAO standards. What is the assessor\'s best technical response?',
+ch:['A. COD>15% always violates IAAO standards for any property type','B. IAAO allows COD up to 20% for income-producing/commercial — 18.7% meets the standard','C. COD is irrelevant for commercial; only PRD matters','D. The assessor should concede and request remand for reassessment','E. IAAO has no COD standard for commercial properties'],
+ans:'B',ansT:'IAAO allows COD up to 20% for income-producing/commercial — 18.7% meets the standard',
+calc:`IAAO COD Standards (Standard on Ratio Studies, 2013):
+  Single-family residential (homogeneous): ≤10%
+  Single-family residential (urban):       ≤15%
+  Income-producing / commercial:           ≤20%
+  Rural / agricultural:                    ≤25%
+
+18.7% < 20% → WITHIN commercial standard ✓`,
+rat:'IAAO COD thresholds are property-type specific. Commercial properties are inherently more heterogeneous than single-family homes — different types, tenants, and leases make uniform assessment harder. The higher 20% allowance recognizes this complexity.',
+ref:'IMPACT_26V.1 S7·F3; IAAO Standard on Ratio Studies (2013) §5.2 Table 1'},
+
+{id:70,diff:'proficient',dom:'admin',fml:'Senior Citizen Tax Freeze',
+txt:'Which Philadelphia program FREEZES a qualifying senior homeowner\'s property tax bill, preventing it from rising even if the assessment increases?',
+ch:['A. LOOP — Longtime Owner Occupant Program','B. Homestead Exemption','C. Senior Citizen Tax Freeze (Act 77)','D. Clean and Green Program','E. Act 50 Homestead Exclusion'],
+ans:'C',ansT:'Senior Citizen Tax Freeze (Act 77)',
+calc:null,
+rat:'Act 77 (Senior Citizen Tax Relief Act) freezes qualifying senior citizens\' property tax at its current level. Unlike LOOP (caps taxable value) or the Homestead Exclusion (reduces assessed value by fixed amount), Act 77 freezes the actual tax bill. Each program has different eligibility requirements.',
+ref:'Act 77 of 1977; City of Philadelphia Revenue Department; 53 Pa.C.S. §8582'},
+
+{id:71,diff:'expert',dom:'admin',fml:'CAMA Model QC — Full Metrics Review',
+txt:'A CAMA model shows: R²=0.87, MAPE=9.3%, COD=13.2%, PRD=1.09. Which action is REQUIRED before certifying the model?',
+ch:['A. No action — all statistics pass','B. Increase sample size only','C. Address regressivity: PRD=1.09 exceeds 0.98–1.03 range; recalibrate or apply stratified corrections to high-value property classes','D. Reduce MAPE below 5% before certification','E. R² must reach 0.95 before certification is possible'],
+ans:'C',ansT:'Address regressivity: PRD=1.09 exceeds 0.98–1.03 range; recalibrate or apply stratified corrections to high-value property classes',
+calc:`R² = 0.87   → good explanatory power ✓
+MAPE = 9.3% → within IAAO guideline (≤10%) ✓
+COD = 13.2% → within residential standard (≤15%) ✓
+PRD = 1.09  → EXCEEDS acceptable range (0.98–1.03) ✗
+             → REGRESSIVITY — high-value properties under-assessed`,
+rat:'A complete IAAO evaluation requires all four metrics. PRD=1.09 is a significant regressivity failure that cannot be ignored even when COD and MAPE pass. Regressivity is both a performance failure and a constitutional concern under PA\'s uniformity clause.',
+ref:'IAAO Standard on Mass Appraisal (2017) §5.4; IAAO Standard on Ratio Studies §§5.2–5.4; PA Art. VIII §1'},
+
+// ── ETHICS & DATA ────────────────────────────────────────────────
+{id:72,diff:'proficient',dom:'ethics',fml:'S10·F1 Commercial Disaggregation',
+txt:'Recorded commercial sale price = $3,200,000. Due diligence reveals: $150,000 equipment (personal property); $85,000 non-compete agreement; $45,000 seller-paid buyer brokerage. What is the real property arm\'s-length equivalent?',
+ch:['A. $3,200,000','B. $3,110,000','C. $3,005,000','D. $2,965,000','E. $2,920,000'],
+ans:'E',ansT:'$2,920,000',
+calc:`Adjusted Price = Recorded Price − Non-Real-Property Elements
+
+Equipment:               −$150,000
+Non-compete:             −$85,000
+Seller-paid brokerage:   −$45,000
+Total deductions:        −$280,000
+
+Adjusted = $3,200,000 − $280,000 = $2,920,000`,
+rat:'Commercial sale disaggregation is critical for ratio study integrity. Deed price may include personal property, intangibles, and concessions — none representing real property value. Using $3.2M unadjusted would overstate market value and distort the assessment ratio downward.',
+ref:'IMPACT_26V.1 S10 Expert Content; IAAO Standard on Ratio Studies §4.2; USPAP Advisory Opinion 9'},
+
+{id:73,diff:'expert',dom:'ethics',fml:'USPAP Ethics Rule',
+txt:'Which action by a Philadelphia OPA assessor VIOLATES the USPAP Ethics Rule?',
+ch:['A. Testifying at BRT about mass appraisal methodology','B. Accepting a bonus contingent on maintaining assessment ratios above a city-set target','C. Reviewing a property\'s sales history before determining market value','D. Using regression analysis in the mass appraisal process','E. Declining to discuss methodology before the FLR'],
+ans:'B',ansT:'Accepting a bonus contingent on maintaining assessment ratios above a city-set target',
+calc:null,
+rat:'The USPAP Ethics Rule (Conduct section) prohibits accepting compensation contingent on reporting a predetermined value or direction in value. A bonus tied to specific ratio levels is precisely this type of contingent arrangement — an unambiguous USPAP violation regardless of government employment.',
+ref:'USPAP 2024-2025 Ethics Rule — Conduct; IAAO Code of Ethics'},
+
+{id:74,diff:'proficient',dom:'ethics',fml:'Arm\'s-Length Sale Verification',
+txt:'Which sale should an assessor EXCLUDE from a ratio study as non-arm\'s-length?',
+ch:['A. A sale where the seller paid $8,000 in buyer closing costs','B. A sale between a corporation and its wholly-owned subsidiary','C. A vacant lot sold at market rate to a neighboring property owner','D. A market-rate sale where the buyer used an FHA loan','E. A and D'],
+ans:'B',ansT:'A sale between a corporation and its wholly-owned subsidiary',
+calc:null,
+rat:'A related-party sale between a corporation and its subsidiary is clearly not arm\'s-length — parties are under common control and the price does not reflect open-market negotiations. Option A (seller concessions) should be adjusted, not excluded. Options C and D are arm\'s-length. Loan type does not affect arm\'s-length status.',
+ref:'IAAO Standard on Ratio Studies §4.2; IAAO Standard 3; USPAP Advisory Opinion 2'},
+
+// ── BONUS — Multi-Domain ─────────────────────────────────────────
+{id:75,diff:'expert',dom:'math',fml:'S7 All Formulas — Combined Ratio Study',
+txt:'Ratio study: Median=0.97, Mean=1.04, Weighted Mean=0.95, COD=19.2%, PRD=1.072. Which COMBINATION represents the most serious compliance failure?',
+ch:['A. COD only — recalibrate model','B. PRD only — minor, monitor next cycle','C. COD exceeds residential standard (≤15%) AND PRD exceeds 1.03 — dual horizontal and vertical equity failures requiring corrective action','D. Weighted mean below simple mean alone is sufficient for a class action appeal','E. All statistics are within acceptable ranges'],
+ans:'C',ansT:'COD exceeds residential standard AND PRD exceeds 1.03 — dual horizontal and vertical equity failures requiring corrective action',
+calc:`COD = 19.2% → FAILS residential (≤15%) ✗
+PRD = 1.072 → FAILS (acceptable 0.98–1.03) ✗
+            → REGRESSIVITY confirmed
+
+WM=0.95 < Mean=1.04 → high-value properties have
+lower ratios → independent regressivity signal`,
+rat:'When both COD and PRD fail simultaneously, the system has compound problems: non-uniform AND systematically biased against lower-value property owners. This is the foundation for class action assessment challenges and IAAO non-compliance findings.',
+ref:'IMPACT_26V.1 S7 All Formulas; IAAO Standard on Ratio Studies §§5.2–5.4; PA Art. VIII §1'},
+
+{id:76,diff:'expert',dom:'philly',fml:'Three Approaches — BRT Defense',
+txt:'An assessor must defend a $2,100,000 commercial assessment at the BRT. Their three approaches: Sales Comp=$2,080,000; Cost=$2,150,000; Income=$2,090,000. Owner\'s appraisal: $1,850,000 (income only). What is the assessor\'s strongest position?',
+ch:['A. Average the three approaches: $2,106,667','B. Present all three showing convergence around $2,080K–$2,150K vs. owner\'s single-method evidence','C. Defer to income approach — most reliable for commercial','D. Withdraw and re-examine','E. Cite only the cost approach since it produced the highest value'],
+ans:'B',ansT:'Present all three showing convergence around $2,080K–$2,150K vs. owner\'s single-method evidence',
+calc:null,
+rat:'Three-approach convergence is the gold standard of expert testimony. Multi-method support vs. a single income approach creates a decisive credibility advantage. USPAP Standard 6 and IAAO standards recognize convergence as the strongest evidentiary foundation.',
+ref:'USPAP Standard 6; IAAO Assessment Administration Ch. 11'},
+
+{id:77,diff:'proficient',dom:'admin',fml:'Philadelphia Assessment Calendar',
+txt:'In Philadelphia, what is the GENERAL deadline for filing a formal BRT appeal after receiving an OPA assessment notice?',
+ch:['A. 30 days from notice date','B. 60 days from notice date','C. October 1 of the tax year','D. Within 1 year of the assessment date','E. No deadline — appeals may be filed at any time'],
+ans:'C',ansT:'October 1 of the tax year',
+calc:null,
+rat:'Philadelphia property owners must file formal BRT appeals by October 1 of the tax year. Missing this deadline forfeits the right to a formal appeal for that year. Philadelphia\'s specific assessment calendar differs from procedures in other PA counties.',
+ref:'53 Pa.C.S. §8844; BRT Appeal Filing Deadlines; OPA Assessment Notices'},
+
+{id:78,diff:'easy',dom:'admin',fml:'Homestead Exclusion Amount',
+txt:'The Philadelphia Homestead Exemption currently reduces the taxable assessed value for qualifying homeowners by:',
+ch:['A. $30,000','B. $45,000','C. $80,000','D. $100,000','E. $150,000'],
+ans:'D',ansT:'$100,000',
+calc:null,
+rat:'Philadelphia City Council has set the Homestead Exclusion at $100,000 off assessed value for qualifying owner-occupied primary residences. $100,000 of assessed value is not subject to property taxes. The amount is set by each taxing jurisdiction under 54 Pa.C.S. §8584.',
+ref:'54 Pa.C.S. §8584; Philadelphia City Council Resolution; City of Philadelphia Revenue Department'},
+
+{id:79,diff:'proficient',dom:'appraisal',fml:'CAMA PRD — Required Action',
+txt:'A CAMA model shows R²=0.87, COD=13.2%, PRD=1.09, MAPE=9.3%. Which action is REQUIRED before certification?',
+ch:['A. No action — all statistics pass','B. Increase sample size only','C. Address regressivity: PRD=1.09 exceeds acceptable range; recalibrate model targeting high-value property classes','D. Reduce MAPE below 5%','E. R² must reach 0.95'],
+ans:'C',ansT:'Address regressivity: PRD=1.09 exceeds acceptable range; recalibrate model targeting high-value property classes',
+calc:`COD=13.2% → passes (≤15%) ✓
+MAPE=9.3% → passes (≤10%) ✓
+PRD=1.09  → FAILS (0.98–1.03) ✗ → regressivity`,
+rat:'PRD=1.09 is a significant regressivity failure that cannot be ignored even when other metrics pass. Corrective actions include stratified model recalibration or targeted adjustments to the high-value property segment.',
+ref:'IAAO Standard on Ratio Studies (2013) §5.3; IAAO Standard on Mass Appraisal (2017) §5.4'},
+
+{id:80,diff:'expert',dom:'law',fml:'Purely Public Charity Test',
+txt:'A Philadelphia nonprofit hospital applies for property tax exemption. Under which framework is eligibility determined?',
+ch:['A. Automatic — all nonprofits are exempt','B. Five-factor Purely Public Charity test from HUP v. Commonwealth (1985): advance charitable purpose, donate services, benefit large class, relieve government burden, operate without profit motive','C. Only IRS 501(c)(3) status required','D. Hospital properties are always taxable regardless of nonprofit status','E. B and C — both IRS status and HUP test required'],
+ans:'B',ansT:'Five-factor Purely Public Charity test from HUP v. Commonwealth (1985)',
+calc:null,
+rat:'The PA Supreme Court\'s HUP decision established a five-part test: (1) advance a charitable purpose; (2) donate/render gratuitously a substantial portion of services; (3) benefit a substantial and indefinite class; (4) relieve government of some burden; (5) operate entirely free of private profit motive. IRS 501(c)(3) status alone is insufficient.',
+ref:'Hospital Utilization Project v. Commonwealth, 507 Pa. 1 (1985); 10 Pa.C.S. §375; 72 P.S. §5020-204'}
+];
+
+// ═══════════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════════
+let diffFilter  = 'all';
+let domFilter   = new Set(['all']);
+let answered    = 0;
+let correct     = 0;
+let answeredSet = new Set();
+
+// ═══════════════════════════════════════════════════════════════════
+// RENDER ALL CARDS
+// ═══════════════════════════════════════════════════════════════════
+function render() {
+  const list = document.getElementById('qlist');
+  list.innerHTML = '';
+  Q.forEach((q, qi) => {
+    const dc = DOMS[q.dom];
+    const choicesHTML = q.ch.map((c, ci) => {
+      const letter = String.fromCharCode(65 + ci);
+      const text   = c.replace(/^[A-G]\.\s*/, '');
+      return `<div class="choice" id="ch-${qi}-${ci}" onclick="pickChoice(${qi},${ci})"><span class="choice-letter">${letter}.</span><span>${text}</span></div>`;
+    }).join('');
+    const calcHTML = q.calc
+      ? `<div class="ap-section"><div class="ap-label">Step-by-step Calculation</div><div class="ap-calc">${q.calc}</div></div>`
+      : '';
+    const card = document.createElement('div');
+    card.className = 'qcard';
+    card.id = `card-${qi}`;
+    card.innerHTML = `
+      <div class="qcard-bar ${dc.bar}"></div>
+      <div class="qcard-head">
+        <span class="q-num">Q${q.id}</span>
+        <span class="q-text">${q.txt}</span>
+        <span class="q-badges">
+          <span class="badge badge-${q.diff}">${DIFFS[q.diff]}</span>
+          <span class="badge ${dc.badge}">${dc.label}</span>
+          <span class="badge badge-fml">${q.fml}</span>
+        </span>
+      </div>
+      <div class="choices" id="choices-${qi}">${choicesHTML}</div>
+      <button class="toggle-btn" id="tbtn-${qi}" onclick="togglePanel(${qi})">Show answer ▸</button>
+      <div class="answer-panel" id="panel-${qi}">
+        <div class="ap-section"><div class="ap-label">Correct Answer</div><div class="ap-answer">${q.ans}. ${q.ansT}</div></div>
+        ${calcHTML}
+        <div class="ap-section"><div class="ap-label">Rationale</div><div>${q.rat}</div></div>
+        <div class="ap-section"><div class="ap-label">Source Reference</div><div class="ap-ref">${q.ref}</div></div>
+      </div>`;
+    list.appendChild(card);
+  });
+  applyFilters();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// FILTERS
+// ═══════════════════════════════════════════════════════════════════
+function applyFilters() {
+  let vis = 0;
+  Q.forEach((q, qi) => {
+    const card  = document.getElementById(`card-${qi}`);
+    if (!card) return;
+    const diffOk = diffFilter === 'all' || diffFilter === 'random' || q.diff === diffFilter;
+    const domOk  = domFilter.has('all') || domFilter.has(q.dom);
+    const show   = diffOk && domOk;
+    card.style.display = show ? '' : 'none';
+    if (show) vis++;
+  });
+  document.getElementById('s-vis').textContent   = vis;
+  document.getElementById('prog-lbl').textContent = answered + ' / ' + vis;
+  // Show no-results message
+  const noR = document.getElementById('no-results');
+  if (noR) noR.style.display = vis === 0 ? 'block' : 'none';
+}
+
+function setDiff(btn) {
+  document.querySelectorAll('[data-diff]').forEach(b => b.classList.remove('diff-active'));
+  btn.classList.add('diff-active');
+  diffFilter = btn.dataset.diff;
+  if (diffFilter === 'random') doShuffle();
+  else applyFilters();
+}
+
+function toggleDom(btn) {
+  const d = btn.dataset.dom;
+  if (d === 'all') {
+    domFilter = new Set(['all']);
+    document.querySelectorAll('[data-dom]').forEach(b => { b.classList.remove('dom-on','dom-all'); });
+    btn.classList.add('dom-all');
+  } else {
+    document.querySelector('[data-dom="all"]').classList.remove('dom-all');
+    domFilter.delete('all');
+    if (domFilter.has(d)) { domFilter.delete(d); btn.classList.remove('dom-on'); }
+    else { domFilter.add(d); btn.classList.add('dom-on'); }
+    if (domFilter.size === 0) {
+      domFilter.add('all');
+      document.querySelector('[data-dom="all"]').classList.add('dom-all');
+    }
+  }
+  applyFilters();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// SHUFFLE
+// ═══════════════════════════════════════════════════════════════════
+function doShuffle() {
+  document.querySelectorAll('[data-diff]').forEach(b => b.classList.remove('diff-active'));
+  document.querySelector('[data-diff="random"]').classList.add('diff-active');
+  diffFilter = 'random';
+  const list  = document.getElementById('qlist');
+  const cards = Array.from(list.children);
+  for (let i = cards.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    list.insertBefore(cards[j], cards[i]);
+  }
+  applyFilters();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// PICK CHOICE
+// ═══════════════════════════════════════════════════════════════════
+function pickChoice(qi, ci) {
+  if (answeredSet.has(qi)) return;
+  answeredSet.add(qi);
+  const q = Q[qi];
+  const correctLetters = q.ans.split(',').map(s => s.trim());
+  const sel  = String.fromCharCode(65 + ci);
+  const isOk = correctLetters.includes(sel);
+  q.ch.forEach((_, i) => {
+    const el = document.getElementById(`ch-${qi}-${i}`);
+    if (!el) return;
+    el.classList.add('locked');
+    const l = String.fromCharCode(65 + i);
+    if (correctLetters.includes(l)) el.classList.add('correct');
+    else if (i === ci) el.classList.add('wrong');
+  });
+  answered++;
+  if (isOk) correct++;
+  updateStats();
+  openPanel(qi);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// PANEL TOGGLE — Show ↔ Hide
+// ═══════════════════════════════════════════════════════════════════
+function openPanel(qi) {
+  const panel = document.getElementById(`panel-${qi}`);
+  const btn   = document.getElementById(`tbtn-${qi}`);
+  if (panel) panel.classList.add('open');
+  if (btn)   { btn.textContent = 'Hide answer ▾'; btn.classList.add('revealed'); }
+}
+
+function togglePanel(qi) {
+  const panel = document.getElementById(`panel-${qi}`);
+  const btn   = document.getElementById(`tbtn-${qi}`);
+  if (!panel || !btn) return;
+  if (panel.classList.contains('open')) {
+    panel.classList.remove('open');
+    btn.textContent = 'Show answer ▸';
+    btn.classList.remove('revealed');
+  } else {
+    panel.classList.add('open');
+    btn.textContent = 'Hide answer ▾';
+    btn.classList.add('revealed');
+  }
+}
+
+function revealAll() {
+  Q.forEach((_, qi) => openPanel(qi));
+}
+
+function hideAll() {
+  Q.forEach((_, qi) => {
+    const panel = document.getElementById(`panel-${qi}`);
+    const btn   = document.getElementById(`tbtn-${qi}`);
+    if (panel) panel.classList.remove('open');
+    if (btn)   { btn.textContent = 'Show answer ▸'; btn.classList.remove('revealed'); }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// RESET
+// ═══════════════════════════════════════════════════════════════════
+function resetExam() {
+  answeredSet.clear();
+  answered = 0; correct = 0;
+  updateStats();
+  Q.forEach((q, qi) => {
+    q.ch.forEach((_, ci) => {
+      const el = document.getElementById(`ch-${qi}-${ci}`);
+      if (el) el.className = 'choice';
+    });
+    const panel = document.getElementById(`panel-${qi}`);
+    const btn   = document.getElementById(`tbtn-${qi}`);
+    if (panel) panel.classList.remove('open');
+    if (btn)   { btn.textContent = 'Show answer ▸'; btn.classList.remove('revealed'); }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// STATS
+// ═══════════════════════════════════════════════════════════════════
+function updateStats() {
+  document.getElementById('s-ans').textContent = answered;
+  document.getElementById('s-cor').textContent = correct;
+  document.getElementById('s-pct').textContent = answered
+    ? Math.round(correct / answered * 100) + '%' : '—';
+  document.getElementById('prog').style.width =
+    (answered / Q.length * 100).toFixed(1) + '%';
+  const vis = document.querySelectorAll('.qcard:not([style*="display: none"]):not([style*="display:none"])').length;
+  document.getElementById('prog-lbl').textContent = answered + ' / ' + vis;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// FORMULA INDEX TOGGLE
+// ═══════════════════════════════════════════════════════════════════
+function toggleIndex() {
+  const body = document.getElementById('fi-body');
+  const icon = document.getElementById('fi-icon');
+  body.classList.toggle('open');
+  icon.classList.toggle('open');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// DEPLOYMENT GUIDE MODAL
+// ═══════════════════════════════════════════════════════════════════
+function openModal()  { document.getElementById('deployModal').classList.add('open'); }
+function closeModal() { document.getElementById('deployModal').classList.remove('open'); }
+document.getElementById('deployModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// SCROLL TO TOP
+// ═══════════════════════════════════════════════════════════════════
+window.addEventListener('scroll', () => {
+  const btn = document.getElementById('scrollTop');
+  if (btn) btn.classList.toggle('visible', window.scrollY > 600);
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════
+render();
+</script>
+</body>
+</html>
