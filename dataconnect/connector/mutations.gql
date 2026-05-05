@@ -1,0 +1,190 @@
+# ─── User management ─────────────────────────────────────────────────────────
+
+# Called from Clerk/Firebase Auth webhook on user creation
+mutation CreateUser($id: UUID!, $email: String!, $fullName: String) @auth(level: NO_ACCESS) {
+  user_insert(data: {
+    id: $id
+    email: $email
+    fullName: $fullName
+    role: "learner"
+  })
+}
+
+mutation UpdateUserRole($id: UUID!, $role: String!) @auth(expr: "auth.token.role == 'admin'") {
+  user_update(id: $id, data: { role: $role })
+}
+
+# ─── Course management (admin/instructor only) ────────────────────────────────
+
+mutation CreateCourse($slug: String!, $title: String!, $description: String, $thumbnailUrl: String, $createdById: UUID!) @auth(expr: "auth.token.role == 'admin' || auth.token.role == 'instructor'") {
+  course_insert(data: {
+    slug: $slug
+    title: $title
+    description: $description
+    thumbnailUrl: $thumbnailUrl
+    createdBy: { id: $createdById }
+  })
+}
+
+mutation UpdateCourse($id: UUID!, $title: String, $description: String, $thumbnailUrl: String, $isPublished: Boolean) @auth(expr: "auth.token.role == 'admin' || auth.token.role == 'instructor'") {
+  course_update(id: $id, data: {
+    title: $title
+    description: $description
+    thumbnailUrl: $thumbnailUrl
+    isPublished: $isPublished
+  })
+}
+
+mutation CreateModule($courseId: UUID!, $title: String!, $position: Int!) @auth(expr: "auth.token.role == 'admin' || auth.token.role == 'instructor'") {
+  module_insert(data: {
+    course: { id: $courseId }
+    title: $title
+    position: $position
+  })
+}
+
+mutation CreateLesson($moduleId: UUID!, $title: String!, $position: Int!, $lessonType: String!) @auth(expr: "auth.token.role == 'admin' || auth.token.role == 'instructor'") {
+  lesson_insert(data: {
+    module: { id: $moduleId }
+    title: $title
+    position: $position
+    lessonType: $lessonType
+  })
+}
+
+mutation UpdateLesson($id: UUID!, $title: String, $contentJson: String, $videoPlaybackId: String, $quizId: UUID, $durationSeconds: Int, $isPublished: Boolean) @auth(expr: "auth.token.role == 'admin' || auth.token.role == 'instructor'") {
+  lesson_update(id: $id, data: {
+    title: $title
+    contentJson: $contentJson
+    videoPlaybackId: $videoPlaybackId
+    quiz: { id: $quizId }
+    durationSeconds: $durationSeconds
+    isPublished: $isPublished
+  })
+}
+
+# ─── Question bank (admin/instructor only) ────────────────────────────────────
+
+mutation CreateQuestion($questionText: String!, $difficulty: String!, $domain: String!, $formulaRef: String, $isMultiselect: Boolean!, $rationale: String, $calculation: String, $sourceRef: String, $createdById: UUID) @auth(expr: "auth.token.role == 'admin' || auth.token.role == 'instructor'") {
+  question_insert(data: {
+    questionText: $questionText
+    difficulty: $difficulty
+    domain: $domain
+    formulaRef: $formulaRef
+    isMultiselect: $isMultiselect
+    rationale: $rationale
+    calculation: $calculation
+    sourceRef: $sourceRef
+    createdBy: { id: $createdById }
+  })
+}
+
+mutation UpdateQuestion($id: UUID!, $questionText: String, $difficulty: String, $domain: String, $formulaRef: String, $rationale: String, $calculation: String, $sourceRef: String) @auth(expr: "auth.token.role == 'admin' || auth.token.role == 'instructor'") {
+  question_update(id: $id, data: {
+    questionText: $questionText
+    difficulty: $difficulty
+    domain: $domain
+    formulaRef: $formulaRef
+    rationale: $rationale
+    calculation: $calculation
+    sourceRef: $sourceRef
+  })
+}
+
+mutation CreateAnswerChoice($questionId: UUID!, $letter: String!, $choiceText: String!, $isCorrect: Boolean!, $explanation: String, $position: Int!) @auth(expr: "auth.token.role == 'admin' || auth.token.role == 'instructor'") {
+  answerChoice_insert(data: {
+    question: { id: $questionId }
+    letter: $letter
+    choiceText: $choiceText
+    isCorrect: $isCorrect
+    explanation: $explanation
+    position: $position
+  })
+}
+
+mutation UpdateAnswerChoice($id: UUID!, $choiceText: String, $isCorrect: Boolean, $explanation: String) @auth(expr: "auth.token.role == 'admin' || auth.token.role == 'instructor'") {
+  answerChoice_update(id: $id, data: {
+    choiceText: $choiceText
+    isCorrect: $isCorrect
+    explanation: $explanation
+  })
+}
+
+# ─── Quiz management ──────────────────────────────────────────────────────────
+
+mutation CreateQuiz($title: String!, $description: String, $timeLimitSeconds: Int, $passingScore: Float, $shuffleQuestions: Boolean!, $shuffleChoices: Boolean!, $createdById: UUID) @auth(expr: "auth.token.role == 'admin' || auth.token.role == 'instructor'") {
+  quiz_insert(data: {
+    title: $title
+    description: $description
+    timeLimitSeconds: $timeLimitSeconds
+    passingScore: $passingScore
+    shuffleQuestions: $shuffleQuestions
+    shuffleChoices: $shuffleChoices
+    createdBy: { id: $createdById }
+  })
+}
+
+mutation AddQuestionToQuiz($quizId: UUID!, $questionId: UUID!, $position: Int!, $pointValue: Float!) @auth(expr: "auth.token.role == 'admin' || auth.token.role == 'instructor'") {
+  quizQuestion_insert(data: {
+    quiz: { id: $quizId }
+    question: { id: $questionId }
+    position: $position
+    pointValue: $pointValue
+  })
+}
+
+# ─── Progress tracking (learner — own records only) ───────────────────────────
+
+mutation EnrollInCourse($userId: UUID!, $courseId: UUID!) @auth(level: USER) {
+  userCourseProgress_insert(data: {
+    user: { id: $userId }
+    course: { id: $courseId }
+  })
+}
+
+mutation UpsertLessonProgress($userId: UUID!, $lessonId: UUID!, $status: String!, $videoPositionSeconds: Int) @auth(level: USER) {
+  userLessonProgress_upsert(data: {
+    user: { id: $userId }
+    lesson: { id: $lessonId }
+    status: $status
+    videoPositionSeconds: $videoPositionSeconds
+  })
+}
+
+# ─── Quiz attempt lifecycle (server-only via Admin SDK) ───────────────────────
+# These mutations are called from Next.js API routes using the Admin SDK.
+# NO_ACCESS means client SDK cannot call them directly.
+
+mutation CreateQuizAttempt($userId: UUID!, $quizId: UUID!, $questionOrder: String!) @auth(level: NO_ACCESS) {
+  quizAttempt_insert(data: {
+    user: { id: $userId }
+    quiz: { id: $quizId }
+    status: "in_progress"
+    questionOrder: $questionOrder
+  })
+}
+
+mutation UpsertQuizResponse($attemptId: UUID!, $questionId: UUID!, $selectedLetters: String!, $isCorrect: Boolean, $pointsEarned: Float, $pointsPossible: Float) @auth(level: NO_ACCESS) {
+  quizResponse_upsert(data: {
+    attempt: { id: $attemptId }
+    question: { id: $questionId }
+    selectedLetters: $selectedLetters
+    isCorrect: $isCorrect
+    pointsEarned: $pointsEarned
+    pointsPossible: $pointsPossible
+  })
+}
+
+mutation CompleteQuizAttempt($id: UUID!, $scoreRaw: Float!, $scoreMax: Float!, $scorePct: Float!, $passed: Boolean!) @auth(level: NO_ACCESS) {
+  quizAttempt_update(id: $id, data: {
+    status: "completed"
+    scoreRaw: $scoreRaw
+    scoreMax: $scoreMax
+    scorePct: $scorePct
+    passed: $passed
+  })
+}
+
+mutation MarkAnsweredAt($responseId: UUID!) @auth(level: NO_ACCESS) {
+  quizResponse_update(id: $responseId, data: { answeredAt: { expr: "request.time" } })
+}

@@ -1,0 +1,11 @@
+specVersion: "v1beta"
+serviceId: "impact26-dataconnect"
+location: "us-central1"
+schema:
+  source: "./schema"
+  datasource:
+    postgresql:
+      database: "impact26db"
+      cloudSql:
+        instanceId: "impact26-sql"
+connectorDirs: ["./connector"]

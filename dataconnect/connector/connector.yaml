@@ -1,0 +1,6 @@
+connectorId: "impact26-connector"
+generate:
+  javascriptSdk:
+    outputDir: "../../lib/firebase/generated"
+    package: "@impact26/dataconnect-sdk"
+    packageJSONDir: "../../"

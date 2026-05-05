@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-next-app@latest . --typescript --tailwind --app --no-src-dir --import-alias \"@/*\" --yes)",
+      "Bash(npm --version)",
+      "PowerShell(node --version)",
+      "PowerShell(npm --version)",
+      "PowerShell(npx --version)",
+      "PowerShell($env:Path = [System.Environment]::GetEnvironmentVariable\\(\"Path\",\"Machine\"\\) + \";\" + [System.Environment]::GetEnvironmentVariable\\(\"Path\",\"User\"\\); node --version; npm --version)",
+      "PowerShell(Get-ChildItem \"C:\\\\Program Files\\\\nodejs\" -ErrorAction SilentlyContinue; Get-ChildItem \"C:\\\\Program Files \\(x86\\)\\\\nodejs\" -ErrorAction SilentlyContinue; Get-ChildItem \"$env:APPDATA\\\\npm\" -ErrorAction SilentlyContinue | Select-Object -First 5)",
+      "PowerShell($nodeDir = \"$env:USERPROFILE\\\\AppData\\\\Local\\\\nodejs-portable\"; $zipPath = \"$env:TEMP\\\\node.zip\"; Expand-Archive -Path $zipPath -DestinationPath $nodeDir -Force; $extracted = Get-ChildItem $nodeDir | Select-Object -First 1; $nodeBin = \"$nodeDir\\\\$\\($extracted.Name\\)\"; Write-Host \"Node bin: $nodeBin\"; & \"$nodeBin\\\\node.exe\" --version; & \"$nodeBin\\\\npm.cmd\" --version)"
+    ]
+  }
+}

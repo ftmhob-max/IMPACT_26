@@ -1,0 +1,227 @@
+# ─── Learner queries (no sensitive fields) ───────────────────────────────────
+
+# Get published courses for the catalog
+query ListPublishedCourses @auth(level: USER) {
+  courses(where: { isPublished: { eq: true } }, orderBy: { createdAt: DESC }) {
+    id
+    slug
+    title
+    description
+    thumbnailUrl
+    createdBy { fullName }
+  }
+}
+
+# Get a course with its full module/lesson tree (learner view)
+query GetCourseBySlug($slug: String!) @auth(level: USER) {
+  course(slug: $slug) {
+    id
+    slug
+    title
+    description
+    thumbnailUrl
+    modules(orderBy: { position: ASC }) {
+      id
+      title
+      position
+      lessons(orderBy: { position: ASC }, where: { isPublished: { eq: true } }) {
+        id
+        title
+        position
+        lessonType
+        durationSeconds
+        videoPlaybackId
+        quiz { id }
+      }
+    }
+  }
+}
+
+# Get a single lesson (learner view — no isCorrect on choices)
+query GetLesson($id: UUID!) @auth(level: USER) {
+  lesson(id: $id) {
+    id
+    title
+    lessonType
+    contentJson
+    videoPlaybackId
+    durationSeconds
+    quiz {
+      id
+      title
+      timeLimitSeconds
+      shuffleQuestions
+      shuffleChoices
+    }
+  }
+}
+
+# Get quiz questions with choices — OMITS isCorrect and explanation
+# (those fields blocked by @auth for learner tokens)
+query GetQuizQuestions($quizId: UUID!) @auth(level: USER) {
+  quizQuestions(
+    where: { quiz: { id: { eq: $quizId } } }
+    orderBy: { position: ASC }
+  ) {
+    position
+    pointValue
+    question {
+      id
+      questionText
+      difficulty
+      domain
+      formulaRef
+      isMultiselect
+      answerChoices(orderBy: { position: ASC }) {
+        id
+        letter
+        choiceText
+        position
+        # isCorrect: blocked for learner role by @auth directive in schema
+        # explanation: blocked for learner role by @auth directive in schema
+      }
+    }
+  }
+}
+
+# Get a user's in-progress attempt for a quiz (for session resume)
+query GetInProgressAttempt($userId: UUID!, $quizId: UUID!) @auth(level: USER) {
+  quizAttempts(
+    where: {
+      user: { id: { eq: $userId } }
+      quiz: { id: { eq: $quizId } }
+      status: { eq: "in_progress" }
+    }
+    limit: 1
+  ) {
+    id
+    status
+    questionOrder
+    startedAt
+    quiz { timeLimitSeconds }
+    quizResponses {
+      id
+      question { id }
+      selectedLetters
+      isCorrect
+      pointsEarned
+      pointsPossible
+      answeredAt
+    }
+  }
+}
+
+# Get learner progress for all lessons in a course
+query GetUserCourseProgress($userId: UUID!, $courseId: UUID!) @auth(level: USER) {
+  userLessonProgress(
+    where: {
+      user: { id: { eq: $userId } }
+      lesson: { module: { course: { id: { eq: $courseId } } } }
+    }
+  ) {
+    lesson { id }
+    status
+    videoPositionSeconds
+    completedAt
+  }
+}
+
+# Get all quiz attempts for a user (attempt history)
+query GetUserAttemptHistory($userId: UUID!) @auth(level: USER) {
+  quizAttempts(
+    where: { user: { id: { eq: $userId } }, status: { eq: "completed" } }
+    orderBy: { completedAt: DESC }
+  ) {
+    id
+    quiz { id title }
+    scorePct
+    passed
+    completedAt
+  }
+}
+
+# Get completed attempt with full response detail (results page)
+query GetAttemptResults($attemptId: UUID!) @auth(level: USER) {
+  quizAttempt(id: $attemptId) {
+    id
+    status
+    scoreRaw
+    scoreMax
+    scorePct
+    passed
+    startedAt
+    completedAt
+    quiz { title passingScore }
+    quizResponses(orderBy: { answeredAt: ASC }) {
+      question {
+        id
+        questionText
+        difficulty
+        domain
+        formulaRef
+        rationale
+        calculation
+        sourceRef
+      }
+      selectedLetters
+      isCorrect
+      pointsEarned
+      pointsPossible
+    }
+  }
+}
+
+# Get formula reference index (public — no auth required)
+query GetFormulaSections @auth(level: PUBLIC) {
+  formulaSections(orderBy: { position: ASC }) {
+    id
+    code
+    title
+    position
+    formulas(orderBy: { position: ASC }) {
+      id
+      code
+      name
+      expression
+      notes
+    }
+  }
+}
+
+# ─── Admin queries ─────────────────────────────────────────────────────────────
+
+# Get all questions for admin question bank (includes sensitive fields)
+query AdminListQuestions @auth(expr: "auth.token.role == 'admin' || auth.token.role == 'instructor'") {
+  questions(orderBy: { createdAt: DESC }) {
+    id
+    questionText
+    difficulty
+    domain
+    formulaRef
+    isMultiselect
+    rationale
+    calculation
+    sourceRef
+    createdAt
+    answerChoices(orderBy: { position: ASC }) {
+      id
+      letter
+      choiceText
+      isCorrect
+      explanation
+      position
+    }
+  }
+}
+
+# Get cohort performance data for admin dashboard
+query AdminCohortStats @auth(expr: "auth.token.role == 'admin'") {
+  quizAttempts(where: { status: { eq: "completed" } }, orderBy: { completedAt: DESC }) {
+    id
+    user { id email fullName }
+    quiz { id title }
+    scorePct
+    passed
+    completedAt
+  }
+}
