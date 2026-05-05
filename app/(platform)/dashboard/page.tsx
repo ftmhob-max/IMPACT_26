@@ -1,72 +1,258 @@
 import Link from "next/link";
+import {
+  EmptyState,
+  LearnerPage,
+  MetricCard,
+  PageHeader,
+  PrimaryAction,
+  SectionPanel,
+} from "@/components/ui/LearnerPrimitives";
+import * as Icons from "@/components/ui/Icons";
+import { getLearnerSession } from "@/lib/firebase/learner-session";
+import { adminDcQuery } from "@/lib/firebase/admin-dc";
 
-export default function DashboardPage() {
+interface LatestAttempt {
+  id: string;
+  quiz: { title: string };
+  scorePct: number | null;
+  passed: boolean | null;
+  completedAt: string | null;
+}
+
+async function getLatestAttempt(userId: string): Promise<LatestAttempt | null> {
+  try {
+    const data = await adminDcQuery<{ quizAttempts: LatestAttempt[] }>(
+      "GetUserProgressDetails",
+      { userId }
+    );
+    return data.quizAttempts?.[0] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export default async function DashboardPage() {
+  const session = await getLearnerSession();
+  const latestAttempt = session ? await getLatestAttempt(session.uid) : null;
+
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8 space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
-        <p className="text-slate-500 mt-1 text-sm">
-          Welcome back. Continue your property assessment training.
-        </p>
+    <LearnerPage>
+      <PageHeader
+        eyebrow="IMPACT_26V.1"
+        title="Property assessment learning"
+        description="Continue the integrated method for assessment calculations, compliance, formulas, and transparent review."
+        action={<PrimaryAction href="/courses">Continue learning</PrimaryAction>}
+        icon={Icons.LayoutDashboard}
+      />
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        <MetricCard
+          label="Practice exam"
+          value="80"
+          detail="Questions across six assessment domains"
+          tone="blue"
+          icon={Icons.GraduationCap}
+        />
+        <MetricCard
+          label="Formula compass"
+          value="53"
+          detail="Quick-reference formulas for calculations"
+          tone="green"
+          icon={Icons.Compass}
+        />
+        <MetricCard
+          label="Study level"
+          value="3"
+          detail="Easy, proficient, and expert practice"
+          tone="amber"
+          icon={Icons.TrendingUp}
+        />
       </div>
 
-      {/* Quick actions */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <QuickCard
-          href="/courses"
-          title="Browse Courses"
-          description="Explore all available training modules"
-          icon="📚"
-          color="bg-blue-50 border-blue-100"
-        />
-        <QuickCard
-          href="/formulas"
-          title="Formula Index"
-          description="53 formulas across 8 assessment sections"
-          icon="∑"
-          color="bg-violet-50 border-violet-100"
-        />
-        <QuickCard
-          href="/profile"
-          title="My Progress"
-          description="View your exam history and scores"
-          icon="📈"
-          color="bg-emerald-50 border-emerald-100"
-        />
+      <div className="mt-6 grid gap-4 lg:grid-cols-[1.45fr_0.9fr]">
+        <SectionPanel
+          title="Recommended path"
+          description="A simple course-style flow: learn the method, review formulas, then practice with answer rationales."
+        >
+          <div className="divide-y divide-slate-100">
+            <LearningStep
+              index="1"
+              title="Start with the IMPACT_26V.1 course"
+              description="Work through modules in order so appraisal, legal, administrative, and ethics topics stay connected."
+              href="/courses"
+              cta="View courses"
+              icon={Icons.BookOpen}
+            />
+            <LearningStep
+              index="2"
+              title="Keep the Formula Compass nearby"
+              description="Use the quick reference before and during practice to reinforce calculation patterns."
+              href="/formulas"
+              cta="Open formulas"
+              icon={Icons.Calculator}
+            />
+            <LearningStep
+              index="3"
+              title="Take the practice exam"
+              description="Answer, submit, and review rationales until the domain breakdown shows where to focus next."
+              href="/courses"
+              cta="Find exam"
+              icon={Icons.Target}
+            />
+          </div>
+        </SectionPanel>
+
+        <SectionPanel title="Study shortcuts" description="The two fastest routes for self-study.">
+          <div className="space-y-3 p-4">
+            <Shortcut
+              href="/courses"
+              title="Course catalog"
+              detail="Browse modules, lessons, and exam launch pages."
+              icon={Icons.GraduationCap}
+            />
+            <Shortcut
+              href="/formulas"
+              title="Formula reference"
+              detail="Search formulas by section, name, code, or expression."
+              icon={Icons.Calculator}
+            />
+            <Shortcut
+              href="/profile"
+              title="My progress"
+              detail={
+                latestAttempt?.scorePct != null
+                  ? `Last score: ${latestAttempt.scorePct.toFixed(1)}% — View full history`
+                  : "Review scores and exam history when progress data is available."
+              }
+              icon={Icons.BarChart3}
+            />
+          </div>
+        </SectionPanel>
       </div>
 
-      {/* Placeholder: recent activity */}
-      <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-6">
-        <h2 className="text-base font-semibold text-slate-800 mb-4">Recent Activity</h2>
-        <p className="text-sm text-slate-400 text-center py-8">
-          No activity yet. Start a course to see your progress here.
-        </p>
+      <div className="mt-6">
+        {latestAttempt ? (
+          <RecentActivity attempt={latestAttempt} />
+        ) : (
+          <EmptyState
+            title="No recent activity yet"
+            description="Once you start a course or submit exam answers, this space should show the next incomplete lesson, last score, and weakest domain."
+            action={<PrimaryAction href="/courses">Start a course</PrimaryAction>}
+            icon={Icons.Inbox}
+          />
+        )}
+      </div>
+    </LearnerPage>
+  );
+}
+
+function RecentActivity({ attempt }: { attempt: LatestAttempt }) {
+  const scoreLabel = attempt.scorePct != null ? `${attempt.scorePct.toFixed(1)}%` : "—";
+  const dateLabel = attempt.completedAt
+    ? new Date(attempt.completedAt).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : null;
+
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
+      <div className="border-b border-slate-100 px-5 py-4">
+        <h2 className="text-sm font-semibold text-slate-800">Recent activity</h2>
+        <p className="mt-1 text-xs leading-5 text-slate-500">Your most recently completed exam.</p>
+      </div>
+      <div className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-4">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#E6F1FB]">
+            <Icons.BarChart3 size={20} className="text-[#185FA5]" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-slate-800">{attempt.quiz.title}</p>
+            <p className="mt-0.5 text-sm text-slate-500">
+              Score: <span className="font-semibold text-slate-700">{scoreLabel}</span>
+              {attempt.passed != null && (
+                <>
+                  {" · "}
+                  <span
+                    className={`font-semibold ${attempt.passed ? "text-green-700" : "text-red-600"}`}
+                  >
+                    {attempt.passed ? "Passed" : "Failed"}
+                  </span>
+                </>
+              )}
+              {dateLabel && <> · {dateLabel}</>}
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-2 sm:shrink-0">
+          <Link
+            href={`/quiz/${attempt.id}`}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:border-[#185FA5] hover:text-[#185FA5]"
+          >
+            Review attempt
+          </Link>
+          <PrimaryAction href="/courses" icon={false}>
+            Take again
+          </PrimaryAction>
+        </div>
       </div>
     </div>
   );
 }
 
-function QuickCard({
-  href,
+function LearningStep({
+  index,
   title,
   description,
-  icon,
-  color,
+  href,
+  cta,
+  icon: Icon,
+}: {
+  index: string;
+  title: string;
+  description: string;
+  href: string;
+  cta: string;
+  icon: React.ComponentType<{ className?: string; size?: number }>;
+}) {
+  return (
+    <div className="flex gap-4 px-5 py-4">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[#E6F1FB] text-[#185FA5]">
+        <Icon size={16} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold text-slate-800">{title}</p>
+        <p className="mt-1 text-sm leading-6 text-slate-500">{description}</p>
+      </div>
+      <Link href={href} className="self-center whitespace-nowrap text-xs font-semibold text-[#185FA5] hover:underline">
+        {cta}
+      </Link>
+    </div>
+  );
+}
+
+function Shortcut({
+  href,
+  title,
+  detail,
+  icon: Icon,
 }: {
   href: string;
   title: string;
-  description: string;
-  icon: string;
-  color: string;
+  detail: string;
+  icon: React.ComponentType<{ className?: string; size?: number }>;
 }) {
   return (
     <Link
       href={href}
-      className={`block rounded-xl border p-5 hover:shadow-md transition-shadow duration-200 ${color}`}
+      className="flex items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 transition-colors hover:border-[#185FA5] hover:bg-white"
     >
-      <div className="text-2xl mb-2">{icon}</div>
-      <p className="font-semibold text-slate-800 text-sm">{title}</p>
-      <p className="text-xs text-slate-500 mt-0.5">{description}</p>
+      <Icon size={18} className="mt-0.5 text-slate-400" />
+      <div>
+        <p className="text-sm font-semibold text-slate-800">{title}</p>
+        <p className="mt-1 text-xs leading-5 text-slate-500">{detail}</p>
+      </div>
     </Link>
   );
 }

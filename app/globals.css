@@ -1,18 +1,26 @@
 @import "tailwindcss";
 
 :root {
-  /* Domain color palette (mirrors original mockup CSS variables) */
-  --color-math: #2563eb;
-  --color-appraisal: #7c3aed;
-  --color-law: #dc2626;
-  --color-philly: #059669;
-  --color-admin: #d97706;
-  --color-ethics: #0891b2;
+  /* Domain color palette — reference design values */
+  --color-math:      #534AB7;
+  --color-appraisal: #0F6E56;
+  --color-law:       #993C1D;
+  --color-philly:    #c47c00;
+  --color-admin:     #A32D2D;
+  --color-ethics:    #3B6D11;
 
   /* UI tokens */
   --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --impact-blue: #185FA5;
+  --impact-blue-dark: #0d3d6e;
+  --impact-page: #f0efe9;
+  --impact-surface: #ffffff;
+  --impact-ink: #1a1a18;
+  --impact-muted: #4a4a46;
+  --impact-faint: #888880;
+  --impact-border: rgba(0,0,0,0.11);
 }
 
 * {
@@ -24,7 +32,7 @@ body {
   font-size: 14px;
   line-height: 1.65;
   color: #1e293b;
-  background-color: #f8fafc;
+  background-color: #f0efe9;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -35,13 +43,31 @@ body {
   line-height: 1.6;
 }
 
-/* Domain color bars (left border on question cards) */
-.bar-math      { border-left: 4px solid var(--color-math); }
-.bar-appraisal { border-left: 4px solid var(--color-appraisal); }
-.bar-law       { border-left: 4px solid var(--color-law); }
-.bar-philly    { border-left: 4px solid var(--color-philly); }
-.bar-admin     { border-left: 4px solid var(--color-admin); }
-.bar-ethics    { border-left: 4px solid var(--color-ethics); }
+/* Domain color bars — gradient top strip on question cards */
+.bar-math      { background: linear-gradient(90deg, #534AB7, #7c75e0); }
+.bar-appraisal { background: linear-gradient(90deg, #0F6E56, #19a882); }
+.bar-law       { background: linear-gradient(90deg, #993C1D, #d05a2b); }
+.bar-philly    { background: linear-gradient(90deg, #9b6400, #e09200); }
+.bar-admin     { background: linear-gradient(90deg, #A32D2D, #d44444); }
+.bar-ethics    { background: linear-gradient(90deg, #3B6D11, #5aaa1a); }
+
+/* Domain & difficulty badge palette */
+.badge-math       { background: #EEEDFE; color: #534AB7; }
+.badge-appraisal  { background: #E1F5EE; color: #0F6E56; }
+.badge-law        { background: #FAECE7; color: #993C1D; }
+.badge-philly     { background: #FAEEDA; color: #c47c00; }
+.badge-admin      { background: #FCEBEB; color: #A32D2D; }
+.badge-ethics     { background: #EAF3DE; color: #3B6D11; }
+.badge-easy       { background: #EAF3DE; color: #3B6D11; }
+.badge-proficient { background: #FAEEDA; color: #854F0B; }
+.badge-expert     { background: #FCEBEB; color: #A32D2D; }
+
+/* Print — hide quiz chrome, reveal all answer panels */
+@media print {
+  .quiz-header, .quiz-scoreboard, .quiz-progress,
+  .quiz-filters, .quiz-formula-ref, .scroll-top { display: none !important; }
+  .answer-panel { display: block !important; }
+}
 
 /* Smooth transitions */
 * { transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); }
@@ -60,3 +86,53 @@ body {
 .ProseMirror table { border-collapse: collapse; width: 100%; margin-bottom: 0.75rem; }
 .ProseMirror th, .ProseMirror td { border: 1px solid #e2e8f0; padding: 0.375rem 0.5rem; }
 .ProseMirror th { background: #f1f5f9; font-weight: 600; }
+
+.admin-input {
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  background: #ffffff;
+  padding: 0.55rem 0.7rem;
+  font-size: 0.875rem;
+  line-height: 1.35;
+  color: #0f172a;
+  outline: none;
+}
+
+.admin-input:focus {
+  border-color: #185FA5;
+  box-shadow: 0 0 0 3px rgba(24, 95, 165, 0.14);
+}
+
+.admin-label {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.admin-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid #185FA5;
+  background: #185FA5;
+  padding: 0.55rem 0.8rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #ffffff;
+  transition: background-color 160ms ease, border-color 160ms ease, opacity 160ms ease;
+}
+
+.admin-action:hover { background: #0d3d6e; border-color: #0d3d6e; }
+.admin-action:disabled { cursor: not-allowed; opacity: 0.55; }
+.admin-action.secondary {
+  border-color: rgba(15, 23, 42, 0.14);
+  background: #ffffff;
+  color: #185FA5;
+}
+.admin-action.secondary:hover { background: #E6F1FB; border-color: rgba(24, 95, 165, 0.35); }

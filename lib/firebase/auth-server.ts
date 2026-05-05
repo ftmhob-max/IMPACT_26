@@ -3,7 +3,7 @@ import type { DecodedIdToken } from "firebase-admin/auth";
 
 export async function verifyIdToken(authHeader: string | null): Promise<DecodedIdToken> {
   if (!authHeader?.startsWith("Bearer ")) {
-    throw new Error("Missing or malformed Authorization header");
+    throw new Error("Unauthorized: missing or malformed auth token");
   }
   const token = authHeader.slice(7);
   return adminAuth.verifyIdToken(token);

@@ -20,7 +20,6 @@ export default function QuizPage() {
   const [state, setState] = useState<PageState>({ status: "loading" });
 
   useEffect(() => {
-    // Load the session data from the query params (passed from course page after start)
     const stored = sessionStorage.getItem(`quiz-session-${attemptId}`);
     if (stored) {
       try {
@@ -58,7 +57,7 @@ export default function QuizPage() {
 
   if (state.status === "loading") {
     return (
-      <div className="flex items-center justify-center h-full py-20 text-slate-400 text-sm">
+      <div className="flex items-center justify-center h-screen text-slate-400 text-sm">
         Loading exam…
       </div>
     );
@@ -97,6 +96,7 @@ export default function QuizPage() {
     <QuizEngine
       session={state.session}
       onComplete={handleComplete}
+      onBack={() => router.back()}
     />
   );
 }

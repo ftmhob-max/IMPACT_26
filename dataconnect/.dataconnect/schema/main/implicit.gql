@@ -1,0 +1,146 @@
+extend type AnswerChoice {
+  """
+  ✨ Implicit foreign key field based on `AnswerChoice`.`question`. It must match the value of `Question`.`id`. See `@ref` for how to customize it.
+  """
+  questionId: UUID! @fdc_generated(from: "AnswerChoice.question", purpose: IMPLICIT_REF_FIELD)
+}
+extend type ContentSourceLink {
+  """
+  ✨ Implicit foreign key field based on `ContentSourceLink`.`course`. It must match the value of `Course`.`id`. See `@ref` for how to customize it.
+  """
+  courseId: UUID @fdc_generated(from: "ContentSourceLink.course", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `ContentSourceLink`.`lesson`. It must match the value of `Lesson`.`id`. See `@ref` for how to customize it.
+  """
+  lessonId: UUID @fdc_generated(from: "ContentSourceLink.lesson", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `ContentSourceLink`.`question`. It must match the value of `Question`.`id`. See `@ref` for how to customize it.
+  """
+  questionId: UUID @fdc_generated(from: "ContentSourceLink.question", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `ContentSourceLink`.`sourceMaterial`. It must match the value of `SourceMaterial`.`id`. See `@ref` for how to customize it.
+  """
+  sourceMaterialId: UUID! @fdc_generated(from: "ContentSourceLink.sourceMaterial", purpose: IMPLICIT_REF_FIELD)
+}
+extend type Course {
+  """
+  ✨ Implicit foreign key field based on `Course`.`createdBy`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  createdById: String! @fdc_generated(from: "Course.createdBy", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Course`.`updatedBy`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  updatedById: String @fdc_generated(from: "Course.updatedBy", purpose: IMPLICIT_REF_FIELD)
+}
+extend type Formula {
+  """
+  ✨ Implicit foreign key field based on `Formula`.`section`. It must match the value of `FormulaSection`.`id`. See `@ref` for how to customize it.
+  """
+  sectionId: UUID! @fdc_generated(from: "Formula.section", purpose: IMPLICIT_REF_FIELD)
+}
+extend type IngestionJob {
+  """
+  ✨ Implicit foreign key field based on `IngestionJob`.`sourceMaterial`. It must match the value of `SourceMaterial`.`id`. See `@ref` for how to customize it.
+  """
+  sourceMaterialId: UUID! @fdc_generated(from: "IngestionJob.sourceMaterial", purpose: IMPLICIT_REF_FIELD)
+}
+extend type Lesson {
+  """
+  ✨ Implicit foreign key field based on `Lesson`.`module`. It must match the value of `Module`.`id`. See `@ref` for how to customize it.
+  """
+  moduleId: UUID! @fdc_generated(from: "Lesson.module", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Lesson`.`quiz`. It must match the value of `Quiz`.`id`. See `@ref` for how to customize it.
+  """
+  quizId: UUID @fdc_generated(from: "Lesson.quiz", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Lesson`.`sourceMaterial`. It must match the value of `SourceMaterial`.`id`. See `@ref` for how to customize it.
+  """
+  sourceMaterialId: UUID @fdc_generated(from: "Lesson.sourceMaterial", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Lesson`.`updatedBy`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  updatedById: String @fdc_generated(from: "Lesson.updatedBy", purpose: IMPLICIT_REF_FIELD)
+}
+extend type Module {
+  """
+  ✨ Implicit foreign key field based on `Module`.`course`. It must match the value of `Course`.`id`. See `@ref` for how to customize it.
+  """
+  courseId: UUID! @fdc_generated(from: "Module.course", purpose: IMPLICIT_REF_FIELD)
+}
+extend type Question {
+  """
+  ✨ Implicit foreign key field based on `Question`.`createdBy`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  createdById: String @fdc_generated(from: "Question.createdBy", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Question`.`updatedBy`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  updatedById: String @fdc_generated(from: "Question.updatedBy", purpose: IMPLICIT_REF_FIELD)
+}
+extend type Quiz {
+  """
+  ✨ Implicit foreign key field based on `Quiz`.`createdBy`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  createdById: String @fdc_generated(from: "Quiz.createdBy", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Quiz`.`updatedBy`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  updatedById: String @fdc_generated(from: "Quiz.updatedBy", purpose: IMPLICIT_REF_FIELD)
+}
+extend type QuizAttempt {
+  """
+  ✨ Implicit foreign key field based on `QuizAttempt`.`quiz`. It must match the value of `Quiz`.`id`. See `@ref` for how to customize it.
+  """
+  quizId: UUID! @fdc_generated(from: "QuizAttempt.quiz", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `QuizAttempt`.`user`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  userId: String! @fdc_generated(from: "QuizAttempt.user", purpose: IMPLICIT_REF_FIELD)
+}
+extend type QuizQuestion {
+  """
+  ✨ Implicit foreign key field based on `QuizQuestion`.`quiz`. It must match the value of `Quiz`.`id`. See `@ref` for how to customize it.
+  """
+  quizId: UUID! @fdc_generated(from: "QuizQuestion.quiz", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `QuizQuestion`.`question`. It must match the value of `Question`.`id`. See `@ref` for how to customize it.
+  """
+  questionId: UUID! @fdc_generated(from: "QuizQuestion.question", purpose: IMPLICIT_REF_FIELD)
+}
+extend type QuizResponse {
+  """
+  ✨ Implicit foreign key field based on `QuizResponse`.`attempt`. It must match the value of `QuizAttempt`.`id`. See `@ref` for how to customize it.
+  """
+  attemptId: UUID! @fdc_generated(from: "QuizResponse.attempt", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `QuizResponse`.`question`. It must match the value of `Question`.`id`. See `@ref` for how to customize it.
+  """
+  questionId: UUID! @fdc_generated(from: "QuizResponse.question", purpose: IMPLICIT_REF_FIELD)
+}
+extend type SourceMaterial {
+  """
+  ✨ Implicit foreign key field based on `SourceMaterial`.`uploadedBy`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  uploadedById: String @fdc_generated(from: "SourceMaterial.uploadedBy", purpose: IMPLICIT_REF_FIELD)
+}
+extend type UserCourseProgress {
+  """
+  ✨ Implicit foreign key field based on `UserCourseProgress`.`user`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  userId: String! @fdc_generated(from: "UserCourseProgress.user", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `UserCourseProgress`.`course`. It must match the value of `Course`.`id`. See `@ref` for how to customize it.
+  """
+  courseId: UUID! @fdc_generated(from: "UserCourseProgress.course", purpose: IMPLICIT_REF_FIELD)
+}
+extend type UserLessonProgress {
+  """
+  ✨ Implicit foreign key field based on `UserLessonProgress`.`user`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  userId: String! @fdc_generated(from: "UserLessonProgress.user", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `UserLessonProgress`.`lesson`. It must match the value of `Lesson`.`id`. See `@ref` for how to customize it.
+  """
+  lessonId: UUID! @fdc_generated(from: "UserLessonProgress.lesson", purpose: IMPLICIT_REF_FIELD)
+}

@@ -1,60 +1,107 @@
-extend type Query
-
 # ─── Users ────────────────────────────────────────────────────────────────────
 
 type User @table(name: "users", singular: "user", plural: "users") {
   # id mirrors Firebase Auth UID — set explicitly on create
-  id: UUID! @col(name: "id") @default(expr: "uuidV4()")
+  id: String! @col(name: "id")
   email: String! @col(dataType: "text")
   fullName: String @col(dataType: "text")
-  # learner | instructor | admin
+  # learner | viewer | instructor | admin
   role: String! @col(dataType: "text") @default(value: "learner")
   createdAt: Date! @default(expr: "request.time")
 }
 
 # ─── Courses ──────────────────────────────────────────────────────────────────
 
-type Course @table(name: "courses", singular: "course", plural: "courses") {
+type Course @table(name: "courses", singular: "course", plural: "courses", key: ["id"]) {
   id: UUID! @col(name: "id") @default(expr: "uuidV4()")
-  slug: String! @col(dataType: "text")
+  slug: String! @col(dataType: "text") @unique
   title: String! @col(dataType: "text")
   description: String @col(dataType: "text")
   thumbnailUrl: String @col(dataType: "text")
+  status: String! @col(dataType: "text") @default(value: "draft")
+  version: Int! @default(value: 1)
   isPublished: Boolean! @default(value: false)
   createdBy: User!
+  updatedBy: User
+  publishedAt: Date
   createdAt: Date! @default(expr: "request.time")
   updatedAt: Date! @default(expr: "request.time")
 }
 
-type Module @table(name: "modules", singular: "module", plural: "modules") {
+type Module @table(name: "modules", singular: "module", plural: "modules", key: ["id"]) {
   id: UUID! @col(name: "id") @default(expr: "uuidV4()")
-  course: Course!
+  course: Course! @ref
   title: String! @col(dataType: "text")
   position: Int!
+  version: Int! @default(value: 1)
+  status: String! @col(dataType: "text") @default(value: "draft")
   createdAt: Date! @default(expr: "request.time")
 }
 
-type Lesson @table(name: "lessons", singular: "lesson", plural: "lessons") {
+type Lesson @table(name: "lessons", singular: "lesson", plural: "lessons", key: ["id"]) {
   id: UUID! @col(name: "id") @default(expr: "uuidV4()")
-  module: Module!
+  module: Module! @ref
   title: String! @col(dataType: "text")
   position: Int!
-  # video | text | quiz
+  # video | text | quiz | source
   lessonType: String! @col(dataType: "text")
   # TipTap JSON document stored as text
   contentJson: String @col(dataType: "text")
   # Mux playback ID (not asset ID — never expose asset ID to client)
   videoPlaybackId: String @col(dataType: "text")
   quiz: Quiz
+  sourceMaterial: SourceMaterial
   durationSeconds: Int
+  status: String! @col(dataType: "text") @default(value: "draft")
+  version: Int! @default(value: 1)
   isPublished: Boolean! @default(value: false)
+  updatedBy: User
+  publishedAt: Date
   createdAt: Date! @default(expr: "request.time")
   updatedAt: Date! @default(expr: "request.time")
 }
 
+# ─── Source Materials / Ingestion ─────────────────────────────────────────────
+
+type SourceMaterial @table(name: "source_materials", singular: "sourceMaterial", plural: "sourceMaterials", key: ["id"]) {
+  id: UUID! @col(name: "id") @default(expr: "uuidV4()")
+  title: String! @col(dataType: "text")
+  fileName: String! @col(dataType: "text")
+  fileType: String! @col(dataType: "text")
+  storagePath: String! @col(dataType: "text")
+  downloadUrl: String @col(dataType: "text")
+  extractedText: String @col(dataType: "text")
+  metadataJson: String @col(dataType: "text")
+  status: String! @col(dataType: "text") @default(value: "uploaded")
+  uploadedBy: User
+  createdAt: Date! @default(expr: "request.time")
+  updatedAt: Date! @default(expr: "request.time")
+}
+
+type IngestionJob @table(name: "ingestion_jobs", singular: "ingestionJob", plural: "ingestionJobs", key: ["id"]) {
+  id: UUID! @col(name: "id") @default(expr: "uuidV4()")
+  sourceMaterial: SourceMaterial! @ref
+  status: String! @col(dataType: "text") @default(value: "queued")
+  parser: String! @col(dataType: "text")
+  extractedCharacters: Int! @default(value: 0)
+  errorMessage: String @col(dataType: "text")
+  createdAt: Date! @default(expr: "request.time")
+  completedAt: Date
+}
+
+type ContentSourceLink @table(name: "content_source_links", singular: "contentSourceLink", plural: "contentSourceLinks", key: ["id"]) {
+  id: UUID! @col(name: "id") @default(expr: "uuidV4()")
+  sourceMaterial: SourceMaterial! @ref
+  course: Course
+  lesson: Lesson
+  question: Question
+  referenceLabel: String @col(dataType: "text")
+  createdAt: Date! @default(expr: "request.time")
+}
+
 # ─── Question Bank ────────────────────────────────────────────────────────────
 
-type Question @table(name: "questions", singular: "question", plural: "questions") {
+type Question @table(name: "questions", singular: "question", plural: "questions", key: ["id"]) {
   id: UUID! @col(name: "id") @default(expr: "uuidV4()")
   questionText: String! @col(dataType: "text")
   # easy | proficient | expert
@@ -62,11 +109,16 @@ type Question @table(name: "questions", singular: "question", plural: "questions
   # math | appraisal | law | philly | admin | ethics
   domain: String! @col(dataType: "text")
   formulaRef: String @col(dataType: "text")
+  questionType: String! @col(dataType: "text") @default(value: "multiple_choice")
+  topicTags: String @col(dataType: "text")
+  version: Int! @default(value: 1)
+  status: String! @col(dataType: "text") @default(value: "draft")
   isMultiselect: Boolean! @default(value: false)
   rationale: String @col(dataType: "text")
   calculation: String @col(dataType: "text")
   sourceRef: String @col(dataType: "text")
   createdBy: User
+  updatedBy: User
   createdAt: Date! @default(expr: "request.time")
   updatedAt: Date! @default(expr: "request.time")
 }
@@ -76,22 +128,20 @@ type Question @table(name: "questions", singular: "question", plural: "questions
 # Server-side code uses the Firebase Admin SDK (bypasses all auth rules).
 type AnswerChoice @table(name: "answer_choices", singular: "answerChoice", plural: "answerChoices") {
   id: UUID! @col(name: "id") @default(expr: "uuidV4()")
-  question: Question!
+  question: Question! @ref
   # A–E
   letter: String! @col(dataType: "char(1)")
   choiceText: String! @col(dataType: "text")
   # Protected: only admin/instructor tokens may read
   isCorrect: Boolean! @default(value: false)
-    @auth(expr: "auth.token.role == 'admin' || auth.token.role == 'instructor'")
   # Protected: only returned to browser after question is answered (via API route)
   explanation: String @col(dataType: "text")
-    @auth(expr: "auth.token.role == 'admin' || auth.token.role == 'instructor'")
   position: Int!
 }
 
 # ─── Quizzes ──────────────────────────────────────────────────────────────────
 
-type Quiz @table(name: "quizzes", singular: "quiz", plural: "quizzes") {
+type Quiz @table(name: "quizzes", singular: "quiz", plural: "quizzes", key: ["id"]) {
   id: UUID! @col(name: "id") @default(expr: "uuidV4()")
   title: String! @col(dataType: "text")
   description: String @col(dataType: "text")
@@ -99,13 +149,16 @@ type Quiz @table(name: "quizzes", singular: "quiz", plural: "quizzes") {
   passingScore: Float
   shuffleQuestions: Boolean! @default(value: false)
   shuffleChoices: Boolean! @default(value: false)
+  status: String! @col(dataType: "text") @default(value: "draft")
+  version: Int! @default(value: 1)
   createdBy: User
+  updatedBy: User
+  publishedAt: Date
   createdAt: Date! @default(expr: "request.time")
 }
 
-type QuizQuestion @table(name: "quiz_questions", singular: "quizQuestion", plural: "quizQuestions") {
-  id: UUID! @col(name: "id") @default(expr: "uuidV4()")
-  quiz: Quiz!
+type QuizQuestion @table(name: "quiz_questions", key: ["quiz", "question"]) {
+  quiz: Quiz! @ref
   question: Question!
   position: Int!
   pointValue: Float! @default(value: 1.0)
@@ -113,8 +166,7 @@ type QuizQuestion @table(name: "quiz_questions", singular: "quizQuestion", plura
 
 # ─── Progress ─────────────────────────────────────────────────────────────────
 
-type UserCourseProgress @table(name: "user_course_progress") {
-  id: UUID! @col(name: "id") @default(expr: "uuidV4()")
+type UserCourseProgress @table(name: "user_course_progress", key: ["user", "course"]) {
   user: User!
   course: Course!
   enrolledAt: Date! @default(expr: "request.time")
@@ -122,8 +174,7 @@ type UserCourseProgress @table(name: "user_course_progress") {
   lastAccessedAt: Date
 }
 
-type UserLessonProgress @table(name: "user_lesson_progress") {
-  id: UUID! @col(name: "id") @default(expr: "uuidV4()")
+type UserLessonProgress @table(name: "user_lesson_progress", key: ["user", "lesson"]) {
   user: User!
   lesson: Lesson!
   # not_started | in_progress | completed
@@ -150,9 +201,8 @@ type QuizAttempt @table(name: "quiz_attempts", singular: "quizAttempt", plural: 
   passed: Boolean
 }
 
-type QuizResponse @table(name: "quiz_responses", singular: "quizResponse", plural: "quizResponses") {
-  id: UUID! @col(name: "id") @default(expr: "uuidV4()")
-  attempt: QuizAttempt!
+type QuizResponse @table(name: "quiz_responses", singular: "quizResponse", plural: "quizResponses", key: ["attempt", "question"]) {
+  attempt: QuizAttempt! @ref
   question: Question!
   # JSON array of selected letters e.g. ["A"] or ["A","C"] for multi-select
   selectedLetters: String! @col(dataType: "text") @default(value: "[]")
@@ -164,7 +214,7 @@ type QuizResponse @table(name: "quiz_responses", singular: "quizResponse", plura
 
 # ─── Formula Reference ────────────────────────────────────────────────────────
 
-type FormulaSection @table(name: "formula_sections", singular: "formulaSection", plural: "formulaSections") {
+type FormulaSection @table(name: "formula_sections", singular: "formulaSection", plural: "formulaSections", key: ["id"]) {
   id: UUID! @col(name: "id") @default(expr: "uuidV4()")
   code: String! @col(dataType: "text")
   title: String! @col(dataType: "text")
@@ -173,7 +223,7 @@ type FormulaSection @table(name: "formula_sections", singular: "formulaSection",
 
 type Formula @table(name: "formulas", singular: "formula", plural: "formulas") {
   id: UUID! @col(name: "id") @default(expr: "uuidV4()")
-  section: FormulaSection!
+  section: FormulaSection! @ref
   code: String! @col(dataType: "text")
   name: String! @col(dataType: "text")
   expression: String! @col(dataType: "text")

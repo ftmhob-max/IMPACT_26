@@ -1,29 +1,44 @@
+import { EmptyState, LearnerPage, PageHeader } from "@/components/ui/LearnerPrimitives";
 import { FormulaIndex } from "@/components/layout/FormulaIndex";
+import { getFormulaSections } from "@/lib/firebase/generated";
+import { getPlatformDataConnect } from "@/lib/firebase/dataconnect";
+import * as Icons from "@/components/ui/Icons";
 
-// In production this fetches from Data Connect via server component
-// For now using empty array — populate after running the migration script
-async function getFormulaSections() {
-  return [];
+async function getFormulaSectionsData() {
+  try {
+    const dc = getPlatformDataConnect();
+    const { data } = await getFormulaSections(dc);
+    return data.formulaSections.map((s) => ({
+      ...s,
+      formulas: s.formulas_on_section,
+    }));
+  } catch {
+    return [];
+  }
 }
 
 export default async function FormulasPage() {
-  const sections = await getFormulaSections();
+  const sections = await getFormulaSectionsData();
+  const totalFormulas = sections.reduce((sum, section) => sum + section.formulas.length, 0);
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-8 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Formula Reference Index</h1>
-        <p className="text-slate-500 mt-1 text-sm">
-          53 formulas across 8 sections. Run the migration script to populate.
-        </p>
-      </div>
+    <LearnerPage width="narrow">
+      <PageHeader
+        eyebrow="Formula Compass"
+        title="Assessment formula reference"
+        description={`${totalFormulas || 53} formulas organized by assessment method section for fast study and exam review.`}
+        icon={Icons.Calculator}
+      />
       {sections.length === 0 ? (
-        <div className="bg-white rounded-xl border border-slate-100 p-8 text-center text-slate-400 text-sm">
-          No formulas yet. Run <code className="font-mono bg-slate-100 px-1 rounded">npx tsx scripts/import-questions.ts</code> to import them.
-        </div>
+        <EmptyState
+          title="No formulas available"
+          description="Formula data could not be loaded or has not been imported yet. If you are developing locally, confirm the Data Connect service you intend to use is available."
+          icon={Icons.Search}
+        />
       ) : (
         <FormulaIndex sections={sections} />
       )}
-    </div>
+    </LearnerPage>
   );
 }
+

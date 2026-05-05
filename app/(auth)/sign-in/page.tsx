@@ -1,14 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { signIn, signInWithGoogle, getIdToken } from "@/lib/firebase/auth";
+import { GraduationCap, ShieldCheck } from "@/components/ui/Icons";
+import { cn } from "@/lib/utils";
+
+type LoginMode = "student" | "teacher";
 
 export default function SignInPage() {
+  return (
+    <Suspense fallback={<SignInShell />}>
+      <SignInForm />
+    </Suspense>
+  );
+}
+
+function SignInForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const redirect = params.get("redirect") ?? "/dashboard";
+  
+  const [mode, setMode] = useState<LoginMode>("student");
+  const redirect = params.get("redirect") ?? (mode === "student" ? "/dashboard" : "/admin");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -55,11 +69,45 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-sm bg-white rounded-2xl border border-slate-100 shadow-md p-8 space-y-6">
+    <SignInShell>
+        {/* Tab Switcher */}
+        <div className="flex p-1 bg-slate-100 rounded-lg mb-6">
+          <button
+            onClick={() => setMode("student")}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-md transition-all",
+              mode === "student" 
+                ? "bg-white text-blue-600 shadow-sm" 
+                : "text-slate-500 hover:text-slate-700"
+            )}
+          >
+            <GraduationCap size={18} />
+            Student
+          </button>
+          <button
+            onClick={() => setMode("teacher")}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-md transition-all",
+              mode === "teacher" 
+                ? "bg-white text-blue-600 shadow-sm" 
+                : "text-slate-500 hover:text-slate-700"
+            )}
+          >
+            <ShieldCheck size={18} />
+            Teacher
+          </button>
+        </div>
+
         <div className="text-center">
-          <h1 className="text-xl font-bold text-slate-900">Sign in to IMPACT_26</h1>
-          <p className="text-sm text-slate-500 mt-1">Property Assessment Training</p>
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 text-blue-600 mb-4">
+            {mode === "student" ? <GraduationCap size={24} /> : <ShieldCheck size={24} />}
+          </div>
+          <h1 className="text-xl font-bold text-slate-900">
+            {mode === "student" ? "Sign in to IMPACT_26" : "Teacher Portal"}
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            {mode === "student" ? "Property Assessment Training" : "Administrative Access"}
+          </p>
         </div>
 
         {error && (
@@ -128,6 +176,20 @@ export default function SignInPage() {
             Forgot password?
           </Link>
         </p>
+    </SignInShell>
+  );
+}
+
+function SignInShell({ children }: { children?: React.ReactNode }) {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-[#f0efe9] p-4">
+      <div className="w-full max-w-sm space-y-6 rounded-lg border border-slate-200 bg-white p-8 shadow-md">
+        {children ?? (
+          <div className="text-center">
+            <h1 className="text-xl font-bold text-slate-900">Sign in to IMPACT_26</h1>
+            <p className="mt-1 text-sm text-slate-500">Loading sign-in...</p>
+          </div>
+        )}
       </div>
     </div>
   );

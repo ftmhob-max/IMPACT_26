@@ -1,0 +1,888 @@
+extend type Query {
+  """
+  ✨ Look up a single `AnswerChoice` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  answerChoice(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: AnswerChoice_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: AnswerChoice_FirstRow
+  ): AnswerChoice @fdc_generated(from: "AnswerChoice", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `ContentSourceLink` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  contentSourceLink(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ContentSourceLink_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ContentSourceLink_FirstRow
+  ): ContentSourceLink @fdc_generated(from: "ContentSourceLink", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `Course` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  course(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Course_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Course_FirstRow
+  ): Course @fdc_generated(from: "Course", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `Formula` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  formula(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Formula_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Formula_FirstRow
+  ): Formula @fdc_generated(from: "Formula", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `FormulaSection` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  formulaSection(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: FormulaSection_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: FormulaSection_FirstRow
+  ): FormulaSection @fdc_generated(from: "FormulaSection", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `IngestionJob` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  ingestionJob(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: IngestionJob_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: IngestionJob_FirstRow
+  ): IngestionJob @fdc_generated(from: "IngestionJob", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `Lesson` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  lesson(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Lesson_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Lesson_FirstRow
+  ): Lesson @fdc_generated(from: "Lesson", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `Module` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  module(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Module_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Module_FirstRow
+  ): Module @fdc_generated(from: "Module", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `Question` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  question(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Question_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Question_FirstRow
+  ): Question @fdc_generated(from: "Question", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `Quiz` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  quiz(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Quiz_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Quiz_FirstRow
+  ): Quiz @fdc_generated(from: "Quiz", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `QuizAttempt` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  quizAttempt(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: QuizAttempt_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: QuizAttempt_FirstRow
+  ): QuizAttempt @fdc_generated(from: "QuizAttempt", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `QuizQuestion` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  quizQuestion(
+    """
+    The key used to identify the object.
+    """
+    key: QuizQuestion_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: QuizQuestion_FirstRow
+  ): QuizQuestion @fdc_generated(from: "QuizQuestion", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `QuizResponse` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  quizResponse(
+    """
+    The key used to identify the object.
+    """
+    key: QuizResponse_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: QuizResponse_FirstRow
+  ): QuizResponse @fdc_generated(from: "QuizResponse", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `SourceMaterial` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  sourceMaterial(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: SourceMaterial_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: SourceMaterial_FirstRow
+  ): SourceMaterial @fdc_generated(from: "SourceMaterial", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `User` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  user(
+    """
+    The unique ID of the object.
+    """
+    id: String
+
+    """
+    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
+    """
+    id_expr: String_Expr
+
+    """
+    The key used to identify the object.
+    """
+    key: User_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: User_FirstRow
+  ): User @fdc_generated(from: "User", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `UserCourseProgress` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  userCourseProgress(
+    """
+    The key used to identify the object.
+    """
+    key: UserCourseProgress_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: UserCourseProgress_FirstRow
+  ): UserCourseProgress @fdc_generated(from: "UserCourseProgress", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `UserLessonProgress` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  userLessonProgress(
+    """
+    The key used to identify the object.
+    """
+    key: UserLessonProgress_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: UserLessonProgress_FirstRow
+  ): UserLessonProgress @fdc_generated(from: "UserLessonProgress", purpose: QUERY_SINGLE)
+  """
+  ✨ List `AnswerChoice` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  answerChoices(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: AnswerChoice_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [AnswerChoice_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: AnswerChoice_Having
+  ): [AnswerChoice!]! @fdc_generated(from: "AnswerChoice", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `ContentSourceLink` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  contentSourceLinks(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: ContentSourceLink_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [ContentSourceLink_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: ContentSourceLink_Having
+  ): [ContentSourceLink!]! @fdc_generated(from: "ContentSourceLink", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `Course` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  courses(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Course_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Course_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Course_Having
+  ): [Course!]! @fdc_generated(from: "Course", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `Formula` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  formulas(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Formula_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Formula_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Formula_Having
+  ): [Formula!]! @fdc_generated(from: "Formula", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `FormulaSection` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  formulaSections(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: FormulaSection_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [FormulaSection_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: FormulaSection_Having
+  ): [FormulaSection!]! @fdc_generated(from: "FormulaSection", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `IngestionJob` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  ingestionJobs(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: IngestionJob_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [IngestionJob_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: IngestionJob_Having
+  ): [IngestionJob!]! @fdc_generated(from: "IngestionJob", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `Lesson` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  lessons(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Lesson_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Lesson_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Lesson_Having
+  ): [Lesson!]! @fdc_generated(from: "Lesson", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `Module` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  modules(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Module_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Module_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Module_Having
+  ): [Module!]! @fdc_generated(from: "Module", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `Question` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  questions(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Question_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Question_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Question_Having
+  ): [Question!]! @fdc_generated(from: "Question", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `Quiz` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  quizzes(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Quiz_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Quiz_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Quiz_Having
+  ): [Quiz!]! @fdc_generated(from: "Quiz", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `QuizAttempt` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  quizAttempts(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: QuizAttempt_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [QuizAttempt_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: QuizAttempt_Having
+  ): [QuizAttempt!]! @fdc_generated(from: "QuizAttempt", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `QuizQuestion` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  quizQuestions(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: QuizQuestion_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [QuizQuestion_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: QuizQuestion_Having
+  ): [QuizQuestion!]! @fdc_generated(from: "QuizQuestion", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `QuizResponse` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  quizResponses(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: QuizResponse_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [QuizResponse_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: QuizResponse_Having
+  ): [QuizResponse!]! @fdc_generated(from: "QuizResponse", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `SourceMaterial` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  sourceMaterials(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: SourceMaterial_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [SourceMaterial_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: SourceMaterial_Having
+  ): [SourceMaterial!]! @fdc_generated(from: "SourceMaterial", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `User` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  users(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: User_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [User_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: User_Having
+  ): [User!]! @fdc_generated(from: "User", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `UserCourseProgress` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  userCourseProgresses(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: UserCourseProgress_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [UserCourseProgress_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: UserCourseProgress_Having
+  ): [UserCourseProgress!]! @fdc_generated(from: "UserCourseProgress", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `UserLessonProgress` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  userLessonProgresses(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: UserLessonProgress_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [UserLessonProgress_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: UserLessonProgress_Having
+  ): [UserLessonProgress!]! @fdc_generated(from: "UserLessonProgress", purpose: QUERY_MULTIPLE)
+}

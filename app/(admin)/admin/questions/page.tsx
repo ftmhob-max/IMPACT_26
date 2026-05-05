@@ -1,11 +1,15 @@
 import Link from "next/link";
 import { DomainBadge } from "@/components/ui/DomainBadge";
 import { DifficultyBadge } from "@/components/ui/DifficultyBadge";
+import { adminDcQuery } from "@/lib/firebase/admin-dc";
 import type { Domain, Difficulty } from "@/lib/utils";
 
 // Server component — fetches from Data Connect via Admin SDK
 async function getQuestions() {
-  return [];
+  const data = await adminDcQuery<{ questions: Array<{ id: string; questionText: string; domain: string; difficulty: string; formulaRef?: string }> }>(
+    "AdminListQuestions"
+  ).catch(() => ({ questions: [] }));
+  return data.questions;
 }
 
 export default async function QuestionBankPage() {
@@ -19,10 +23,10 @@ export default async function QuestionBankPage() {
           <p className="text-slate-500 mt-1 text-sm">{questions.length} questions</p>
         </div>
         <Link
-          href="/admin/questions/new"
+          href="/admin"
           className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
         >
-          + New question
+          Open builder
         </Link>
       </div>
 
@@ -61,11 +65,11 @@ export default async function QuestionBankPage() {
                     <DifficultyBadge difficulty={q.difficulty as Difficulty} />
                   </td>
                   <td className="px-4 py-3 font-mono text-xs text-slate-500">
-                    {q.formulaRef ?? "—"}
+                    {q.formulaRef ?? "-"}
                   </td>
                   <td className="px-4 py-3">
                     <Link
-                      href={`/admin/questions/${q.id}`}
+                      href="/admin"
                       className="text-blue-600 hover:underline text-xs"
                     >
                       Edit

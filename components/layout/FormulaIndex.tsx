@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import * as Icons from "@/components/ui/Icons";
 
 interface Formula {
   id: string;
@@ -36,64 +37,100 @@ export function FormulaIndex({ sections }: FormulaIndexProps) {
     });
   }
 
-  const filtered = search.trim()
-    ? sections
-        .map((s) => ({
-          ...s,
-          formulas: s.formulas.filter(
-            (f) =>
-              f.name.toLowerCase().includes(search.toLowerCase()) ||
-              f.code.toLowerCase().includes(search.toLowerCase()) ||
-              f.expression.toLowerCase().includes(search.toLowerCase())
-          ),
-        }))
-        .filter((s) => s.formulas.length > 0)
-    : sections;
+  const filtered = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return sections;
+
+    return sections
+      .map((section) => ({
+        ...section,
+        formulas: section.formulas.filter((formula) =>
+          [formula.name, formula.code, formula.expression, formula.notes ?? ""]
+            .join(" ")
+            .toLowerCase()
+            .includes(query)
+        ),
+      }))
+      .filter((section) => section.formulas.length > 0);
+  }, [search, sections]);
+
+  const totalVisible = filtered.reduce((sum, section) => sum + section.formulas.length, 0);
 
   return (
-    <div className="space-y-3">
-      <input
-        type="search"
-        placeholder="Search formulas…"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white"
-      />
+    <div className="space-y-4">
+      <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+        <label htmlFor="formula-search" className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.08em] text-slate-400">
+          <Icons.Search size={14} />
+          Search formulas
+        </label>
+        <div className="relative mt-2">
+          <input
+            id="formula-search"
+            type="search"
+            placeholder="Try cap rate, COD, RCNLD, assessment ratio..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-[#185FA5] focus:ring-2 focus:ring-[#E6F1FB]"
+          />
+        </div>
+        <p className="mt-2 text-xs text-slate-500">
+          Showing {totalVisible} formulas across {filtered.length} sections.
+        </p>
+      </div>
 
-      {filtered.map((section) => (
-        <div key={section.id} className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
-          <button
-            onClick={() => toggleSection(section.id)}
-            className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
-          >
-            <span>{section.title}</span>
-            <span className="text-slate-400 text-xs">
-              {section.formulas.length} formulas {openSections.has(section.id) ? "▲" : "▼"}
-            </span>
-          </button>
-
-          {openSections.has(section.id) && (
-            <div className="divide-y divide-slate-50 border-t border-slate-100">
-              {section.formulas.map((formula) => (
-                <div key={formula.id} className="px-4 py-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-xs font-mono text-blue-600 mb-0.5">{formula.code}</p>
-                      <p className="text-sm font-medium text-slate-800">{formula.name}</p>
-                    </div>
-                  </div>
-                  <p className="mt-1 font-calc text-xs text-slate-600 bg-slate-50 rounded px-2 py-1">
-                    {formula.expression}
-                  </p>
-                  {formula.notes && (
-                    <p className="mt-1 text-xs text-slate-500">{formula.notes}</p>
+      {filtered.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-slate-200 bg-white px-6 py-10 text-center text-sm text-slate-500">
+          <Icons.Inbox size={32} className="mx-auto mb-3 text-slate-300" />
+          No formulas match that search.
+        </div>
+      ) : (
+        filtered.map((section) => {
+          const isOpen = openSections.has(section.id) || Boolean(search.trim());
+          return (
+            <section key={section.id} className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+              <button
+                onClick={() => toggleSection(section.id)}
+                className="flex w-full items-start justify-between gap-4 px-5 py-4 text-left transition-colors hover:bg-[#F8F7F4]"
+              >
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#185FA5]">{section.code}</p>
+                  <h2 className="mt-1 text-sm font-semibold text-slate-800">{section.title}</h2>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-500">
+                    {section.formulas.length}
+                  </span>
+                  {isOpen ? (
+                    <Icons.ChevronUp size={18} className="text-slate-400" />
+                  ) : (
+                    <Icons.ChevronDown size={18} className="text-slate-400" />
                   )}
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      ))}
+              </button>
+
+              {isOpen && (
+                <div className="grid gap-0 border-t border-slate-100 sm:grid-cols-2">
+                  {section.formulas.map((formula) => (
+                    <article key={formula.id} className="border-b border-slate-100 px-5 py-4">
+                      <div className="mb-2 flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-mono text-xs font-semibold text-[#185FA5]">{formula.code}</p>
+                          <h3 className="mt-1 text-sm font-semibold leading-snug text-slate-800">{formula.name}</h3>
+                        </div>
+                      </div>
+                      <p className="font-calc rounded-md bg-[#F8F7F4] px-3 py-2 text-[12px] text-slate-700">
+                        {formula.expression}
+                      </p>
+                      {formula.notes && <p className="mt-2 text-xs leading-5 text-slate-500">{formula.notes}</p>}
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
+          );
+        })
+      )}
     </div>
   );
 }
+

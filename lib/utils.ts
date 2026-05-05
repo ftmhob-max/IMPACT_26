@@ -5,19 +5,36 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function formatUuid(id: string): string {
+  if (!id) return id;
+  // If it's a 32-char hex string without dashes, add them
+  if (id.length === 32 && !id.includes("-")) {
+    return `${id.slice(0, 8)}-${id.slice(8, 12)}-${id.slice(12, 16)}-${id.slice(16, 20)}-${id.slice(20)}`;
+  }
+  return id;
+}
+
+export function shuffleArray<T>(arr: T[]): T[] {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 export const DOMAINS = {
-  math:      { label: "Math / Formulas",   color: "#2563eb", cssClass: "bar-math",      badge: "bg-blue-100 text-blue-800" },
-  appraisal: { label: "Appraisal Theory",  color: "#7c3aed", cssClass: "bar-appraisal", badge: "bg-violet-100 text-violet-800" },
-  law:       { label: "PA Law",            color: "#dc2626", cssClass: "bar-law",        badge: "bg-red-100 text-red-800" },
-  philly:    { label: "Philadelphia",      color: "#059669", cssClass: "bar-philly",     badge: "bg-emerald-100 text-emerald-800" },
-  admin:     { label: "Administration",    color: "#d97706", cssClass: "bar-admin",      badge: "bg-amber-100 text-amber-800" },
-  ethics:    { label: "Ethics & Data",     color: "#0891b2", cssClass: "bar-ethics",     badge: "bg-cyan-100 text-cyan-800" },
+  math:      { label: "Math / Formulas",   color: "#534AB7", barClass: "bar-math",      badgeClass: "badge-math"      },
+  appraisal: { label: "Appraisal Theory",  color: "#0F6E56", barClass: "bar-appraisal", badgeClass: "badge-appraisal" },
+  law:       { label: "PA Law",            color: "#993C1D", barClass: "bar-law",        badgeClass: "badge-law"       },
+  philly:    { label: "Philadelphia",      color: "#c47c00", barClass: "bar-philly",     badgeClass: "badge-philly"    },
+  admin:     { label: "Administration",    color: "#A32D2D", barClass: "bar-admin",      badgeClass: "badge-admin"     },
+  ethics:    { label: "Ethics & Data",     color: "#3B6D11", barClass: "bar-ethics",     badgeClass: "badge-ethics"    },
 } as const;
 
 export const DIFFICULTIES = {
-  easy:       { label: "Easy",       badge: "bg-green-100 text-green-800" },
-  proficient: { label: "Proficient", badge: "bg-yellow-100 text-yellow-800" },
-  expert:     { label: "Expert",     badge: "bg-red-100 text-red-800" },
+  easy:       { label: "Easy",       badgeClass: "badge-easy"       },
+  proficient: { label: "Proficient", badgeClass: "badge-proficient" },
+  expert:     { label: "Expert",     badgeClass: "badge-expert"     },
 } as const;
 
 export type Domain = keyof typeof DOMAINS;

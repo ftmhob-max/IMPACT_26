@@ -1,11 +1,11 @@
 import { z } from "zod";
 
 export const startAttemptSchema = z.object({
-  quizId: z.string().uuid(),
+  quizId: z.string().min(32),
 });
 
 export const submitAnswerSchema = z.object({
-  questionId: z.string().uuid(),
+  questionId: z.string().min(32),
   selectedLetters: z
     .array(z.string().length(1).toUpperCase())
     .min(1, "Select at least one answer")
@@ -13,7 +13,7 @@ export const submitAnswerSchema = z.object({
 });
 
 export const saveProgressSchema = z.object({
-  questionId: z.string().uuid(),
+  questionId: z.string().min(32),
   selectedLetters: z.array(z.string().length(1)),
 });
 

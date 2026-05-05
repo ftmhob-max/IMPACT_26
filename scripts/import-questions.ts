@@ -14,26 +14,32 @@
 
 import { readFileSync } from "fs";
 import { join } from "path";
+import { randomUUID } from "crypto";
 import { parse as parseHtml } from "node-html-parser";
-import { initializeApp, cert, getApps } from "firebase-admin/app";
+import { initializeApp, cert, getApps, type App } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
 const PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? "impact26-aa59b";
 const SERVICE_ACCOUNT_KEY = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-const HTML_PATH = join(process.cwd(), "IMPACT26V1_Practice_Exam_FINAL.html");
-const DC_BASE_URL = `https://firebasedataconnect.googleapis.com/v1beta/projects/${PROJECT_ID}/locations/us-central1/services/impact26-dataconnect/connectors/impact26-connector`;
+const HTML_PATH = join(process.cwd(), "public", "index.html");
+const DC_BASE_URL = process.env.FIREBASE_DATACONNECT_EMULATOR_HOST
+  ? `http://${process.env.FIREBASE_DATACONNECT_EMULATOR_HOST}/v1beta/projects/${PROJECT_ID}/locations/us-central1/services/impact26-dataconnect/connectors/impact26-connector`
+  : `https://firebasedataconnect.googleapis.com/v1beta/projects/${PROJECT_ID}/locations/us-central1/services/impact26-dataconnect/connectors/impact26-connector`;
 
 // ─── Firebase Admin init ─────────────────────────────────────────────────────
 
+let app: App;
 if (!getApps().length) {
   if (!SERVICE_ACCOUNT_KEY) {
     throw new Error("Set FIREBASE_SERVICE_ACCOUNT_KEY env var before running");
   }
-  initializeApp({ credential: cert(JSON.parse(SERVICE_ACCOUNT_KEY)), projectId: PROJECT_ID });
+  app = initializeApp({ credential: cert(JSON.parse(SERVICE_ACCOUNT_KEY)), projectId: PROJECT_ID });
+} else {
+  app = getApps()[0];
 }
-const adminAuth = getAuth();
+const adminAuth = getAuth(app);
 
 // ─── Types (mirror the Q array in the HTML) ──────────────────────────────────
 
@@ -54,8 +60,10 @@ interface RawQuestion {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 async function getAdminToken(): Promise<string> {
-  // Use a service-account level custom token that bypasses @auth rules
-  return adminAuth.createCustomToken("migration-script");
+  // Use the service account's access token to call the Data Connect REST API
+  // @ts-ignore
+  const accessTokenObj = await app.options.credential?.getAccessToken();
+  return accessTokenObj?.access_token || "";
 }
 
 async function dcMutate(operationName: string, variables: Record<string, unknown>) {
@@ -173,7 +181,9 @@ async function main() {
     const isMultiselect = correctLetters.length > 1;
 
     // Create question
-    const result = await dcMutate("CreateQuestion", {
+    const questionId = randomUUID();
+    await dcMutate("CreateQuestion", {
+      id: questionId,
       questionText: q.txt,
       difficulty: q.diff,
       domain: q.dom,
@@ -185,8 +195,6 @@ async function main() {
       createdById: null,
     });
 
-    const questionId: string = result.question_insert?.id;
-    if (!questionId) throw new Error(`Failed to create question ${q.id}`);
     questionIdMap.set(q.id, questionId);
 
     // Create answer choices
@@ -210,7 +218,9 @@ async function main() {
 
   // ── Create default quiz with all 80 questions ─────────────────────────────
   console.log("\nCreating default quiz...");
-  const quizResult = await dcMutate("CreateQuiz", {
+  const quizId = randomUUID();
+  await dcMutate("CreateQuiz", {
+    id: quizId,
     title: "IMPACT_26V.1 Full Practice Exam",
     description:
       "80-question practice exam covering all six domains of the IMPACT_26 property assessment curriculum.",
@@ -220,8 +230,6 @@ async function main() {
     shuffleChoices: false,
     createdById: null,
   });
-  const quizId: string = quizResult.quiz_insert?.id;
-  if (!quizId) throw new Error("Failed to create quiz");
   console.log(`  Quiz ID: ${quizId}`);
 
   // Add all questions to quiz in original order
@@ -242,16 +250,13 @@ async function main() {
   const { sections } = extractFormulas(html);
 
   for (const section of sections) {
-    const sectionResult = await dcMutate("CreateFormulaSection", {
+    const sectionId = randomUUID();
+    await dcMutate("CreateFormulaSection", {
+      id: sectionId,
       code: section.code,
       title: section.title,
       position: section.position,
     });
-    const sectionId: string = sectionResult.formulaSection_insert?.id;
-    if (!sectionId) {
-      console.warn(`  Could not create section ${section.code}, skipping`);
-      continue;
-    }
 
     for (const formula of section.formulas) {
       await dcMutate("CreateFormula", {

@@ -16,9 +16,13 @@ export async function signUp(email: string, password: string, fullName: string):
   const credential = await createUserWithEmailAndPassword(auth, email, password);
   await updateProfile(credential.user, { displayName: fullName });
   // Sync user to database via API route
+  const idToken = await credential.user.getIdToken();
   await fetch("/api/auth/sync-user", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${idToken}`,
+    },
     body: JSON.stringify({ fullName }),
   });
   return credential.user;
@@ -32,9 +36,14 @@ export async function signIn(email: string, password: string): Promise<User> {
 export async function signInWithGoogle(): Promise<User> {
   const provider = new GoogleAuthProvider();
   const credential = await signInWithPopup(auth, provider);
+  // Include the Firebase ID token so the server can verify identity
+  const idToken = await credential.user.getIdToken();
   await fetch("/api/auth/sync-user", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${idToken}`,
+    },
     body: JSON.stringify({ fullName: credential.user.displayName }),
   });
   return credential.user;

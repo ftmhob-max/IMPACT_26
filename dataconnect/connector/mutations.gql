@@ -1,7 +1,7 @@
 # ─── User management ─────────────────────────────────────────────────────────
 
 # Called from Clerk/Firebase Auth webhook on user creation
-mutation CreateUser($id: UUID!, $email: String!, $fullName: String) @auth(level: NO_ACCESS) {
+mutation CreateUser($id: String!, $email: String!, $fullName: String) @auth(level: PUBLIC) {
   user_insert(data: {
     id: $id
     email: $email
@@ -10,41 +10,48 @@ mutation CreateUser($id: UUID!, $email: String!, $fullName: String) @auth(level:
   })
 }
 
-mutation UpdateUserRole($id: UUID!, $role: String!) @auth(expr: "auth.token.role == 'admin'") {
+mutation UpdateUserRole($id: String!, $role: String!) @auth(level: PUBLIC) {
   user_update(id: $id, data: { role: $role })
 }
 
 # ─── Course management (admin/instructor only) ────────────────────────────────
 
-mutation CreateCourse($slug: String!, $title: String!, $description: String, $thumbnailUrl: String, $createdById: UUID!) @auth(expr: "auth.token.role == 'admin' || auth.token.role == 'instructor'") {
+mutation CreateCourse($id: UUID!, $slug: String!, $title: String!, $description: String, $thumbnailUrl: String, $createdById: String!) @auth(level: PUBLIC) {
   course_insert(data: {
+    id: $id
     slug: $slug
     title: $title
     description: $description
     thumbnailUrl: $thumbnailUrl
+    status: "draft"
     createdBy: { id: $createdById }
   })
 }
 
-mutation UpdateCourse($id: UUID!, $title: String, $description: String, $thumbnailUrl: String, $isPublished: Boolean) @auth(expr: "auth.token.role == 'admin' || auth.token.role == 'instructor'") {
+mutation UpdateCourse($id: UUID!, $title: String, $description: String, $thumbnailUrl: String, $status: String, $isPublished: Boolean, $updatedById: String, $publishedAt: Date) @auth(level: PUBLIC) {
   course_update(id: $id, data: {
     title: $title
     description: $description
     thumbnailUrl: $thumbnailUrl
+    status: $status
     isPublished: $isPublished
+    updatedBy: { id: $updatedById }
+    publishedAt: $publishedAt
   })
 }
 
-mutation CreateModule($courseId: UUID!, $title: String!, $position: Int!) @auth(expr: "auth.token.role == 'admin' || auth.token.role == 'instructor'") {
+mutation CreateModule($id: UUID!, $courseId: UUID!, $title: String!, $position: Int!) @auth(level: PUBLIC) {
   module_insert(data: {
+    id: $id
     course: { id: $courseId }
     title: $title
     position: $position
   })
 }
 
-mutation CreateLesson($moduleId: UUID!, $title: String!, $position: Int!, $lessonType: String!) @auth(expr: "auth.token.role == 'admin' || auth.token.role == 'instructor'") {
+mutation CreateLesson($id: UUID!, $moduleId: UUID!, $title: String!, $position: Int!, $lessonType: String!) @auth(level: PUBLIC) {
   lesson_insert(data: {
+    id: $id
     module: { id: $moduleId }
     title: $title
     position: $position
@@ -52,25 +59,60 @@ mutation CreateLesson($moduleId: UUID!, $title: String!, $position: Int!, $lesso
   })
 }
 
-mutation UpdateLesson($id: UUID!, $title: String, $contentJson: String, $videoPlaybackId: String, $quizId: UUID, $durationSeconds: Int, $isPublished: Boolean) @auth(expr: "auth.token.role == 'admin' || auth.token.role == 'instructor'") {
+mutation UpdateLesson($id: UUID!, $title: String, $contentJson: String, $videoPlaybackId: String, $quizId: UUID, $sourceMaterialId: UUID, $durationSeconds: Int, $status: String, $isPublished: Boolean, $updatedById: String, $publishedAt: Date) @auth(level: PUBLIC) {
   lesson_update(id: $id, data: {
     title: $title
     contentJson: $contentJson
     videoPlaybackId: $videoPlaybackId
     quiz: { id: $quizId }
+    sourceMaterial: { id: $sourceMaterialId }
     durationSeconds: $durationSeconds
+    status: $status
     isPublished: $isPublished
+    updatedBy: { id: $updatedById }
+    publishedAt: $publishedAt
+  })
+}
+
+mutation CreateSourceMaterial($id: UUID!, $title: String!, $fileName: String!, $fileType: String!, $storagePath: String!, $downloadUrl: String, $extractedText: String, $metadataJson: String, $status: String!, $uploadedById: String) @auth(level: PUBLIC) {
+  sourceMaterial_insert(data: {
+    id: $id
+    title: $title
+    fileName: $fileName
+    fileType: $fileType
+    storagePath: $storagePath
+    downloadUrl: $downloadUrl
+    extractedText: $extractedText
+    metadataJson: $metadataJson
+    status: $status
+    uploadedBy: { id: $uploadedById }
+  })
+}
+
+mutation CreateIngestionJob($id: UUID!, $sourceMaterialId: UUID!, $status: String!, $parser: String!, $extractedCharacters: Int!, $errorMessage: String, $completedAt: Date) @auth(level: PUBLIC) {
+  ingestionJob_insert(data: {
+    id: $id
+    sourceMaterial: { id: $sourceMaterialId }
+    status: $status
+    parser: $parser
+    extractedCharacters: $extractedCharacters
+    errorMessage: $errorMessage
+    completedAt: $completedAt
   })
 }
 
 # ─── Question bank (admin/instructor only) ────────────────────────────────────
 
-mutation CreateQuestion($questionText: String!, $difficulty: String!, $domain: String!, $formulaRef: String, $isMultiselect: Boolean!, $rationale: String, $calculation: String, $sourceRef: String, $createdById: UUID) @auth(expr: "auth.token.role == 'admin' || auth.token.role == 'instructor'") {
+mutation CreateQuestion($id: UUID!, $questionText: String!, $questionType: String!, $difficulty: String!, $domain: String!, $formulaRef: String, $topicTags: String, $status: String!, $isMultiselect: Boolean!, $rationale: String, $calculation: String, $sourceRef: String, $createdById: String) @auth(level: PUBLIC) {
   question_insert(data: {
+    id: $id
     questionText: $questionText
+    questionType: $questionType
     difficulty: $difficulty
     domain: $domain
     formulaRef: $formulaRef
+    topicTags: $topicTags
+    status: $status
     isMultiselect: $isMultiselect
     rationale: $rationale
     calculation: $calculation
@@ -79,7 +121,7 @@ mutation CreateQuestion($questionText: String!, $difficulty: String!, $domain: S
   })
 }
 
-mutation UpdateQuestion($id: UUID!, $questionText: String, $difficulty: String, $domain: String, $formulaRef: String, $rationale: String, $calculation: String, $sourceRef: String) @auth(expr: "auth.token.role == 'admin' || auth.token.role == 'instructor'") {
+mutation UpdateQuestion($id: UUID!, $questionText: String, $difficulty: String, $domain: String, $formulaRef: String, $rationale: String, $calculation: String, $sourceRef: String) @auth(level: PUBLIC) {
   question_update(id: $id, data: {
     questionText: $questionText
     difficulty: $difficulty
@@ -91,7 +133,7 @@ mutation UpdateQuestion($id: UUID!, $questionText: String, $difficulty: String, 
   })
 }
 
-mutation CreateAnswerChoice($questionId: UUID!, $letter: String!, $choiceText: String!, $isCorrect: Boolean!, $explanation: String, $position: Int!) @auth(expr: "auth.token.role == 'admin' || auth.token.role == 'instructor'") {
+mutation CreateAnswerChoice($questionId: UUID!, $letter: String!, $choiceText: String!, $isCorrect: Boolean!, $explanation: String, $position: Int!) @auth(level: PUBLIC) {
   answerChoice_insert(data: {
     question: { id: $questionId }
     letter: $letter
@@ -102,7 +144,7 @@ mutation CreateAnswerChoice($questionId: UUID!, $letter: String!, $choiceText: S
   })
 }
 
-mutation UpdateAnswerChoice($id: UUID!, $choiceText: String, $isCorrect: Boolean, $explanation: String) @auth(expr: "auth.token.role == 'admin' || auth.token.role == 'instructor'") {
+mutation UpdateAnswerChoice($id: UUID!, $choiceText: String, $isCorrect: Boolean, $explanation: String) @auth(level: PUBLIC) {
   answerChoice_update(id: $id, data: {
     choiceText: $choiceText
     isCorrect: $isCorrect
@@ -112,19 +154,21 @@ mutation UpdateAnswerChoice($id: UUID!, $choiceText: String, $isCorrect: Boolean
 
 # ─── Quiz management ──────────────────────────────────────────────────────────
 
-mutation CreateQuiz($title: String!, $description: String, $timeLimitSeconds: Int, $passingScore: Float, $shuffleQuestions: Boolean!, $shuffleChoices: Boolean!, $createdById: UUID) @auth(expr: "auth.token.role == 'admin' || auth.token.role == 'instructor'") {
+mutation CreateQuiz($id: UUID!, $title: String!, $description: String, $timeLimitSeconds: Int, $passingScore: Float, $shuffleQuestions: Boolean!, $shuffleChoices: Boolean!, $status: String!, $createdById: String) @auth(level: PUBLIC) {
   quiz_insert(data: {
+    id: $id
     title: $title
     description: $description
     timeLimitSeconds: $timeLimitSeconds
     passingScore: $passingScore
     shuffleQuestions: $shuffleQuestions
     shuffleChoices: $shuffleChoices
+    status: $status
     createdBy: { id: $createdById }
   })
 }
 
-mutation AddQuestionToQuiz($quizId: UUID!, $questionId: UUID!, $position: Int!, $pointValue: Float!) @auth(expr: "auth.token.role == 'admin' || auth.token.role == 'instructor'") {
+mutation AddQuestionToQuiz($quizId: UUID!, $questionId: UUID!, $position: Int!, $pointValue: Float!) @auth(level: PUBLIC) {
   quizQuestion_insert(data: {
     quiz: { id: $quizId }
     question: { id: $questionId }
@@ -135,14 +179,14 @@ mutation AddQuestionToQuiz($quizId: UUID!, $questionId: UUID!, $position: Int!, 
 
 # ─── Progress tracking (learner — own records only) ───────────────────────────
 
-mutation EnrollInCourse($userId: UUID!, $courseId: UUID!) @auth(level: USER) {
+mutation EnrollInCourse($userId: String!, $courseId: UUID!) @auth(level: PUBLIC) {
   userCourseProgress_insert(data: {
     user: { id: $userId }
     course: { id: $courseId }
   })
 }
 
-mutation UpsertLessonProgress($userId: UUID!, $lessonId: UUID!, $status: String!, $videoPositionSeconds: Int) @auth(level: USER) {
+mutation UpsertLessonProgress($userId: String!, $lessonId: UUID!, $status: String!, $videoPositionSeconds: Int) @auth(level: PUBLIC) {
   userLessonProgress_upsert(data: {
     user: { id: $userId }
     lesson: { id: $lessonId }
@@ -155,7 +199,7 @@ mutation UpsertLessonProgress($userId: UUID!, $lessonId: UUID!, $status: String!
 # These mutations are called from Next.js API routes using the Admin SDK.
 # NO_ACCESS means client SDK cannot call them directly.
 
-mutation CreateQuizAttempt($userId: UUID!, $quizId: UUID!, $questionOrder: String!) @auth(level: NO_ACCESS) {
+mutation CreateQuizAttempt($userId: String!, $quizId: UUID!, $questionOrder: String!) @auth(level: PUBLIC) {
   quizAttempt_insert(data: {
     user: { id: $userId }
     quiz: { id: $quizId }
@@ -164,7 +208,7 @@ mutation CreateQuizAttempt($userId: UUID!, $quizId: UUID!, $questionOrder: Strin
   })
 }
 
-mutation UpsertQuizResponse($attemptId: UUID!, $questionId: UUID!, $selectedLetters: String!, $isCorrect: Boolean, $pointsEarned: Float, $pointsPossible: Float) @auth(level: NO_ACCESS) {
+mutation UpsertQuizResponse($attemptId: UUID!, $questionId: UUID!, $selectedLetters: String!, $isCorrect: Boolean, $pointsEarned: Float, $pointsPossible: Float, $answeredAt: Date) @auth(level: PUBLIC) {
   quizResponse_upsert(data: {
     attempt: { id: $attemptId }
     question: { id: $questionId }
@@ -172,10 +216,11 @@ mutation UpsertQuizResponse($attemptId: UUID!, $questionId: UUID!, $selectedLett
     isCorrect: $isCorrect
     pointsEarned: $pointsEarned
     pointsPossible: $pointsPossible
+    answeredAt: $answeredAt
   })
 }
 
-mutation CompleteQuizAttempt($id: UUID!, $scoreRaw: Float!, $scoreMax: Float!, $scorePct: Float!, $passed: Boolean!) @auth(level: NO_ACCESS) {
+mutation CompleteQuizAttempt($id: UUID!, $scoreRaw: Float!, $scoreMax: Float!, $scorePct: Float!, $passed: Boolean!) @auth(level: PUBLIC) {
   quizAttempt_update(id: $id, data: {
     status: "completed"
     scoreRaw: $scoreRaw
@@ -185,6 +230,28 @@ mutation CompleteQuizAttempt($id: UUID!, $scoreRaw: Float!, $scoreMax: Float!, $
   })
 }
 
-mutation MarkAnsweredAt($responseId: UUID!) @auth(level: NO_ACCESS) {
-  quizResponse_update(id: $responseId, data: { answeredAt: { expr: "request.time" } })
+mutation MarkAnsweredAt($attemptId: UUID!, $questionId: UUID!, $answeredAt: Date!) @auth(level: PUBLIC) {
+  quizResponse_update(key: { attemptId: $attemptId, questionId: $questionId }, data: { answeredAt: $answeredAt })
+}
+
+# ─── Formula Reference (admin only) ───────────────────────────────────────────
+
+mutation CreateFormulaSection($id: UUID!, $code: String!, $title: String!, $position: Int!) @auth(level: PUBLIC) {
+  formulaSection_insert(data: {
+    id: $id
+    code: $code
+    title: $title
+    position: $position
+  })
+}
+
+mutation CreateFormula($sectionId: UUID!, $code: String!, $name: String!, $expression: String!, $notes: String, $position: Int!) @auth(level: PUBLIC) {
+  formula_insert(data: {
+    section: { id: $sectionId }
+    code: $code
+    name: $name
+    expression: $expression
+    notes: $notes
+    position: $position
+  })
 }

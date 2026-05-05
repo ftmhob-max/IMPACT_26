@@ -1,111 +1,112 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { verifyIdToken } from "@/lib/firebase/auth-server";
-import { evaluateAnswer, shuffle } from "@/lib/quiz-engine/evaluate";
-import { sanitizeQuestion, type RawQuestion } from "@/lib/quiz-engine/sanitize";
+import { adminDcQuery, adminDcMutate } from "@/lib/firebase/admin-dc";
+import { shuffle } from "@/lib/quiz-engine/evaluate";
+import { sanitizeQuestion } from "@/lib/quiz-engine/sanitize";
+import { formatUuid } from "@/lib/utils";
 
-/**
- * POST /api/quiz/[quizId]/start
- *
- * Creates a new quiz attempt or returns an existing in-progress one.
- * Returns a sanitized QuizSession — isCorrect and explanation are NEVER
- * included in the response payload (they are omitted by sanitizeQuestion).
- */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ quizId: string }> }
 ) {
   try {
-    const { quizId } = await params;
+    const quizId = formatUuid((await params).quizId);
     const decoded = await verifyIdToken(request.headers.get("Authorization"));
     const userId = decoded.uid;
+    const userEmail = decoded.email ?? `${decoded.uid}@impact26.local`;
+    const userName = decoded.name ?? null;
 
-    // Dynamically import Admin SDK to keep it server-only
-    const { adminAuth } = await import("@/lib/firebase/admin");
-    void adminAuth; // ensure module is loaded
+    // Quiz metadata is passed from the lesson page (already fetched via GetLesson)
+    const body = await request.json().catch(() => ({}));
+    const timeLimitSeconds: number | null = body.timeLimitSeconds ?? null;
+    const shuffleQuestions: boolean = body.shuffleQuestions ?? false;
+    const shuffleChoices: boolean = body.shuffleChoices ?? false;
 
-    // ── Fetch quiz config + all questions with choices (Admin SDK bypasses @auth) ──
-    // In production this uses the Data Connect Admin SDK or direct Cloud SQL query.
-    // Represented here as a typed fetch to the Data Connect REST endpoint.
-    const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!;
-    const serviceId = "impact26-dataconnect";
-    const location = "us-central1";
-    const connectorId = "impact26-connector";
-    const dcBaseUrl = `https://firebasedataconnect.googleapis.com/v1beta/projects/${projectId}/locations/${location}/services/${serviceId}/connectors/${connectorId}`;
-
-    // Fetch quiz metadata
-    const quizRes = await fetchDataConnect(dcBaseUrl, "GetQuizQuestionsAdmin", { quizId });
-    if (!quizRes.ok) {
-      return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
+    // ── Check for an existing in-progress attempt ───────────────────────────
+    // Wrapped in try/catch: if the deployed connector is out of sync with the
+    // local schema (e.g. $userId typed as UUID! in prod vs String! locally),
+    // we treat it as "no existing attempt" rather than hard-failing.
+    let existing: any = null;
+    try {
+      const { quizAttempts } = await adminDcQuery<{ quizAttempts: any[] }>(
+        "GetInProgressAttempt",
+        { userId, quizId }
+      );
+      existing = quizAttempts?.[0];
+    } catch (resumeErr) {
+      console.warn("[quiz/start] GetInProgressAttempt failed (connector may be out of sync — run `firebase deploy --only dataconnect`):", resumeErr instanceof Error ? resumeErr.message : resumeErr);
     }
-    const { quiz, quizQuestions } = await quizRes.json();
 
-    if (!quiz) {
-      return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
+    // ── Fetch questions (GetQuizQuestions is already deployed) ──────────────
+    const { quizQuestions } = await adminDcQuery<{ quizQuestions: any[] }>(
+      "GetQuizQuestions",
+      { quizId }
+    );
+
+    if (!quizQuestions?.length) {
+      return NextResponse.json({ error: "Quiz not found or has no questions" }, { status: 404 });
     }
-
-    // ── Check for existing in-progress attempt (session resume) ──
-    const existingRes = await fetchDataConnect(dcBaseUrl, "GetInProgressAttempt", {
-      userId,
-      quizId,
-    });
-    const existingData = await existingRes.json();
-    const existing = existingData.quizAttempts?.[0];
 
     if (existing) {
-      // Resume: return existing attempt with answered questions marked
       const answeredIds = new Set(
-        (existing.quizResponses ?? [])
+        (existing.quizResponses_on_attempt ?? [])
           .filter((r: { answeredAt: string | null }) => r.answeredAt !== null)
           .map((r: { question: { id: string } }) => r.question.id)
       );
-
       const questionOrder: string[] = JSON.parse(existing.questionOrder);
-      const questionsMap = buildQuestionsMap(quizQuestions);
+      const questionsMap = new Map(quizQuestions.map((qq: any) => [qq.question.id, qq.question]));
       const orderedQuestions = questionOrder
         .map((id) => questionsMap.get(id))
-        .filter(Boolean) as RawQuestion[];
+        .filter(Boolean)
+        .map((q: any) => ({ ...q, answerChoices: q.answerChoices_on_question ?? [] }));
 
       return NextResponse.json({
         attemptId: existing.id,
         quizId,
         isResume: true,
-        timeLimitSeconds: quiz.timeLimitSeconds ?? null,
+        timeLimitSeconds,
         answeredQuestionIds: [...answeredIds],
-        previousResponses: existing.quizResponses ?? [],
+        previousResponses: existing.quizResponses_on_attempt ?? [],
         questions: orderedQuestions.map(sanitizeQuestion),
       });
     }
 
-    // ── New attempt: shuffle questions and choices if configured ──
-    let questionList: RawQuestion[] = quizQuestions.map(
-      (qq: { question: RawQuestion }) => qq.question
+    // ── New attempt ─────────────────────────────────────────────────────────
+    let questionList = quizQuestions.map((qq: any) => ({
+      ...qq.question,
+      answerChoices: qq.question.answerChoices_on_question ?? [],
+    }));
+
+    if (shuffleQuestions) questionList = shuffle(questionList);
+    if (shuffleChoices) {
+      questionList = questionList.map((q: any) => ({ ...q, answerChoices: shuffle(q.answerChoices) }));
+    }
+
+    const questionOrder = questionList.map((q: any) => formatUuid(q.id));
+
+    try {
+      await adminDcMutate("CreateUser", {
+        id: userId,
+        email: userEmail,
+        fullName: userName,
+      });
+    } catch (userErr) {
+      const message = userErr instanceof Error ? userErr.message : String(userErr);
+      if (!/already exists|duplicate|unique/i.test(message)) {
+        console.warn("[quiz/start] CreateUser before attempt failed:", message);
+      }
+    }
+
+    const { quizAttempt_insert } = await adminDcMutate<{ quizAttempt_insert: { id: string } }>(
+      "CreateQuizAttempt",
+      { userId, quizId, questionOrder: JSON.stringify(questionOrder) }
     );
-
-    if (quiz.shuffleQuestions) {
-      questionList = shuffle(questionList);
-    }
-    if (quiz.shuffleChoices) {
-      questionList = questionList.map((q) => ({
-        ...q,
-        answerChoices: shuffle(q.answerChoices),
-      }));
-    }
-
-    const questionOrder = questionList.map((q) => q.id);
-
-    // ── Create attempt record ──
-    const createRes = await fetchDataConnect(dcBaseUrl, "CreateQuizAttempt", {
-      userId,
-      quizId,
-      questionOrder: JSON.stringify(questionOrder),
-    });
-    const { quizAttempt_insert } = await createRes.json();
 
     return NextResponse.json({
       attemptId: quizAttempt_insert.id,
       quizId,
       isResume: false,
-      timeLimitSeconds: quiz.timeLimitSeconds ?? null,
+      timeLimitSeconds,
       answeredQuestionIds: [],
       previousResponses: [],
       questions: questionList.map(sanitizeQuestion),
@@ -113,30 +114,7 @@ export async function POST(
   } catch (err) {
     console.error("[/api/quiz/start]", err);
     const message = err instanceof Error ? err.message : "Internal error";
-    const status = message.includes("auth") || message.includes("token") ? 401 : 500;
+    const status = message.includes("auth") || message.includes("token") || message.includes("Unauthorized") ? 401 : 500;
     return NextResponse.json({ error: message }, { status });
   }
-}
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function buildQuestionsMap(quizQuestions: Array<{ question: RawQuestion }>) {
-  const map = new Map<string, RawQuestion>();
-  for (const qq of quizQuestions) {
-    map.set(qq.question.id, qq.question);
-  }
-  return map;
-}
-
-async function fetchDataConnect(baseUrl: string, operationName: string, variables: object) {
-  const { adminAuth } = await import("@/lib/firebase/admin");
-  const token = await adminAuth.createCustomToken("server");
-  return fetch(`${baseUrl}:executeQuery`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ operationName, variables }),
-  });
 }

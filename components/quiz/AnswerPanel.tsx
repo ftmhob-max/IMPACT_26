@@ -6,100 +6,77 @@ import type { EvaluationResult } from "@/lib/quiz-engine/evaluate";
 interface AnswerPanelProps {
   result: EvaluationResult;
   isOpen: boolean;
-  onToggle: () => void;
 }
 
-export function AnswerPanel({ result, isOpen, onToggle }: AnswerPanelProps) {
-  const correctLetters = new Set(result.correctLetters);
+export function AnswerPanel({ result, isOpen }: AnswerPanelProps) {
+  if (!isOpen) return null;
 
   return (
-    <div className="mt-2 rounded-lg border border-slate-200 overflow-hidden">
-      <button
-        onClick={onToggle}
-        className={cn(
-          "w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium",
-          "transition-colors duration-150",
-          result.isCorrect
-            ? "bg-green-50 text-green-800 hover:bg-green-100"
-            : "bg-red-50 text-red-800 hover:bg-red-100"
-        )}
-      >
-        <span className="flex items-center gap-2">
-          {result.isCorrect ? (
-            <>
-              <span className="text-green-600">✓</span>
-              Correct — {result.pointsEarned.toFixed(1)} / {result.pointsPossible.toFixed(1)} pts
-            </>
-          ) : (
-            <>
-              <span className="text-red-500">✗</span>
-              {result.pointsEarned > 0
-                ? `Partial credit — ${result.pointsEarned.toFixed(1)} / ${result.pointsPossible.toFixed(1)} pts`
-                : "Incorrect"}
-            </>
-          )}
-        </span>
-        <span className="text-slate-400">{isOpen ? "▲" : "▼"}</span>
-      </button>
-
-      {isOpen && (
-        <div className="bg-white px-4 py-4 space-y-4 border-t border-slate-100">
-          {/* Per-choice breakdown */}
-          <div className="space-y-2">
-            {result.choices.map((choice) => (
-              <div
-                key={choice.letter}
+    <div className="answer-panel mt-1 rounded-[7px] border border-[rgba(0,0,0,0.11)] bg-[#f8f7f4] overflow-hidden">
+      {/* Per-choice breakdown */}
+      {result.choices.length > 0 && (
+        <div className="px-3.5 py-2.5 border-b border-[rgba(0,0,0,0.11)] space-y-2">
+          <p className="text-[9.5px] font-extrabold uppercase tracking-[0.07em] text-[#888880]">
+            Correct Answer
+          </p>
+          {result.choices.map((choice) => (
+            <div
+              key={choice.letter}
+              className={cn(
+                "flex gap-3 p-2.5 rounded-md text-sm",
+                choice.isCorrect
+                  ? "bg-[#EAF3DE] border border-[#3B6D11]"
+                  : "bg-slate-50 border border-slate-100"
+              )}
+            >
+              <span
                 className={cn(
-                  "flex gap-3 p-2.5 rounded-md text-sm",
-                  choice.isCorrect ? "bg-green-50 border border-green-200" : "bg-slate-50 border border-slate-100"
+                  "shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold",
+                  choice.isCorrect ? "bg-[#3B6D11] text-white" : "bg-slate-300 text-slate-600"
                 )}
               >
-                <span
-                  className={cn(
-                    "shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold",
-                    choice.isCorrect ? "bg-green-500 text-white" : "bg-slate-300 text-slate-600"
-                  )}
-                >
-                  {choice.letter}
-                </span>
-                <div className="space-y-1">
-                  <p className="font-medium text-slate-800">{choice.choiceText}</p>
-                  {choice.explanation && (
-                    <p className="text-slate-600 text-xs leading-relaxed">{choice.explanation}</p>
-                  )}
-                </div>
+                {choice.letter}
+              </span>
+              <div className="space-y-1">
+                <p className="font-medium text-[#1a1a18] text-[12.5px]">{choice.choiceText}</p>
+                {choice.explanation && (
+                  <p className="text-[#4a4a46] text-xs leading-relaxed">{choice.explanation}</p>
+                )}
               </div>
-            ))}
-          </div>
-
-          {/* Calculation */}
-          {result.calculation && (
-            <div className="bg-slate-50 rounded-md p-3 border border-slate-100">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
-                Calculation
-              </p>
-              <pre className="font-calc text-slate-700 whitespace-pre-wrap text-xs">
-                {result.calculation}
-              </pre>
             </div>
-          )}
+          ))}
+        </div>
+      )}
 
-          {/* Rationale */}
-          {result.rationale && (
-            <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
-                Rationale
-              </p>
-              <p className="text-sm text-slate-700 leading-relaxed">{result.rationale}</p>
-            </div>
-          )}
+      {/* Calculation */}
+      {result.calculation && (
+        <div className="px-3.5 py-2.5 border-b border-[rgba(0,0,0,0.11)]">
+          <p className="text-[9.5px] font-extrabold uppercase tracking-[0.07em] text-[#888880] mb-1">
+            Step-by-step Calculation
+          </p>
+          <pre className="font-calc text-[#1a1a18] whitespace-pre-wrap text-[11.5px] leading-[1.85] bg-white px-3 py-2.5 rounded border border-[rgba(0,0,0,0.11)]">
+            {result.calculation}
+          </pre>
+        </div>
+      )}
 
-          {/* Reference */}
-          {result.sourceRef && (
-            <p className="text-xs text-slate-400 border-t border-slate-100 pt-2">
-              Ref: {result.sourceRef}
-            </p>
-          )}
+      {/* Rationale */}
+      {result.rationale && (
+        <div className="px-3.5 py-2.5 border-b border-[rgba(0,0,0,0.11)]">
+          <p className="text-[9.5px] font-extrabold uppercase tracking-[0.07em] text-[#888880] mb-1">
+            Rationale
+          </p>
+          <p className="text-[12.5px] text-[#4a4a46] leading-[1.7]">{result.rationale}</p>
+        </div>
+      )}
+
+      {/* Source reference */}
+      {result.sourceRef && (
+        <div className="px-3.5 py-2.5">
+          <p className="text-[9.5px] font-extrabold uppercase tracking-[0.07em] text-[#888880] mb-1">
+            Source Reference
+          </p>
+          <p className="text-[12px] italic text-[#4a4a46]">{result.sourceRef}</p>
         </div>
       )}
     </div>

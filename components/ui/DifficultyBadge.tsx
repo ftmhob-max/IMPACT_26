@@ -7,5 +7,5 @@ interface DifficultyBadgeProps {
 
 export function DifficultyBadge({ difficulty }: DifficultyBadgeProps) {
   const config = DIFFICULTIES[difficulty] ?? DIFFICULTIES.proficient;
-  return <Badge className={config.badge}>{config.label}</Badge>;
+  return <Badge className={config.badgeClass}>{config.label}</Badge>;
 }

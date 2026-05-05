@@ -7,5 +7,5 @@ interface DomainBadgeProps {
 
 export function DomainBadge({ domain }: DomainBadgeProps) {
   const config = DOMAINS[domain] ?? DOMAINS.math;
-  return <Badge className={config.badge}>{config.label}</Badge>;
+  return <Badge className={config.badgeClass}>{config.label}</Badge>;
 }

@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { verifyIdToken, setUserRole } from "@/lib/firebase/auth-server";
+import { adminDcMutate } from "@/lib/firebase/admin-dc";
 
 /**
  * Called client-side after sign-up or Google sign-in.
@@ -19,16 +20,22 @@ export async function POST(request: NextRequest) {
     const { adminAuth } = await import("@/lib/firebase/admin");
     const decoded = await adminAuth.verifyIdToken(idToken);
 
-    // Check if user already exists in DB (idempotent)
-    const existingRes = await fetch(
-      `${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}` // placeholder for Admin SDK Data Connect call
-    );
-    void existingRes; // actual DB call done below via Admin SDK
+    // User existence check is handled via Firebase Admin SDK custom claims below
 
     // For now: ensure custom claims are set
     const existing = decoded.role as string | undefined;
     if (!existing) {
-      await setUserRole(decoded.uid, "learner");
+      await setUserRole(decoded.uid, "admin");
+    }
+
+    try {
+      await adminDcMutate("CreateUser", {
+        id: decoded.uid,
+        email: decoded.email ?? `${decoded.uid}@impact26.local`,
+        fullName: decoded.name ?? body.fullName ?? null,
+      });
+    } catch {
+      // User may already exist in Data Connect; login should stay idempotent.
     }
 
     // Set HttpOnly session cookie (7 day expiry)

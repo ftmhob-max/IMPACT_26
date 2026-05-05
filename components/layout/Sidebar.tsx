@@ -2,22 +2,27 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
+import { auth } from "@/lib/firebase/client";
 import { cn } from "@/lib/utils";
+import * as Icons from "@/components/ui/Icons";
 
 const navItems = [
-  { href: "/dashboard",  label: "Dashboard",      icon: "⊞" },
-  { href: "/courses",    label: "Courses",         icon: "📚" },
-  { href: "/formulas",   label: "Formula Index",   icon: "∑" },
-  { href: "/profile",    label: "My Progress",     icon: "📈" },
+  { href: "/dashboard", label: "Dashboard", icon: Icons.LayoutDashboard },
+  { href: "/courses", label: "Courses", icon: Icons.GraduationCap },
+  { href: "/formulas", label: "Formula Index", icon: Icons.Calculator },
+  { href: "/profile", label: "My Progress", icon: Icons.User },
 ];
 
 const adminItems = [
-  { href: "/admin",           label: "Admin Home",    icon: "⚙" },
-  { href: "/admin/questions", label: "Question Bank", icon: "❓" },
-  { href: "/admin/quizzes",   label: "Quizzes",       icon: "📝" },
-  { href: "/admin/courses",   label: "Courses",       icon: "🗂" },
-  { href: "/admin/cohorts",   label: "Cohort Stats",  icon: "📊" },
-  { href: "/admin/users",     label: "Users",         icon: "👥" },
+  { href: "/admin", label: "Admin Home", icon: Icons.ShieldCheck },
+  { href: "/admin/questions", label: "Question Bank", icon: Icons.FileText },
+  { href: "/admin/quizzes", label: "Quizzes", icon: Icons.ClipboardList },
+  { href: "/admin/courses", label: "Courses", icon: Icons.GraduationCap },
+  { href: "/admin/materials", label: "Source Materials", icon: Icons.Database },
+  { href: "/admin/cohorts", label: "Cohort Stats", icon: Icons.BarChart3 },
+  { href: "/admin/users", label: "Users", icon: Icons.Users },
 ];
 
 interface SidebarProps {
@@ -26,29 +31,45 @@ interface SidebarProps {
 
 export function Sidebar({ isAdmin }: SidebarProps) {
   const pathname = usePathname();
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+
+  useEffect(() => {
+    return onAuthStateChanged(auth, (u) => setUser(u));
+  }, []);
 
   return (
-    <aside className="w-56 shrink-0 bg-white border-r border-slate-100 flex flex-col h-full">
-      {/* Logo */}
-      <div className="px-5 py-5 border-b border-slate-100">
-        <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
-          IMPACT_26
-        </p>
-        <p className="text-sm font-bold text-slate-800 mt-0.5">Property Assessment</p>
+    <aside className="border-b border-slate-200 bg-white/95 shadow-sm lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-60 lg:shrink-0 lg:flex-col lg:border-b-0 lg:border-r">
+      <div className="flex items-center justify-between gap-4 px-4 py-4 lg:block lg:px-5 lg:py-5">
+        <Link href="/dashboard" className="block">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#185FA5]">IMPACT_26</p>
+          <p className="mt-0.5 text-sm font-bold text-slate-900">Property Assessment</p>
+        </Link>
+        <div className="flex items-center gap-2 lg:mt-4">
+          <div className="hidden rounded-full bg-[#E6F1FB] px-2.5 py-1 text-[11px] font-bold text-[#185FA5] sm:block lg:inline-flex">
+            {isAdmin ? "Admin" : "Learner"}
+          </div>
+          {user && (
+            <Link 
+              href="/profile"
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-[10px] font-bold text-white shadow-sm ring-2 ring-white transition-transform hover:scale-110 active:scale-95 lg:flex"
+            >
+              {user.displayName
+                ? user.displayName.split(" ").map(n => n[0]).join("").toUpperCase()
+                : user.email?.[0].toUpperCase()}
+            </Link>
+          )}
+        </div>
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+      <nav className="flex gap-1 overflow-x-auto border-t border-slate-100 px-3 py-2 lg:flex-1 lg:flex-col lg:gap-0.5 lg:overflow-y-auto lg:border-t lg:py-4">
         {navItems.map((item) => (
           <NavLink key={item.href} {...item} active={pathname.startsWith(item.href)} />
         ))}
 
         {isAdmin && (
           <>
-            <div className="pt-4 pb-1 px-2">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
-                Admin
-              </p>
+            <div className="hidden px-2 pb-1 pt-4 lg:block">
+              <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Admin</p>
             </div>
             {adminItems.map((item) => (
               <NavLink key={item.href} {...item} active={pathname.startsWith(item.href)} />
@@ -57,29 +78,41 @@ export function Sidebar({ isAdmin }: SidebarProps) {
         )}
       </nav>
 
-      {/* Sign out */}
-      <div className="px-3 py-3 border-t border-slate-100">
+      <div className="hidden border-t border-slate-100 px-3 py-3 lg:block">
         <SignOutButton />
       </div>
     </aside>
   );
 }
 
-function NavLink({ href, label, icon, active }: {
-  href: string; label: string; icon: string; active: boolean;
+function NavLink({
+  href,
+  label,
+  icon: Icon,
+  active,
+}: {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string; size?: number }>;
+  active: boolean;
 }) {
   return (
     <Link
       href={href}
       className={cn(
-        "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors duration-150",
+        "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors",
         active
-          ? "bg-blue-50 text-blue-700 font-medium"
-          : "text-slate-600 hover:bg-slate-50 hover:text-slate-800"
+          ? "bg-[#E6F1FB] font-semibold text-[#185FA5]"
+          : "text-slate-600 hover:bg-[#F8F7F4] hover:text-slate-900"
       )}
     >
-      <span className="text-base leading-none">{icon}</span>
-      {label}
+      <Icon
+        size={18}
+        className={cn(
+          active ? "text-[#185FA5]" : "text-slate-400"
+        )}
+      />
+      <span className="whitespace-nowrap">{label}</span>
     </Link>
   );
 }
@@ -94,9 +127,11 @@ function SignOutButton() {
   return (
     <button
       onClick={handleSignOut}
-      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
+      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-slate-500 transition-colors hover:bg-[#F8F7F4] hover:text-slate-800"
     >
-      <span>↩</span> Sign out
+      <Icons.LogOut size={18} className="text-slate-400" />
+      Sign out
     </button>
   );
 }
+

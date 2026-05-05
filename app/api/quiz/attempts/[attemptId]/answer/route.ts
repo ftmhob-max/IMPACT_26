@@ -1,21 +1,16 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { verifyIdToken } from "@/lib/firebase/auth-server";
+import { adminDcQuery, adminDcMutate } from "@/lib/firebase/admin-dc";
 import { evaluateAnswer } from "@/lib/quiz-engine/evaluate";
 import { submitAnswerSchema } from "@/lib/validations/quiz";
+import { formatUuid } from "@/lib/utils";
 
-/**
- * POST /api/quiz/attempts/[attemptId]/answer
- *
- * Security-critical endpoint. Fetches isCorrect from the database server-side,
- * evaluates the answer, stores the result, then returns full explanations.
- * Correct answers are NEVER exposed until after the learner submits.
- */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ attemptId: string }> }
 ) {
   try {
-    const { attemptId } = await params;
+    const attemptId = formatUuid((await params).attemptId);
     const decoded = await verifyIdToken(request.headers.get("Authorization"));
     const userId = decoded.uid;
 
@@ -24,71 +19,69 @@ export async function POST(
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
-    const { questionId, selectedLetters } = parsed.data;
-
-    const { adminAuth } = await import("@/lib/firebase/admin");
-    void adminAuth;
+    const { selectedLetters } = parsed.data;
+    const questionId = formatUuid(parsed.data.questionId);
 
     // ── Fetch attempt and verify ownership ──────────────────────────────────
-    const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!;
-    const dcBaseUrl = buildDcBaseUrl(projectId);
-
-    const attemptRes = await adminFetch(dcBaseUrl, "GetAttemptForEvaluation", { attemptId });
-    const { quizAttempt } = await attemptRes.json();
+    const { quizAttempt } = await adminDcQuery<{ quizAttempt: any }>(
+      "GetAttemptForEvaluation",
+      { attemptId }
+    );
 
     if (!quizAttempt) {
       return NextResponse.json({ error: "Attempt not found" }, { status: 404 });
     }
     if (quizAttempt.user.id !== userId) {
-      // Horizontal privilege escalation prevention
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     if (quizAttempt.status !== "in_progress") {
       return NextResponse.json({ error: "Attempt is not in progress" }, { status: 409 });
     }
 
-    // ── Verify questionId belongs to this attempt ────────────────────────────
-    const questionOrder: string[] = JSON.parse(quizAttempt.questionOrder);
+    const questionOrder: string[] = JSON.parse(quizAttempt.questionOrder).map((id: string) => formatUuid(id));
     if (!questionOrder.includes(questionId)) {
-      return NextResponse.json({ error: "Question not in this attempt" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Question not in this attempt" },
+        { status: 400 }
+      );
     }
-
-    // ── Prevent re-submission of an already-answered question ────────────────
-    const existingResponse = quizAttempt.quizResponses?.find(
-      (r: { question: { id: string }; answeredAt: string | null }) =>
-        r.question.id === questionId && r.answeredAt !== null
-    );
-    if (existingResponse) {
+    const previousResponses = quizAttempt.quizResponses_on_attempt ?? [];
+    const existing = previousResponses.find((r: any) => r.question.id === questionId);
+    if (existing && existing.isCorrect !== null) {
       return NextResponse.json({ error: "Question already answered" }, { status: 409 });
     }
 
-    // ── Fetch correct answers (Admin SDK — bypasses @auth on isCorrect) ──────
-    const questionRes = await adminFetch(dcBaseUrl, "GetQuestionWithAnswers", { questionId });
-    const { question } = await questionRes.json();
-
+    // ── Fetch correct answers ────────────────────────────────────────────────
+    const { question } = await adminDcQuery<{ question: any }>(
+      "GetQuestionWithAnswers",
+      { questionId }
+    );
     if (!question) {
       return NextResponse.json({ error: "Question not found" }, { status: 404 });
     }
 
-    // ── Find point value for this question in this quiz ──────────────────────
-    const quizQuestionRes = await adminFetch(dcBaseUrl, "GetQuizQuestionPointValue", {
-      quizId: quizAttempt.quiz.id,
-      questionId,
-    });
-    const { quizQuestions } = await quizQuestionRes.json();
+    const { quizQuestions } = await adminDcQuery<{ quizQuestions: Array<{ pointValue: number }> }>(
+      "GetQuizQuestionPointValue",
+      { quizId: quizAttempt.quiz.id, questionId }
+    );
     const pointValue = quizQuestions?.[0]?.pointValue ?? 1.0;
 
     // ── Evaluate server-side ─────────────────────────────────────────────────
-    const result = evaluateAnswer(question, selectedLetters, pointValue);
+    const questionRecord = {
+      ...question,
+      answerChoices: question.answerChoices_on_question ?? [],
+    };
+    const result = evaluateAnswer(questionRecord, selectedLetters, pointValue);
 
     // ── Store response ───────────────────────────────────────────────────────
-    await adminFetch(dcBaseUrl, "UpsertQuizResponse", {
+    await adminDcMutate("UpsertQuizResponse", {
       attemptId,
       questionId,
       selectedLetters: JSON.stringify(selectedLetters),
       isCorrect: result.isCorrect,
       pointsEarned: result.pointsEarned,
       pointsPossible: result.pointsPossible,
+      answeredAt: new Date().toISOString().split("T")[0],
     });
 
     return NextResponse.json(result);
@@ -98,21 +91,4 @@ export async function POST(
     const status = message.includes("auth") || message.includes("token") ? 401 : 500;
     return NextResponse.json({ error: message }, { status });
   }
-}
-
-function buildDcBaseUrl(projectId: string) {
-  return `https://firebasedataconnect.googleapis.com/v1beta/projects/${projectId}/locations/us-central1/services/impact26-dataconnect/connectors/impact26-connector`;
-}
-
-async function adminFetch(baseUrl: string, operationName: string, variables: object) {
-  const { adminAuth } = await import("@/lib/firebase/admin");
-  const token = await adminAuth.createCustomToken("server");
-  return fetch(`${baseUrl}:executeQuery`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ operationName, variables }),
-  });
 }

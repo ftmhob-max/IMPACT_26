@@ -8,5 +8,13 @@
   },
   "dataconnect": {
     "source": "dataconnect"
+  },
+  "emulators": {
+    "dataconnect": {
+      "port": 9400
+    },
+    "ui": {
+      "enabled": true
+    }
   }
 }

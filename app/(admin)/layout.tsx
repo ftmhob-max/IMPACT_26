@@ -1,6 +1,9 @@
 import { Sidebar } from "@/components/layout/Sidebar";
+import { requireAdminPage } from "@/lib/admin/auth";
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  await requireAdminPage("viewer");
+
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden">
       <Sidebar isAdmin />

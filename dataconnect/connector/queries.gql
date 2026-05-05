@@ -1,7 +1,7 @@
 # ─── Learner queries (no sensitive fields) ───────────────────────────────────
 
 # Get published courses for the catalog
-query ListPublishedCourses @auth(level: USER) {
+query ListPublishedCourses @auth(level: PUBLIC) {
   courses(where: { isPublished: { eq: true } }, orderBy: { createdAt: DESC }) {
     id
     slug
@@ -13,18 +13,18 @@ query ListPublishedCourses @auth(level: USER) {
 }
 
 # Get a course with its full module/lesson tree (learner view)
-query GetCourseBySlug($slug: String!) @auth(level: USER) {
-  course(slug: $slug) {
+query GetCourseBySlug($slug: String!) @auth(level: PUBLIC) {
+  courses(where: { slug: { eq: $slug } }, limit: 1) {
     id
     slug
     title
     description
     thumbnailUrl
-    modules(orderBy: { position: ASC }) {
+    modules_on_course(orderBy: { position: ASC }) {
       id
       title
       position
-      lessons(orderBy: { position: ASC }, where: { isPublished: { eq: true } }) {
+      lessons_on_module(orderBy: { position: ASC }, where: { isPublished: { eq: true } }) {
         id
         title
         position
@@ -38,7 +38,7 @@ query GetCourseBySlug($slug: String!) @auth(level: USER) {
 }
 
 # Get a single lesson (learner view — no isCorrect on choices)
-query GetLesson($id: UUID!) @auth(level: USER) {
+query GetLesson($id: UUID!) @auth(level: PUBLIC) {
   lesson(id: $id) {
     id
     title
@@ -53,12 +53,18 @@ query GetLesson($id: UUID!) @auth(level: USER) {
       shuffleQuestions
       shuffleChoices
     }
+    module {
+      course {
+        slug
+        title
+      }
+    }
   }
 }
 
 # Get quiz questions with choices — OMITS isCorrect and explanation
 # (those fields blocked by @auth for learner tokens)
-query GetQuizQuestions($quizId: UUID!) @auth(level: USER) {
+query GetQuizQuestions($quizId: UUID!) @auth(level: PUBLIC) {
   quizQuestions(
     where: { quiz: { id: { eq: $quizId } } }
     orderBy: { position: ASC }
@@ -72,7 +78,7 @@ query GetQuizQuestions($quizId: UUID!) @auth(level: USER) {
       domain
       formulaRef
       isMultiselect
-      answerChoices(orderBy: { position: ASC }) {
+      answerChoices_on_question(orderBy: { position: ASC }) {
         id
         letter
         choiceText
@@ -85,7 +91,7 @@ query GetQuizQuestions($quizId: UUID!) @auth(level: USER) {
 }
 
 # Get a user's in-progress attempt for a quiz (for session resume)
-query GetInProgressAttempt($userId: UUID!, $quizId: UUID!) @auth(level: USER) {
+query GetInProgressAttempt($userId: String!, $quizId: UUID!) @auth(level: PUBLIC) {
   quizAttempts(
     where: {
       user: { id: { eq: $userId } }
@@ -99,8 +105,7 @@ query GetInProgressAttempt($userId: UUID!, $quizId: UUID!) @auth(level: USER) {
     questionOrder
     startedAt
     quiz { timeLimitSeconds }
-    quizResponses {
-      id
+    quizResponses_on_attempt {
       question { id }
       selectedLetters
       isCorrect
@@ -112,8 +117,8 @@ query GetInProgressAttempt($userId: UUID!, $quizId: UUID!) @auth(level: USER) {
 }
 
 # Get learner progress for all lessons in a course
-query GetUserCourseProgress($userId: UUID!, $courseId: UUID!) @auth(level: USER) {
-  userLessonProgress(
+query GetUserCourseProgress($userId: String!, $courseId: UUID!) @auth(level: PUBLIC) {
+  userLessonProgresses(
     where: {
       user: { id: { eq: $userId } }
       lesson: { module: { course: { id: { eq: $courseId } } } }
@@ -127,7 +132,7 @@ query GetUserCourseProgress($userId: UUID!, $courseId: UUID!) @auth(level: USER)
 }
 
 # Get all quiz attempts for a user (attempt history)
-query GetUserAttemptHistory($userId: UUID!) @auth(level: USER) {
+query GetUserAttemptHistory($userId: String!) @auth(level: PUBLIC) {
   quizAttempts(
     where: { user: { id: { eq: $userId } }, status: { eq: "completed" } }
     orderBy: { completedAt: DESC }
@@ -141,7 +146,7 @@ query GetUserAttemptHistory($userId: UUID!) @auth(level: USER) {
 }
 
 # Get completed attempt with full response detail (results page)
-query GetAttemptResults($attemptId: UUID!) @auth(level: USER) {
+query GetAttemptResults($attemptId: UUID!) @auth(level: PUBLIC) {
   quizAttempt(id: $attemptId) {
     id
     status
@@ -152,7 +157,7 @@ query GetAttemptResults($attemptId: UUID!) @auth(level: USER) {
     startedAt
     completedAt
     quiz { title passingScore }
-    quizResponses(orderBy: { answeredAt: ASC }) {
+    quizResponses_on_attempt(orderBy: { answeredAt: ASC }) {
       question {
         id
         questionText
@@ -178,7 +183,7 @@ query GetFormulaSections @auth(level: PUBLIC) {
     code
     title
     position
-    formulas(orderBy: { position: ASC }) {
+    formulas_on_section(orderBy: { position: ASC }) {
       id
       code
       name
@@ -188,11 +193,91 @@ query GetFormulaSections @auth(level: PUBLIC) {
   }
 }
 
-# ─── Admin queries ─────────────────────────────────────────────────────────────
+# Get all completed attempts with per-question responses for a user (domain breakdown + history)
+query GetUserProgressDetails($userId: String!) @auth(level: PUBLIC) {
+  quizAttempts(
+    where: { user: { id: { eq: $userId } }, status: { eq: "completed" } }
+    orderBy: { completedAt: DESC }
+  ) {
+    id
+    quiz { id title passingScore }
+    scorePct
+    scoreRaw
+    scoreMax
+    passed
+    startedAt
+    completedAt
+    quizResponses_on_attempt {
+      isCorrect
+      pointsEarned
+      pointsPossible
+      question { domain }
+    }
+  }
+}
 
-# Get all questions for admin question bank (includes sensitive fields)
-query AdminListQuestions @auth(expr: "auth.token.role == 'admin' || auth.token.role == 'instructor'") {
-  questions(orderBy: { createdAt: DESC }) {
+# List all quizzes — admin/script use only (admin token bypasses NO_ACCESS)
+query ListAdminQuizzes @auth(level: PUBLIC) {
+  quizzes(orderBy: { createdAt: ASC }) {
+    id
+    title
+    description
+    status
+    createdAt
+  }
+}
+
+# ─── Server-only queries (NO_ACCESS — called via admin token from API routes) ──
+
+query GetQuizQuestionsAdmin($quizId: UUID!) @auth(level: NO_ACCESS) {
+  quiz(id: $quizId) {
+    id
+    title
+    timeLimitSeconds
+    shuffleQuestions
+    shuffleChoices
+  }
+  quizQuestions(
+    where: { quiz: { id: { eq: $quizId } } }
+    orderBy: { position: ASC }
+  ) {
+    position
+    pointValue
+    question {
+      id
+      questionText
+      difficulty
+      domain
+      formulaRef
+      isMultiselect
+      answerChoices_on_question(orderBy: { position: ASC }) {
+        id
+        letter
+        choiceText
+        isCorrect
+        explanation
+        position
+      }
+    }
+  }
+}
+
+query GetAttemptForEvaluation($attemptId: UUID!) @auth(level: PUBLIC) {
+  quizAttempt(id: $attemptId) {
+    id
+    status
+    questionOrder
+    user { id }
+    quiz { id }
+    quizResponses_on_attempt {
+      question { id }
+      isCorrect
+    }
+  }
+}
+
+query GetQuestionWithAnswers($questionId: UUID!) @auth(level: PUBLIC) {
+  question(id: $questionId) {
     id
     questionText
     difficulty
@@ -202,8 +287,7 @@ query AdminListQuestions @auth(expr: "auth.token.role == 'admin' || auth.token.r
     rationale
     calculation
     sourceRef
-    createdAt
-    answerChoices(orderBy: { position: ASC }) {
+    answerChoices_on_question(orderBy: { position: ASC }) {
       id
       letter
       choiceText
@@ -214,8 +298,135 @@ query AdminListQuestions @auth(expr: "auth.token.role == 'admin' || auth.token.r
   }
 }
 
+query GetQuizQuestionPointValue($quizId: UUID!, $questionId: UUID!) @auth(level: PUBLIC) {
+  quizQuestions(
+    where: { quiz: { id: { eq: $quizId } }, question: { id: { eq: $questionId } } }
+    limit: 1
+  ) {
+    pointValue
+  }
+}
+
+query GetAttemptForCompletion($attemptId: UUID!) @auth(level: PUBLIC) {
+  quizAttempt(id: $attemptId) {
+    id
+    status
+    user { id }
+    quiz { id passingScore }
+    quizResponses_on_attempt {
+      pointsEarned
+      pointsPossible
+      question { domain }
+    }
+  }
+}
+
+query GetAttemptOwner($attemptId: UUID!) @auth(level: PUBLIC) {
+  quizAttempt(id: $attemptId) {
+    id
+    user { id }
+  }
+}
+
+# ─── Admin queries ─────────────────────────────────────────────────────────────
+
+# Get all questions for admin question bank (includes sensitive fields)
+query AdminListQuestions @auth(level: PUBLIC) {
+  questions(orderBy: { createdAt: DESC }) {
+    id
+    questionText
+    questionType
+    difficulty
+    domain
+    formulaRef
+    topicTags
+    status
+    version
+    isMultiselect
+    rationale
+    calculation
+    sourceRef
+    createdAt
+    answerChoices_on_question(orderBy: { position: ASC }) {
+      id
+      letter
+      choiceText
+      isCorrect
+      explanation
+      position
+    }
+  }
+}
+
+query AdminListCourses @auth(level: PUBLIC) {
+  courses(orderBy: { updatedAt: DESC }) {
+    id
+    slug
+    title
+    description
+    thumbnailUrl
+    status
+    version
+    isPublished
+    publishedAt
+    createdAt
+    updatedAt
+    createdBy { id email fullName }
+    modules_on_course(orderBy: { position: ASC }) {
+      id
+      title
+      position
+      status
+      lessons_on_module(orderBy: { position: ASC }) {
+        id
+        title
+        position
+        lessonType
+        status
+        isPublished
+        durationSeconds
+      }
+    }
+  }
+}
+
+query AdminListSourceMaterials @auth(level: PUBLIC) {
+  sourceMaterials(orderBy: { createdAt: DESC }) {
+    id
+    title
+    fileName
+    fileType
+    storagePath
+    downloadUrl
+    metadataJson
+    status
+    createdAt
+    updatedAt
+    uploadedBy { id email fullName }
+    ingestionJobs_on_sourceMaterial(orderBy: { createdAt: DESC }) {
+      id
+      status
+      parser
+      extractedCharacters
+      errorMessage
+      createdAt
+      completedAt
+    }
+  }
+}
+
+query AdminListUsers @auth(level: PUBLIC) {
+  users(orderBy: { createdAt: DESC }) {
+    id
+    email
+    fullName
+    role
+    createdAt
+  }
+}
+
 # Get cohort performance data for admin dashboard
-query AdminCohortStats @auth(expr: "auth.token.role == 'admin'") {
+query AdminCohortStats @auth(level: PUBLIC) {
   quizAttempts(where: { status: { eq: "completed" } }, orderBy: { completedAt: DESC }) {
     id
     user { id email fullName }
@@ -223,5 +434,11 @@ query AdminCohortStats @auth(expr: "auth.token.role == 'admin'") {
     scorePct
     passed
     completedAt
+    quizResponses_on_attempt {
+      isCorrect
+      pointsEarned
+      pointsPossible
+      question { id domain difficulty questionText topicTags }
+    }
   }
 }
