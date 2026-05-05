@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode, ComponentType } from "react";
 import { cn } from "@/lib/utils";
-import { ArrowRight, ChevronLeft } from "./Icons";
+import { ArrowRight, ChevronLeft, type IconProps } from "./Icons";
 
 export function LearnerPage({
   children,
@@ -37,7 +37,7 @@ export function PageHeader({
   action?: ReactNode;
   backHref?: string;
   backLabel?: string;
-  icon?: ComponentType<{ className?: string; size?: number }>;
+  icon?: ComponentType<IconProps>;
 }) {
   return (
     <header className="mb-6">
@@ -103,7 +103,7 @@ export function MetricCard({
   value: string | number;
   detail?: string;
   tone?: "blue" | "green" | "amber" | "slate";
-  icon?: ComponentType<{ className?: string; size?: number }>;
+  icon?: ComponentType<IconProps>;
 }) {
   const tones = {
     blue: "text-[#185FA5] bg-[#E6F1FB]",
@@ -173,7 +173,7 @@ export function EmptyState({
   title: string;
   description: string;
   action?: ReactNode;
-  icon?: ComponentType<{ className?: string; size?: number }>;
+  icon?: ComponentType<IconProps>;
 }) {
   return (
     <div className="rounded-lg border border-dashed border-slate-200 bg-white px-6 py-12 text-center">

@@ -116,29 +116,37 @@ export function QuizEngine({ session, onComplete, onBack }: QuizEngineProps) {
 
   const handleSelect = useCallback(
     (questionId: string, letter: string, isMultiselect: boolean) => {
-      setQuestionStates((prev) => {
-        const current = prev[questionId];
-        let next: string[];
-        if (isMultiselect) {
-          next = current.selectedLetters.includes(letter)
-            ? current.selectedLetters.filter((l) => l !== letter)
-            : [...current.selectedLetters, letter];
-        } else {
-          next = [letter];
-        }
-        return { ...prev, [questionId]: { ...current, selectedLetters: next } };
-      });
+      const current = questionStates[questionId];
+      if (!current) return;
+
+      let next: string[];
+      if (isMultiselect) {
+        next = current.selectedLetters.includes(letter)
+          ? current.selectedLetters.filter((l) => l !== letter)
+          : [...current.selectedLetters, letter];
+      } else {
+        next = [letter];
+      }
+
+      setQuestionStates((prev) => ({
+        ...prev,
+        [questionId]: { ...prev[questionId], selectedLetters: next },
+      }));
 
       void (async () => {
-        const headers = await authHeaders();
-        await fetch(`/api/quiz/attempts/${session.attemptId}/save`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", ...headers },
-          body: JSON.stringify({ questionId, selectedLetters: next }),
-        }).catch(() => {});
+        try {
+          const headers = await authHeaders();
+          await fetch(`/api/quiz/attempts/${session.attemptId}/save`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", ...headers },
+            body: JSON.stringify({ questionId, selectedLetters: next }),
+          });
+        } catch (err) {
+          console.error("[QuizEngine] Auto-save error:", err);
+        }
       })();
     },
-    [session.attemptId]
+    [questionStates, session.attemptId]
   );
 
   const handleSubmit = useCallback(
