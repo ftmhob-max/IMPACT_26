@@ -14,38 +14,38 @@ If a user is not using a supported framework, they can use the generated SDK dir
 Here's an example of how to use it with the first 5 operations:
 
 ```js
-import { createUser, updateUserRole, createCourse, updateCourse, createModule, updateModule, createLessonVersion, createLesson, updateLesson, createSourceMaterial } from '@impact26/dataconnect-sdk';
+import { listPublishedCourses, getCourseBySlug, getLesson, getQuizQuestions, getInProgressAttempt, getUserCourseProgress, getLessonProgress, getUserCourseProgressFull, getUserAttemptHistory, getAttemptResults } from '@impact26/dataconnect-sdk';
 
 
-// Operation CreateUser:  For variables, look at type CreateUserVars in ../index.d.ts
-const { data } = await CreateUser(dataConnect, createUserVars);
+// Operation ListPublishedCourses: 
+const { data } = await ListPublishedCourses(dataConnect);
 
-// Operation UpdateUserRole:  For variables, look at type UpdateUserRoleVars in ../index.d.ts
-const { data } = await UpdateUserRole(dataConnect, updateUserRoleVars);
+// Operation GetCourseBySlug:  For variables, look at type GetCourseBySlugVars in ../index.d.ts
+const { data } = await GetCourseBySlug(dataConnect, getCourseBySlugVars);
 
-// Operation CreateCourse:  For variables, look at type CreateCourseVars in ../index.d.ts
-const { data } = await CreateCourse(dataConnect, createCourseVars);
+// Operation GetLesson:  For variables, look at type GetLessonVars in ../index.d.ts
+const { data } = await GetLesson(dataConnect, getLessonVars);
 
-// Operation UpdateCourse:  For variables, look at type UpdateCourseVars in ../index.d.ts
-const { data } = await UpdateCourse(dataConnect, updateCourseVars);
+// Operation GetQuizQuestions:  For variables, look at type GetQuizQuestionsVars in ../index.d.ts
+const { data } = await GetQuizQuestions(dataConnect, getQuizQuestionsVars);
 
-// Operation CreateModule:  For variables, look at type CreateModuleVars in ../index.d.ts
-const { data } = await CreateModule(dataConnect, createModuleVars);
+// Operation GetInProgressAttempt:  For variables, look at type GetInProgressAttemptVars in ../index.d.ts
+const { data } = await GetInProgressAttempt(dataConnect, getInProgressAttemptVars);
 
-// Operation UpdateModule:  For variables, look at type UpdateModuleVars in ../index.d.ts
-const { data } = await UpdateModule(dataConnect, updateModuleVars);
+// Operation GetUserCourseProgress:  For variables, look at type GetUserCourseProgressVars in ../index.d.ts
+const { data } = await GetUserCourseProgress(dataConnect, getUserCourseProgressVars);
 
-// Operation CreateLessonVersion:  For variables, look at type CreateLessonVersionVars in ../index.d.ts
-const { data } = await CreateLessonVersion(dataConnect, createLessonVersionVars);
+// Operation GetLessonProgress:  For variables, look at type GetLessonProgressVars in ../index.d.ts
+const { data } = await GetLessonProgress(dataConnect, getLessonProgressVars);
 
-// Operation CreateLesson:  For variables, look at type CreateLessonVars in ../index.d.ts
-const { data } = await CreateLesson(dataConnect, createLessonVars);
+// Operation GetUserCourseProgressFull:  For variables, look at type GetUserCourseProgressFullVars in ../index.d.ts
+const { data } = await GetUserCourseProgressFull(dataConnect, getUserCourseProgressFullVars);
 
-// Operation UpdateLesson:  For variables, look at type UpdateLessonVars in ../index.d.ts
-const { data } = await UpdateLesson(dataConnect, updateLessonVars);
+// Operation GetUserAttemptHistory:  For variables, look at type GetUserAttemptHistoryVars in ../index.d.ts
+const { data } = await GetUserAttemptHistory(dataConnect, getUserAttemptHistoryVars);
 
-// Operation CreateSourceMaterial:  For variables, look at type CreateSourceMaterialVars in ../index.d.ts
-const { data } = await CreateSourceMaterial(dataConnect, createSourceMaterialVars);
+// Operation GetAttemptResults:  For variables, look at type GetAttemptResultsVars in ../index.d.ts
+const { data } = await GetAttemptResults(dataConnect, getAttemptResultsVars);
 
 
 ```

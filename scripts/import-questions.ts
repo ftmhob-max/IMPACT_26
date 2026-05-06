@@ -30,16 +30,19 @@ const DC_BASE_URL = process.env.FIREBASE_DATACONNECT_EMULATOR_HOST
 
 // ─── Firebase Admin init ─────────────────────────────────────────────────────
 
-let app: App;
+let app: App | null = null;
+const isEmulator = !!process.env.FIREBASE_DATACONNECT_EMULATOR_HOST;
+
 if (!getApps().length) {
-  if (!SERVICE_ACCOUNT_KEY) {
+  if (SERVICE_ACCOUNT_KEY) {
+    app = initializeApp({ credential: cert(JSON.parse(SERVICE_ACCOUNT_KEY)), projectId: PROJECT_ID });
+  } else if (!isEmulator) {
     throw new Error("Set FIREBASE_SERVICE_ACCOUNT_KEY env var before running");
   }
-  app = initializeApp({ credential: cert(JSON.parse(SERVICE_ACCOUNT_KEY)), projectId: PROJECT_ID });
 } else {
   app = getApps()[0];
 }
-const adminAuth = getAuth(app);
+const adminAuth = app ? getAuth(app) : null;
 
 // ─── Types (mirror the Q array in the HTML) ──────────────────────────────────
 
@@ -60,9 +63,10 @@ interface RawQuestion {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 async function getAdminToken(): Promise<string> {
+  if (isEmulator) return "owner";
   // Use the service account's access token to call the Data Connect REST API
   // @ts-ignore
-  const accessTokenObj = await app.options.credential?.getAccessToken();
+  const accessTokenObj = await app?.options.credential?.getAccessToken();
   return accessTokenObj?.access_token || "";
 }
 

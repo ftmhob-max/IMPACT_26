@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently -n \"next,firebase,browser\" -c \"cyan,yellow,green\" \"next dev\" \".\\firebase.exe emulators:start --only dataconnect\" \"wait-on http://127.0.0.1:3000 http://127.0.0.1:9400 && open-cli http://127.0.0.1:3000\"",
+    "dev": "concurrently -n \"next,firebase,browser\" -c \"cyan,yellow,green\" \"next dev\" \"firebase emulators:start --only dataconnect\" \"wait-on http://127.0.0.1:3000 http://127.0.0.1:9400 && open-cli http://127.0.0.1:3000\"",
     "dev:next": "next dev",
-    "dev:firebase": ".\\firebase.exe emulators:start --only dataconnect",
+    "dev:firebase": "firebase emulators:start --only dataconnect",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
