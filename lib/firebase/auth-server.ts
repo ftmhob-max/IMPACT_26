@@ -1,7 +1,14 @@
 import { adminAuth } from "./admin";
-import type { DecodedIdToken } from "firebase-admin/auth";
 
-export async function verifyIdToken(authHeader: string | null): Promise<DecodedIdToken> {
+export interface VerifiedToken {
+  uid: string;
+  email?: string;
+  name?: string;
+  role?: string;
+  [key: string]: unknown;
+}
+
+export async function verifyIdToken(authHeader: string | null): Promise<VerifiedToken> {
   if (!authHeader?.startsWith("Bearer ")) {
     throw new Error("Unauthorized: missing or malformed auth token");
   }
