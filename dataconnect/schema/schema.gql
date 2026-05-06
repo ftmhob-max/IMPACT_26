@@ -32,6 +32,11 @@ type Module @table(name: "modules", singular: "module", plural: "modules", key: 
   id: UUID! @col(name: "id") @default(expr: "uuidV4()")
   course: Course! @ref
   title: String! @col(dataType: "text")
+  description: String @col(dataType: "text")
+  # JSON array of objective strings
+  learningObjectives: String @col(dataType: "text")
+  # JSON array of prerequisite Module UUIDs
+  prerequisiteModuleIds: String @col(dataType: "text")
   position: Int!
   version: Int! @default(value: 1)
   status: String! @col(dataType: "text") @default(value: "draft")
@@ -49,6 +54,8 @@ type Lesson @table(name: "lessons", singular: "lesson", plural: "lessons", key: 
   contentJson: String @col(dataType: "text")
   # Mux playback ID (not asset ID — never expose asset ID to client)
   videoPlaybackId: String @col(dataType: "text")
+  # External video URL (YouTube, Vimeo, Loom, Google Drive, Wistia, etc.)
+  videoUrl: String @col(dataType: "text")
   quiz: Quiz
   sourceMaterial: SourceMaterial
   durationSeconds: Int
@@ -210,6 +217,19 @@ type QuizResponse @table(name: "quiz_responses", singular: "quizResponse", plura
   pointsEarned: Float
   pointsPossible: Float
   answeredAt: Date
+}
+
+# ─── Lesson Version History ───────────────────────────────────────────────────
+
+type LessonVersion @table(name: "lesson_versions", singular: "lessonVersion", plural: "lessonVersions", key: ["id"]) {
+  id: UUID! @col(name: "id") @default(expr: "uuidV4()")
+  lesson: Lesson! @ref
+  # Snapshot of contentJson at time of save
+  contentJson: String @col(dataType: "text")
+  videoPlaybackId: String @col(dataType: "text")
+  versionNote: String @col(dataType: "text")
+  createdBy: User!
+  createdAt: Date! @default(expr: "request.time")
 }
 
 # ─── Formula Reference ────────────────────────────────────────────────────────

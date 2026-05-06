@@ -11,7 +11,7 @@ export function SignOutButton() {
     try {
       await signOut();
       await fetch("/api/auth/sync-user", { method: "DELETE" });
-      router.push("/sign-in");
+      router.push("/");
       router.refresh();
     } catch (error) {
       console.error("Sign out failed:", error);

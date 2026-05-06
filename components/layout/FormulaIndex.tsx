@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import * as Icons from "@/components/ui/Icons";
+import { IconTile, StatusBadge } from "@/components/ui/LearnerPrimitives";
 
 interface Formula {
   id: string;
@@ -59,8 +60,10 @@ export function FormulaIndex({ sections }: FormulaIndexProps) {
   return (
     <div className="space-y-4">
       <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-        <label htmlFor="formula-search" className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.08em] text-slate-400">
-          <Icons.Search size={14} />
+        <div className="flex items-start gap-3">
+          <IconTile icon={Icons.Search} size={16} className="h-9 w-9" />
+          <div className="min-w-0 flex-1">
+        <label htmlFor="formula-search" className="text-xs font-extrabold uppercase tracking-[0.08em] text-[#185FA5]">
           Search formulas
         </label>
         <div className="relative mt-2">
@@ -76,6 +79,8 @@ export function FormulaIndex({ sections }: FormulaIndexProps) {
         <p className="mt-2 text-xs text-slate-500">
           Showing {totalVisible} formulas across {filtered.length} sections.
         </p>
+          </div>
+        </div>
       </div>
 
       {filtered.length === 0 ? (
@@ -90,11 +95,11 @@ export function FormulaIndex({ sections }: FormulaIndexProps) {
             <section key={section.id} className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
               <button
                 onClick={() => toggleSection(section.id)}
-                className="flex w-full items-start justify-between gap-4 px-5 py-4 text-left transition-colors hover:bg-[#F8F7F4]"
+                className="flex w-full items-start justify-between gap-4 px-5 py-4 text-left transition-colors hover:bg-[#F8F7F4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-inset"
               >
                 <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#185FA5]">{section.code}</p>
-                  <h2 className="mt-1 text-sm font-semibold text-slate-800">{section.title}</h2>
+                  <StatusBadge tone="blue" className="mb-2">{section.code}</StatusBadge>
+                  <h2 className="text-sm font-extrabold text-slate-900">{section.title}</h2>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-500">
@@ -111,14 +116,14 @@ export function FormulaIndex({ sections }: FormulaIndexProps) {
               {isOpen && (
                 <div className="grid gap-0 border-t border-slate-100 sm:grid-cols-2">
                   {section.formulas.map((formula) => (
-                    <article key={formula.id} className="border-b border-slate-100 px-5 py-4">
+                    <article key={formula.id} className="border-b border-slate-100 px-5 py-4 transition-colors hover:bg-[#fbfcfd]">
                       <div className="mb-2 flex items-start justify-between gap-3">
                         <div>
                           <p className="font-mono text-xs font-semibold text-[#185FA5]">{formula.code}</p>
                           <h3 className="mt-1 text-sm font-semibold leading-snug text-slate-800">{formula.name}</h3>
                         </div>
                       </div>
-                      <p className="font-calc rounded-md bg-[#F8F7F4] px-3 py-2 text-[12px] text-slate-700">
+                      <p className="font-calc rounded-md border border-[#b8d7f0] bg-[#f8fbff] px-3 py-2 text-[12px] text-slate-800">
                         {formula.expression}
                       </p>
                       {formula.notes && <p className="mt-2 text-xs leading-5 text-slate-500">{formula.notes}</p>}
@@ -133,4 +138,3 @@ export function FormulaIndex({ sections }: FormulaIndexProps) {
     </div>
   );
 }
-

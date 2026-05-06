@@ -63,6 +63,15 @@ extend type Mutation {
     data: Lesson_Data!
   ): Lesson_KeyOutput! @fdc_generated(from: "Lesson", purpose: INSERT_SINGLE)
   """
+  ✨ Insert a single `LessonVersion` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  lessonVersion_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: LessonVersion_Data!
+  ): LessonVersion_KeyOutput! @fdc_generated(from: "LessonVersion", purpose: INSERT_SINGLE)
+  """
   ✨ Insert a single `Module` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
   module_insert(
@@ -215,6 +224,15 @@ extend type Mutation {
     """
     data: [Lesson_Data!]!
   ): [Lesson_KeyOutput!]! @fdc_generated(from: "Lesson", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `LessonVersion` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  lessonVersion_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [LessonVersion_Data!]!
+  ): [LessonVersion_KeyOutput!]! @fdc_generated(from: "LessonVersion", purpose: INSERT_MULTIPLE)
   """
   ✨ Insert `Module` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
@@ -369,6 +387,15 @@ extend type Mutation {
     data: Lesson_Data!
   ): Lesson_KeyOutput! @fdc_generated(from: "Lesson", purpose: UPSERT_SINGLE)
   """
+  ✨ Insert or update a single `LessonVersion` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `LessonVersion`.
+  """
+  lessonVersion_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: LessonVersion_Data!
+  ): LessonVersion_KeyOutput! @fdc_generated(from: "LessonVersion", purpose: UPSERT_SINGLE)
+  """
   ✨ Insert or update a single `Module` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Module`.
   """
   module_upsert(
@@ -521,6 +548,15 @@ extend type Mutation {
     """
     data: [Lesson_Data!]!
   ): [Lesson_KeyOutput!]! @fdc_generated(from: "Lesson", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `LessonVersion` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `LessonVersion`.
+  """
+  lessonVersion_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [LessonVersion_Data!]!
+  ): [LessonVersion_KeyOutput!]! @fdc_generated(from: "LessonVersion", purpose: UPSERT_MULTIPLE)
   """
   ✨ Insert or update `Module` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Module`.
   """
@@ -779,6 +815,30 @@ extend type Mutation {
     """
     data: Lesson_Data!
   ): Lesson_KeyOutput @fdc_generated(from: "Lesson", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `LessonVersion` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `LessonVersion` or `null` if not found.
+  """
+  lessonVersion_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: LessonVersion_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: LessonVersion_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: LessonVersion_Data!
+  ): LessonVersion_KeyOutput @fdc_generated(from: "LessonVersion", purpose: UPDATE_SINGLE)
   """
   ✨ Update a single `Module` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Module` or `null` if not found.
   """
@@ -1138,6 +1198,25 @@ extend type Mutation {
     data: Lesson_Data!
   ): Int! @fdc_generated(from: "Lesson", purpose: UPDATE_MULTIPLE)
   """
+  ✨ Update `LessonVersion` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  lessonVersion_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: LessonVersion_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: LessonVersion_Data!
+  ): Int! @fdc_generated(from: "LessonVersion", purpose: UPDATE_MULTIPLE)
+  """
   ✨ Update `Module` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
   """
   module_updateMany(
@@ -1461,6 +1540,25 @@ extend type Mutation {
     first: Lesson_FirstRow
   ): Lesson_KeyOutput @fdc_generated(from: "Lesson", purpose: DELETE_SINGLE)
   """
+  ✨ Delete a single `LessonVersion` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  lessonVersion_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: LessonVersion_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: LessonVersion_FirstRow
+  ): LessonVersion_KeyOutput @fdc_generated(from: "LessonVersion", purpose: DELETE_SINGLE)
+  """
   ✨ Delete a single `Module` based on `id`, `key` or `first` and return its key (or `null` if not found).
   """
   module_delete(
@@ -1733,6 +1831,20 @@ extend type Mutation {
     """
     all: Boolean = false
   ): Int! @fdc_generated(from: "Lesson", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `LessonVersion` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  lessonVersion_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: LessonVersion_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "LessonVersion", purpose: DELETE_MULTIPLE)
   """
   ✨ Delete `Module` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
   """

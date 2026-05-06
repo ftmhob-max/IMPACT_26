@@ -246,7 +246,7 @@ export function QuizEngine({ session, onComplete, onBack }: QuizEngineProps) {
   };
 
   return (
-    <div style={{ background: "#f0efe9", minHeight: "100vh" }}>
+    <div className="min-h-screen bg-[#f7f8f6]">
       <QuizHeader
         answeredCount={answeredCount}
         total={session.questions.length}
@@ -259,7 +259,7 @@ export function QuizEngine({ session, onComplete, onBack }: QuizEngineProps) {
         isCompleting={isCompleting}
       />
 
-      <div style={{ maxWidth: 980, margin: "0 auto" }}>
+      <div className="mx-auto max-w-6xl">
         <Scoreboard
           answeredCount={answeredCount}
           correctCount={correctCount}

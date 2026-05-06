@@ -1,4 +1,4 @@
-import { SectionPanel } from "@/components/ui/LearnerPrimitives";
+import { SectionPanel, StatusBadge } from "@/components/ui/LearnerPrimitives";
 import * as Icons from "@/components/ui/Icons";
 import { SignOutButton } from "@/components/auth/SignOutButton";
 import { LearnerSession } from "@/lib/firebase/learner-session";
@@ -22,9 +22,7 @@ export function ProfileSection({ session }: { session: LearnerSession }) {
               <h2 className="text-base font-bold text-slate-900">
                 {session.fullName || "Learner"}
               </h2>
-              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#185FA5] ring-1 ring-inset ring-blue-700/10">
-                {session.role}
-              </span>
+              <StatusBadge tone="blue" className="px-2 py-0.5 text-[10px]">{session.role}</StatusBadge>
             </div>
             <p className="text-sm font-medium text-slate-500">{session.email}</p>
           </div>

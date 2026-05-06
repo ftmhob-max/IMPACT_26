@@ -14,7 +14,7 @@ If a user is not using a supported framework, they can use the generated SDK dir
 Here's an example of how to use it with the first 5 operations:
 
 ```js
-import { createUser, updateUserRole, createCourse, updateCourse, createModule, createLesson, updateLesson, createSourceMaterial, createIngestionJob, createQuestion } from '@impact26/dataconnect-sdk';
+import { createUser, updateUserRole, createCourse, updateCourse, createModule, updateModule, createLessonVersion, createLesson, updateLesson, createSourceMaterial } from '@impact26/dataconnect-sdk';
 
 
 // Operation CreateUser:  For variables, look at type CreateUserVars in ../index.d.ts
@@ -32,6 +32,12 @@ const { data } = await UpdateCourse(dataConnect, updateCourseVars);
 // Operation CreateModule:  For variables, look at type CreateModuleVars in ../index.d.ts
 const { data } = await CreateModule(dataConnect, createModuleVars);
 
+// Operation UpdateModule:  For variables, look at type UpdateModuleVars in ../index.d.ts
+const { data } = await UpdateModule(dataConnect, updateModuleVars);
+
+// Operation CreateLessonVersion:  For variables, look at type CreateLessonVersionVars in ../index.d.ts
+const { data } = await CreateLessonVersion(dataConnect, createLessonVersionVars);
+
 // Operation CreateLesson:  For variables, look at type CreateLessonVars in ../index.d.ts
 const { data } = await CreateLesson(dataConnect, createLessonVars);
 
@@ -40,12 +46,6 @@ const { data } = await UpdateLesson(dataConnect, updateLessonVars);
 
 // Operation CreateSourceMaterial:  For variables, look at type CreateSourceMaterialVars in ../index.d.ts
 const { data } = await CreateSourceMaterial(dataConnect, createSourceMaterialVars);
-
-// Operation CreateIngestionJob:  For variables, look at type CreateIngestionJobVars in ../index.d.ts
-const { data } = await CreateIngestionJob(dataConnect, createIngestionJobVars);
-
-// Operation CreateQuestion:  For variables, look at type CreateQuestionVars in ../index.d.ts
-const { data } = await CreateQuestion(dataConnect, createQuestionVars);
 
 
 ```

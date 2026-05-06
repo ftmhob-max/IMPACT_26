@@ -57,7 +57,7 @@ export default function QuizPage() {
 
   if (state.status === "loading") {
     return (
-      <div className="flex items-center justify-center h-screen text-slate-400 text-sm">
+      <div className="flex h-screen items-center justify-center bg-[#f7f8f6] text-sm font-semibold text-slate-500">
         Loading exam…
       </div>
     );
@@ -65,11 +65,11 @@ export default function QuizPage() {
 
   if (state.status === "error") {
     return (
-      <div className="max-w-md mx-auto py-20 text-center space-y-4">
-        <p className="text-red-600 text-sm">{state.message}</p>
+      <div className="mx-auto max-w-md space-y-4 px-4 py-20 text-center">
+        <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{state.message}</p>
         <button
           onClick={() => router.back()}
-          className="px-4 py-2 border border-slate-200 text-slate-700 text-sm rounded-lg hover:bg-slate-50"
+          className="rounded-lg border border-[#185FA5] bg-white px-4 py-2 text-sm font-bold text-[#185FA5] hover:bg-[#E6F1FB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2"
         >
           Go back
         </button>

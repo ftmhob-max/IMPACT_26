@@ -880,6 +880,40 @@ extend type Lesson {
     having: ContentSourceLink_Having
   ): [ContentSourceLink!]! @fdc_generated(from: "ContentSourceLink.lesson", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
   """
+  ✨ List `LessonVersion` objects in a one-to-many relationship (where `LessonVersion`.`lesson` is this object).
+  """
+  lessonVersions_on_lesson(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: LessonVersion_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [LessonVersion_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: LessonVersion_Having
+  ): [LessonVersion!]! @fdc_generated(from: "LessonVersion.lesson", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
   ✨ List `UserLessonProgress` objects in a one-to-many relationship (where `UserLessonProgress`.`lesson` is this object).
   """
   userLessonProgresses_on_lesson(
@@ -1109,6 +1143,15 @@ extend type Lesson {
     distinct: Boolean = false
   ): Int! @fdc_generated(from: "Lesson.videoPlaybackId", purpose: QUERY_COUNT)
   """
+  ✨ Count the number of rows in the `Lesson` table where the `videoUrl` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  videoUrl_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Lesson.videoUrl", purpose: QUERY_COUNT)
+  """
   ✨ Sum the `durationSeconds` field in the `Lesson` table.
   """
   durationSeconds_sum(
@@ -1215,6 +1258,91 @@ extend type Lesson {
   """
   _id: ID! @fdc_generated(from: "Lesson.id", purpose: ENTITY_ID)
 }
+extend type LessonVersion {
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "LessonVersion", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `LessonVersion` table.
+  """
+  _count: Int! @fdc_generated(from: "LessonVersion.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `LessonVersion` table where the `contentJson` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  contentJson_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "LessonVersion.contentJson", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `LessonVersion` table where the `createdAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "LessonVersion.createdAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `LessonVersion` table where the `createdById` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdById_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "LessonVersion.createdById", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `LessonVersion` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "LessonVersion.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `LessonVersion` table where the `lessonId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  lessonId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "LessonVersion.lessonId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `LessonVersion` table where the `versionNote` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  versionNote_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "LessonVersion.versionNote", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `LessonVersion` table where the `videoPlaybackId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  videoPlaybackId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "LessonVersion.videoPlaybackId", purpose: QUERY_COUNT)
+  """
+  ✨ Minimum of the `createdAt` field in the `LessonVersion` table.
+  """
+  createdAt_min: Date @fdc_generated(from: "LessonVersion.createdAt", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `createdAt` field in the `LessonVersion` table.
+  """
+  createdAt_max: Date @fdc_generated(from: "LessonVersion.createdAt", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "LessonVersion.id", purpose: ENTITY_ID)
+}
 extend type Module {
   """
   ✨ List `Lesson` objects in a one-to-many relationship (where `Lesson`.`module` is this object).
@@ -1277,6 +1405,15 @@ extend type Module {
     distinct: Boolean = false
   ): Int! @fdc_generated(from: "Module.createdAt", purpose: QUERY_COUNT)
   """
+  ✨ Count the number of rows in the `Module` table where the `description` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  description_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Module.description", purpose: QUERY_COUNT)
+  """
   ✨ Count the number of rows in the `Module` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
   """
   id_count(
@@ -1286,6 +1423,15 @@ extend type Module {
     distinct: Boolean = false
   ): Int! @fdc_generated(from: "Module.id", purpose: QUERY_COUNT)
   """
+  ✨ Count the number of rows in the `Module` table where the `learningObjectives` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  learningObjectives_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Module.learningObjectives", purpose: QUERY_COUNT)
+  """
   ✨ Count the number of rows in the `Module` table where the `position` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
   """
   position_count(
@@ -1294,6 +1440,15 @@ extend type Module {
     """
     distinct: Boolean = false
   ): Int! @fdc_generated(from: "Module.position", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Module` table where the `prerequisiteModuleIds` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  prerequisiteModuleIds_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Module.prerequisiteModuleIds", purpose: QUERY_COUNT)
   """
   ✨ Count the number of rows in the `Module` table where the `status` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
   """
@@ -3017,6 +3172,40 @@ extend type User {
     """
     having: Lesson_Having
   ): [Lesson!]! @fdc_generated(from: "Lesson.updatedBy", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `LessonVersion` objects in a one-to-many relationship (where `LessonVersion`.`createdBy` is this object).
+  """
+  lessonVersions_on_createdBy(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: LessonVersion_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [LessonVersion_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: LessonVersion_Having
+  ): [LessonVersion!]! @fdc_generated(from: "LessonVersion.createdBy", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
   """
   ✨ List `Question` objects in a one-to-many relationship (where `Question`.`createdBy` is this object).
   """

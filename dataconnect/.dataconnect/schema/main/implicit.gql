@@ -62,6 +62,16 @@ extend type Lesson {
   """
   updatedById: String @fdc_generated(from: "Lesson.updatedBy", purpose: IMPLICIT_REF_FIELD)
 }
+extend type LessonVersion {
+  """
+  ✨ Implicit foreign key field based on `LessonVersion`.`createdBy`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  createdById: String! @fdc_generated(from: "LessonVersion.createdBy", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `LessonVersion`.`lesson`. It must match the value of `Lesson`.`id`. See `@ref` for how to customize it.
+  """
+  lessonId: UUID! @fdc_generated(from: "LessonVersion.lesson", purpose: IMPLICIT_REF_FIELD)
+}
 extend type Module {
   """
   ✨ Implicit foreign key field based on `Module`.`course`. It must match the value of `Course`.`id`. See `@ref` for how to customize it.

@@ -8,6 +8,7 @@ import { AnswerPanel } from "./AnswerPanel";
 import { DOMAINS, type Difficulty, type Domain } from "@/lib/utils";
 import type { SafeQuestion } from "@/lib/quiz-engine/sanitize";
 import type { EvaluationResult } from "@/lib/quiz-engine/evaluate";
+import * as Icons from "@/components/ui/Icons";
 
 interface QuestionCardProps {
   question: SafeQuestion;
@@ -156,7 +157,7 @@ export function QuestionCard({
             <button
               onClick={onSubmit}
               disabled={isSubmitting}
-              className="mt-1 w-full rounded-lg bg-[#185FA5] px-4 py-2 text-sm font-semibold text-white transition-colors duration-150 hover:bg-[#0d3d6e] disabled:opacity-50"
+              className="mt-1 w-full rounded-lg bg-[#185FA5] px-4 py-2 text-sm font-bold text-white transition-colors duration-150 hover:bg-[#0d3d6e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2 disabled:opacity-50"
             >
               {isSubmitting ? "Checking..." : "Submit answer"}
             </button>
@@ -165,14 +166,15 @@ export function QuestionCard({
           <button
             onClick={handleTogglePanel}
             disabled={isPeeking}
-            className="mt-1 w-fit rounded-md border px-4 py-1.5 text-left text-[11.5px] font-semibold transition-colors duration-150 disabled:opacity-50"
+            className="mt-1 inline-flex w-fit items-center gap-1.5 rounded-md border px-4 py-1.5 text-left text-[11.5px] font-bold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2 disabled:opacity-50"
             style={
               answerPanelOpen
                 ? { color: "#185FA5", borderColor: "#185FA5", background: "#E6F1FB" }
                 : { color: "#888880", borderColor: "rgba(0,0,0,0.20)", background: "transparent" }
             }
           >
-            {isPeeking ? "Loading…" : answerPanelOpen ? "Hide answer ▾" : "Show answer ▸"}
+            {isPeeking ? "Loading..." : answerPanelOpen ? "Hide answer" : "Show answer"}
+            {!isPeeking && (answerPanelOpen ? <Icons.ChevronUp size={13} /> : <Icons.ChevronRight size={13} />)}
           </button>
 
           {panelData && (

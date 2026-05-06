@@ -133,6 +133,25 @@ extend type Query {
     first: Lesson_FirstRow
   ): Lesson @fdc_generated(from: "Lesson", purpose: QUERY_SINGLE)
   """
+  ✨ Look up a single `LessonVersion` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  lessonVersion(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: LessonVersion_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: LessonVersion_FirstRow
+  ): LessonVersion @fdc_generated(from: "LessonVersion", purpose: QUERY_SINGLE)
+  """
   ✨ Look up a single `Module` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
   module(
@@ -545,6 +564,40 @@ extend type Query {
     """
     having: Lesson_Having
   ): [Lesson!]! @fdc_generated(from: "Lesson", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `LessonVersion` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  lessonVersions(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: LessonVersion_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [LessonVersion_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: LessonVersion_Having
+  ): [LessonVersion!]! @fdc_generated(from: "LessonVersion", purpose: QUERY_MULTIPLE)
   """
   ✨ List `Module` objects in the table and return selected fields, optionally filtered by `where` conditions
   """

@@ -1,0 +1,154 @@
+"use client";
+
+import { useCallback, useRef, useState } from "react";
+import * as Icons from "@/components/ui/Icons";
+import { cn } from "@/lib/utils";
+
+const ACCEPTED_TYPES: Record<string, string[]> = {
+  "application/pdf": [".pdf"],
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
+  "application/msword": [".doc"],
+  "text/csv": [".csv"],
+  "text/plain": [".txt"],
+  "text/markdown": [".md"],
+};
+
+const ACCEPTED_EXTENSIONS = [".pdf", ".docx", ".doc", ".csv", ".txt", ".md"];
+
+type IconComp = React.FC<{ className?: string; size?: number }>;
+const FILE_TYPE_ICONS: Record<string, IconComp> = {
+  pdf: Icons.FileText,
+  docx: Icons.FileText,
+  doc: Icons.FileText,
+  csv: Icons.ClipboardList,
+  txt: Icons.BookOpen,
+  md: Icons.BookOpen,
+};
+
+function getExtension(name: string) {
+  return name.split(".").pop()?.toLowerCase() ?? "";
+}
+
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function isAccepted(file: File) {
+  const ext = "." + getExtension(file.name);
+  return ACCEPTED_EXTENSIONS.includes(ext) || Object.keys(ACCEPTED_TYPES).includes(file.type);
+}
+
+interface FileDropZoneProps {
+  onFile: (file: File) => void;
+  file?: File | null;
+  disabled?: boolean;
+  className?: string;
+}
+
+export function FileDropZone({ onFile, file, disabled, className }: FileDropZoneProps) {
+  const [dragging, setDragging] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = useCallback(
+    (incoming: File | undefined) => {
+      if (!incoming) return;
+      if (!isAccepted(incoming)) {
+        setError(`Unsupported file type. Use PDF, DOCX, CSV, TXT, or Markdown.`);
+        return;
+      }
+      setError(null);
+      onFile(incoming);
+    },
+    [onFile]
+  );
+
+  function onDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    if (!disabled) setDragging(true);
+  }
+
+  function onDragLeave(e: React.DragEvent) {
+    e.preventDefault();
+    setDragging(false);
+  }
+
+  function onDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragging(false);
+    if (disabled) return;
+    handleFile(e.dataTransfer.files[0]);
+  }
+
+  function onInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    handleFile(e.target.files?.[0]);
+    e.target.value = "";
+  }
+
+  const ext = file ? getExtension(file.name) : null;
+  const FileIcon: IconComp = (ext != null && FILE_TYPE_ICONS[ext]) || Icons.FileText;
+
+  return (
+    <div className={cn("space-y-1.5", className)}>
+      <div
+        role="button"
+        tabIndex={disabled ? -1 : 0}
+        aria-label="Drop file or click to browse"
+        onDragOver={onDragOver}
+        onDragLeave={onDragLeave}
+        onDrop={onDrop}
+        onClick={() => !disabled && inputRef.current?.click()}
+        onKeyDown={(e) => e.key === "Enter" && !disabled && inputRef.current?.click()}
+        className={cn(
+          "flex min-h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-6 text-center transition-all",
+          dragging
+            ? "border-[#185FA5] bg-[#E6F1FB]/60 scale-[1.01]"
+            : file
+            ? "border-emerald-300 bg-emerald-50"
+            : "border-slate-300 bg-slate-50 hover:border-[#185FA5]/60 hover:bg-[#E6F1FB]/30",
+          disabled && "cursor-not-allowed opacity-60"
+        )}
+      >
+        <input
+          ref={inputRef}
+          type="file"
+          accept={ACCEPTED_EXTENSIONS.join(",")}
+          className="sr-only"
+          onChange={onInputChange}
+          disabled={disabled}
+          tabIndex={-1}
+        />
+
+        {file ? (
+          <>
+            <FileIcon size={28} className="text-emerald-600" />
+            <div>
+              <p className="text-sm font-semibold text-emerald-700">{file.name}</p>
+              <p className="text-xs text-emerald-600">{formatBytes(file.size)}</p>
+            </div>
+            <p className="text-xs text-slate-500">Click to change file</p>
+          </>
+        ) : (
+          <>
+            <Icons.Upload size={28} className={dragging ? "text-[#185FA5]" : "text-slate-400"} />
+            <div>
+              <p className="text-sm font-semibold text-slate-700">
+                {dragging ? "Drop file here" : "Drag & drop or click to browse"}
+              </p>
+              <p className="text-xs text-slate-500">PDF, DOCX, CSV, TXT, Markdown</p>
+            </div>
+          </>
+        )}
+      </div>
+
+      {error && (
+        <p className="flex items-center gap-1.5 text-xs text-red-600">
+          <Icons.X size={12} />
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}

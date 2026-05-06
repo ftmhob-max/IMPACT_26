@@ -1,86 +1,73 @@
-import Link from "next/link";
-import { DomainBadge } from "@/components/ui/DomainBadge";
-import { DifficultyBadge } from "@/components/ui/DifficultyBadge";
 import { adminDcQuery } from "@/lib/firebase/admin-dc";
-import type { Domain, Difficulty } from "@/lib/utils";
+import { QuestionBuilderClient } from "@/components/admin/QuestionBuilderClient";
+import { QuestionBankClient } from "@/components/admin/QuestionBankClient";
 
-// Server component — fetches from Data Connect via Admin SDK
-async function getQuestions() {
-  const data = await adminDcQuery<{ questions: Array<{ id: string; questionText: string; domain: string; difficulty: string; formulaRef?: string }> }>(
-    "AdminListQuestions"
-  ).catch(() => ({ questions: [] }));
-  return data.questions;
+interface Question {
+  id: string;
+  questionText: string;
+  questionType: string;
+  difficulty: string;
+  domain: string;
+  formulaRef?: string | null;
+  topicTags?: string | null;
+  status: string;
+  version: number;
+  isMultiselect: boolean;
+  createdAt: string;
+}
+
+async function getPageData() {
+  const [qData, quizData] = await Promise.all([
+    adminDcQuery<{ questions: Question[] }>("AdminListQuestions").catch(() => ({ questions: [] })),
+    adminDcQuery<{ quizzes: Array<{ id: string; title: string }> }>("ListAdminQuizzes").catch(() => ({
+      quizzes: [],
+    })),
+  ]);
+  return { questions: qData.questions, quizzes: quizData.quizzes };
 }
 
 export default async function QuestionBankPage() {
-  const questions = await getQuestions();
+  const { questions, quizzes } = await getPageData();
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Question Bank</h1>
-          <p className="text-slate-500 mt-1 text-sm">{questions.length} questions</p>
-        </div>
-        <Link
-          href="/admin"
-          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          Open builder
-        </Link>
+    <div className="mx-auto max-w-7xl space-y-8 px-6 py-8">
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900">Question Bank</h1>
+        <p className="mt-1 text-sm text-slate-500">
+          {questions.length} question{questions.length !== 1 ? "s" : ""} · Import via CSV or build manually, then assign to a quiz.
+        </p>
       </div>
 
-      {questions.length === 0 ? (
-        <div className="bg-white rounded-xl border border-slate-100 p-12 text-center space-y-3">
-          <p className="text-slate-400 text-sm">No questions yet.</p>
-          <p className="text-slate-400 text-xs">
-            Run the migration script to import the 80 existing questions, or create new ones manually.
-          </p>
-          <code className="block text-xs bg-slate-100 text-slate-600 rounded px-3 py-2 font-mono max-w-md mx-auto">
-            npx tsx scripts/import-questions.ts
-          </code>
+      {/* Builder panels */}
+      <div className="grid gap-6 xl:grid-cols-2">
+        <div className="rounded-xl border border-black/10 bg-white shadow-sm">
+          <div className="flex items-center gap-2 border-b border-slate-100 px-4 py-3">
+            <span className="text-[#185FA5]">📋</span>
+            <h2 className="text-sm font-bold text-slate-900">CSV Import</h2>
+            <span className="ml-auto text-xs text-slate-400">Bulk upload with validation</span>
+          </div>
+          <div className="p-4">
+            <QuestionBuilderClient mode="csv" quizzes={quizzes} />
+          </div>
         </div>
-      ) : (
-        <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-slate-100 bg-slate-50">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Question</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Domain</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Difficulty</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Formula</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {(questions as Array<{ id: string; questionText: string; domain: string; difficulty: string; formulaRef?: string }>).map((q) => (
-                <tr key={q.id} className="hover:bg-slate-50">
-                  <td className="px-4 py-3 max-w-xs">
-                    <p className="truncate text-slate-800">{q.questionText}</p>
-                  </td>
-                  <td className="px-4 py-3">
-                    <DomainBadge domain={q.domain as Domain} />
-                  </td>
-                  <td className="px-4 py-3">
-                    <DifficultyBadge difficulty={q.difficulty as Difficulty} />
-                  </td>
-                  <td className="px-4 py-3 font-mono text-xs text-slate-500">
-                    {q.formulaRef ?? "-"}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Link
-                      href="/admin"
-                      className="text-blue-600 hover:underline text-xs"
-                    >
-                      Edit
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+
+        <div className="rounded-xl border border-black/10 bg-white shadow-sm">
+          <div className="flex items-center gap-2 border-b border-slate-100 px-4 py-3">
+            <span className="text-[#185FA5]">✏️</span>
+            <h2 className="text-sm font-bold text-slate-900">Manual Builder</h2>
+            <span className="ml-auto text-xs text-slate-400">Multiple choice, multiselect, scenario</span>
+          </div>
+          <div className="p-4">
+            <QuestionBuilderClient mode="manual" quizzes={quizzes} />
+          </div>
         </div>
-      )}
+      </div>
+
+      {/* Question bank with search / filters / pagination / bulk ops */}
+      <div>
+        <h2 className="mb-4 text-lg font-bold text-slate-900">All questions</h2>
+        <QuestionBankClient questions={questions} quizzes={quizzes} />
+      </div>
     </div>
   );
 }

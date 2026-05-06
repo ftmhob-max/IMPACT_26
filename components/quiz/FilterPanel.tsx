@@ -1,5 +1,7 @@
 "use client";
 
+import { cn } from "@/lib/utils";
+
 type DiffFilter = "all" | "easy" | "proficient" | "expert" | "random";
 
 interface FilterPanelProps {
@@ -31,7 +33,7 @@ export function FilterPanel({ diffFilter, domainFilters, onDiffChange, onDomainT
   const isAllDomain = domainFilters.size === 0;
 
   return (
-    <div className="quiz-filters border-b border-[rgba(0,0,0,0.11)] bg-white px-4 py-3 sm:px-5">
+    <div className="quiz-filters mx-4 mt-3 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm sm:px-5">
       <div className="grid gap-3 lg:grid-cols-[92px_1fr] lg:items-start">
         <FilterLabel>Difficulty</FilterLabel>
         <div className="flex gap-1.5 overflow-x-auto pb-1">
@@ -41,12 +43,12 @@ export function FilterPanel({ diffFilter, domainFilters, onDiffChange, onDomainT
               <button
                 key={opt.value}
                 onClick={() => onDiffChange(opt.value)}
-                className="whitespace-nowrap rounded-full border px-3 py-1 text-[11px] font-semibold transition-colors"
-                style={
+                className={cn(
+                  "whitespace-nowrap rounded-full border px-3 py-1 text-[11px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2",
                   active
-                    ? { background: "#185FA5", color: "#fff", borderColor: "#185FA5" }
-                    : { background: "#fff", color: "#4a4a46", borderColor: "rgba(0,0,0,0.20)" }
-                }
+                    ? "border-[#185FA5] bg-[#185FA5] text-white"
+                    : "border-slate-200 bg-white text-slate-600 hover:border-[#185FA5] hover:text-[#185FA5]"
+                )}
               >
                 {opt.label}
               </button>
@@ -62,7 +64,7 @@ export function FilterPanel({ diffFilter, domainFilters, onDiffChange, onDomainT
               <button
                 key={opt.value}
                 onClick={() => onDomainToggle(opt.value)}
-                className="whitespace-nowrap rounded-full border px-3 py-1 text-[11px] font-semibold transition-colors"
+                className="whitespace-nowrap rounded-full border px-3 py-1 text-[11px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2"
                 style={
                   active
                     ? { background: opt.color, color: "#fff", borderColor: opt.color }

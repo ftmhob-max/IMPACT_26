@@ -40,11 +40,11 @@ export function QuizResults({
   onRetake,
 }: QuizResultsProps) {
   return (
-    <div className="max-w-2xl mx-auto px-4 py-12 space-y-8">
+    <div className="mx-auto min-h-screen max-w-3xl space-y-6 bg-[#f7f8f6] px-4 py-10">
       {/* Score card */}
       <div
         className={cn(
-          "relative overflow-hidden rounded-2xl p-10 text-center border shadow-sm",
+          "relative overflow-hidden rounded-lg p-10 text-center border shadow-sm",
           passed === true
             ? "bg-green-50 border-green-200"
             : passed === false
@@ -76,10 +76,12 @@ export function QuizResults({
       </div>
 
       {/* Domain breakdown */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="bg-slate-50 px-5 py-4 border-b border-slate-200 flex items-center gap-2">
-          <Icons.BarChart3 size={18} className="text-slate-500" />
-          <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider">Performance by Domain</h3>
+      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div className="flex items-center gap-2 border-b border-slate-200 bg-[#f8fbff] px-5 py-4">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#b8d7f0] bg-[#E6F1FB] text-[#185FA5]">
+            <Icons.BarChart3 size={18} />
+          </span>
+          <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-800">Performance by Domain</h3>
         </div>
         <div className="p-5 space-y-5">
           {Object.entries(domainBreakdown).map(([domain, { earned, possible }]) => {
@@ -118,14 +120,14 @@ export function QuizResults({
       <div className="flex flex-col sm:flex-row gap-3">
         <button
           onClick={onReview}
-          className="flex-1 flex items-center justify-center gap-2 py-3 px-6 border border-slate-200 bg-white text-slate-700 text-sm font-bold rounded-xl hover:bg-slate-50 transition-all active:scale-[0.98] shadow-sm"
+          className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-[#185FA5] bg-white px-6 py-3 text-sm font-bold text-[#185FA5] shadow-sm transition-all hover:bg-[#E6F1FB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2 active:scale-[0.98]"
         >
           <Icons.FileText size={18} />
           Review Answers
         </button>
         <button
           onClick={onRetake}
-          className="flex-1 flex items-center justify-center gap-2 py-3 px-6 bg-[#185FA5] text-white text-sm font-bold rounded-xl hover:bg-[#0d3d6e] transition-all active:scale-[0.98] shadow-sm"
+          className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#185FA5] px-6 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#0d3d6e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2 active:scale-[0.98]"
         >
           <Icons.RotateCcw size={18} />
           Retake Exam
@@ -134,4 +136,3 @@ export function QuizResults({
     </div>
   );
 }
-

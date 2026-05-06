@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { EmptyState, LearnerPage, PageHeader, PrimaryAction } from "@/components/ui/LearnerPrimitives";
+import { EmptyState, LearnerPage, PageHeader, PrimaryAction, StatusBadge } from "@/components/ui/LearnerPrimitives";
 import { listPublishedCourses } from "@/lib/firebase/generated";
 import { getPlatformDataConnect } from "@/lib/firebase/dataconnect";
 import * as Icons from "@/components/ui/Icons";
@@ -35,12 +35,12 @@ export default async function CoursesPage() {
           icon={Icons.Search}
         />
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           {(courses as Array<{ id: string; slug: string; title: string; description?: string; thumbnailUrl?: string }>).map((course) => (
             <Link
               key={course.id}
               href={`/courses/${course.slug}`}
-              className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#185FA5] hover:shadow-md"
+              className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#185FA5] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2"
             >
               {course.thumbnailUrl ? (
                 <div className="aspect-[16/9] bg-slate-100">
@@ -51,27 +51,25 @@ export default async function CoursesPage() {
                   />
                 </div>
               ) : (
-                <div className="flex aspect-[16/9] items-center justify-center bg-[#E6F1FB] px-6 text-center">
-                  <Icons.BookOpen size={48} className="text-[#185FA5] opacity-20" />
+                <div className="flex aspect-[16/9] items-center justify-center bg-[#f8fbff] px-6 text-center">
+                  <div className="rounded-lg border border-[#b8d7f0] bg-[#E6F1FB] p-5 text-[#185FA5]">
+                    <Icons.BookOpen size={42} className="opacity-80" />
+                  </div>
                 </div>
               )}
               <div className="p-5">
                 <div className="mb-3 flex flex-wrap gap-2">
-                  <span className="rounded-full bg-[#E6F1FB] px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] text-[#185FA5]">
-                    Assessment method
-                  </span>
-                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-500">
-                    Self-paced
-                  </span>
+                  <StatusBadge tone="blue">Assessment method</StatusBadge>
+                  <StatusBadge tone="slate">Self-paced</StatusBadge>
                 </div>
-                <h2 className="text-base font-semibold leading-snug text-slate-900 group-hover:text-[#185FA5]">
+                <h2 className="text-lg font-extrabold leading-snug tracking-[-0.01em] text-slate-950 group-hover:text-[#185FA5]">
                   {course.title}
                 </h2>
                 {course.description && (
                   <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-500">{course.description}</p>
                 )}
                 <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
-                  <span className="text-xs font-semibold text-slate-500">View modules</span>
+                  <span className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">View modules</span>
                   <div className="flex items-center gap-1.5 text-sm font-bold text-[#185FA5]">
                     Start
                     <Icons.ArrowRight size={16} />
@@ -85,4 +83,3 @@ export default async function CoursesPage() {
     </LearnerPage>
   );
 }
-

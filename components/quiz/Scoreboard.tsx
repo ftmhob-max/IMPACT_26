@@ -7,7 +7,7 @@ interface ScoreboardProps {
 
 export function Scoreboard({ answeredCount, correctCount, scorePct, visibleCount }: ScoreboardProps) {
   return (
-    <div className="quiz-scoreboard grid grid-cols-2 border-b border-[rgba(0,0,0,0.11)] bg-white sm:grid-cols-4">
+    <div className="quiz-scoreboard m-4 mb-0 grid grid-cols-2 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm sm:grid-cols-4">
       <ScoreCard value={answeredCount} label="Answered" valueColor="#185FA5" />
       <ScoreCard value={correctCount} label="Correct" valueColor="#3B6D11" />
       <ScoreCard value={scorePct !== null ? `${scorePct}%` : "-"} label="Score" />
@@ -26,7 +26,7 @@ function ScoreCard({
   valueColor?: string;
 }) {
   return (
-    <div className="border-r border-b border-[rgba(0,0,0,0.08)] px-4 py-3 text-center last:border-r-0 sm:border-b-0">
+    <div className="border-r border-b border-slate-100 px-4 py-3 text-center last:border-r-0 sm:border-b-0">
       <div
         className="mb-1 text-2xl font-extrabold leading-none tracking-[-0.02em] sm:text-[26px]"
         style={{ color: valueColor ?? "#1a1a18" }}

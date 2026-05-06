@@ -17,7 +17,9 @@ export function middleware(request: NextRequest) {
   if (
     PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/")) ||
     pathname.startsWith("/_next") ||
-    pathname.startsWith("/favicon")
+    pathname.startsWith("/favicon") ||
+    pathname === "/icon.svg" ||
+    pathname === "/impact-logo.svg"
   ) {
     return NextResponse.next();
   }

@@ -5,7 +5,11 @@ import {
   MetricCard,
   PageHeader,
   PrimaryAction,
+  ProgressMeter,
+  SecondaryAction,
   SectionPanel,
+  StatusBadge,
+  IconTile,
 } from "@/components/ui/LearnerPrimitives";
 import * as Icons from "@/components/ui/Icons";
 import { getLearnerSession } from "@/lib/firebase/learner-session";
@@ -44,6 +48,10 @@ export default async function DashboardPage() {
         action={<PrimaryAction href="/courses">Continue learning</PrimaryAction>}
         icon={Icons.LayoutDashboard}
       />
+
+      <div className="mb-6">
+        <ContinuePanel latestAttempt={latestAttempt} />
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
         <MetricCard
@@ -146,6 +154,60 @@ export default async function DashboardPage() {
   );
 }
 
+function ContinuePanel({ latestAttempt }: { latestAttempt: LatestAttempt | null }) {
+  const score = latestAttempt?.scorePct ?? null;
+  const hasScore = score != null;
+  return (
+    <SectionPanel>
+      <div className="grid gap-5 p-5 lg:grid-cols-[1.25fr_0.75fr] lg:items-center">
+        <div className="flex gap-4">
+          <IconTile icon={hasScore ? Icons.BarChart3 : Icons.BookOpen} tone={hasScore ? "green" : "blue"} />
+          <div className="min-w-0">
+            <StatusBadge tone={hasScore ? (latestAttempt?.passed ? "green" : "amber") : "blue"}>
+              {hasScore ? "Recent exam activity" : "Ready to begin"}
+            </StatusBadge>
+            <h2 className="mt-3 text-xl font-extrabold tracking-[-0.02em] text-slate-950">
+              {hasScore ? "Review your latest attempt and choose the next study move." : "Start with the course, then reinforce formulas as you practice."}
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+              {hasScore
+                ? `${latestAttempt?.quiz.title} is ready for review. Use the rationale and domain feedback to focus your next session.`
+                : "The learner portal is organized around a simple loop: learn the concept, apply the formula, review the rationale, and measure readiness."}
+            </p>
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+              <PrimaryAction href={hasScore && latestAttempt ? `/quiz/${latestAttempt.id}` : "/courses"}>
+                {hasScore ? "Review attempt" : "Start course"}
+              </PrimaryAction>
+              <SecondaryAction href="/formulas">Open Formula Compass</SecondaryAction>
+            </div>
+          </div>
+        </div>
+        <div className="rounded-lg border border-slate-200 bg-[#f8fbff] p-4">
+          <ProgressMeter
+            value={hasScore ? Math.round(score ?? 0) : 0}
+            label={hasScore ? "Latest score" : "Course progress"}
+            detail={hasScore ? `${score?.toFixed(1)}%` : "Not started"}
+            tone={hasScore && latestAttempt?.passed ? "green" : "blue"}
+          />
+          <div className="mt-4 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4">
+            <MiniMetric label="Sections" value="10" />
+            <MiniMetric label="Formulas" value="53" />
+          </div>
+        </div>
+      </div>
+    </SectionPanel>
+  );
+}
+
+function MiniMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-2xl font-extrabold tracking-[-0.03em] text-[#185FA5]">{value}</p>
+      <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500">{label}</p>
+    </div>
+  );
+}
+
 function RecentActivity({ attempt }: { attempt: LatestAttempt }) {
   const scoreLabel = attempt.scorePct != null ? `${attempt.scorePct.toFixed(1)}%` : "—";
   const dateLabel = attempt.completedAt
@@ -157,16 +219,14 @@ function RecentActivity({ attempt }: { attempt: LatestAttempt }) {
     : null;
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
+    <SectionPanel>
       <div className="border-b border-slate-100 px-5 py-4">
-        <h2 className="text-sm font-semibold text-slate-800">Recent activity</h2>
+        <h2 className="text-sm font-extrabold text-slate-900">Recent activity</h2>
         <p className="mt-1 text-xs leading-5 text-slate-500">Your most recently completed exam.</p>
       </div>
       <div className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-4">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#E6F1FB]">
-            <Icons.BarChart3 size={20} className="text-[#185FA5]" />
-          </div>
+          <IconTile icon={Icons.BarChart3} tone={attempt.passed ? "green" : "blue"} size={20} />
           <div>
             <p className="text-sm font-semibold text-slate-800">{attempt.quiz.title}</p>
             <p className="mt-0.5 text-sm text-slate-500">
@@ -186,18 +246,13 @@ function RecentActivity({ attempt }: { attempt: LatestAttempt }) {
           </div>
         </div>
         <div className="flex gap-2 sm:shrink-0">
-          <Link
-            href={`/quiz/${attempt.id}`}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:border-[#185FA5] hover:text-[#185FA5]"
-          >
-            Review attempt
-          </Link>
+          <SecondaryAction href={`/quiz/${attempt.id}`} icon={false}>Review attempt</SecondaryAction>
           <PrimaryAction href="/courses" icon={false}>
             Take again
           </PrimaryAction>
         </div>
       </div>
-    </div>
+    </SectionPanel>
   );
 }
 
@@ -218,9 +273,7 @@ function LearningStep({
 }) {
   return (
     <div className="flex gap-4 px-5 py-4">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[#E6F1FB] text-[#185FA5]">
-        <Icon size={16} />
-      </div>
+      <IconTile icon={Icon} size={16} className="h-9 w-9" />
       <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold text-slate-800">{title}</p>
         <p className="mt-1 text-sm leading-6 text-slate-500">{description}</p>
@@ -246,7 +299,7 @@ function Shortcut({
   return (
     <Link
       href={href}
-      className="flex items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 transition-colors hover:border-[#185FA5] hover:bg-white"
+      className="flex items-start gap-3 rounded-lg border border-slate-200 bg-[#f8fbff] px-4 py-3 transition-colors hover:border-[#185FA5] hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2"
     >
       <Icon size={18} className="mt-0.5 text-slate-400" />
       <div>

@@ -24,6 +24,7 @@ query GetCourseBySlug($slug: String!) @auth(level: PUBLIC) {
       id
       title
       position
+      prerequisiteModuleIds
       lessons_on_module(orderBy: { position: ASC }, where: { isPublished: { eq: true } }) {
         id
         title
@@ -31,6 +32,7 @@ query GetCourseBySlug($slug: String!) @auth(level: PUBLIC) {
         lessonType
         durationSeconds
         videoPlaybackId
+        videoUrl
         quiz { id }
       }
     }
@@ -45,6 +47,7 @@ query GetLesson($id: UUID!) @auth(level: PUBLIC) {
     lessonType
     contentJson
     videoPlaybackId
+    videoUrl
     durationSeconds
     quiz {
       id
@@ -118,6 +121,39 @@ query GetInProgressAttempt($userId: String!, $quizId: UUID!) @auth(level: PUBLIC
 
 # Get learner progress for all lessons in a course
 query GetUserCourseProgress($userId: String!, $courseId: UUID!) @auth(level: PUBLIC) {
+  userLessonProgresses(
+    where: {
+      user: { id: { eq: $userId } }
+      lesson: { module: { course: { id: { eq: $courseId } } } }
+    }
+  ) {
+    lesson { id }
+    status
+    videoPositionSeconds
+    completedAt
+  }
+}
+
+# Get a single lesson's progress record for a user
+query GetLessonProgress($userId: String!, $lessonId: UUID!) @auth(level: PUBLIC) {
+  userLessonProgresses(
+    where: { user: { id: { eq: $userId } }, lesson: { id: { eq: $lessonId } } }
+    limit: 1
+  ) {
+    status
+    videoPositionSeconds
+    completedAt
+  }
+}
+
+# Get enrollment status + all lesson progress for a user in a course
+query GetUserCourseProgressFull($userId: String!, $courseId: UUID!) @auth(level: PUBLIC) {
+  userCourseProgress: userCourseProgresses(
+    where: { user: { id: { eq: $userId } }, course: { id: { eq: $courseId } } }
+    limit: 1
+  ) {
+    enrolledAt
+  }
   userLessonProgresses(
     where: {
       user: { id: { eq: $userId } }
@@ -223,7 +259,17 @@ query ListAdminQuizzes @auth(level: PUBLIC) {
     title
     description
     status
+    passingScore
+    timeLimitSeconds
+    shuffleQuestions
     createdAt
+  }
+}
+
+# Get position count of questions in a quiz (for append position)
+query GetQuizQuestionCount($quizId: UUID!) @auth(level: PUBLIC) {
+  quizQuestions(where: { quiz: { id: { eq: $quizId } } }) {
+    position
   }
 }
 
@@ -332,7 +378,7 @@ query GetAttemptOwner($attemptId: UUID!) @auth(level: PUBLIC) {
 
 # Get all questions for admin question bank (includes sensitive fields)
 query AdminListQuestions @auth(level: PUBLIC) {
-  questions(orderBy: { createdAt: DESC }) {
+  questions(orderBy: { createdAt: DESC }, limit: 500) {
     id
     questionText
     questionType
@@ -358,6 +404,30 @@ query AdminListQuestions @auth(level: PUBLIC) {
   }
 }
 
+# Lightweight question list for question bank table (no answer choices, paginated)
+query AdminListQuestionsPage($limit: Int!, $offset: Int!) @auth(level: PUBLIC) {
+  questions(orderBy: { createdAt: DESC }, limit: $limit, offset: $offset) {
+    id
+    questionText
+    questionType
+    difficulty
+    domain
+    formulaRef
+    topicTags
+    status
+    version
+    isMultiselect
+    createdAt
+  }
+}
+
+# Count of all questions (for pagination total)
+query AdminCountQuestions @auth(level: PUBLIC) {
+  questions {
+    id
+  }
+}
+
 query AdminListCourses @auth(level: PUBLIC) {
   courses(orderBy: { updatedAt: DESC }) {
     id
@@ -375,6 +445,9 @@ query AdminListCourses @auth(level: PUBLIC) {
     modules_on_course(orderBy: { position: ASC }) {
       id
       title
+      description
+      learningObjectives
+      prerequisiteModuleIds
       position
       status
       lessons_on_module(orderBy: { position: ASC }) {
@@ -385,8 +458,26 @@ query AdminListCourses @auth(level: PUBLIC) {
         status
         isPublished
         durationSeconds
+        videoPlaybackId
+        videoUrl
+        contentJson
       }
     }
+  }
+}
+
+# Get lesson version history
+query GetLessonVersions($lessonId: UUID!) @auth(level: PUBLIC) {
+  lessonVersions(
+    where: { lesson: { id: { eq: $lessonId } } }
+    orderBy: { createdAt: DESC }
+  ) {
+    id
+    contentJson
+    videoPlaybackId
+    versionNote
+    createdAt
+    createdBy { id email fullName }
   }
 }
 

@@ -1,4 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="6" fill="#2563eb"/>
-  <text x="16" y="22" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="white">I</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" role="img" aria-label="IMPACT_26 logo">
+  <rect width="32" height="32" rx="7" fill="#0D2F4F"/>
+  <path
+    d="M16 5.4c4.7 0 8.7 3.4 9.5 8l-4.2-.9a6 6 0 0 0-8.8-2.8c-2.3 1.5-3.2 4.2-2.5 6.7l-3.6 2.1C4.8 12 9.5 5.4 16 5.4Z"
+    fill="#185FA5"
+  />
+  <path
+    d="M25.7 14.7 18.2 26a1.7 1.7 0 0 1-3.1-.9v-6.5H8.9a1.7 1.7 0 0 1-.9-3.1L19.4 8a1.7 1.7 0 0 1 2.5 1.8l-1.1 4.1 4 .8c.5.1.7.6.9 1Z"
+    fill="#F7FBFF"
+  />
+  <path
+    d="M20.7 14.1 16.9 25c-.2.7-1.3.5-1.3-.2v-7.1H8.9c-.7 0-.9-1-.3-1.3l11-7.2c.6-.4 1.3.2 1.1.9l-1.2 4.6 4.6 1-3.4-1.6Z"
+    fill="#185FA5"
+  />
+  <path
+    d="M11.3 20.7c2.5 2.1 6 2.5 8.8.9 1.6-.9 2.8-2.3 3.4-3.9l2.8 2.4A11.3 11.3 0 0 1 7.9 23l3.4-2.3Z"
+    fill="#0F6E56"
+  />
 </svg>

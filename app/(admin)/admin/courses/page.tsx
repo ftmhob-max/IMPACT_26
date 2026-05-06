@@ -1,5 +1,9 @@
-import { AdminPortal } from "@/components/admin/AdminPortal";
+import { CurriculumTree } from "@/components/admin/CurriculumTree";
 
 export default function AdminCoursesPage() {
-  return <AdminPortal />;
+  return (
+    <div className="mx-auto max-w-6xl px-6 py-8">
+      <CurriculumTree />
+    </div>
+  );
 }

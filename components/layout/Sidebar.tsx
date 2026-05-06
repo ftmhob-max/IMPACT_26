@@ -38,14 +38,14 @@ export function Sidebar({ isAdmin }: SidebarProps) {
   }, []);
 
   return (
-    <aside className="border-b border-slate-200 bg-white/95 shadow-sm lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-60 lg:shrink-0 lg:flex-col lg:border-b-0 lg:border-r">
+    <aside className="border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-64 lg:shrink-0 lg:flex-col lg:border-b-0 lg:border-r">
       <div className="flex items-center justify-between gap-4 px-4 py-4 lg:block lg:px-5 lg:py-5">
         <Link href="/dashboard" className="block">
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#185FA5]">IMPACT_26</p>
-          <p className="mt-0.5 text-sm font-bold text-slate-900">Property Assessment</p>
+          <p className="text-lg font-extrabold tracking-[-0.03em] text-[#0b3970]">IMPACT_26</p>
+          <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">Property Assessment</p>
         </Link>
         <div className="flex items-center gap-2 lg:mt-4">
-          <div className="hidden rounded-full bg-[#E6F1FB] px-2.5 py-1 text-[11px] font-bold text-[#185FA5] sm:block lg:inline-flex">
+          <div className="hidden rounded-full border border-[#b8d7f0] bg-[#E6F1FB] px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-[0.08em] text-[#185FA5] sm:block lg:inline-flex">
             {isAdmin ? "Admin" : "Learner"}
           </div>
           {user && (
@@ -61,7 +61,7 @@ export function Sidebar({ isAdmin }: SidebarProps) {
         </div>
       </div>
 
-      <nav className="flex gap-1 overflow-x-auto border-t border-slate-100 px-3 py-2 lg:flex-1 lg:flex-col lg:gap-0.5 lg:overflow-y-auto lg:border-t lg:py-4">
+      <nav className="flex gap-1 overflow-x-auto border-t border-slate-100 px-3 py-2 lg:flex-1 lg:flex-col lg:gap-1 lg:overflow-y-auto lg:border-t lg:py-4">
         {navItems.map((item) => (
           <NavLink key={item.href} {...item} active={pathname.startsWith(item.href)} />
         ))}
@@ -100,9 +100,9 @@ function NavLink({
     <Link
       href={href}
       className={cn(
-        "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors",
+        "flex min-h-10 shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2",
         active
-          ? "bg-[#E6F1FB] font-semibold text-[#185FA5]"
+          ? "bg-[#E6F1FB] text-[#185FA5]"
           : "text-slate-600 hover:bg-[#F8F7F4] hover:text-slate-900"
       )}
     >
@@ -122,7 +122,7 @@ function SignOutButton() {
     const { signOut } = await import("@/lib/firebase/auth");
     await signOut();
     await fetch("/api/auth/sync-user", { method: "DELETE" });
-    window.location.href = "/sign-in";
+    window.location.href = "/";
   }
   return (
     <button
@@ -134,4 +134,3 @@ function SignOutButton() {
     </button>
   );
 }
-
