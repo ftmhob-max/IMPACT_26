@@ -1,11 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAdminRequest } from "@/lib/admin/auth";
 import { adminDcMutate, adminDcQuery } from "@/lib/firebase/admin-dc";
+import { formatUuid } from "@/lib/utils";
 import { z } from "zod";
 
+const uuidSchema = z.string().trim().transform(formatUuid).pipe(z.string().uuid());
+
 const addQuestionsSchema = z.object({
-  quizId: z.string().uuid(),
-  questionIds: z.array(z.string().uuid()).min(1),
+  quizId: uuidSchema,
+  questionIds: z.array(uuidSchema).min(1),
   pointValue: z.coerce.number().positive().default(1),
 });
 
@@ -21,22 +24,34 @@ export async function POST(request: NextRequest) {
 
   const { quizId, questionIds, pointValue } = parsed.data;
   try {
-    // Get current max position in quiz
-    const data = await adminDcQuery<{ quizQuestions: Array<{ position: number }> }>(
-      "GetQuizQuestionCount",
-      { quizId }
-    ).catch(() => ({ quizQuestions: [] }));
-    const maxPosition = data.quizQuestions.reduce((max, q) => Math.max(max, q.position), -1);
+    const [positionData, existingQuizData] = await Promise.all([
+      adminDcQuery<{ quizQuestions: Array<{ position: number }> }>("GetQuizQuestionCount", {
+        quizId,
+      }).catch(() => ({ quizQuestions: [] })),
+      adminDcQuery<{
+        quizQuestions: Array<{ question: { id: string } }>;
+      }>("GetQuizQuestionsAdmin", { quizId }).catch(() => ({ quizQuestions: [] })),
+    ]);
 
-    for (let i = 0; i < questionIds.length; i++) {
+    const maxPosition = positionData.quizQuestions.reduce((max, q) => Math.max(max, q.position), -1);
+    const existingQuestionIds = new Set(
+      existingQuizData.quizQuestions.map((entry) => formatUuid(entry.question.id))
+    );
+
+    const uniqueRequestedIds = [...new Set(questionIds)];
+    const questionIdsToAdd = uniqueRequestedIds.filter((questionId) => !existingQuestionIds.has(questionId));
+    const skipped = uniqueRequestedIds.length - questionIdsToAdd.length;
+
+    for (let i = 0; i < questionIdsToAdd.length; i++) {
       await adminDcMutate("AddQuestionToQuiz", {
         quizId,
-        questionId: questionIds[i],
+        questionId: questionIdsToAdd[i],
         position: maxPosition + i + 1,
         pointValue,
       });
     }
-    return NextResponse.json({ added: questionIds.length }, { status: 201 });
+
+    return NextResponse.json({ added: questionIdsToAdd.length, skipped }, { status: 201 });
   } catch (error) {
     console.error("[admin/quizzes/questions]", error);
     return NextResponse.json({ error: "Unable to add questions to quiz" }, { status: 500 });

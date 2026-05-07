@@ -69,11 +69,20 @@ function stripTags(html: string): string {
 function parseSectionTitle(text: string): string {
   // "Section 1: Income Approach" → "Income Approach"
   // "1. Income Approach" → "Income Approach"
-  const m = text.match(/^(?:Section\s+\d+\s*[:.]\s*|\d+\.\s+)(.+)/i);
+  const m = text.match(/^(?:Section\s+\d+\s*[:.:\-–—]\s*|\d+\.\s+)(.+)/i);
   return m ? m[1].trim() : text.trim();
 }
 
 function parseFormulaHeader(text: string): { code: string; name: string } | null {
+  // "FORMULA 1 — CLR-Implied Market Value"
+  const numbered = text.match(/^FORMULA\s+(\d+)\s*[:–—\-]\s*(.+)$/i);
+  if (numbered) {
+    return {
+      code: `FORMULA_${numbered[1]}`,
+      name: numbered[2].trim(),
+    };
+  }
+
   // "Formula GRM: Gross Rent Multiplier"
   // "GRM: Gross Rent Multiplier"
   // "GRM – Gross Rent Multiplier"
@@ -95,6 +104,7 @@ interface QBuilder {
   domain: string;
   formulaRef: string;
   topicTags: string;
+  targetFormula: ParsedFormula;
   choices: ParsedChoice[];
   correctLetters: string[];
   rationale: string;
@@ -126,54 +136,125 @@ function finalizeQuestion(qb: QBuilder): ParsedQuestion {
   };
 }
 
-function parseQuestionsFromCells(
-  cells: string[],
-  ctx: { domain: string; formulaRef: string; topicTags: string }
-): ParsedQuestion[] {
-  const questions: ParsedQuestion[] = [];
-  let qb: QBuilder | null = null;
-  let questionCounter = 0;
+interface ParseContext {
+  domain: string;
+  formulaRef: string;
+  topicTags: string;
+}
 
-  function flush() {
-    if (qb && qb.choices.length > 0) {
-      questions.push(finalizeQuestion(qb));
-    }
-    qb = null;
+interface QuestionParserState {
+  qb: QBuilder | null;
+  questionCounter: number;
+}
+
+function startQuestion(
+  state: QuestionParserState,
+  ctx: ParseContext,
+  targetFormula: ParsedFormula,
+  questionNumber: number | null,
+  difficultySource: string,
+  questionText = ""
+) {
+  flushQuestion(state);
+  state.questionCounter += 1;
+  state.qb = {
+    questionNumber: questionNumber ?? state.questionCounter,
+    questionLines: questionText ? [questionText] : [],
+    difficulty: parseDifficulty(difficultySource),
+    domain: ctx.domain,
+    formulaRef: ctx.formulaRef,
+    topicTags: ctx.topicTags,
+    targetFormula,
+    choices: [],
+    correctLetters: [],
+    rationale: "",
+    calculation: "",
+    mode: "question",
+  };
+}
+
+function flushQuestion(state: QuestionParserState) {
+  if (state.qb && state.qb.choices.length > 0) {
+    state.qb.targetFormula.questions.push(finalizeQuestion(state.qb));
+  }
+  state.qb = null;
+}
+
+function parseQuestionHeaderCells(cells: string[], index: number): {
+  consumed: number;
+  questionNumber: number | null;
+  difficultySource: string;
+  questionText: string;
+} | null {
+  const first = cells[index]?.trim() ?? "";
+  const qMatch = first.match(/^Q[\s.]?(\d+)/i);
+  if (!qMatch) return null;
+
+  const inlineSkill = /SKILL/i.test(first);
+  if (inlineSkill) {
+    const cleaned = first
+      .replace(/^Q[\s.]?\d+\s*/i, "")
+      .replace(/SKILL\s*[:\-]?\s*(EASY|INTERMEDIATE|EXPERT)\s*/i, "")
+      .trim();
+    return {
+      consumed: 1,
+      questionNumber: Number.parseInt(qMatch[1], 10),
+      difficultySource: first,
+      questionText: cleaned,
+    };
   }
 
-  for (const raw of cells) {
-    const text = raw.trim();
+  const second = cells[index + 1]?.trim() ?? "";
+  const third = cells[index + 2]?.trim() ?? "";
+
+  if (/^SKILL/i.test(second)) {
+    return {
+      consumed: 2,
+      questionNumber: Number.parseInt(qMatch[1], 10),
+      difficultySource: second,
+      questionText: "",
+    };
+  }
+
+  if (/^SKILL/i.test(third)) {
+    return {
+      consumed: 3,
+      questionNumber: Number.parseInt(qMatch[1], 10),
+      difficultySource: third,
+      questionText: "",
+    };
+  }
+
+  return null;
+}
+
+function consumeQuestionCells(
+  cells: string[],
+  ctx: ParseContext,
+  getTargetFormula: () => ParsedFormula,
+  state: QuestionParserState
+) {
+  for (let index = 0; index < cells.length; index += 1) {
+    const text = cells[index]?.trim();
     if (!text) continue;
 
-    // ── New question ──────────────────────────────────────────────────────────
-    const qMatch = text.match(/^Q[\s.]?(\d+)/i);
-    if (qMatch && /SKILL/i.test(text)) {
-      flush();
-      questionCounter++;
-      // Strip the Q-number prefix + SKILL label to get question text
-      const cleaned = text
-        .replace(/^Q[\s.]?\d+\s*/i, "")
-        .replace(/SKILL\s*[:\-]?\s*(EASY|INTERMEDIATE|EXPERT)\s*/i, "")
-        .trim();
-      qb = {
-        questionNumber: questionCounter,
-        questionLines: cleaned ? [cleaned] : [],
-        difficulty: parseDifficulty(text),
-        domain: ctx.domain,
-        formulaRef: ctx.formulaRef,
-        topicTags: ctx.topicTags,
-        choices: [],
-        correctLetters: [],
-        rationale: "",
-        calculation: "",
-        mode: "question",
-      };
+    const header = parseQuestionHeaderCells(cells, index);
+    if (header) {
+      startQuestion(
+        state,
+        ctx,
+        getTargetFormula(),
+        header.questionNumber,
+        header.difficultySource,
+        header.questionText
+      );
+      index += header.consumed - 1;
       continue;
     }
 
+    const qb = state.qb;
     if (!qb) continue;
 
-    // ── Correct answer ────────────────────────────────────────────────────────
     const caMatch = text.match(/Correct\s+Answer\s*[:\-]\s*([A-D](?:[,\s]+[A-D])*)/i);
     if (caMatch) {
       qb.correctLetters = caMatch[1]
@@ -184,30 +265,44 @@ function parseQuestionsFromCells(
       continue;
     }
 
-    // ── Section markers ───────────────────────────────────────────────────────
-    if (/^RATIONALE\s*[:\-]/i.test(text)) {
+    if (/^RATIONALE(?:\s*[:\-]|$)/i.test(text)) {
       qb.mode = "rationale";
-      const rest = text.replace(/^RATIONALE\s*[:\-]\s*/i, "").trim();
+      const rest = text.replace(/^RATIONALE\s*[:\-]?\s*/i, "").trim();
       if (rest) qb.rationale = rest;
       continue;
     }
-    if (/^STEP[\s\-]*BY[\s\-]*STEP|^CALCULATION\s*[:\-]/i.test(text)) {
+
+    if (/^(?:STEP[\s\-]*BY[\s\-]*STEP(?:\s+CALCULATION)?|CALCULATION)(?:\s*[:\-]|$)/i.test(text)) {
       qb.mode = "calculation";
       const rest = text
-        .replace(/^STEP[\s\S]*?[:\-]\s*/i, "")
-        .replace(/^CALCULATION\s*[:\-]\s*/i, "")
+        .replace(/^STEP[\s\-]*BY[\s\-]*STEP(?:\s+CALCULATION)?\s*[:\-]?\s*/i, "")
+        .replace(/^CALCULATION\s*[:\-]?\s*/i, "")
         .trim();
       if (rest) qb.calculation = rest;
       continue;
     }
-    if (/^FORMULA\s*[:\-]/i.test(text)) {
-      // Formula reference — store in formulaRef if not already set
+
+    if (/^FORMULA(?:\s*[:\-]|$)/i.test(text)) {
       qb.mode = "post_answer";
       continue;
     }
 
-    // ── Answer choices: "A. text", "A) text", "A - text" ────────────────────
-    const choiceMatch = text.match(/^([A-D])[.)\s\-]\s*(.+)/);
+    const splitChoiceMatch =
+      cells.length >= 2 && /^[A-D]$/i.test(text) && index + 1 < cells.length
+        ? { letter: text.toUpperCase(), choiceText: cells[index + 1]?.trim() ?? "" }
+        : null;
+    if (splitChoiceMatch?.choiceText) {
+      qb.mode = "choices";
+      qb.choices.push({
+        letter: splitChoiceMatch.letter,
+        choiceText: splitChoiceMatch.choiceText,
+        isCorrect: false,
+      });
+      index += 1;
+      continue;
+    }
+
+    const choiceMatch = text.match(/^([A-D])(?:[.)]\s*|\s*-\s+)(.+)$/);
     if (choiceMatch) {
       qb.mode = "choices";
       qb.choices.push({
@@ -218,14 +313,9 @@ function parseQuestionsFromCells(
       continue;
     }
 
-    // ── Accumulate text based on current mode ────────────────────────────────
     switch (qb.mode) {
       case "question":
-        // Continuation of question text (before any choices)
         qb.questionLines.push(text);
-        break;
-      case "choices":
-        // Extra text after choices but before answer — might be formula note; skip
         break;
       case "rationale":
         qb.rationale += (qb.rationale ? " " : "") + text;
@@ -237,19 +327,11 @@ function parseQuestionsFromCells(
         break;
     }
   }
-
-  flush();
-  return questions;
 }
 
 // ─── Main export ──────────────────────────────────────────────────────────────
 
-export async function parseDocxQuestions(buffer: Buffer): Promise<DocxParseResult> {
-  const mammoth = await import("mammoth");
-
-  // Convert to HTML — mammoth maps Heading 1 → <h1>, Heading 2 → <h2>, tables → <table>
-  const { value: html } = await mammoth.convertToHtml({ buffer });
-
+export function parseDocxHtml(html: string): DocxParseResult {
   // ── Split HTML into top-level segments ──────────────────────────────────────
   // We need to handle <table> as a unit (cells can contain <p>/<em> etc.)
   type Segment =
@@ -257,11 +339,6 @@ export async function parseDocxQuestions(buffer: Buffer): Promise<DocxParseResul
     | { type: "table"; cells: string[] };
 
   const segments: Segment[] = [];
-
-  // Walk through the HTML extracting top-level blocks
-  const blockRe = /<(h1|h2|h3|h4|p|table)(\s[^>]*)?>[\s\S]*?<\/\1>/gi;
-  let match: RegExpExecArray | null;
-
   // Track table depths to avoid matching inner tags
   // We use a two-pass approach: find tables first, then paragraphs outside them
   const tableRanges: Array<{ start: number; end: number }> = [];
@@ -314,6 +391,7 @@ export async function parseDocxQuestions(buffer: Buffer): Promise<DocxParseResul
   const sections: ParsedSection[] = [];
   let currentSection: ParsedSection | null = null;
   let currentFormula: ParsedFormula | null = null;
+  const questionState: QuestionParserState = { qb: null, questionCounter: 0 };
 
   function ensureSection(title: string) {
     currentSection = { title, formulas: [] };
@@ -339,10 +417,21 @@ export async function parseDocxQuestions(buffer: Buffer): Promise<DocxParseResul
     };
   }
 
+  function ensureQuestionTargetFormula() {
+    if (!currentFormula) {
+      if (!currentSection) ensureSection("General");
+      currentFormula = { code: "MISC", name: currentSection!.title, questions: [] };
+      currentSection!.formulas.push(currentFormula);
+    }
+    return currentFormula;
+  }
+
   for (const seg of segments) {
     if (seg.type === "h1") {
+      flushQuestion(questionState);
       ensureSection(parseSectionTitle(seg.text));
     } else if (seg.type === "h2") {
+      flushQuestion(questionState);
       const fi = parseFormulaHeader(seg.text);
       if (fi) {
         ensureFormula(fi.code, fi.name);
@@ -352,21 +441,21 @@ export async function parseDocxQuestions(buffer: Buffer): Promise<DocxParseResul
       }
     } else if (seg.type === "table") {
       const ctx = getContext();
-      const questions = parseQuestionsFromCells(seg.cells, ctx);
-      if (questions.length === 0) continue;
-
-      if (!currentFormula) {
-        // Create a default formula container
-        if (!currentSection) ensureSection("General");
-        currentFormula = { code: "MISC", name: currentSection!.title, questions: [] };
-        currentSection!.formulas.push(currentFormula);
-      }
-      currentFormula.questions.push(...questions);
+      consumeQuestionCells(seg.cells, ctx, ensureQuestionTargetFormula, questionState);
     }
     // Skip standalone paragraphs (p) — they are usually headings or blank space
   }
 
+  flushQuestion(questionState);
   const allQuestions = sections.flatMap((s) => s.formulas.flatMap((f) => f.questions));
 
   return { sections, allQuestions };
+}
+
+export async function parseDocxQuestions(buffer: Buffer): Promise<DocxParseResult> {
+  const mammoth = await import("mammoth");
+
+  // Convert to HTML — mammoth maps Heading 1 → <h1>, Heading 2 → <h2>, tables → <table>
+  const { value: html } = await mammoth.convertToHtml({ buffer });
+  return parseDocxHtml(html);
 }

@@ -1,10 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAdminRequest } from "@/lib/admin/auth";
 import { adminDcMutate } from "@/lib/firebase/admin-dc";
+import { formatUuid } from "@/lib/utils";
 import { z } from "zod";
 
 const bodySchema = z.object({
-  courseId: z.string().uuid(),
+  courseId: z.string().trim().transform(formatUuid).pipe(z.string().uuid()),
   publish: z.boolean(),
 });
 

@@ -2,7 +2,10 @@ import { randomUUID } from "crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAdminRequest } from "@/lib/admin/auth";
 import { adminDcMutate, adminDcQuery } from "@/lib/firebase/admin-dc";
+import { formatUuid } from "@/lib/utils";
 import { z } from "zod";
+
+const uuidSchema = z.string().trim().transform(formatUuid).pipe(z.string().uuid());
 
 const createQuizSchema = z.object({
   title: z.string().trim().min(2),
@@ -15,7 +18,7 @@ const createQuizSchema = z.object({
 });
 
 const patchQuizSchema = z.object({
-  quizId: z.string().uuid(),
+  quizId: uuidSchema,
   status: z.enum(["draft", "review", "published"]),
 });
 

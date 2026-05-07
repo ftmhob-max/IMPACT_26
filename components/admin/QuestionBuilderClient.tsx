@@ -15,7 +15,6 @@ export function QuestionBuilderClient({ mode, quizzes }: QuestionBuilderClientPr
   if (mode === "csv") {
     return (
       <CsvImportPanel
-        quizzes={quizzes}
         onImported={(msg) => setNotice(msg)}
       />
     );

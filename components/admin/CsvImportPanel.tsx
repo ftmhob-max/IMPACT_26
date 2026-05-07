@@ -25,13 +25,12 @@ interface PreviewResult {
 }
 
 interface CsvImportPanelProps {
-  quizzes: Array<{ id: string; title: string }>;
   onImported: (message: string) => void;
 }
 
 type InputMode = "text" | "file";
 
-export function CsvImportPanel({ quizzes, onImported }: CsvImportPanelProps) {
+export function CsvImportPanel({ onImported }: CsvImportPanelProps) {
   const [mode, setMode] = useState<InputMode>("file");
   const [csvText, setCsvText] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -131,8 +130,13 @@ export function CsvImportPanel({ quizzes, onImported }: CsvImportPanelProps) {
           className="flex items-center gap-1.5 text-xs font-medium text-[#185FA5] hover:underline"
         >
           <Icons.FileCheck size={13} />
-          Download template
+          Download sample CSV
         </button>
+      </div>
+
+      <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+        Use the sample CSV as a fill-in template for instructors. Keep the header row unchanged, separate choices with
+        `|`, and set `correct_answers` to letters like `A` or `A|C`.
       </div>
 
       {/* Input */}

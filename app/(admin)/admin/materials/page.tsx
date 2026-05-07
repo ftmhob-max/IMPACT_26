@@ -11,18 +11,18 @@ export default function AdminMaterialsPage() {
         </p>
       </div>
 
-      {/* ── DOCX Question Import ──────────────────────────────────────────────── */}
+      {/* ── Question Import ───────────────────────────────────────────────────── */}
       <div className="grid gap-6 xl:grid-cols-2">
         <div className="rounded-xl border border-black/10 bg-white shadow-sm">
           <div className="flex items-center gap-2 border-b border-slate-100 px-4 py-3">
             <span className="text-[#185FA5]">📄</span>
-            <h2 className="text-sm font-bold text-slate-900">DOCX Question Import</h2>
-            <span className="ml-auto text-xs text-slate-400">Auto-generate curriculum + question bank</span>
+            <h2 className="text-sm font-bold text-slate-900">Question Import</h2>
+            <span className="ml-auto text-xs text-slate-400">DOCX or CSV</span>
           </div>
           <div className="p-4">
             <p className="mb-4 text-xs text-slate-500 leading-relaxed">
-              Upload a structured DOCX file (e.g. Assessment Calculations Review format) to automatically extract
-              questions, answers, and rationales — and optionally generate a complete course curriculum.
+              Upload a structured DOCX file to generate curriculum and questions automatically, or use the CSV tab to
+              import instructor-prepared question rows from the sample template.
             </p>
             <DocxImportClient />
           </div>

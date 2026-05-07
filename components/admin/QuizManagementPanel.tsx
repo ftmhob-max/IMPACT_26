@@ -62,7 +62,14 @@ export function QuizManagementPanel() {
     if (quizRes.ok) {
       const data = await quizRes.json();
       setQuizzes(data.quizzes ?? []);
+    } else {
+      setQuizzes([]);
+    }
+    if (qRes.ok) {
+      const data = await qRes.json();
       setQuestions(data.questions ?? []);
+    } else {
+      setQuestions([]);
     }
     setLoading(false);
   }
@@ -105,6 +112,7 @@ export function QuizManagementPanel() {
   async function addQuestionsToQuiz() {
     if (!selectedQuiz || !selectedQIds.size) return;
     setBusy(true);
+    setNotice(null);
     const res = await fetch("/api/admin/quizzes/questions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -115,9 +123,16 @@ export function QuizManagementPanel() {
     });
     setBusy(false);
     if (res.ok) {
+      const data = await res.json().catch(() => ({}));
       setSelectedQIds(new Set());
       setAddingQuestions(false);
-      setNotice({ type: "success", text: `${selectedQIds.size} question(s) added to quiz.` });
+      const added = Number(data.added ?? selectedQIds.size);
+      const skipped = Number(data.skipped ?? 0);
+      const parts = [`${added} question${added !== 1 ? "s" : ""} added to quiz.`];
+      if (skipped > 0) {
+        parts.push(`${skipped} already existed and ${skipped === 1 ? "was" : "were"} skipped.`);
+      }
+      setNotice({ type: "success", text: parts.join(" ") });
       await load();
     } else {
       const err = await res.json().catch(() => ({}));
@@ -126,12 +141,22 @@ export function QuizManagementPanel() {
   }
 
   async function publishQuiz(quizId: string, publish: boolean) {
-    await fetch("/api/admin/quizzes", {
+    setBusy(true);
+    setNotice(null);
+    const res = await fetch("/api/admin/quizzes", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ quizId, status: publish ? "published" : "draft" }),
     });
-    await load();
+    setBusy(false);
+    if (res.ok) {
+      setNotice({ type: "success", text: publish ? "Quiz published." : "Quiz moved back to draft." });
+      await load();
+      return;
+    }
+
+    const err = await res.json().catch(() => ({}));
+    setNotice({ type: "error", text: err.error ?? "Could not update quiz status." });
   }
 
   function setField<K extends keyof NewQuizForm>(key: K, value: NewQuizForm[K]) {
@@ -288,6 +313,9 @@ export function QuizManagementPanel() {
                 </label>
               ))}
             </div>
+            {questions.length === 0 && (
+              <p className="text-xs text-slate-400">No question bank entries available yet.</p>
+            )}
             <button
               type="button"
               className="admin-action"

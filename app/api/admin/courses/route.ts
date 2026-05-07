@@ -2,29 +2,32 @@ import { randomUUID } from "crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAdminRequest } from "@/lib/admin/auth";
 import { adminDcMutate, adminDcQuery } from "@/lib/firebase/admin-dc";
+import { formatUuid } from "@/lib/utils";
 import { courseSchema, lessonSchema } from "@/lib/validations/admin";
 import { z } from "zod";
 
+const uuidSchema = z.string().trim().transform(formatUuid).pipe(z.string().uuid());
+
 const moduleUpdateSchema = z.object({
   action: z.literal("update-module"),
-  moduleId: z.string().uuid(),
+  moduleId: uuidSchema,
   title: z.string().trim().min(2).optional(),
   description: z.string().trim().optional().nullable(),
   learningObjectives: z.array(z.string().trim().min(1)).optional(),
-  prerequisiteModuleIds: z.array(z.string().uuid()).optional(),
+  prerequisiteModuleIds: z.array(uuidSchema).optional(),
   position: z.coerce.number().int().nonnegative().optional(),
   status: z.enum(["draft", "review", "published"]).optional(),
 });
 
 const lessonUpdateSchema = z.object({
   action: z.literal("update-lesson"),
-  lessonId: z.string().uuid(),
+  lessonId: uuidSchema,
   title: z.string().trim().min(2).optional(),
   contentJson: z.string().optional().nullable(),
   videoPlaybackId: z.string().optional().nullable(),
   videoUrl: z.string().url().optional().nullable(),
-  quizId: z.string().uuid().optional().nullable(),
-  sourceMaterialId: z.string().uuid().optional().nullable(),
+  quizId: uuidSchema.optional().nullable(),
+  sourceMaterialId: uuidSchema.optional().nullable(),
   durationSeconds: z.coerce.number().int().nonnegative().optional().nullable(),
   position: z.coerce.number().int().nonnegative().optional(),
   status: z.enum(["draft", "review", "published"]).optional(),
@@ -33,9 +36,34 @@ const lessonUpdateSchema = z.object({
   saveVersion: z.boolean().default(false),
 });
 
+const createLessonSchema = z.object({
+  action: z.literal("create-lesson"),
+  courseId: uuidSchema,
+  moduleId: uuidSchema,
+  lessonTitle: z.string().trim().min(2),
+  lessonType: z.enum(["text", "video", "quiz", "source"]),
+  contentJson: z.string().optional().nullable(),
+  videoPlaybackId: z.string().optional().nullable(),
+  quizId: uuidSchema.optional().nullable(),
+  sourceMaterialId: uuidSchema.optional().nullable(),
+  durationSeconds: z.coerce.number().int().nonnegative().optional().nullable(),
+  publish: z.boolean().default(false),
+});
+
+const bulkPublishLessonsSchema = z.object({
+  action: z.literal("publish-lessons"),
+  lessonIds: z.array(uuidSchema).min(1),
+  publish: z.boolean().default(true),
+});
+
+const deleteLessonsSchema = z.object({
+  action: z.literal("delete-lessons"),
+  lessonIds: z.array(uuidSchema).min(1),
+});
+
 const reorderSchema = z.object({
   action: z.literal("reorder"),
-  items: z.array(z.object({ id: z.string().uuid(), position: z.number().int() })),
+  items: z.array(z.object({ id: uuidSchema, position: z.number().int() })),
   type: z.enum(["module", "lesson"]),
 });
 
@@ -165,6 +193,94 @@ export async function PUT(request: NextRequest) {
     } catch (err) {
       console.error("[admin/courses:reorder]", err);
       return NextResponse.json({ error: "Unable to reorder" }, { status: 500 });
+    }
+  }
+
+  if (body.action === "publish-lessons") {
+    const parsed = bulkPublishLessonsSchema.safeParse(body);
+    if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+
+    const { lessonIds, publish } = parsed.data;
+    try {
+      await Promise.all(
+        lessonIds.map((lessonId) =>
+          adminDcMutate("UpdateLesson", {
+            id: lessonId,
+            status: publish ? "published" : "draft",
+            isPublished: publish,
+            updatedById: auth.session.uid,
+            publishedAt: publish ? new Date().toISOString() : null,
+          })
+        )
+      );
+      return NextResponse.json({ ok: true, updated: lessonIds.length });
+    } catch (err) {
+      console.error("[admin/courses:publish-lessons]", err);
+      return NextResponse.json({ error: "Unable to publish lessons" }, { status: 500 });
+    }
+  }
+
+  if (body.action === "delete-lessons") {
+    const parsed = deleteLessonsSchema.safeParse(body);
+    if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+
+    const { lessonIds } = parsed.data;
+    try {
+      for (const lessonId of lessonIds) {
+        await adminDcMutate("DeleteSourceLinksForLesson", { lessonId }).catch(() => null);
+        await adminDcMutate("DeleteLessonVersionsForLesson", { lessonId }).catch(() => null);
+        await adminDcMutate("DeleteUserLessonProgressForLesson", { lessonId }).catch(() => null);
+        await adminDcMutate("DeleteLesson", { id: lessonId });
+      }
+      return NextResponse.json({ ok: true, deleted: lessonIds.length });
+    } catch (err) {
+      console.error("[admin/courses:delete-lessons]", err);
+      return NextResponse.json({ error: "Unable to delete lessons" }, { status: 500 });
+    }
+  }
+
+  if (body.action === "create-lesson") {
+    const parsed = createLessonSchema.safeParse(body);
+    if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+
+    const input = parsed.data;
+    const lessonId = randomUUID();
+    try {
+      const courseData = await adminDcQuery<{ courses: Array<{ id: string; modules_on_course?: Array<{ id: string; lessons_on_module?: Array<{ position: number }> }> }> }>(
+        "AdminListCourses"
+      ).catch(() => ({ courses: [] }));
+
+      const targetCourse = courseData.courses.find((course) => formatUuid(course.id) === input.courseId);
+      const targetModule = targetCourse?.modules_on_course?.find((module) => formatUuid(module.id) === input.moduleId);
+      const nextPosition =
+        (targetModule?.lessons_on_module ?? []).reduce(
+          (max: number, lesson: { position?: number | null }) => Math.max(max, lesson.position ?? 0),
+          0
+        ) + 1;
+
+      await adminDcMutate("CreateLesson", {
+        id: lessonId,
+        moduleId: input.moduleId,
+        title: input.lessonTitle,
+        position: nextPosition,
+        lessonType: input.lessonType,
+      });
+      await adminDcMutate("UpdateLesson", {
+        id: lessonId,
+        contentJson: input.contentJson || null,
+        videoPlaybackId: input.videoPlaybackId || null,
+        quizId: input.quizId || null,
+        sourceMaterialId: input.sourceMaterialId || null,
+        durationSeconds: input.durationSeconds ?? null,
+        status: input.publish ? "published" : "draft",
+        isPublished: input.publish,
+        updatedById: auth.session.uid,
+        publishedAt: input.publish ? new Date().toISOString() : null,
+      });
+      return NextResponse.json({ lessonId, moduleId: input.moduleId }, { status: 201 });
+    } catch (error) {
+      console.error("[admin/courses:create-lesson]", error);
+      return NextResponse.json({ error: "Unable to create lesson" }, { status: 500 });
     }
   }
 

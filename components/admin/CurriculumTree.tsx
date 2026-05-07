@@ -60,6 +60,7 @@ export function CurriculumTree() {
   const [editTarget, setEditTarget] = useState<EditTarget | null>(null);
   const [expandedCourses, setExpandedCourses] = useState<Set<string>>(new Set());
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
+  const [selectedLessonIds, setSelectedLessonIds] = useState<Set<string>>(new Set());
   const [notice, setNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [showCreateCourse, setShowCreateCourse] = useState(false);
   const [quizzes, setQuizzes] = useState<Array<{ id: string; title: string }>>([]);
@@ -94,6 +95,73 @@ export function CurriculumTree() {
     setTimeout(() => setNotice(null), 4000);
   }
 
+  function toggleLessonSelection(lessonId: string, checked: boolean) {
+    setSelectedLessonIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(lessonId);
+      else next.delete(lessonId);
+      return next;
+    });
+  }
+
+  function toggleModuleLessonSelection(lessonIds: string[], checked: boolean) {
+    setSelectedLessonIds((prev) => {
+      const next = new Set(prev);
+      for (const lessonId of lessonIds) {
+        if (checked) next.add(lessonId);
+        else next.delete(lessonId);
+      }
+      return next;
+    });
+  }
+
+  async function publishLessons(lessonIds: string[]) {
+    if (!lessonIds.length) return;
+    const res = await fetch("/api/admin/courses", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "publish-lessons", lessonIds, publish: true }),
+    });
+    if (res.ok) {
+      setSelectedLessonIds((prev) => {
+        const next = new Set(prev);
+        lessonIds.forEach((id) => next.delete(id));
+        return next;
+      });
+      showNotice("success", `${lessonIds.length} lesson${lessonIds.length !== 1 ? "s" : ""} published.`);
+      await load();
+      return;
+    }
+    const err = await res.json().catch(() => ({}));
+    showNotice("error", err.error ?? "Failed to publish lessons.");
+  }
+
+  async function deleteLessons(lessonIds: string[]) {
+    if (!lessonIds.length) return;
+    const confirmed = window.confirm(
+      `Delete ${lessonIds.length} lesson${lessonIds.length !== 1 ? "s" : ""}? This cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    const res = await fetch("/api/admin/courses", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "delete-lessons", lessonIds }),
+    });
+    if (res.ok) {
+      setSelectedLessonIds((prev) => {
+        const next = new Set(prev);
+        lessonIds.forEach((id) => next.delete(id));
+        return next;
+      });
+      showNotice("success", `${lessonIds.length} lesson${lessonIds.length !== 1 ? "s" : ""} deleted.`);
+      await load();
+      return;
+    }
+    const err = await res.json().catch(() => ({}));
+    showNotice("error", err.error ?? "Failed to delete lessons.");
+  }
+
   async function addModule(courseId: string) {
     const title = `Module ${courses.find((c) => c.id === courseId)?.modules_on_course.length ?? 0 + 1}`;
     const res = await fetch("/api/admin/courses", {
@@ -116,15 +184,19 @@ export function CurriculumTree() {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        action: "create-lesson",
         courseId,
-        moduleTitle: "__existing__",
+        moduleId,
         lessonTitle: "Untitled lesson",
         lessonType: "text",
         publish: false,
       }),
     });
     if (res.ok) { showNotice("success", "Lesson added."); await load(); }
-    else showNotice("error", "Failed to add lesson.");
+    else {
+      const err = await res.json().catch(() => ({}));
+      showNotice("error", err.error ?? "Failed to add lesson.");
+    }
   }
 
   async function reorderItems(type: "module" | "lesson", items: Array<{ id: string; position: number }>) {
@@ -185,11 +257,16 @@ export function CurriculumTree() {
               course={course}
               expanded={expandedCourses.has(course.id)}
               expandedModules={expandedModules}
+              selectedLessonIds={selectedLessonIds}
               onToggle={() => toggleCourse(course.id)}
               onToggleModule={toggleModule}
               onEdit={(target) => setEditTarget(target)}
               onAddModule={() => addModule(course.id)}
               onAddLesson={(mId) => addLesson(course.id, mId)}
+              onToggleLessonSelection={toggleLessonSelection}
+              onToggleModuleLessonSelection={toggleModuleLessonSelection}
+              onPublishLessons={publishLessons}
+              onDeleteLessons={deleteLessons}
               onReorder={reorderItems}
             />
           ))
@@ -217,21 +294,31 @@ function CourseNode({
   course,
   expanded,
   expandedModules,
+  selectedLessonIds,
   onToggle,
   onToggleModule,
   onEdit,
   onAddModule,
   onAddLesson,
+  onToggleLessonSelection,
+  onToggleModuleLessonSelection,
+  onPublishLessons,
+  onDeleteLessons,
   onReorder,
 }: {
   course: Course;
   expanded: boolean;
   expandedModules: Set<string>;
+  selectedLessonIds: Set<string>;
   onToggle: () => void;
   onToggleModule: (id: string) => void;
   onEdit: (t: EditTarget) => void;
   onAddModule: () => void;
   onAddLesson: (moduleId: string) => void;
+  onToggleLessonSelection: (lessonId: string, checked: boolean) => void;
+  onToggleModuleLessonSelection: (lessonIds: string[], checked: boolean) => void;
+  onPublishLessons: (lessonIds: string[]) => void;
+  onDeleteLessons: (lessonIds: string[]) => void;
   onReorder: (type: "module" | "lesson", items: Array<{ id: string; position: number }>) => void;
 }) {
   return (
@@ -263,9 +350,14 @@ function CourseNode({
               module={mod}
               courseId={course.id}
               expanded={expandedModules.has(mod.id)}
+              selectedLessonIds={selectedLessonIds}
               onToggle={() => onToggleModule(mod.id)}
               onEdit={(t) => onEdit(t)}
               onAddLesson={() => onAddLesson(mod.id)}
+              onToggleLessonSelection={onToggleLessonSelection}
+              onToggleModuleLessonSelection={onToggleModuleLessonSelection}
+              onPublishLessons={onPublishLessons}
+              onDeleteLessons={onDeleteLessons}
             />
           ))}
           {course.modules_on_course.length === 0 && (
@@ -283,21 +375,35 @@ function ModuleNode({
   module,
   courseId,
   expanded,
+  selectedLessonIds,
   onToggle,
   onEdit,
   onAddLesson,
+  onToggleLessonSelection,
+  onToggleModuleLessonSelection,
+  onPublishLessons,
+  onDeleteLessons,
 }: {
   module: Module;
   courseId: string;
   expanded: boolean;
+  selectedLessonIds: Set<string>;
   onToggle: () => void;
   onEdit: (t: EditTarget) => void;
   onAddLesson: () => void;
+  onToggleLessonSelection: (lessonId: string, checked: boolean) => void;
+  onToggleModuleLessonSelection: (lessonIds: string[], checked: boolean) => void;
+  onPublishLessons: (lessonIds: string[]) => void;
+  onDeleteLessons: (lessonIds: string[]) => void;
 }) {
   let objectives: string[] = [];
   let prereqs: string[] = [];
   try { objectives = JSON.parse(module.learningObjectives ?? "[]"); } catch { /* ignore */ }
   try { prereqs = JSON.parse(module.prerequisiteModuleIds ?? "[]"); } catch { /* ignore */ }
+  const lessonIds = module.lessons_on_module.map((lesson) => lesson.id);
+  const selectedIds = lessonIds.filter((lessonId) => selectedLessonIds.has(lessonId));
+  const allSelected = lessonIds.length > 0 && selectedIds.length === lessonIds.length;
+  const someSelected = selectedIds.length > 0;
 
   return (
     <div className="pl-4">
@@ -312,6 +418,33 @@ function ModuleNode({
           )}
         </button>
         <div className="flex items-center gap-1 shrink-0">
+          {module.lessons_on_module.length > 0 && (
+            <input
+              type="checkbox"
+              checked={allSelected}
+              onChange={(e) => onToggleModuleLessonSelection(lessonIds, e.target.checked)}
+              aria-label={`Select all lessons in ${module.title}`}
+              className={cn("h-3.5 w-3.5 rounded border-slate-300", someSelected && !allSelected && "accent-[#185FA5]")}
+            />
+          )}
+          {someSelected && (
+            <>
+              <button
+                type="button"
+                onClick={() => onPublishLessons(selectedIds)}
+                className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700 hover:bg-emerald-100"
+              >
+                Publish selected
+              </button>
+              <button
+                type="button"
+                onClick={() => onDeleteLessons(selectedIds)}
+                className="rounded-md border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-semibold text-red-700 hover:bg-red-100"
+              >
+                Delete selected
+              </button>
+            </>
+          )}
           <span className="text-[10px] text-slate-400">{module.lessons_on_module.length} lessons</span>
           <button type="button" onClick={() => onEdit({ type: "module", item: module, courseId })} className="p-1 text-slate-300 hover:text-slate-600 transition-colors rounded">
             <Icons.Pencil size={12} />
@@ -330,6 +463,8 @@ function ModuleNode({
               lesson={lesson}
               moduleId={module.id}
               courseId={courseId}
+              selected={selectedLessonIds.has(lesson.id)}
+              onToggleSelected={(checked) => onToggleLessonSelection(lesson.id, checked)}
               onEdit={(t) => onEdit(t)}
             />
           ))}
@@ -348,11 +483,15 @@ function LessonRow({
   lesson,
   moduleId,
   courseId,
+  selected,
+  onToggleSelected,
   onEdit,
 }: {
   lesson: Lesson;
   moduleId: string;
   courseId: string;
+  selected: boolean;
+  onToggleSelected: (checked: boolean) => void;
   onEdit: (t: EditTarget) => void;
 }) {
   const typeIcons: Record<string, React.ComponentType<any>> = {
@@ -365,6 +504,13 @@ function LessonRow({
 
   return (
     <div className="flex items-center gap-2 px-3 py-2 group hover:bg-slate-50 transition-colors">
+      <input
+        type="checkbox"
+        checked={selected}
+        onChange={(e) => onToggleSelected(e.target.checked)}
+        aria-label={`Select lesson ${lesson.title}`}
+        className="h-3.5 w-3.5 rounded border-slate-300"
+      />
       <Icons.GripVertical size={12} className="text-slate-200 shrink-0" />
       <TypeIcon size={13} className="text-slate-400 shrink-0" />
       <span className="flex-1 min-w-0 text-xs text-slate-600 truncate">{lesson.title}</span>
@@ -430,10 +576,12 @@ function CourseEditForm({ course, onSaved }: { course: Course; onSaved: () => vo
   const [title, setTitle] = useState(course.title);
   const [description, setDescription] = useState(course.description ?? "");
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function save() {
     setBusy(true);
-    await fetch("/api/admin/courses", {
+    setError(null);
+    const res = await fetch("/api/admin/courses", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -444,17 +592,28 @@ function CourseEditForm({ course, onSaved }: { course: Course; onSaved: () => vo
       }),
     });
     setBusy(false);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      setError(err.error ?? "Could not save course.");
+      return;
+    }
     onSaved();
   }
 
   async function togglePublish() {
     setBusy(true);
-    await fetch("/api/admin/courses/publish", {
+    setError(null);
+    const res = await fetch("/api/admin/courses/publish", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ courseId: course.id, publish: !course.isPublished }),
     });
     setBusy(false);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      setError(err.error ?? "Could not update publish status.");
+      return;
+    }
     onSaved();
   }
 
@@ -466,6 +625,7 @@ function CourseEditForm({ course, onSaved }: { course: Course; onSaved: () => vo
       <Field label="Description">
         <textarea className="admin-input min-h-16" value={description} onChange={(e) => setDescription(e.target.value)} />
       </Field>
+      {error && <p className="text-xs text-red-600">{error}</p>}
       <div className="flex gap-2 pt-1">
         <button type="button" className="admin-action flex-1" onClick={save} disabled={busy}>Save</button>
         <button type="button" className="admin-action secondary" onClick={togglePublish} disabled={busy}>

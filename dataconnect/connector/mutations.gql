@@ -97,6 +97,22 @@ mutation UpdateLesson($id: UUID!, $title: String, $contentJson: String, $videoPl
   })
 }
 
+mutation DeleteLesson($id: UUID!) @auth(level: PUBLIC) {
+  lesson_delete(id: $id)
+}
+
+mutation DeleteLessonVersionsForLesson($lessonId: UUID!) @auth(level: PUBLIC) {
+  lessonVersion_deleteMany(where: { lesson: { id: { eq: $lessonId } } })
+}
+
+mutation DeleteSourceLinksForLesson($lessonId: UUID!) @auth(level: PUBLIC) {
+  contentSourceLink_deleteMany(where: { lesson: { id: { eq: $lessonId } } })
+}
+
+mutation DeleteUserLessonProgressForLesson($lessonId: UUID!) @auth(level: PUBLIC) {
+  userLessonProgress_deleteMany(where: { lesson: { id: { eq: $lessonId } } })
+}
+
 mutation CreateSourceMaterial($id: UUID!, $title: String!, $fileName: String!, $fileType: String!, $storagePath: String!, $downloadUrl: String, $extractedText: String, $metadataJson: String, $status: String!, $uploadedById: String) @auth(level: PUBLIC) {
   sourceMaterial_insert(data: {
     id: $id

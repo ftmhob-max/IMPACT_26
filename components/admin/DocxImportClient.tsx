@@ -5,6 +5,7 @@ import Link from "next/link";
 import * as Icons from "@/components/ui/Icons";
 import { cn } from "@/lib/utils";
 import type { ParsedSection } from "@/lib/admin/docx-question-parser";
+import { CsvImportPanel } from "./CsvImportPanel";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -24,6 +25,7 @@ interface ImportResult {
 }
 
 type Phase = "upload" | "preview" | "options" | "importing" | "done" | "error";
+type ImportMode = "docx" | "csv";
 
 // ─── Difficulty badge ────────────────────────────────────────────────────────
 
@@ -134,6 +136,8 @@ function CheckRow({
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function DocxImportClient() {
+  const [mode, setMode] = useState<ImportMode>("docx");
+  const [csvNotice, setCsvNotice] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>("upload");
   const [file, setFile] = useState<File | null>(null);
   const [parseResult, setParseResult] = useState<ParseResult | null>(null);
@@ -270,6 +274,52 @@ export function DocxImportClient() {
 
   return (
     <div className="space-y-4">
+      <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-0.5">
+        <button
+          type="button"
+          onClick={() => setMode("docx")}
+          className={cn(
+            "flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-medium transition-all",
+            mode === "docx" ? "bg-white text-[#185FA5] shadow-sm" : "text-slate-500 hover:text-slate-700"
+          )}
+        >
+          <Icons.FileText size={13} />
+          DOCX import
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode("csv")}
+          className={cn(
+            "flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-medium transition-all",
+            mode === "csv" ? "bg-white text-[#185FA5] shadow-sm" : "text-slate-500 hover:text-slate-700"
+          )}
+        >
+          <Icons.ClipboardList size={13} />
+          CSV import
+        </button>
+      </div>
+
+      {mode === "csv" ? (
+        <div className="space-y-4">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <p className="text-sm font-semibold text-slate-800">Instructor-friendly CSV import</p>
+            <p className="mt-1 text-xs leading-relaxed text-slate-600">
+              Upload a completed CSV or download the sample CSV and fill it in. This path imports questions directly
+              into the question bank and creates a draft quiz from the rows you provide.
+            </p>
+          </div>
+
+          {csvNotice && (
+            <div className="flex items-start gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+              <Icons.Check size={14} className="mt-0.5 shrink-0 text-emerald-600" />
+              <p className="text-xs text-emerald-700">{csvNotice}</p>
+            </div>
+          )}
+
+          <CsvImportPanel onImported={(message) => setCsvNotice(message)} />
+        </div>
+      ) : (
+        <>
       {/* ── Step indicator ─────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-1.5 text-xs text-slate-500">
         {(["upload", "preview", "options", "importing", "done"] as Phase[]).map((p, i) => {
@@ -360,9 +410,11 @@ export function DocxImportClient() {
           )}
         </div>
       )}
+        </>
+      )}
 
       {/* ── Error ────────────────────────────────────────────────────────────── */}
-      {errorMsg && (
+      {mode === "docx" && errorMsg && (
         <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3">
           <Icons.X size={14} className="mt-0.5 shrink-0 text-red-500" />
           <p className="text-xs text-red-700">{errorMsg}</p>
@@ -370,7 +422,7 @@ export function DocxImportClient() {
       )}
 
       {/* ── Preview phase ─────────────────────────────────────────────────────── */}
-      {phase === "preview" && parseResult && (
+      {mode === "docx" && phase === "preview" && parseResult && (
         <div className="space-y-4">
           {/* Summary cards */}
           <div className="grid grid-cols-3 gap-3">
@@ -425,7 +477,7 @@ export function DocxImportClient() {
       )}
 
       {/* ── Options phase ─────────────────────────────────────────────────────── */}
-      {phase === "options" && parseResult && (
+      {mode === "docx" && phase === "options" && parseResult && (
         <div className="space-y-4">
           <div className="space-y-2">
             <CheckRow
@@ -489,7 +541,7 @@ export function DocxImportClient() {
       )}
 
       {/* ── Importing phase ───────────────────────────────────────────────────── */}
-      {phase === "importing" && (
+      {mode === "docx" && phase === "importing" && (
         <div className="flex flex-col items-center gap-4 py-8">
           <Icons.Loader size={32} className="animate-spin text-[#185FA5]" />
           <div className="text-center">
@@ -502,7 +554,7 @@ export function DocxImportClient() {
       )}
 
       {/* ── Done phase ────────────────────────────────────────────────────────── */}
-      {phase === "done" && importResult && (
+      {mode === "docx" && phase === "done" && importResult && (
         <div className="space-y-4">
           <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100">
