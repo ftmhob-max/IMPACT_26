@@ -11,9 +11,39 @@ const ACCEPTED_TYPES: Record<string, string[]> = {
   "text/csv": [".csv"],
   "text/plain": [".txt"],
   "text/markdown": [".md"],
+  "video/mp4": [".mp4"],
+  "video/quicktime": [".mov"],
+  "video/x-m4v": [".m4v"],
+  "video/webm": [".webm"],
+  "video/x-msvideo": [".avi"],
+  "video/x-matroska": [".mkv"],
+  "audio/mpeg": [".mp3"],
+  "audio/wav": [".wav"],
+  "audio/x-wav": [".wav"],
+  "audio/mp4": [".m4a"],
+  "audio/aac": [".aac"],
+  "audio/ogg": [".ogg"],
 };
 
-const ACCEPTED_EXTENSIONS = [".pdf", ".docx", ".doc", ".csv", ".txt", ".md"];
+const ACCEPTED_EXTENSIONS = [
+  ".pdf",
+  ".docx",
+  ".doc",
+  ".csv",
+  ".txt",
+  ".md",
+  ".mp4",
+  ".mov",
+  ".m4v",
+  ".webm",
+  ".avi",
+  ".mkv",
+  ".mp3",
+  ".wav",
+  ".m4a",
+  ".aac",
+  ".ogg",
+];
 
 type IconComp = React.FC<{ className?: string; size?: number }>;
 const FILE_TYPE_ICONS: Record<string, IconComp> = {
@@ -23,6 +53,12 @@ const FILE_TYPE_ICONS: Record<string, IconComp> = {
   csv: Icons.ClipboardList,
   txt: Icons.BookOpen,
   md: Icons.BookOpen,
+  mp4: Icons.Video,
+  mov: Icons.Video,
+  m4v: Icons.Video,
+  webm: Icons.Video,
+  avi: Icons.Video,
+  mkv: Icons.Video,
 };
 
 function getExtension(name: string) {
@@ -56,7 +92,7 @@ export function FileDropZone({ onFile, file, disabled, className }: FileDropZone
     (incoming: File | undefined) => {
       if (!incoming) return;
       if (!isAccepted(incoming)) {
-        setError(`Unsupported file type. Use PDF, DOCX, CSV, TXT, or Markdown.`);
+        setError("Unsupported file type. Use PDF, DOCX, CSV, TXT, Markdown, audio, or video.");
         return;
       }
       setError(null);
@@ -137,7 +173,7 @@ export function FileDropZone({ onFile, file, disabled, className }: FileDropZone
               <p className="text-sm font-semibold text-slate-700">
                 {dragging ? "Drop file here" : "Drag & drop or click to browse"}
               </p>
-              <p className="text-xs text-slate-500">PDF, DOCX, CSV, TXT, Markdown</p>
+              <p className="text-xs text-slate-500">PDF, DOCX, CSV, TXT, Markdown, audio, video</p>
             </div>
           </>
         )}

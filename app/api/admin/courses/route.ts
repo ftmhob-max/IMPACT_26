@@ -61,11 +61,29 @@ const deleteLessonsSchema = z.object({
   lessonIds: z.array(uuidSchema).min(1),
 });
 
+const deleteModuleSchema = z.object({
+  action: z.literal("delete-module"),
+  moduleId: uuidSchema,
+});
+
 const reorderSchema = z.object({
   action: z.literal("reorder"),
   items: z.array(z.object({ id: uuidSchema, position: z.number().int() })),
   type: z.enum(["module", "lesson"]),
 });
+
+function withDefinedFields<T extends Record<string, unknown>>(fields: T) {
+  return Object.fromEntries(Object.entries(fields).filter(([, value]) => value !== undefined));
+}
+
+async function deleteLessonsCascade(lessonIds: string[]) {
+  for (const lessonId of lessonIds) {
+    await adminDcMutate("DeleteSourceLinksForLesson", { lessonId }).catch(() => null);
+    await adminDcMutate("DeleteLessonVersionsForLesson", { lessonId }).catch(() => null);
+    await adminDcMutate("DeleteUserLessonProgressForLesson", { lessonId }).catch(() => null);
+    await adminDcMutate("DeleteLesson", { id: lessonId });
+  }
+}
 
 export async function GET(request: NextRequest) {
   const auth = await requireAdminRequest(request, "viewer");
@@ -123,15 +141,15 @@ export async function PUT(request: NextRequest) {
     if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     const { moduleId, learningObjectives, prerequisiteModuleIds, ...rest } = parsed.data;
     try {
-      await adminDcMutate("UpdateModule", {
+      await adminDcMutate("UpdateModule", withDefinedFields({
         id: moduleId,
-        title: rest.title ?? null,
-        description: rest.description ?? null,
-        learningObjectives: learningObjectives != null ? JSON.stringify(learningObjectives) : null,
-        prerequisiteModuleIds: prerequisiteModuleIds != null ? JSON.stringify(prerequisiteModuleIds) : null,
-        position: rest.position ?? null,
-        status: rest.status ?? null,
-      });
+        title: rest.title,
+        description: rest.description,
+        learningObjectives: learningObjectives !== undefined ? JSON.stringify(learningObjectives) : undefined,
+        prerequisiteModuleIds: prerequisiteModuleIds !== undefined ? JSON.stringify(prerequisiteModuleIds) : undefined,
+        position: rest.position,
+        status: rest.status,
+      }));
       return NextResponse.json({ ok: true });
     } catch (err) {
       console.error("[admin/courses:update-module]", err);
@@ -158,20 +176,20 @@ export async function PUT(request: NextRequest) {
           });
         }
       }
-      await adminDcMutate("UpdateLesson", {
+      await adminDcMutate("UpdateLesson", withDefinedFields({
         id: lessonId,
-        title: rest.title ?? null,
-        contentJson: rest.contentJson ?? null,
-        videoPlaybackId: rest.videoPlaybackId ?? null,
-        videoUrl: rest.videoUrl ?? null,
-        quizId: rest.quizId ?? null,
-        sourceMaterialId: rest.sourceMaterialId ?? null,
-        durationSeconds: rest.durationSeconds ?? null,
-        status: rest.status ?? null,
-        isPublished: rest.isPublished ?? null,
+        title: rest.title,
+        contentJson: rest.contentJson,
+        videoPlaybackId: rest.videoPlaybackId,
+        videoUrl: rest.videoUrl,
+        quizId: rest.quizId,
+        sourceMaterialId: rest.sourceMaterialId,
+        durationSeconds: rest.durationSeconds,
+        status: rest.status,
+        isPublished: rest.isPublished,
         updatedById: auth.session.uid,
-        publishedAt: rest.isPublished ? new Date().toISOString() : null,
-      });
+        publishedAt: rest.isPublished === undefined ? undefined : rest.isPublished ? new Date().toISOString() : null,
+      }));
       return NextResponse.json({ ok: true });
     } catch (err) {
       console.error("[admin/courses:update-lesson]", err);
@@ -226,16 +244,38 @@ export async function PUT(request: NextRequest) {
 
     const { lessonIds } = parsed.data;
     try {
-      for (const lessonId of lessonIds) {
-        await adminDcMutate("DeleteSourceLinksForLesson", { lessonId }).catch(() => null);
-        await adminDcMutate("DeleteLessonVersionsForLesson", { lessonId }).catch(() => null);
-        await adminDcMutate("DeleteUserLessonProgressForLesson", { lessonId }).catch(() => null);
-        await adminDcMutate("DeleteLesson", { id: lessonId });
-      }
+      await deleteLessonsCascade(lessonIds);
       return NextResponse.json({ ok: true, deleted: lessonIds.length });
     } catch (err) {
       console.error("[admin/courses:delete-lessons]", err);
       return NextResponse.json({ error: "Unable to delete lessons" }, { status: 500 });
+    }
+  }
+
+  if (body.action === "delete-module") {
+    const parsed = deleteModuleSchema.safeParse(body);
+    if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+
+    try {
+      const courseData = await adminDcQuery<{ courses: Array<{ modules_on_course?: Array<{ id: string; lessons_on_module?: Array<{ id: string }> }> }> }>(
+        "AdminListCourses"
+      ).catch(() => ({ courses: [] }));
+
+      const targetModule = courseData.courses
+        .flatMap((course) => course.modules_on_course ?? [])
+        .find((module) => formatUuid(module.id) === parsed.data.moduleId);
+
+      if (!targetModule) {
+        return NextResponse.json({ error: "Module not found" }, { status: 404 });
+      }
+
+      const lessonIds = (targetModule.lessons_on_module ?? []).map((lesson) => formatUuid(lesson.id));
+      await deleteLessonsCascade(lessonIds);
+      await adminDcMutate("DeleteModule", { id: parsed.data.moduleId });
+      return NextResponse.json({ ok: true, deletedLessons: lessonIds.length });
+    } catch (err) {
+      console.error("[admin/courses:delete-module]", err);
+      return NextResponse.json({ error: "Unable to delete module" }, { status: 500 });
     }
   }
 

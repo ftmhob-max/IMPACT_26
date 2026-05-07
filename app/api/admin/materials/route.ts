@@ -30,12 +30,22 @@ export async function POST(request: NextRequest) {
   const storagePath = `source-materials/${materialId}/${file.name}`;
 
   try {
+    const ingestion = await ingestBuffer(
+      buffer,
+      file.name,
+      file.type || "application/octet-stream",
+      file.size
+    );
+
+    if (ingestion.parser === "unsupported") {
+      return NextResponse.json({ error: ingestion.errorMessage ?? "Unsupported file type" }, { status: 400 });
+    }
+
     const storageUri = await uploadSourceBuffer({
       buffer,
       storagePath,
       contentType: file.type || "application/octet-stream",
     });
-    const ingestion = await ingestBuffer(buffer, file.name, file.type || "application/octet-stream");
 
     await adminDcMutate("CreateSourceMaterial", {
       id: materialId,
@@ -52,7 +62,7 @@ export async function POST(request: NextRequest) {
     await adminDcMutate("CreateIngestionJob", {
       id: jobId,
       sourceMaterialId: materialId,
-      status: ingestion.status === "parsed" ? "completed" : "failed",
+      status: ingestion.status === "failed" ? "failed" : "completed",
       parser: ingestion.parser,
       extractedCharacters: ingestion.extractedText.length,
       errorMessage: ingestion.errorMessage || null,

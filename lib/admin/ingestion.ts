@@ -1,6 +1,7 @@
 import { getStorage } from "firebase-admin/storage";
 import { adminApp } from "@/lib/firebase/admin";
 import { previewAssessmentCsv } from "./csv";
+import { getFileExtension, getSourceMaterialKind, isPreviewableMediaKind } from "./source-materials";
 
 // ─── Auto metadata tagging ─────────────────────────────────────────────────────
 
@@ -101,7 +102,7 @@ export function detectMetadata(text: string): {
 
 export interface IngestionResult {
   parser: string;
-  status: "parsed" | "failed";
+  status: "parsed" | "uploaded" | "failed";
   extractedText: string;
   metadata: Record<string, unknown>;
   errorMessage?: string;
@@ -127,13 +128,33 @@ export async function uploadSourceBuffer({
   return `gs://${bucket.name}/${storagePath}`;
 }
 
-export async function ingestBuffer(buffer: Buffer, fileName: string, fileType: string): Promise<IngestionResult> {
+export async function ingestBuffer(
+  buffer: Buffer,
+  fileName: string,
+  fileType: string,
+  sizeBytes?: number
+): Promise<IngestionResult> {
   const lowerName = fileName.toLowerCase();
+  const kind = getSourceMaterialKind(fileName, fileType);
+  const extension = getFileExtension(fileName);
 
   try {
     let result: IngestionResult;
 
-    if (fileType.includes("pdf") || lowerName.endsWith(".pdf")) {
+    if (isPreviewableMediaKind(kind)) {
+      result = {
+        parser: "media",
+        status: "uploaded",
+        extractedText: "",
+        metadata: {
+          kind,
+          mimeType: fileType || "application/octet-stream",
+          extension,
+          sizeBytes: sizeBytes ?? buffer.length,
+          previewable: true,
+        },
+      };
+    } else if (fileType.includes("pdf") || lowerName.endsWith(".pdf")) {
       const mod = await import("pdf-parse");
       const pdfParse = (mod as any).default ?? (mod as any);
       const parsed = await pdfParse(buffer);
@@ -141,7 +162,7 @@ export async function ingestBuffer(buffer: Buffer, fileName: string, fileType: s
         parser: "pdf-parse",
         status: "parsed",
         extractedText: parsed.text ?? "",
-        metadata: { pages: parsed.numpages ?? null, info: parsed.info ?? null },
+        metadata: { kind, extension, mimeType: fileType, sizeBytes: sizeBytes ?? buffer.length, pages: parsed.numpages ?? null, info: parsed.info ?? null },
       };
     } else if (
       fileType.includes("wordprocessingml") ||
@@ -154,7 +175,7 @@ export async function ingestBuffer(buffer: Buffer, fileName: string, fileType: s
         parser: "mammoth",
         status: "parsed",
         extractedText: parsed.value ?? "",
-        metadata: { messages: parsed.messages ?? [] },
+        metadata: { kind, extension, mimeType: fileType, sizeBytes: sizeBytes ?? buffer.length, messages: parsed.messages ?? [] },
       };
     } else if (fileType.includes("csv") || lowerName.endsWith(".csv")) {
       const text = buffer.toString("utf-8");
@@ -164,6 +185,10 @@ export async function ingestBuffer(buffer: Buffer, fileName: string, fileType: s
         status: preview.errors.length ? "failed" : "parsed",
         extractedText: text,
         metadata: {
+          kind,
+          extension,
+          mimeType: fileType,
+          sizeBytes: sizeBytes ?? buffer.length,
           rows: preview.validRows.length,
           validationErrors: preview.errors.length,
           duplicates: preview.duplicates.length,
@@ -175,15 +200,15 @@ export async function ingestBuffer(buffer: Buffer, fileName: string, fileType: s
         parser: "text",
         status: "parsed",
         extractedText: buffer.toString("utf-8"),
-        metadata: { characters: buffer.length },
+        metadata: { kind, extension, mimeType: fileType, sizeBytes: sizeBytes ?? buffer.length, characters: buffer.length },
       };
     } else {
       return {
         parser: "unsupported",
         status: "failed",
         extractedText: "",
-        metadata: { fileType },
-        errorMessage: "Unsupported file type. Upload PDF, DOCX, CSV, TXT, Markdown, or a transcript file.",
+        metadata: { kind, extension, mimeType: fileType, sizeBytes: sizeBytes ?? buffer.length },
+        errorMessage: "Unsupported file type. Upload PDF, DOCX, CSV, TXT, Markdown, audio, or video.",
       };
     }
 

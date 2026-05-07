@@ -17,12 +17,16 @@ const ROLE_RANK: Record<AdminRole, number> = {
   admin: 3,
 };
 
-function isAdminRole(role: unknown): role is AdminRole {
+export function isAdminRole(role: unknown): role is AdminRole {
   return typeof role === "string" && (adminRoles as readonly string[]).includes(role);
 }
 
 function canAccess(role: AdminRole, minimum: AdminRole) {
   return ROLE_RANK[role] >= ROLE_RANK[minimum];
+}
+
+export function isElevatedRole(role: unknown): role is AdminRole {
+  return isAdminRole(role);
 }
 
 export async function getSessionFromCookie(): Promise<AdminSession | null> {

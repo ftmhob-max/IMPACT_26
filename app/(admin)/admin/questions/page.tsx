@@ -13,7 +13,18 @@ interface Question {
   status: string;
   version: number;
   isMultiselect: boolean;
+  rationale?: string | null;
+  calculation?: string | null;
+  sourceRef?: string | null;
   createdAt: string;
+  answerChoices_on_question: Array<{
+    id: string;
+    letter: string;
+    choiceText: string;
+    isCorrect: boolean;
+    explanation?: string | null;
+    position: number;
+  }>;
 }
 
 async function getPageData() {

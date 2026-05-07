@@ -101,6 +101,10 @@ mutation DeleteLesson($id: UUID!) @auth(level: PUBLIC) {
   lesson_delete(id: $id)
 }
 
+mutation DeleteModule($id: UUID!) @auth(level: PUBLIC) {
+  module_delete(id: $id)
+}
+
 mutation DeleteLessonVersionsForLesson($lessonId: UUID!) @auth(level: PUBLIC) {
   lessonVersion_deleteMany(where: { lesson: { id: { eq: $lessonId } } })
 }
@@ -109,8 +113,24 @@ mutation DeleteSourceLinksForLesson($lessonId: UUID!) @auth(level: PUBLIC) {
   contentSourceLink_deleteMany(where: { lesson: { id: { eq: $lessonId } } })
 }
 
+mutation DeleteSourceLinksForQuestion($questionId: UUID!) @auth(level: PUBLIC) {
+  contentSourceLink_deleteMany(where: { question: { id: { eq: $questionId } } })
+}
+
+mutation DeleteSourceLinksForMaterial($sourceMaterialId: UUID!) @auth(level: PUBLIC) {
+  contentSourceLink_deleteMany(where: { sourceMaterial: { id: { eq: $sourceMaterialId } } })
+}
+
 mutation DeleteUserLessonProgressForLesson($lessonId: UUID!) @auth(level: PUBLIC) {
   userLessonProgress_deleteMany(where: { lesson: { id: { eq: $lessonId } } })
+}
+
+mutation DeleteIngestionJobsForMaterial($sourceMaterialId: UUID!) @auth(level: PUBLIC) {
+  ingestionJob_deleteMany(where: { sourceMaterial: { id: { eq: $sourceMaterialId } } })
+}
+
+mutation DeleteSourceMaterial($id: UUID!) @auth(level: PUBLIC) {
+  sourceMaterial_delete(id: $id)
 }
 
 mutation CreateSourceMaterial($id: UUID!, $title: String!, $fileName: String!, $fileType: String!, $storagePath: String!, $downloadUrl: String, $extractedText: String, $metadataJson: String, $status: String!, $uploadedById: String) @auth(level: PUBLIC) {
@@ -195,6 +215,18 @@ mutation UpdateAnswerChoice($id: UUID!, $choiceText: String, $isCorrect: Boolean
   })
 }
 
+mutation DeleteAnswerChoicesForQuestion($questionId: UUID!) @auth(level: PUBLIC) {
+  answerChoice_deleteMany(where: { question: { id: { eq: $questionId } } })
+}
+
+mutation DeleteQuizQuestionsForQuestion($questionId: UUID!) @auth(level: PUBLIC) {
+  quizQuestion_deleteMany(where: { question: { id: { eq: $questionId } } })
+}
+
+mutation DeleteQuestion($id: UUID!) @auth(level: PUBLIC) {
+  question_delete(id: $id)
+}
+
 # ─── Quiz management ──────────────────────────────────────────────────────────
 
 mutation CreateQuiz($id: UUID!, $title: String!, $description: String, $timeLimitSeconds: Int, $passingScore: Float, $shuffleQuestions: Boolean!, $shuffleChoices: Boolean!, $status: String!, $createdById: String) @auth(level: PUBLIC) {
@@ -226,6 +258,22 @@ mutation UpdateQuizStatus($id: UUID!, $status: String!, $updatedById: String, $p
     updatedBy: { id: $updatedById }
     publishedAt: $publishedAt
   })
+}
+
+mutation DeleteQuizQuestionsForQuiz($quizId: UUID!) @auth(level: PUBLIC) {
+  quizQuestion_deleteMany(where: { quiz: { id: { eq: $quizId } } })
+}
+
+mutation DeleteQuizResponsesForQuiz($quizId: UUID!) @auth(level: PUBLIC) {
+  quizResponse_deleteMany(where: { attempt: { quiz: { id: { eq: $quizId } } } })
+}
+
+mutation DeleteQuizAttemptsForQuiz($quizId: UUID!) @auth(level: PUBLIC) {
+  quizAttempt_deleteMany(where: { quiz: { id: { eq: $quizId } } })
+}
+
+mutation DeleteQuiz($id: UUID!) @auth(level: PUBLIC) {
+  quiz_delete(id: $id)
 }
 
 # ─── Progress tracking (learner — own records only) ───────────────────────────

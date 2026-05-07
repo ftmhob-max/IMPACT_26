@@ -11,7 +11,8 @@ import * as Icons from "@/components/ui/Icons";
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: Icons.LayoutDashboard },
   { href: "/courses", label: "Courses", icon: Icons.GraduationCap },
-  { href: "/formulas", label: "Formula Index", icon: Icons.Calculator },
+  { href: "/formulas", label: "Formula Compass", icon: Icons.Calculator },
+  { href: "/glossary", label: "Glossary", icon: Icons.BookOpen },
   { href: "/profile", label: "My Progress", icon: Icons.User },
 ];
 
@@ -20,6 +21,7 @@ const adminItems = [
   { href: "/admin/questions", label: "Question Bank", icon: Icons.FileText },
   { href: "/admin/quizzes", label: "Quizzes", icon: Icons.ClipboardList },
   { href: "/admin/courses", label: "Courses", icon: Icons.GraduationCap },
+  { href: "/admin/glossary", label: "Glossary", icon: Icons.BookOpen },
   { href: "/admin/materials", label: "Source Materials", icon: Icons.Database },
   { href: "/admin/cohorts", label: "Cohort Stats", icon: Icons.BarChart3 },
   { href: "/admin/users", label: "Users", icon: Icons.Users },

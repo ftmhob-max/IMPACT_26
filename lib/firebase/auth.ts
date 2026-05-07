@@ -9,6 +9,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   type User,
+  type UserCredential,
 } from "firebase/auth";
 import { auth } from "./client";
 
@@ -34,7 +35,13 @@ export async function signIn(email: string, password: string): Promise<User> {
 
 export async function signInWithGoogle(): Promise<User> {
   const provider = new GoogleAuthProvider();
-  const credential = await signInWithPopup(auth, provider);
+  let credential: UserCredential;
+  try {
+    credential = await signInWithPopup(auth, provider);
+  } catch (err: any) {
+    console.error("[Firebase Auth] Google popup sign-in failed:", err?.code, err?.message);
+    throw err;
+  }
   const idToken = await credential.user.getIdToken();
   await fetch("/api/auth/sync-user", {
     method: "POST",

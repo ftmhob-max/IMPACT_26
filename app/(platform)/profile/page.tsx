@@ -6,11 +6,16 @@ import {
   MetricCard,
   PageHeader,
   PrimaryAction,
+  SecondaryAction,
   SectionPanel,
 } from "@/components/ui/LearnerPrimitives";
 import * as Icons from "@/components/ui/Icons";
 import { getLearnerSession } from "@/lib/firebase/learner-session";
 import { adminDcQuery } from "@/lib/firebase/admin-dc";
+import { getAdminFirestore } from "@/lib/firebase/admin-firestore";
+import { listUserFavorites } from "@/lib/firebase/favorites";
+import { getFormulaSections } from "@/lib/firebase/generated";
+import { getPlatformDataConnect } from "@/lib/firebase/dataconnect";
 import { DOMAINS, type Domain } from "@/lib/utils";
 import { ProfileSection } from "@/components/profile/ProfileSection";
 
@@ -34,6 +39,20 @@ interface Attempt {
   quizResponses_on_attempt: AttemptResponse[];
 }
 
+interface FavoriteFormula {
+  id: string;
+  code: string;
+  name: string;
+  expression: string;
+}
+
+interface FavoriteGlossaryTerm {
+  id: string;
+  term: string;
+  definition: string;
+  domain?: string | null;
+}
+
 async function getProgressData(userId: string) {
   try {
     const data = await adminDcQuery<{ quizAttempts: Attempt[] }>(
@@ -46,39 +65,71 @@ async function getProgressData(userId: string) {
   }
 }
 
+async function getFavoriteFormulas(userId: string): Promise<FavoriteFormula[]> {
+  const favorites = await listUserFavorites(userId, "formula");
+  if (favorites.length === 0) return [];
+
+  try {
+    const dc = getPlatformDataConnect();
+    const { data } = await getFormulaSections(dc);
+    const formulas = data.formulaSections.flatMap((section) => section.formulas_on_section);
+    const favoriteIds = new Set(favorites.map((favorite) => favorite.itemId));
+
+    return formulas
+      .filter((formula) => favoriteIds.has(formula.id))
+      .map((formula) => ({
+        id: formula.id,
+        code: formula.code,
+        name: formula.name,
+        expression: formula.expression,
+      }));
+  } catch {
+    return [];
+  }
+}
+
+async function getFavoriteGlossaryTerms(userId: string): Promise<FavoriteGlossaryTerm[]> {
+  const favorites = await listUserFavorites(userId, "glossary");
+  if (favorites.length === 0) return [];
+
+  try {
+    const db = getAdminFirestore();
+    const docs = await Promise.all(
+      favorites.map((favorite) => db.collection("glossaryTerms").doc(favorite.itemId).get())
+    );
+
+    return docs
+      .filter((doc: any) => doc.exists && doc.data()?.isPublished)
+      .map((doc: any) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          term: data.term,
+          definition: data.definition,
+          domain: data.domain ?? null,
+        };
+      });
+  } catch {
+    return [];
+  }
+}
+
 export default async function ProfilePage() {
   const session = await getLearnerSession();
   if (!session) redirect("/sign-in");
 
-  const attempts = await getProgressData(session.uid);
-
-  if (attempts.length === 0) {
-    return (
-      <LearnerPage>
-        <PageHeader
-          eyebrow="My progress"
-          title="Performance overview"
-          description="Track your scores, domain strengths, and exam history."
-          icon={Icons.BarChart3}
-          action={<PrimaryAction href="/courses">Find an exam</PrimaryAction>}
-        />
-        <ProfileSection session={session} />
-        <EmptyState
-          title="No exam history yet"
-          description="Complete a practice exam to see your score breakdown, domain performance, and improvement over time."
-          action={<PrimaryAction href="/courses">Find an exam</PrimaryAction>}
-          icon={Icons.BarChart3}
-        />
-      </LearnerPage>
-    );
-  }
+  const [attempts, favoriteFormulas, favoriteGlossaryTerms] = await Promise.all([
+    getProgressData(session.uid),
+    getFavoriteFormulas(session.uid),
+    getFavoriteGlossaryTerms(session.uid),
+  ]);
 
   // Computed metrics
   const totalAttempts = attempts.length;
   const passed = attempts.filter((a) => a.passed).length;
-  const passRate = Math.round((passed / totalAttempts) * 100);
+  const passRate = totalAttempts > 0 ? Math.round((passed / totalAttempts) * 100) : 0;
   const scores = attempts.map((a) => a.scorePct ?? 0);
-  const bestScore = Math.max(...scores);
+  const bestScore = scores.length > 0 ? Math.max(...scores) : 0;
   const latestScore = scores[0] ?? 0;
 
   // Domain aggregate across all attempts
@@ -112,69 +163,163 @@ export default async function ProfilePage() {
 
       <ProfileSection session={session} />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard
-          label="Attempts"
-          value={totalAttempts}
-          detail="Completed exam attempts"
-          tone="blue"
-          icon={Icons.Target}
-        />
-        <MetricCard
-          label="Best score"
-          value={`${bestScore.toFixed(1)}%`}
-          detail="Highest score across all attempts"
-          tone="green"
-          icon={Icons.TrendingUp}
-        />
-        <MetricCard
-          label="Pass rate"
-          value={`${passRate}%`}
-          detail={`${passed} of ${totalAttempts} attempts passed`}
-          tone="amber"
-          icon={Icons.Check}
-        />
-        <MetricCard
-          label="Latest"
-          value={`${latestScore.toFixed(1)}%`}
-          detail="Most recent attempt score"
-          tone="slate"
-          icon={Icons.BarChart3}
-        />
+      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+        <SectionPanel
+          title="Saved formulas"
+          description="Quick access to the formulas you want close at hand."
+          className="h-full"
+        >
+          <SavedFormulasList formulas={favoriteFormulas} />
+        </SectionPanel>
+        <SectionPanel
+          title="Saved glossary terms"
+          description="Definitions and terms you’ve bookmarked for review."
+          className="h-full"
+        >
+          <SavedGlossaryList terms={favoriteGlossaryTerms} />
+        </SectionPanel>
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-        <SectionPanel
-          title="Domain performance"
-          description="Aggregate score across all completed attempts."
-        >
-          <div className="divide-y divide-slate-100 px-5 py-2">
-            {(Object.entries(DOMAINS) as [Domain, typeof DOMAINS[Domain]][]).map(
-              ([key, { label, color }]) => {
-                const { earned, possible, pct } = domainStats[key];
-                return (
-                  <DomainRow
-                    key={key}
-                    label={label}
-                    color={color}
-                    earned={earned}
-                    possible={possible}
-                    pct={pct}
-                  />
-                );
-              }
+      {attempts.length === 0 ? (
+        <div className="mt-6">
+          <EmptyState
+            title="No exam history yet"
+            description="Complete a practice exam to see your score breakdown, domain performance, and improvement over time."
+            action={<PrimaryAction href="/courses">Find an exam</PrimaryAction>}
+            icon={Icons.BarChart3}
+          />
+        </div>
+      ) : (
+        <>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <MetricCard
+              label="Attempts"
+              value={totalAttempts}
+              detail="Completed exam attempts"
+              tone="blue"
+              icon={Icons.Target}
+            />
+            <MetricCard
+              label="Best score"
+              value={`${bestScore.toFixed(1)}%`}
+              detail="Highest score across all attempts"
+              tone="green"
+              icon={Icons.TrendingUp}
+            />
+            <MetricCard
+              label="Pass rate"
+              value={`${passRate}%`}
+              detail={`${passed} of ${totalAttempts} attempts passed`}
+              tone="amber"
+              icon={Icons.Check}
+            />
+            <MetricCard
+              label="Latest"
+              value={`${latestScore.toFixed(1)}%`}
+              detail="Most recent attempt score"
+              tone="slate"
+              icon={Icons.BarChart3}
+            />
+          </div>
+
+          <div className="mt-6 grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+            <SectionPanel
+              title="Domain performance"
+              description="Aggregate score across all completed attempts."
+            >
+              <div className="divide-y divide-slate-100 px-5 py-2">
+                {(Object.entries(DOMAINS) as [Domain, typeof DOMAINS[Domain]][]).map(
+                  ([key, { label, color }]) => {
+                    const { earned, possible, pct } = domainStats[key];
+                    return (
+                      <DomainRow
+                        key={key}
+                        label={label}
+                        color={color}
+                        earned={earned}
+                        possible={possible}
+                        pct={pct}
+                      />
+                    );
+                  }
+                )}
+              </div>
+            </SectionPanel>
+
+            <SectionPanel
+              title="Attempt history"
+              description="Most recent attempts first."
+            >
+              <AttemptTable attempts={attempts} />
+            </SectionPanel>
+          </div>
+        </>
+      )}
+    </LearnerPage>
+  );
+}
+
+function SavedFormulasList({ formulas }: { formulas: FavoriteFormula[] }) {
+  if (formulas.length === 0) {
+    return (
+      <div className="px-5 py-8">
+        <p className="text-sm text-slate-500">No formulas saved yet.</p>
+        <div className="mt-4">
+          <SecondaryAction href="/formulas">Open Formula Compass</SecondaryAction>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="divide-y divide-slate-100">
+      {formulas.map((formula) => (
+        <div key={formula.id} className="px-5 py-4">
+          <p className="font-mono text-xs font-semibold text-[#185FA5]">{formula.code}</p>
+          <p className="mt-1 text-sm font-semibold text-slate-900">{formula.name}</p>
+          <p className="mt-2 font-calc rounded-md border border-[#b8d7f0] bg-[#f8fbff] px-3 py-2 text-[12px] text-slate-800">
+            {formula.expression}
+          </p>
+        </div>
+      ))}
+      <div className="px-5 py-4">
+        <SecondaryAction href="/formulas">Open Formula Compass</SecondaryAction>
+      </div>
+    </div>
+  );
+}
+
+function SavedGlossaryList({ terms }: { terms: FavoriteGlossaryTerm[] }) {
+  if (terms.length === 0) {
+    return (
+      <div className="px-5 py-8">
+        <p className="text-sm text-slate-500">No glossary terms saved yet.</p>
+        <div className="mt-4">
+          <SecondaryAction href="/glossary">Open Glossary</SecondaryAction>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="divide-y divide-slate-100">
+      {terms.map((term) => (
+        <div key={term.id} className="px-5 py-4">
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-semibold text-slate-900">{term.term}</p>
+            {term.domain && (
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold capitalize text-slate-500">
+                {term.domain}
+              </span>
             )}
           </div>
-        </SectionPanel>
-
-        <SectionPanel
-          title="Attempt history"
-          description="Most recent attempts first."
-        >
-          <AttemptTable attempts={attempts} />
-        </SectionPanel>
+          <p className="mt-1 text-sm leading-6 text-slate-600">{term.definition}</p>
+        </div>
+      ))}
+      <div className="px-5 py-4">
+        <SecondaryAction href="/glossary">Open Glossary</SecondaryAction>
       </div>
-    </LearnerPage>
+    </div>
   );
 }
 

@@ -62,8 +62,10 @@ function SignInForm() {
       await signInWithGoogle();
       await syncSession();
       router.push(redirect);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Sign-in failed");
+    } catch (err: any) {
+      const code: string = err?.code ?? "";
+      const msg: string = err instanceof Error ? err.message : "Sign-in failed";
+      setError(code ? `${msg} (${code})` : msg);
     } finally {
       setLoading(false);
     }

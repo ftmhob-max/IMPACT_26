@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { isPreviewableMediaKind, type SourceMaterialKind } from "@/lib/admin/source-materials";
 import * as Icons from "@/components/ui/Icons";
 
 interface IngestionResult {
   parser: string;
-  status: "parsed" | "failed";
+  status: "parsed" | "uploaded" | "failed";
   extractedText: string;
   metadata: Record<string, unknown>;
   errorMessage?: string;
@@ -37,6 +38,7 @@ const PARSER_LABELS: Record<string, string> = {
   mammoth: "DOCX",
   "csv-parse": "CSV",
   text: "Text",
+  media: "Media",
 };
 
 export function MaterialPreview({ material, courses, onLinked }: MaterialPreviewProps) {
@@ -45,9 +47,14 @@ export function MaterialPreview({ material, courses, onLinked }: MaterialPreview
   const { ingestion } = material;
   const preview = ingestion.extractedText.slice(0, 800);
   const isTruncated = ingestion.extractedText.length > 800;
+  const mediaKind = getPreviewKind(ingestion.metadata.kind);
+  const previewable = mediaKind ? isPreviewableMediaKind(mediaKind) : false;
+  const sizeBytes = typeof ingestion.metadata.sizeBytes === "number" ? ingestion.metadata.sizeBytes : null;
 
   const pages = ingestion.metadata.pages as number | undefined;
   const chars = ingestion.extractedText.length;
+  const assetHref = `/api/admin/materials/${material.id}/asset`;
+  const downloadHref = `${assetHref}?download=1`;
 
   return (
     <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 space-y-3">
@@ -58,11 +65,15 @@ export function MaterialPreview({ material, courses, onLinked }: MaterialPreview
             <Icons.FileCheck size={16} className="text-emerald-700" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-emerald-800">Material ingested successfully</p>
+            <p className="text-sm font-semibold text-emerald-800">
+              {previewable ? "Material added to the source library" : "Material ingested successfully"}
+            </p>
             <div className="flex flex-wrap gap-2 mt-0.5">
               <Chip label={PARSER_LABELS[ingestion.parser] ?? ingestion.parser} />
+              {mediaKind && <Chip label={mediaKind === "video" ? "Video" : "Audio"} />}
               {pages != null && <Chip label={`${pages} pages`} />}
-              <Chip label={`${chars.toLocaleString()} chars`} />
+              {sizeBytes != null && <Chip label={formatBytes(sizeBytes)} />}
+              {chars > 0 && <Chip label={`${chars.toLocaleString()} chars`} />}
             </div>
           </div>
         </div>
@@ -76,7 +87,35 @@ export function MaterialPreview({ material, courses, onLinked }: MaterialPreview
         </button>
       </div>
 
-      {/* Extracted text preview */}
+      {previewable && (
+        <div className="space-y-2">
+          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-emerald-700">Media preview</p>
+          {mediaKind === "video" ? (
+            <video controls preload="metadata" src={assetHref} className="aspect-video w-full rounded-lg bg-slate-950" />
+          ) : (
+            <audio controls preload="metadata" src={assetHref} className="w-full" />
+          )}
+          <div className="flex flex-wrap gap-2">
+            <a
+              href={assetHref}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 transition hover:border-emerald-400"
+            >
+              <Icons.ExternalLink size={12} />
+              Open asset
+            </a>
+            <a
+              href={downloadHref}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 transition hover:border-emerald-400"
+            >
+              <Icons.Upload size={12} className="rotate-180" />
+              Download
+            </a>
+          </div>
+        </div>
+      )}
+
       {ingestion.extractedText && (
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-emerald-700 mb-1.5">Extracted content</p>
@@ -126,6 +165,18 @@ function Chip({ label }: { label: string }) {
       {label}
     </span>
   );
+}
+
+function getPreviewKind(kind: unknown): SourceMaterialKind | null {
+  if (kind === "audio" || kind === "video") return kind;
+  return null;
+}
+
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
 }
 
 interface LinkToLessonModalProps {

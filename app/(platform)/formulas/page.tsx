@@ -1,7 +1,9 @@
 import { EmptyState, LearnerPage, PageHeader } from "@/components/ui/LearnerPrimitives";
-import { FormulaIndex } from "@/components/layout/FormulaIndex";
+import { FormulaCompass } from "@/components/layout/FormulaCompass";
 import { getFormulaSections } from "@/lib/firebase/generated";
 import { getPlatformDataConnect } from "@/lib/firebase/dataconnect";
+import { listUserFavorites } from "@/lib/firebase/favorites";
+import { getLearnerSession } from "@/lib/firebase/learner-session";
 import * as Icons from "@/components/ui/Icons";
 
 async function getFormulaSectionsData() {
@@ -18,7 +20,11 @@ async function getFormulaSectionsData() {
 }
 
 export default async function FormulasPage() {
+  const session = await getLearnerSession();
   const sections = await getFormulaSectionsData();
+  const favoriteFormulaIds = session
+    ? (await listUserFavorites(session.uid, "formula")).map((favorite) => favorite.itemId)
+    : [];
   const totalFormulas = sections.reduce((sum, section) => sum + section.formulas.length, 0);
 
   return (
@@ -36,9 +42,12 @@ export default async function FormulasPage() {
           icon={Icons.Search}
         />
       ) : (
-        <FormulaIndex sections={sections} />
+        <FormulaCompass
+          sections={sections}
+          initialFavoriteFormulaIds={favoriteFormulaIds}
+          canFavorite={Boolean(session)}
+        />
       )}
     </LearnerPage>
   );
 }
-

@@ -428,6 +428,22 @@ query AdminCountQuestions @auth(level: PUBLIC) {
   }
 }
 
+query AdminListQuizQuestionUsage @auth(level: PUBLIC) {
+  quizQuestions {
+    quiz { id title }
+    question { id }
+  }
+  lessons(where: { lessonType: { eq: "quiz" } }) {
+    id
+    title
+    quiz { id }
+    module {
+      id
+      title
+    }
+  }
+}
+
 query AdminListCourses @auth(level: PUBLIC) {
   courses(orderBy: { updatedAt: DESC }) {
     id
@@ -461,6 +477,7 @@ query AdminListCourses @auth(level: PUBLIC) {
         videoPlaybackId
         videoUrl
         contentJson
+        quiz { id }
       }
     }
   }

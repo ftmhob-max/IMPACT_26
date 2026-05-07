@@ -94,6 +94,9 @@ export interface AdminListCoursesData {
           videoPlaybackId?: string | null;
           videoUrl?: string | null;
           contentJson?: string | null;
+          quiz?: {
+            id: UUIDString;
+          } & Quiz_Key;
         } & Lesson_Key)[];
       } & Module_Key)[];
   } & Course_Key)[];
@@ -145,6 +148,29 @@ export interface AdminListQuestionsPageData {
 export interface AdminListQuestionsPageVariables {
   limit: number;
   offset: number;
+}
+
+export interface AdminListQuizQuestionUsageData {
+  quizQuestions: ({
+    quiz: {
+      id: UUIDString;
+      title: string;
+    } & Quiz_Key;
+      question: {
+        id: UUIDString;
+      } & Question_Key;
+  })[];
+    lessons: ({
+      id: UUIDString;
+      title: string;
+      quiz?: {
+        id: UUIDString;
+      } & Quiz_Key;
+        module: {
+          id: UUIDString;
+          title: string;
+        } & Module_Key;
+    } & Lesson_Key)[];
 }
 
 export interface AdminListSourceMaterialsData {
@@ -399,6 +425,22 @@ export interface CreateUserVariables {
   fullName?: string | null;
 }
 
+export interface DeleteAnswerChoicesForQuestionData {
+  answerChoice_deleteMany: number;
+}
+
+export interface DeleteAnswerChoicesForQuestionVariables {
+  questionId: UUIDString;
+}
+
+export interface DeleteIngestionJobsForMaterialData {
+  ingestionJob_deleteMany: number;
+}
+
+export interface DeleteIngestionJobsForMaterialVariables {
+  sourceMaterialId: UUIDString;
+}
+
 export interface DeleteLessonData {
   lesson_delete?: Lesson_Key | null;
 }
@@ -415,12 +457,92 @@ export interface DeleteLessonVersionsForLessonVariables {
   lessonId: UUIDString;
 }
 
+export interface DeleteModuleData {
+  module_delete?: Module_Key | null;
+}
+
+export interface DeleteModuleVariables {
+  id: UUIDString;
+}
+
+export interface DeleteQuestionData {
+  question_delete?: Question_Key | null;
+}
+
+export interface DeleteQuestionVariables {
+  id: UUIDString;
+}
+
+export interface DeleteQuizAttemptsForQuizData {
+  quizAttempt_deleteMany: number;
+}
+
+export interface DeleteQuizAttemptsForQuizVariables {
+  quizId: UUIDString;
+}
+
+export interface DeleteQuizData {
+  quiz_delete?: Quiz_Key | null;
+}
+
+export interface DeleteQuizQuestionsForQuestionData {
+  quizQuestion_deleteMany: number;
+}
+
+export interface DeleteQuizQuestionsForQuestionVariables {
+  questionId: UUIDString;
+}
+
+export interface DeleteQuizQuestionsForQuizData {
+  quizQuestion_deleteMany: number;
+}
+
+export interface DeleteQuizQuestionsForQuizVariables {
+  quizId: UUIDString;
+}
+
+export interface DeleteQuizResponsesForQuizData {
+  quizResponse_deleteMany: number;
+}
+
+export interface DeleteQuizResponsesForQuizVariables {
+  quizId: UUIDString;
+}
+
+export interface DeleteQuizVariables {
+  id: UUIDString;
+}
+
 export interface DeleteSourceLinksForLessonData {
   contentSourceLink_deleteMany: number;
 }
 
 export interface DeleteSourceLinksForLessonVariables {
   lessonId: UUIDString;
+}
+
+export interface DeleteSourceLinksForMaterialData {
+  contentSourceLink_deleteMany: number;
+}
+
+export interface DeleteSourceLinksForMaterialVariables {
+  sourceMaterialId: UUIDString;
+}
+
+export interface DeleteSourceLinksForQuestionData {
+  contentSourceLink_deleteMany: number;
+}
+
+export interface DeleteSourceLinksForQuestionVariables {
+  questionId: UUIDString;
+}
+
+export interface DeleteSourceMaterialData {
+  sourceMaterial_delete?: SourceMaterial_Key | null;
+}
+
+export interface DeleteSourceMaterialVariables {
+  id: UUIDString;
 }
 
 export interface DeleteUserLessonProgressForLessonData {
@@ -1225,6 +1347,18 @@ export const deleteLessonRef: DeleteLessonRef;
 export function deleteLesson(vars: DeleteLessonVariables): MutationPromise<DeleteLessonData, DeleteLessonVariables>;
 export function deleteLesson(dc: DataConnect, vars: DeleteLessonVariables): MutationPromise<DeleteLessonData, DeleteLessonVariables>;
 
+interface DeleteModuleRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteModuleVariables): MutationRef<DeleteModuleData, DeleteModuleVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteModuleVariables): MutationRef<DeleteModuleData, DeleteModuleVariables>;
+  operationName: string;
+}
+export const deleteModuleRef: DeleteModuleRef;
+
+export function deleteModule(vars: DeleteModuleVariables): MutationPromise<DeleteModuleData, DeleteModuleVariables>;
+export function deleteModule(dc: DataConnect, vars: DeleteModuleVariables): MutationPromise<DeleteModuleData, DeleteModuleVariables>;
+
 interface DeleteLessonVersionsForLessonRef {
   /* Allow users to create refs without passing in DataConnect */
   (vars: DeleteLessonVersionsForLessonVariables): MutationRef<DeleteLessonVersionsForLessonData, DeleteLessonVersionsForLessonVariables>;
@@ -1249,6 +1383,30 @@ export const deleteSourceLinksForLessonRef: DeleteSourceLinksForLessonRef;
 export function deleteSourceLinksForLesson(vars: DeleteSourceLinksForLessonVariables): MutationPromise<DeleteSourceLinksForLessonData, DeleteSourceLinksForLessonVariables>;
 export function deleteSourceLinksForLesson(dc: DataConnect, vars: DeleteSourceLinksForLessonVariables): MutationPromise<DeleteSourceLinksForLessonData, DeleteSourceLinksForLessonVariables>;
 
+interface DeleteSourceLinksForQuestionRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteSourceLinksForQuestionVariables): MutationRef<DeleteSourceLinksForQuestionData, DeleteSourceLinksForQuestionVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteSourceLinksForQuestionVariables): MutationRef<DeleteSourceLinksForQuestionData, DeleteSourceLinksForQuestionVariables>;
+  operationName: string;
+}
+export const deleteSourceLinksForQuestionRef: DeleteSourceLinksForQuestionRef;
+
+export function deleteSourceLinksForQuestion(vars: DeleteSourceLinksForQuestionVariables): MutationPromise<DeleteSourceLinksForQuestionData, DeleteSourceLinksForQuestionVariables>;
+export function deleteSourceLinksForQuestion(dc: DataConnect, vars: DeleteSourceLinksForQuestionVariables): MutationPromise<DeleteSourceLinksForQuestionData, DeleteSourceLinksForQuestionVariables>;
+
+interface DeleteSourceLinksForMaterialRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteSourceLinksForMaterialVariables): MutationRef<DeleteSourceLinksForMaterialData, DeleteSourceLinksForMaterialVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteSourceLinksForMaterialVariables): MutationRef<DeleteSourceLinksForMaterialData, DeleteSourceLinksForMaterialVariables>;
+  operationName: string;
+}
+export const deleteSourceLinksForMaterialRef: DeleteSourceLinksForMaterialRef;
+
+export function deleteSourceLinksForMaterial(vars: DeleteSourceLinksForMaterialVariables): MutationPromise<DeleteSourceLinksForMaterialData, DeleteSourceLinksForMaterialVariables>;
+export function deleteSourceLinksForMaterial(dc: DataConnect, vars: DeleteSourceLinksForMaterialVariables): MutationPromise<DeleteSourceLinksForMaterialData, DeleteSourceLinksForMaterialVariables>;
+
 interface DeleteUserLessonProgressForLessonRef {
   /* Allow users to create refs without passing in DataConnect */
   (vars: DeleteUserLessonProgressForLessonVariables): MutationRef<DeleteUserLessonProgressForLessonData, DeleteUserLessonProgressForLessonVariables>;
@@ -1260,6 +1418,30 @@ export const deleteUserLessonProgressForLessonRef: DeleteUserLessonProgressForLe
 
 export function deleteUserLessonProgressForLesson(vars: DeleteUserLessonProgressForLessonVariables): MutationPromise<DeleteUserLessonProgressForLessonData, DeleteUserLessonProgressForLessonVariables>;
 export function deleteUserLessonProgressForLesson(dc: DataConnect, vars: DeleteUserLessonProgressForLessonVariables): MutationPromise<DeleteUserLessonProgressForLessonData, DeleteUserLessonProgressForLessonVariables>;
+
+interface DeleteIngestionJobsForMaterialRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteIngestionJobsForMaterialVariables): MutationRef<DeleteIngestionJobsForMaterialData, DeleteIngestionJobsForMaterialVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteIngestionJobsForMaterialVariables): MutationRef<DeleteIngestionJobsForMaterialData, DeleteIngestionJobsForMaterialVariables>;
+  operationName: string;
+}
+export const deleteIngestionJobsForMaterialRef: DeleteIngestionJobsForMaterialRef;
+
+export function deleteIngestionJobsForMaterial(vars: DeleteIngestionJobsForMaterialVariables): MutationPromise<DeleteIngestionJobsForMaterialData, DeleteIngestionJobsForMaterialVariables>;
+export function deleteIngestionJobsForMaterial(dc: DataConnect, vars: DeleteIngestionJobsForMaterialVariables): MutationPromise<DeleteIngestionJobsForMaterialData, DeleteIngestionJobsForMaterialVariables>;
+
+interface DeleteSourceMaterialRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteSourceMaterialVariables): MutationRef<DeleteSourceMaterialData, DeleteSourceMaterialVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteSourceMaterialVariables): MutationRef<DeleteSourceMaterialData, DeleteSourceMaterialVariables>;
+  operationName: string;
+}
+export const deleteSourceMaterialRef: DeleteSourceMaterialRef;
+
+export function deleteSourceMaterial(vars: DeleteSourceMaterialVariables): MutationPromise<DeleteSourceMaterialData, DeleteSourceMaterialVariables>;
+export function deleteSourceMaterial(dc: DataConnect, vars: DeleteSourceMaterialVariables): MutationPromise<DeleteSourceMaterialData, DeleteSourceMaterialVariables>;
 
 interface CreateSourceMaterialRef {
   /* Allow users to create refs without passing in DataConnect */
@@ -1345,6 +1527,42 @@ export const updateAnswerChoiceRef: UpdateAnswerChoiceRef;
 export function updateAnswerChoice(vars: UpdateAnswerChoiceVariables): MutationPromise<UpdateAnswerChoiceData, UpdateAnswerChoiceVariables>;
 export function updateAnswerChoice(dc: DataConnect, vars: UpdateAnswerChoiceVariables): MutationPromise<UpdateAnswerChoiceData, UpdateAnswerChoiceVariables>;
 
+interface DeleteAnswerChoicesForQuestionRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteAnswerChoicesForQuestionVariables): MutationRef<DeleteAnswerChoicesForQuestionData, DeleteAnswerChoicesForQuestionVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteAnswerChoicesForQuestionVariables): MutationRef<DeleteAnswerChoicesForQuestionData, DeleteAnswerChoicesForQuestionVariables>;
+  operationName: string;
+}
+export const deleteAnswerChoicesForQuestionRef: DeleteAnswerChoicesForQuestionRef;
+
+export function deleteAnswerChoicesForQuestion(vars: DeleteAnswerChoicesForQuestionVariables): MutationPromise<DeleteAnswerChoicesForQuestionData, DeleteAnswerChoicesForQuestionVariables>;
+export function deleteAnswerChoicesForQuestion(dc: DataConnect, vars: DeleteAnswerChoicesForQuestionVariables): MutationPromise<DeleteAnswerChoicesForQuestionData, DeleteAnswerChoicesForQuestionVariables>;
+
+interface DeleteQuizQuestionsForQuestionRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteQuizQuestionsForQuestionVariables): MutationRef<DeleteQuizQuestionsForQuestionData, DeleteQuizQuestionsForQuestionVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteQuizQuestionsForQuestionVariables): MutationRef<DeleteQuizQuestionsForQuestionData, DeleteQuizQuestionsForQuestionVariables>;
+  operationName: string;
+}
+export const deleteQuizQuestionsForQuestionRef: DeleteQuizQuestionsForQuestionRef;
+
+export function deleteQuizQuestionsForQuestion(vars: DeleteQuizQuestionsForQuestionVariables): MutationPromise<DeleteQuizQuestionsForQuestionData, DeleteQuizQuestionsForQuestionVariables>;
+export function deleteQuizQuestionsForQuestion(dc: DataConnect, vars: DeleteQuizQuestionsForQuestionVariables): MutationPromise<DeleteQuizQuestionsForQuestionData, DeleteQuizQuestionsForQuestionVariables>;
+
+interface DeleteQuestionRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteQuestionVariables): MutationRef<DeleteQuestionData, DeleteQuestionVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteQuestionVariables): MutationRef<DeleteQuestionData, DeleteQuestionVariables>;
+  operationName: string;
+}
+export const deleteQuestionRef: DeleteQuestionRef;
+
+export function deleteQuestion(vars: DeleteQuestionVariables): MutationPromise<DeleteQuestionData, DeleteQuestionVariables>;
+export function deleteQuestion(dc: DataConnect, vars: DeleteQuestionVariables): MutationPromise<DeleteQuestionData, DeleteQuestionVariables>;
+
 interface CreateQuizRef {
   /* Allow users to create refs without passing in DataConnect */
   (vars: CreateQuizVariables): MutationRef<CreateQuizData, CreateQuizVariables>;
@@ -1380,6 +1598,54 @@ export const updateQuizStatusRef: UpdateQuizStatusRef;
 
 export function updateQuizStatus(vars: UpdateQuizStatusVariables): MutationPromise<UpdateQuizStatusData, UpdateQuizStatusVariables>;
 export function updateQuizStatus(dc: DataConnect, vars: UpdateQuizStatusVariables): MutationPromise<UpdateQuizStatusData, UpdateQuizStatusVariables>;
+
+interface DeleteQuizQuestionsForQuizRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteQuizQuestionsForQuizVariables): MutationRef<DeleteQuizQuestionsForQuizData, DeleteQuizQuestionsForQuizVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteQuizQuestionsForQuizVariables): MutationRef<DeleteQuizQuestionsForQuizData, DeleteQuizQuestionsForQuizVariables>;
+  operationName: string;
+}
+export const deleteQuizQuestionsForQuizRef: DeleteQuizQuestionsForQuizRef;
+
+export function deleteQuizQuestionsForQuiz(vars: DeleteQuizQuestionsForQuizVariables): MutationPromise<DeleteQuizQuestionsForQuizData, DeleteQuizQuestionsForQuizVariables>;
+export function deleteQuizQuestionsForQuiz(dc: DataConnect, vars: DeleteQuizQuestionsForQuizVariables): MutationPromise<DeleteQuizQuestionsForQuizData, DeleteQuizQuestionsForQuizVariables>;
+
+interface DeleteQuizResponsesForQuizRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteQuizResponsesForQuizVariables): MutationRef<DeleteQuizResponsesForQuizData, DeleteQuizResponsesForQuizVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteQuizResponsesForQuizVariables): MutationRef<DeleteQuizResponsesForQuizData, DeleteQuizResponsesForQuizVariables>;
+  operationName: string;
+}
+export const deleteQuizResponsesForQuizRef: DeleteQuizResponsesForQuizRef;
+
+export function deleteQuizResponsesForQuiz(vars: DeleteQuizResponsesForQuizVariables): MutationPromise<DeleteQuizResponsesForQuizData, DeleteQuizResponsesForQuizVariables>;
+export function deleteQuizResponsesForQuiz(dc: DataConnect, vars: DeleteQuizResponsesForQuizVariables): MutationPromise<DeleteQuizResponsesForQuizData, DeleteQuizResponsesForQuizVariables>;
+
+interface DeleteQuizAttemptsForQuizRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteQuizAttemptsForQuizVariables): MutationRef<DeleteQuizAttemptsForQuizData, DeleteQuizAttemptsForQuizVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteQuizAttemptsForQuizVariables): MutationRef<DeleteQuizAttemptsForQuizData, DeleteQuizAttemptsForQuizVariables>;
+  operationName: string;
+}
+export const deleteQuizAttemptsForQuizRef: DeleteQuizAttemptsForQuizRef;
+
+export function deleteQuizAttemptsForQuiz(vars: DeleteQuizAttemptsForQuizVariables): MutationPromise<DeleteQuizAttemptsForQuizData, DeleteQuizAttemptsForQuizVariables>;
+export function deleteQuizAttemptsForQuiz(dc: DataConnect, vars: DeleteQuizAttemptsForQuizVariables): MutationPromise<DeleteQuizAttemptsForQuizData, DeleteQuizAttemptsForQuizVariables>;
+
+interface DeleteQuizRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteQuizVariables): MutationRef<DeleteQuizData, DeleteQuizVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteQuizVariables): MutationRef<DeleteQuizData, DeleteQuizVariables>;
+  operationName: string;
+}
+export const deleteQuizRef: DeleteQuizRef;
+
+export function deleteQuiz(vars: DeleteQuizVariables): MutationPromise<DeleteQuizData, DeleteQuizVariables>;
+export function deleteQuiz(dc: DataConnect, vars: DeleteQuizVariables): MutationPromise<DeleteQuizData, DeleteQuizVariables>;
 
 interface EnrollInCourseRef {
   /* Allow users to create refs without passing in DataConnect */
@@ -1764,6 +2030,18 @@ export const adminCountQuestionsRef: AdminCountQuestionsRef;
 
 export function adminCountQuestions(options?: ExecuteQueryOptions): QueryPromise<AdminCountQuestionsData, undefined>;
 export function adminCountQuestions(dc: DataConnect, options?: ExecuteQueryOptions): QueryPromise<AdminCountQuestionsData, undefined>;
+
+interface AdminListQuizQuestionUsageRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (): QueryRef<AdminListQuizQuestionUsageData, undefined>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect): QueryRef<AdminListQuizQuestionUsageData, undefined>;
+  operationName: string;
+}
+export const adminListQuizQuestionUsageRef: AdminListQuizQuestionUsageRef;
+
+export function adminListQuizQuestionUsage(options?: ExecuteQueryOptions): QueryPromise<AdminListQuizQuestionUsageData, undefined>;
+export function adminListQuizQuestionUsage(dc: DataConnect, options?: ExecuteQueryOptions): QueryPromise<AdminListQuizQuestionUsageData, undefined>;
 
 interface AdminListCoursesRef {
   /* Allow users to create refs without passing in DataConnect */

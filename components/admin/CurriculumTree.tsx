@@ -162,6 +162,24 @@ export function CurriculumTree() {
     showNotice("error", err.error ?? "Failed to delete lessons.");
   }
 
+  async function deleteModule(moduleId: string, moduleTitle: string) {
+    const confirmed = window.confirm(`Delete module "${moduleTitle}" and all of its lessons? This cannot be undone.`);
+    if (!confirmed) return;
+
+    const res = await fetch("/api/admin/courses", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "delete-module", moduleId }),
+    });
+    if (res.ok) {
+      showNotice("success", `Module "${moduleTitle}" deleted.`);
+      await load();
+      return;
+    }
+    const err = await res.json().catch(() => ({}));
+    showNotice("error", err.error ?? "Failed to delete module.");
+  }
+
   async function addModule(courseId: string) {
     const title = `Module ${courses.find((c) => c.id === courseId)?.modules_on_course.length ?? 0 + 1}`;
     const res = await fetch("/api/admin/courses", {
@@ -267,6 +285,7 @@ export function CurriculumTree() {
               onToggleModuleLessonSelection={toggleModuleLessonSelection}
               onPublishLessons={publishLessons}
               onDeleteLessons={deleteLessons}
+              onDeleteModule={deleteModule}
               onReorder={reorderItems}
             />
           ))
@@ -304,6 +323,7 @@ function CourseNode({
   onToggleModuleLessonSelection,
   onPublishLessons,
   onDeleteLessons,
+  onDeleteModule,
   onReorder,
 }: {
   course: Course;
@@ -319,18 +339,26 @@ function CourseNode({
   onToggleModuleLessonSelection: (lessonIds: string[], checked: boolean) => void;
   onPublishLessons: (lessonIds: string[]) => void;
   onDeleteLessons: (lessonIds: string[]) => void;
+  onDeleteModule: (moduleId: string, moduleTitle: string) => void;
   onReorder: (type: "module" | "lesson", items: Array<{ id: string; position: number }>) => void;
 }) {
   return (
     <div className="rounded-xl border border-black/10 bg-white shadow-sm overflow-hidden">
       {/* Course header */}
       <div className="flex items-center gap-2 px-4 py-3 bg-[#E6F1FB]/30 border-b border-slate-100">
-        <button type="button" onClick={onToggle} className="flex items-center gap-2 flex-1 min-w-0 text-left">
-          {expanded ? <Icons.ChevronDown size={15} className="text-slate-400 shrink-0" /> : <Icons.ChevronRight size={15} className="text-slate-400 shrink-0" />}
-          <Icons.GraduationCap size={16} className="text-[#185FA5] shrink-0" />
-          <span className="font-semibold text-slate-900 text-sm truncate">{course.title}</span>
-          <StatusDot status={course.status} published={course.isPublished} />
+        <button type="button" onClick={onToggle} className="flex items-center gap-1.5 shrink-0">
+          {expanded ? <Icons.ChevronDown size={15} className="text-slate-400" /> : <Icons.ChevronRight size={15} className="text-slate-400" />}
         </button>
+        <Icons.GraduationCap size={16} className="text-[#185FA5] shrink-0" />
+        <a
+          href={`/admin/courses/${course.id}`}
+          className="flex-1 min-w-0 flex items-center gap-2 group"
+          title="Open lesson plan detail view"
+        >
+          <span className="font-semibold text-slate-900 text-sm truncate group-hover:text-[#185FA5] transition-colors">{course.title}</span>
+          <StatusDot status={course.status} published={course.isPublished} />
+          <Icons.ExternalLink size={11} className="shrink-0 text-slate-300 group-hover:text-[#185FA5] transition-colors" />
+        </a>
         <div className="flex items-center gap-1 shrink-0">
           <span className="text-[10px] text-slate-400">{course.modules_on_course.length} modules</span>
           <button type="button" onClick={() => onEdit({ type: "course", item: course })} className="p-1.5 text-slate-400 hover:text-[#185FA5] transition-colors rounded">
@@ -358,6 +386,7 @@ function CourseNode({
               onToggleModuleLessonSelection={onToggleModuleLessonSelection}
               onPublishLessons={onPublishLessons}
               onDeleteLessons={onDeleteLessons}
+              onDeleteModule={onDeleteModule}
             />
           ))}
           {course.modules_on_course.length === 0 && (
@@ -383,6 +412,7 @@ function ModuleNode({
   onToggleModuleLessonSelection,
   onPublishLessons,
   onDeleteLessons,
+  onDeleteModule,
 }: {
   module: Module;
   courseId: string;
@@ -395,6 +425,7 @@ function ModuleNode({
   onToggleModuleLessonSelection: (lessonIds: string[], checked: boolean) => void;
   onPublishLessons: (lessonIds: string[]) => void;
   onDeleteLessons: (lessonIds: string[]) => void;
+  onDeleteModule: (moduleId: string, moduleTitle: string) => void;
 }) {
   let objectives: string[] = [];
   let prereqs: string[] = [];
@@ -449,6 +480,14 @@ function ModuleNode({
           <button type="button" onClick={() => onEdit({ type: "module", item: module, courseId })} className="p-1 text-slate-300 hover:text-slate-600 transition-colors rounded">
             <Icons.Pencil size={12} />
           </button>
+          <button
+            type="button"
+            onClick={() => onDeleteModule(module.id, module.title)}
+            className="p-1 text-slate-300 hover:text-red-600 transition-colors rounded"
+            title="Delete module"
+          >
+            <Icons.Trash2 size={12} />
+          </button>
           <button type="button" onClick={onAddLesson} className="p-1 text-slate-300 hover:text-slate-600 transition-colors rounded">
             <Icons.Plus size={12} />
           </button>
@@ -466,6 +505,7 @@ function ModuleNode({
               selected={selectedLessonIds.has(lesson.id)}
               onToggleSelected={(checked) => onToggleLessonSelection(lesson.id, checked)}
               onEdit={(t) => onEdit(t)}
+              onDelete={() => onDeleteLessons([lesson.id])}
             />
           ))}
           {module.lessons_on_module.length === 0 && (
@@ -486,6 +526,7 @@ function LessonRow({
   selected,
   onToggleSelected,
   onEdit,
+  onDelete,
 }: {
   lesson: Lesson;
   moduleId: string;
@@ -493,6 +534,7 @@ function LessonRow({
   selected: boolean;
   onToggleSelected: (checked: boolean) => void;
   onEdit: (t: EditTarget) => void;
+  onDelete: () => void;
 }) {
   const typeIcons: Record<string, React.ComponentType<any>> = {
     text: Icons.FileText,
@@ -526,6 +568,14 @@ function LessonRow({
           className="p-1 text-slate-200 hover:text-slate-600 transition-colors rounded opacity-0 group-hover:opacity-100"
         >
           <Icons.Pencil size={12} />
+        </button>
+        <button
+          type="button"
+          onClick={onDelete}
+          className="p-1 text-slate-200 hover:text-red-600 transition-colors rounded opacity-0 group-hover:opacity-100"
+          title="Delete lesson"
+        >
+          <Icons.Trash2 size={12} />
         </button>
       </div>
     </div>
