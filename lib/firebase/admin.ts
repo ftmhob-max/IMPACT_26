@@ -6,9 +6,18 @@ function loadAdminAuthModule() {
   return eval("require")("firebase-admin/auth");
 }
 
+let cachedAdminApp: any = null;
+
 function buildAdminApp() {
+  if (cachedAdminApp) return cachedAdminApp;
+
   const { getApps, getApp, initializeApp, cert, applicationDefault } = loadAdminAppModule();
-  if (getApps().length > 0) return getApp();
+  const existingApps = getApps();
+  if (existingApps.length > 0) {
+    cachedAdminApp = existingApps[0] ?? getApp();
+    return cachedAdminApp;
+  }
+
   const key = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
   const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? process.env.GCLOUD_PROJECT;
 
@@ -19,18 +28,20 @@ function buildAdminApp() {
   if (key) {
     const config = JSON.parse(key);
     if (config.private_key) config.private_key = config.private_key.replace(/\\n/g, "\n");
-    return initializeApp({
+    cachedAdminApp = initializeApp({
       credential: cert(config),
       projectId,
     });
+    return cachedAdminApp;
   }
 
   // In Firebase Hosting / Cloud Run, Application Default Credentials are
   // available automatically and should be preferred over shipping a JSON key.
-  return initializeApp({
+  cachedAdminApp = initializeApp({
     credential: applicationDefault(),
     projectId,
   });
+  return cachedAdminApp;
 }
 
 // Lazy proxy — defers initialization to first use, never throws at import time
