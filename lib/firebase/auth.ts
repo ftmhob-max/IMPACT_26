@@ -15,7 +15,6 @@ import { auth } from "./client";
 export async function signUp(email: string, password: string, fullName: string): Promise<User> {
   const credential = await createUserWithEmailAndPassword(auth, email, password);
   await updateProfile(credential.user, { displayName: fullName });
-  // Sync user to database via API route
   const idToken = await credential.user.getIdToken();
   await fetch("/api/auth/sync-user", {
     method: "POST",
@@ -36,7 +35,6 @@ export async function signIn(email: string, password: string): Promise<User> {
 export async function signInWithGoogle(): Promise<User> {
   const provider = new GoogleAuthProvider();
   const credential = await signInWithPopup(auth, provider);
-  // Include the Firebase ID token so the server can verify identity
   const idToken = await credential.user.getIdToken();
   await fetch("/api/auth/sync-user", {
     method: "POST",
