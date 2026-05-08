@@ -16,10 +16,15 @@ export function favoriteDocId(userId: string, itemType: FavoriteItemType, itemId
 export async function listUserFavorites(userId: string, itemType?: FavoriteItemType) {
   const db = tryGetAdminFirestore();
   if (!db) return [];
-  let query = db.collection("userFavorites").where("userId", "==", userId);
-  if (itemType) query = query.where("itemType", "==", itemType);
-  const snap = await query.get();
-  return snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() })) as FavoriteRecord[];
+  try {
+    let query = db.collection("userFavorites").where("userId", "==", userId);
+    if (itemType) query = query.where("itemType", "==", itemType);
+    const snap = await query.get();
+    return snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() })) as FavoriteRecord[];
+  } catch (error) {
+    console.warn("[favorites] Failed to list favorites", error);
+    return [];
+  }
 }
 
 export async function upsertUserFavorite(userId: string, itemType: FavoriteItemType, itemId: string) {

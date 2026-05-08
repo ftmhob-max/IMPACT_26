@@ -4,6 +4,17 @@ import { requireAdminRequest } from "@/lib/admin/auth";
 import { ingestBuffer, uploadSourceBuffer } from "@/lib/admin/ingestion";
 import { adminDcMutate, adminDcQuery } from "@/lib/firebase/admin-dc";
 
+function isFormDataFile(
+  value: FormDataEntryValue | null
+): value is File {
+  return !!value
+    && typeof value === "object"
+    && "arrayBuffer" in value
+    && typeof value.arrayBuffer === "function"
+    && "name" in value
+    && typeof value.name === "string";
+}
+
 export async function GET(request: NextRequest) {
   const auth = await requireAdminRequest(request, "viewer");
   if (!auth.ok) return auth.response;
@@ -17,19 +28,19 @@ export async function POST(request: NextRequest) {
   const auth = await requireAdminRequest(request, "instructor");
   if (!auth.ok) return auth.response;
 
-  const form = await request.formData();
-  const file = form.get("file");
-  const title = String(form.get("title") ?? "");
-  if (!(file instanceof File) || !title.trim()) {
-    return NextResponse.json({ error: "A title and file are required" }, { status: 400 });
-  }
-
-  const materialId = randomUUID();
-  const jobId = randomUUID();
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const storagePath = `source-materials/${materialId}/${file.name}`;
-
   try {
+    const form = await request.formData();
+    const file = form.get("file");
+    const title = String(form.get("title") ?? "").trim();
+    if (!isFormDataFile(file) || !title) {
+      return NextResponse.json({ error: "A title and file are required" }, { status: 400 });
+    }
+
+    const materialId = randomUUID();
+    const jobId = randomUUID();
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const storagePath = `source-materials/${materialId}/${file.name}`;
+
     const ingestion = await ingestBuffer(
       buffer,
       file.name,
@@ -49,7 +60,7 @@ export async function POST(request: NextRequest) {
 
     await adminDcMutate("CreateSourceMaterial", {
       id: materialId,
-      title: title.trim(),
+      title,
       fileName: file.name,
       fileType: file.type || "application/octet-stream",
       storagePath: storageUri,

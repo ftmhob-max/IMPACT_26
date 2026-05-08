@@ -14,6 +14,14 @@ type Overview = {
   users: any[];
 };
 
+type NoticeTone = "success" | "error";
+
+type NoticeState = {
+  title: string;
+  message: string;
+  tone: NoticeTone;
+};
+
 const emptyOverview: Overview = {
   questions: [],
   courses: [],
@@ -29,15 +37,23 @@ const sampleCsv = `question_text,question_type,difficulty,domain,choices,correct
 export function AdminPortal({ initialOverview = emptyOverview }: { initialOverview?: Overview }) {
   const [overview, setOverview] = useState<Overview>(initialOverview);
   const [loading, setLoading] = useState(true);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useState<NoticeState | null>(null);
 
   async function refresh() {
     setLoading(true);
     const res = await adminFetch("/api/admin/overview", { cache: "no-store" });
     if (res.ok) {
       setOverview(await res.json());
-    } else if (overview.questions.length === 0 && overview.courses.length === 0 && overview.quizzes.length === 0) {
-      setNotice("Unable to refresh admin overview data.");
+    } else if (
+      overview.questions.length === 0 &&
+      overview.courses.length === 0 &&
+      overview.quizzes.length === 0
+    ) {
+      setNotice({
+        title: "Refresh unavailable",
+        message: "Unable to refresh admin overview data.",
+        tone: "error",
+      });
     }
     setLoading(false);
   }
@@ -57,105 +73,391 @@ export function AdminPortal({ initialOverview = emptyOverview }: { initialOvervi
         )
       : 0;
     const publishedCourses = overview.courses.filter((course) => course.isPublished).length;
-    return { completed, passRate, avgScore, publishedCourses };
+    const draftCourses = overview.courses.length - publishedCourses;
+    const parsedMaterials = overview.materials.filter((material) => material.status === "parsed").length;
+    const ingestionQueue = Math.max(overview.materials.length - parsedMaterials, 0);
+    const adminUsers = overview.users.filter((user) => user.role === "admin").length;
+
+    return {
+      completed,
+      passRate,
+      avgScore,
+      publishedCourses,
+      draftCourses,
+      parsedMaterials,
+      ingestionQueue,
+      adminUsers,
+    };
   }, [overview]);
 
-  async function withNotice(action: () => Promise<void>, message: string) {
+  const recentAttempts = useMemo(() => overview.attempts.slice(0, 5), [overview.attempts]);
+  const recentMaterials = useMemo(() => overview.materials.slice(0, 5), [overview.materials]);
+  const recentUsers = useMemo(() => overview.users.slice(0, 6), [overview.users]);
+
+  async function withNotice(action: () => Promise<void>, title: string, message: string) {
     setNotice(null);
     await action();
-    setNotice(message);
+    setNotice({ title, message, tone: "success" });
     await refresh();
   }
 
   return (
     <div className="min-h-screen bg-[#f0efe9] px-4 py-5 text-slate-900 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-5">
-        <header className="flex flex-col gap-4 border-b border-black/10 pb-5 lg:flex-row lg:items-end lg:justify-between">
-          <div className="flex items-start gap-4">
-            <div className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#185FA5] text-white shadow-sm">
-              <Icons.ShieldCheck size={24} />
-            </div>
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#185FA5]">IMPACT_26 admin</p>
-              <h1 className="mt-0.5 text-2xl font-extrabold tracking-normal text-slate-950">Learning operations portal</h1>
-              <p className="mt-1 max-w-2xl text-sm text-slate-600">
-                Create curriculum, validate assessments, ingest source materials, and monitor learner performance.
-              </p>
+        <section className="overflow-hidden rounded-[28px] border border-black/10 bg-white shadow-sm">
+          <div className="border-b border-slate-100 bg-[radial-gradient(circle_at_top_left,_rgba(24,95,165,0.14),_transparent_34%),linear-gradient(135deg,#f8fbff_0%,#ffffff_44%,#f7f4ec_100%)] px-5 py-6 sm:px-6 lg:px-7">
+            <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr] xl:items-end">
+              <div className="space-y-5">
+                <div className="flex items-start gap-4">
+                  <div className="mt-1 flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#185FA5] text-white shadow-sm">
+                    <Icons.ShieldCheck size={24} />
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#185FA5]">
+                      IMPACT_26 admin
+                    </p>
+                    <h1 className="mt-1 text-3xl font-extrabold tracking-[-0.02em] text-slate-950">
+                      Learning operations command center
+                    </h1>
+                    <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                      Monitor learner outcomes, move curriculum work forward, and keep assessment content flowing
+                      without losing the operational picture.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <a className="admin-action flex items-center gap-2" href="/admin/preview/courses">
+                    <Icons.Eye size={16} />
+                    Student Preview
+                  </a>
+                  <a className="admin-action secondary flex items-center gap-2" href="/api/admin/analytics/export?kind=attempts">
+                    <Icons.LogOut size={16} className="-rotate-90" />
+                    Export attempts
+                  </a>
+                  <button className="admin-action secondary flex items-center gap-2" type="button" onClick={refresh}>
+                    <Icons.RotateCcw size={16} />
+                    Refresh overview
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <HeroCallout
+                  eyebrow="Operational health"
+                  title={stats.ingestionQueue > 0 ? `${stats.ingestionQueue} materials need review` : "Material pipeline clear"}
+                  description={
+                    stats.ingestionQueue > 0
+                      ? "Recent uploads still need parsing or follow-up before they can support lesson generation."
+                      : "All recent source materials have reached a parsed state."
+                  }
+                  icon={stats.ingestionQueue > 0 ? Icons.AlertCircle : Icons.Check}
+                  tone={stats.ingestionQueue > 0 ? "amber" : "green"}
+                />
+                <HeroCallout
+                  eyebrow="Coverage"
+                  title={`${stats.draftCourses} draft ${stats.draftCourses === 1 ? "course" : "courses"}`}
+                  description="Use quick actions below to publish new content or add lessons to active programs."
+                  icon={Icons.GraduationCap}
+                  tone="blue"
+                />
+              </div>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <a className="admin-action secondary flex items-center gap-2" href="/courses">
-              <Icons.GraduationCap size={16} />
-              Learner catalog
-            </a>
-            <a className="admin-action flex items-center gap-2" href="/api/admin/analytics/export?kind=attempts">
-              <Icons.LogOut size={16} className="-rotate-90" />
-              Export attempts
-            </a>
+
+          <div className="grid gap-3 border-t border-slate-100 px-5 py-4 sm:grid-cols-2 xl:grid-cols-6">
+            <Metric label="Questions" value={overview.questions.length} detail="Banked assessment items" icon={Icons.FileText} />
+            <Metric label="Published courses" value={stats.publishedCourses} detail={`${overview.courses.length} total courses`} icon={Icons.GraduationCap} />
+            <Metric label="Pass rate" value={`${stats.passRate}%`} detail={`${stats.completed} completed attempts`} icon={Icons.Target} />
+            <Metric label="Avg score" value={`${stats.avgScore}%`} detail="Across completed attempts" icon={Icons.BarChart3} />
+            <Metric label="Materials queued" value={stats.ingestionQueue} detail={`${stats.parsedMaterials} parsed ready`} icon={Icons.Database} />
+            <Metric label="Admins" value={stats.adminUsers} detail={`${overview.users.length} active users`} icon={Icons.Users} />
           </div>
-        </header>
+        </section>
 
         {notice && (
-          <div className="flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
-            <Icons.Check size={18} />
-            {notice}
+          <div
+            className={`flex items-start gap-3 rounded-xl border px-4 py-3 text-sm ${
+              notice.tone === "success"
+                ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                : "border-amber-200 bg-amber-50 text-amber-900"
+            }`}
+          >
+            {notice.tone === "success" ? <Icons.Check size={18} /> : <Icons.AlertCircle size={18} />}
+            <div>
+              <p className="font-semibold">{notice.title}</p>
+              <p className="text-sm/6">{notice.message}</p>
+            </div>
           </div>
         )}
 
-        <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <Metric label="Questions" value={overview.questions.length} detail="Banked assessment items" icon={Icons.FileText} />
-          <Metric label="Published courses" value={stats.publishedCourses} detail={`${overview.courses.length} total courses`} icon={Icons.GraduationCap} />
-          <Metric label="Pass rate" value={`${stats.passRate}%`} detail={`${stats.completed} completed attempts`} icon={Icons.Target} />
-          <Metric label="Avg score" value={`${stats.avgScore}%`} detail="Across completed attempts" icon={Icons.BarChart3} />
-        </section>
-
         <section className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
-          <Panel title="Assessment CSV Upload" icon={Icons.ClipboardList} action={<span className="text-xs text-slate-500">Validation before publishing</span>}>
-            <CsvWorkflow onComplete={(msg) => withNotice(async () => {}, msg)} />
+          <Panel
+            title="Priority actions"
+            icon={Icons.LayoutDashboard}
+            action={<span className="text-xs text-slate-500">Fast paths into the main admin jobs</span>}
+          >
+            <div className="grid gap-3 md:grid-cols-2">
+              <QuickActionCard
+                href="/admin/preview/courses"
+                title="Preview learner experience"
+                description="Check published course presentation before sending learners in."
+                icon={Icons.Eye}
+              />
+              <QuickActionCard
+                href="#content-workspace"
+                title="Create course or lesson"
+                description="Jump straight to curriculum drafting and publication tools."
+                icon={Icons.GraduationCap}
+              />
+              <QuickActionCard
+                href="#materials-workspace"
+                title="Ingest source material"
+                description="Upload transcripts, docs, and references for downstream authoring."
+                icon={Icons.Upload}
+              />
+              <QuickActionCard
+                href="#assessment-workspace"
+                title="Build assessments"
+                description="Import CSV questions or add manual items into the bank."
+                icon={Icons.ClipboardList}
+              />
+            </div>
           </Panel>
-          <Panel title="Manual Builder" icon={Icons.BookOpen} action={<span className="text-xs text-slate-500">Multiple choice, multiselect, scenario</span>}>
-            <ManualQuestionForm quizzes={overview.quizzes} onSaved={() => withNotice(async () => {}, "Question saved to the bank.")} />
+
+          <Panel
+            title="Operational snapshot"
+            icon={Icons.BarChart3}
+            action={<span className="text-xs text-slate-500">{loading ? "Refreshing..." : "Live overview"}</span>}
+          >
+            <div className="grid gap-3 md:grid-cols-3">
+              <SnapshotCard
+                label="Attempts"
+                value={stats.completed}
+                detail={stats.completed ? `${stats.passRate}% pass rate` : "No completions yet"}
+                tone="blue"
+              />
+              <SnapshotCard
+                label="Materials"
+                value={overview.materials.length}
+                detail={
+                  stats.ingestionQueue > 0
+                    ? `${stats.ingestionQueue} still processing`
+                    : "All recent uploads parsed"
+                }
+                tone={stats.ingestionQueue > 0 ? "amber" : "green"}
+              />
+              <SnapshotCard
+                label="Users"
+                value={overview.users.length}
+                detail={`${stats.adminUsers} admin roles assigned`}
+                tone="slate"
+              />
+            </div>
+            <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+              <p className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">Recommended next move</p>
+              <p className="mt-1 text-sm font-semibold text-slate-900">
+                {stats.ingestionQueue > 0
+                  ? "Review source material queue so new content can move into lesson planning."
+                  : stats.draftCourses > 0
+                    ? "Publish or extend draft courses to keep the learner catalog growing."
+                    : "Assessment content is in a healthy state. Shift attention to learner performance trends."}
+              </p>
+            </div>
           </Panel>
         </section>
 
-        <section className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
-          <Panel title="Content Management" icon={Icons.GraduationCap} action={<span className="text-xs text-slate-500">Draft and publish learner content</span>}>
-            <ContentWorkflow courses={overview.courses} onSaved={() => withNotice(async () => {}, "Course content updated.")} />
+        <section className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
+          <Panel title="Recent learner attempts" icon={Icons.BarChart3} action={<ExportLinks />}>
+            <AnalyticsTable attempts={overview.attempts} loading={loading} compact />
           </Panel>
-          <Panel title="Source Materials" icon={Icons.Database} action={<span className="text-xs text-slate-500">PDF, DOCX, CSV, transcript ingestion</span>}>
-            <MaterialsWorkflow materials={overview.materials} onSaved={() => withNotice(async () => {}, "Source material ingested.")} />
+          <Panel
+            title="Source material queue"
+            icon={Icons.Database}
+            action={<span className="text-xs text-slate-500">Most recent uploads</span>}
+          >
+            <RecentMaterialsList materials={recentMaterials} />
           </Panel>
         </section>
 
-        <section className="grid gap-5 xl:grid-cols-[1fr_0.95fr]">
-          <Panel title="Analytics" icon={Icons.BarChart3} action={<ExportLinks />}>
-            <AnalyticsTable attempts={overview.attempts} loading={loading} />
+        <section className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
+          <Panel
+            title="Team access"
+            icon={Icons.Users}
+            action={<span className="text-xs text-slate-500">Admin-only mutations</span>}
+          >
+            <TeamSummary users={recentUsers} />
+            <div className="mt-4 border-t border-slate-100 pt-4">
+              <UsersTable
+                users={overview.users}
+                onSaved={() =>
+                  withNotice(async () => {}, "Role updated", "User access levels were updated and the roster was refreshed.")
+                }
+              />
+            </div>
           </Panel>
-          <Panel title="Users & Roles" icon={Icons.Users} action={<span className="text-xs text-slate-500">Admin-only mutations</span>}>
-            <UsersTable users={overview.users} onSaved={() => withNotice(async () => {}, "User role updated.")} />
+
+          <Panel
+            title="Content workspace"
+            icon={Icons.Settings}
+            action={<span className="text-xs text-slate-500">Authoring tools stay available below</span>}
+          >
+            <div className="grid gap-3 md:grid-cols-2">
+              <WorkspaceJump
+                href="#assessment-workspace"
+                title="Assessment workspace"
+                description="CSV validation, imports, and manual question building."
+              />
+              <WorkspaceJump
+                href="#content-workspace"
+                title="Curriculum workspace"
+                description="Create published courses and add new instructor lessons."
+              />
+              <WorkspaceJump
+                href="#materials-workspace"
+                title="Materials workspace"
+                description="Upload files and monitor parse status without leaving this page."
+              />
+              <WorkspaceJump
+                href="#analytics-workspace"
+                title="Analytics workspace"
+                description="Inspect attempt-level data and export downstream reports."
+              />
+            </div>
           </Panel>
+        </section>
+
+        <section className="space-y-5">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#185FA5]">Workspace</p>
+              <h2 className="text-xl font-extrabold tracking-[-0.02em] text-slate-950">Authoring and operations tools</h2>
+              <p className="mt-1 text-sm text-slate-600">
+                The full builders are still here when you need to execute detailed work after reviewing the command center.
+              </p>
+            </div>
+          </div>
+
+          <div id="assessment-workspace" className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
+            <Panel
+              title="Assessment CSV Upload"
+              icon={Icons.ClipboardList}
+              action={<span className="text-xs text-slate-500">Validation before publishing</span>}
+            >
+              <CsvWorkflow
+                onComplete={(msg) =>
+                  withNotice(async () => {}, "Assessment import complete", msg)
+                }
+              />
+            </Panel>
+            <Panel
+              title="Manual Builder"
+              icon={Icons.BookOpen}
+              action={<span className="text-xs text-slate-500">Multiple choice, multiselect, scenario</span>}
+            >
+              <ManualQuestionForm
+                quizzes={overview.quizzes}
+                onSaved={() =>
+                  withNotice(
+                    async () => {},
+                    "Question saved",
+                    "The question was added to the bank and the overview data was refreshed."
+                  )
+                }
+              />
+            </Panel>
+          </div>
+
+          <div id="content-workspace" className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
+            <Panel
+              title="Content Management"
+              icon={Icons.GraduationCap}
+              action={<span className="text-xs text-slate-500">Draft and publish learner content</span>}
+            >
+              <ContentWorkflow
+                courses={overview.courses}
+                onSaved={() =>
+                  withNotice(
+                    async () => {},
+                    "Content updated",
+                    "Course content changes were saved and the content overview was refreshed."
+                  )
+                }
+              />
+            </Panel>
+            <Panel
+              title="Source Materials"
+              icon={Icons.Database}
+              action={<span className="text-xs text-slate-500">PDF, DOCX, CSV, transcript ingestion</span>}
+            >
+              <MaterialsWorkflow
+                materials={overview.materials}
+                onSaved={() =>
+                  withNotice(
+                    async () => {},
+                    "Material ingested",
+                    "The upload completed and the source material queue was refreshed."
+                  )
+                }
+              />
+            </Panel>
+          </div>
+
+          <div id="analytics-workspace" className="grid gap-5 xl:grid-cols-[1fr_0.95fr]">
+            <Panel title="Analytics" icon={Icons.BarChart3} action={<ExportLinks />}>
+              <AnalyticsTable attempts={overview.attempts} loading={loading} />
+            </Panel>
+            <Panel title="Users & Roles" icon={Icons.Users} action={<span className="text-xs text-slate-500">Full roster</span>}>
+              <UsersTable
+                users={overview.users}
+                onSaved={() =>
+                  withNotice(async () => {}, "User role updated", "User role changes were applied successfully.")
+                }
+              />
+            </Panel>
+          </div>
         </section>
       </div>
     </div>
   );
 }
 
-function Metric({ label, value, detail, icon: Icon }: { label: string; value: string | number; detail: string; icon?: React.ComponentType<{ className?: string; size?: number }> }) {
+function Metric({
+  label,
+  value,
+  detail,
+  icon: Icon,
+}: {
+  label: string;
+  value: string | number;
+  detail: string;
+  icon?: React.ComponentType<{ className?: string; size?: number }>;
+}) {
   return (
-    <div className="rounded-lg border border-black/10 bg-white px-4 py-3 shadow-sm">
+    <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
       <div className="flex items-center justify-between">
         <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate-500">{label}</p>
         {Icon && <Icon size={18} className="text-slate-300" />}
       </div>
-      <p className="mt-1 text-2xl font-extrabold tabular-nums text-slate-950">{value}</p>
+      <p className="mt-2 text-2xl font-extrabold tabular-nums text-slate-950">{value}</p>
       <p className="text-xs text-slate-500">{detail}</p>
     </div>
   );
 }
 
-function Panel({ title, action, icon: Icon, children }: { title: string; action?: React.ReactNode; icon?: React.ComponentType<{ className?: string; size?: number }>; children: React.ReactNode }) {
+function Panel({
+  title,
+  action,
+  icon: Icon,
+  children,
+}: {
+  title: string;
+  action?: React.ReactNode;
+  icon?: React.ComponentType<{ className?: string; size?: number }>;
+  children: React.ReactNode;
+}) {
   return (
-    <section className="rounded-lg border border-black/10 bg-white shadow-sm">
+    <section className="rounded-[24px] border border-black/10 bg-white shadow-sm">
       <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
         <div className="flex items-center gap-2">
           {Icon && <Icon size={18} className="text-[#185FA5]" />}
@@ -168,6 +470,167 @@ function Panel({ title, action, icon: Icon, children }: { title: string; action?
   );
 }
 
+function HeroCallout({
+  eyebrow,
+  title,
+  description,
+  icon: Icon,
+  tone,
+}: {
+  eyebrow: string;
+  title: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string; size?: number }>;
+  tone: "blue" | "green" | "amber";
+}) {
+  const toneClasses = {
+    blue: "border-[#b8d7f0] bg-[#f8fbff] text-[#185FA5]",
+    green: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    amber: "border-amber-200 bg-amber-50 text-amber-800",
+  }[tone];
+
+  return (
+    <div className={`rounded-2xl border p-4 ${toneClasses}`}>
+      <div className="flex items-start gap-3">
+        <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/80">
+          <Icon size={18} />
+        </div>
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.1em] opacity-80">{eyebrow}</p>
+          <p className="mt-1 text-base font-extrabold leading-tight text-slate-950">{title}</p>
+          <p className="mt-1 text-sm leading-6 text-slate-600">{description}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function QuickActionCard({
+  href,
+  title,
+  description,
+  icon: Icon,
+}: {
+  href: string;
+  title: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string; size?: number }>;
+}) {
+  return (
+    <a
+      href={href}
+      className="group rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 transition-all hover:-translate-y-0.5 hover:border-[#b8d7f0] hover:bg-white hover:shadow-sm"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-[#185FA5] shadow-sm ring-1 ring-slate-100">
+          <Icon size={18} />
+        </div>
+        <Icons.ArrowRight size={16} className="text-slate-300 transition-transform group-hover:translate-x-0.5" />
+      </div>
+      <p className="mt-4 text-sm font-bold text-slate-900">{title}</p>
+      <p className="mt-1 text-sm leading-6 text-slate-500">{description}</p>
+    </a>
+  );
+}
+
+function SnapshotCard({
+  label,
+  value,
+  detail,
+  tone,
+}: {
+  label: string;
+  value: string | number;
+  detail: string;
+  tone: "blue" | "green" | "amber" | "slate";
+}) {
+  const toneClasses = {
+    blue: "bg-[#E6F1FB] text-[#185FA5]",
+    green: "bg-emerald-50 text-emerald-700",
+    amber: "bg-amber-50 text-amber-800",
+    slate: "bg-slate-100 text-slate-700",
+  }[tone];
+
+  return (
+    <div className="rounded-2xl border border-slate-200 px-4 py-3">
+      <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] ${toneClasses}`}>
+        {label}
+      </span>
+      <p className="mt-3 text-2xl font-extrabold text-slate-950">{value}</p>
+      <p className="text-xs text-slate-500">{detail}</p>
+    </div>
+  );
+}
+
+function RecentMaterialsList({ materials }: { materials: any[] }) {
+  if (!materials.length) {
+    return <p className="text-sm text-slate-500">No source materials have been uploaded yet.</p>;
+  }
+
+  return (
+    <div className="space-y-3">
+      {materials.map((material) => (
+        <div key={material.id} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-slate-900">{material.title}</p>
+              <p className="truncate text-xs text-slate-500">{material.fileName}</p>
+            </div>
+            <span
+              className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] ${
+                material.status === "parsed"
+                  ? "bg-emerald-100 text-emerald-700"
+                  : "bg-amber-100 text-amber-800"
+              }`}
+            >
+              {material.status}
+            </span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TeamSummary({ users }: { users: any[] }) {
+  if (!users.length) {
+    return <p className="text-sm text-slate-500">No users available yet.</p>;
+  }
+
+  return (
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {users.map((user) => (
+        <div key={user.id} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+          <p className="truncate text-sm font-semibold text-slate-900">{user.fullName ?? user.email}</p>
+          <p className="truncate text-xs text-slate-500">{user.email}</p>
+          <span className="mt-3 inline-flex rounded-full bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#185FA5] ring-1 ring-[#b8d7f0]">
+            {user.role}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function WorkspaceJump({
+  href,
+  title,
+  description,
+}: {
+  href: string;
+  title: string;
+  description: string;
+}) {
+  return (
+    <a href={href} className="rounded-2xl border border-slate-200 px-4 py-3 transition-colors hover:border-[#b8d7f0] hover:bg-[#f8fbff]">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-bold text-slate-900">{title}</p>
+        <Icons.ArrowRight size={15} className="text-[#185FA5]" />
+      </div>
+      <p className="mt-1 text-sm leading-6 text-slate-500">{description}</p>
+    </a>
+  );
+}
 
 function CsvWorkflow({ onComplete }: { onComplete: (message: string) => void }) {
   const [csvText, setCsvText] = useState(sampleCsv);
@@ -387,16 +850,27 @@ function MaterialsWorkflow({ materials, onSaved }: { materials: any[]; onSaved: 
   const [title, setTitle] = useState("Assessment calculations reference");
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function upload() {
     if (!file) return;
     setBusy(true);
+    setError(null);
     const form = new FormData();
     form.set("title", title);
     form.set("file", file);
     const res = await fetch("/api/admin/materials", { method: "POST", body: form });
     setBusy(false);
     if (res.ok) onSaved();
+    else {
+      const text = await res.text();
+      try {
+        const data = JSON.parse(text) as { error?: string };
+        setError(data.error ?? "Upload failed.");
+      } catch {
+        setError(text || "Upload failed.");
+      }
+    }
   }
 
   return (
@@ -408,6 +882,7 @@ function MaterialsWorkflow({ materials, onSaved }: { materials: any[]; onSaved: 
         <input className="sr-only" type="file" onChange={(event) => setFile(event.target.files?.[0] ?? null)} />
       </label>
       <button className="admin-action w-full" type="button" onClick={upload} disabled={busy || !file}>Ingest material</button>
+      {error ? <p className="text-xs text-red-600">{error}</p> : null}
       <div className="max-h-44 overflow-auto rounded-md border border-slate-200">
         {materials.slice(0, 6).map((material) => (
           <div key={material.id} className="border-b border-slate-100 px-3 py-2 text-xs last:border-0">
@@ -423,8 +898,10 @@ function MaterialsWorkflow({ materials, onSaved }: { materials: any[]; onSaved: 
   );
 }
 
-function AnalyticsTable({ attempts, loading }: { attempts: any[]; loading: boolean }) {
+function AnalyticsTable({ attempts, loading, compact = false }: { attempts: any[]; loading: boolean; compact?: boolean }) {
   if (loading) return <p className="text-sm text-slate-500">Loading analytics...</p>;
+  if (!attempts.length) return <p className="text-sm text-slate-500">No learner attempts recorded yet.</p>;
+
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full text-left text-sm">
@@ -437,7 +914,7 @@ function AnalyticsTable({ attempts, loading }: { attempts: any[]; loading: boole
           </tr>
         </thead>
         <tbody>
-          {attempts.slice(0, 8).map((attempt) => (
+          {attempts.slice(0, compact ? 5 : 8).map((attempt) => (
             <tr key={attempt.id} className="border-b border-slate-50">
               <td className="py-2 pr-3 text-slate-700">{attempt.user?.fullName ?? attempt.user?.email}</td>
               <td className="py-2 pr-3 text-slate-600">{attempt.quiz?.title}</td>

@@ -44,11 +44,24 @@ async function getFormulaSectionsData() {
 }
 
 export default async function FormulasPage() {
-  const session = await getLearnerSession();
   const sections = await getFormulaSectionsData();
-  const favoriteFormulaIds = session
-    ? (await listUserFavorites(session.uid, "formula")).map((favorite) => favorite.itemId)
-    : [];
+  let session = null as Awaited<ReturnType<typeof getLearnerSession>>;
+  let favoriteFormulaIds: string[] = [];
+
+  try {
+    session = await getLearnerSession();
+  } catch {
+    session = null;
+  }
+
+  if (session) {
+    try {
+      favoriteFormulaIds = (await listUserFavorites(session.uid, "formula")).map((favorite) => favorite.itemId);
+    } catch {
+      favoriteFormulaIds = [];
+    }
+  }
+
   const totalFormulas = sections.reduce((sum, section) => sum + section.formulas.length, 0);
 
   return (

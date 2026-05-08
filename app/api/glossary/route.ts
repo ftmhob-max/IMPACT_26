@@ -7,12 +7,17 @@ export async function GET(request: NextRequest) {
     await verifyIdToken(request.headers.get("Authorization"));
     const db = tryGetAdminFirestore();
     if (!db) return NextResponse.json({ terms: [] });
-    const snap = await db
-      .collection("glossaryTerms")
-      .where("isPublished", "==", true)
-      .orderBy("term")
-      .get();
-    const terms = snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
+    let terms: any[] = [];
+    try {
+      const snap = await db
+        .collection("glossaryTerms")
+        .where("isPublished", "==", true)
+        .orderBy("term")
+        .get();
+      terms = snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+      console.warn("[api/glossary:GET] Falling back to empty glossary", error);
+    }
     return NextResponse.json({ terms });
   } catch (err: any) {
     if (err.message?.includes("Unauthorized")) {

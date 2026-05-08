@@ -1,10 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import * as Icons from "@/components/ui/Icons";
 import { adminFetch } from "@/lib/admin/client-fetch";
 import { cn } from "@/lib/utils";
 import { QuestionBankPicker } from "@/components/admin/QuestionBankPicker";
+import {
+  getQuizReadiness,
+  type QuizDashboardSummary,
+  type QuizDashboardTotals,
+} from "@/lib/admin/quiz-dashboard";
 
 // ─── Choice ordering utilities ────────────────────────────────────────────────
 
@@ -39,17 +44,7 @@ async function saveChoices(questionId: string, choices: Array<{ id: string; choi
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface Quiz {
-  id: string;
-  title: string;
-  description?: string | null;
-  status: string;
-  passingScore?: number | null;
-  timeLimitSeconds?: number | null;
-  shuffleQuestions: boolean;
-  shuffleChoices: boolean;
-  createdAt: string;
-}
+type Quiz = QuizDashboardSummary;
 
 interface AnswerChoice {
   id: string;
@@ -93,14 +88,35 @@ const DEFAULT_FORM: NewQuizForm = {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export function QuizManagementPanel({ initialQuizzes = [] }: { initialQuizzes?: Quiz[] }) {
+export function QuizManagementPanel({
+  initialQuizzes = [],
+  initialTotals,
+}: {
+  initialQuizzes?: Quiz[];
+  initialTotals?: QuizDashboardTotals;
+}) {
   const [quizzes, setQuizzes] = useState<Quiz[]>(initialQuizzes);
+  const [quizTotals, setQuizTotals] = useState<QuizDashboardTotals>(
+    initialTotals ?? {
+      total: initialQuizzes.length,
+      draft: initialQuizzes.filter((quiz) => quiz.status === "draft").length,
+      review: initialQuizzes.filter((quiz) => quiz.status === "review").length,
+      published: initialQuizzes.filter((quiz) => quiz.status === "published").length,
+      ready: initialQuizzes.filter((quiz) => quiz.readiness === "ready").length,
+      attention: initialQuizzes.filter((quiz) => quiz.readiness === "attention").length,
+      empty: initialQuizzes.filter((quiz) => quiz.readiness === "empty").length,
+    }
+  );
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState<NewQuizForm>(DEFAULT_FORM);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
-  const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
+  const [selectedQuizId, setSelectedQuizId] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const selectedQuiz = useMemo(
+    () => quizzes.find((quiz) => quiz.id === selectedQuizId) ?? null,
+    [quizzes, selectedQuizId]
+  );
 
   async function load() {
     setLoading(true);
@@ -108,6 +124,7 @@ export function QuizManagementPanel({ initialQuizzes = [] }: { initialQuizzes?: 
     if (quizRes.ok) {
       const data = await quizRes.json();
       setQuizzes(data.quizzes ?? []);
+      setQuizTotals(data.quizTotals ?? initialTotals ?? quizTotals);
     } else if (!quizzes.length) {
       showNotice("error", "Unable to load quizzes from the admin API.");
     }
@@ -162,9 +179,6 @@ export function QuizManagementPanel({ initialQuizzes = [] }: { initialQuizzes?: 
     if (res.ok) {
       showNotice("success", publish ? "Quiz published." : "Quiz moved to draft.");
       await load();
-      if (selectedQuiz?.id === quizId) {
-        setSelectedQuiz((prev) => prev ? { ...prev, status: publish ? "published" : "draft" } : null);
-      }
     } else {
       const err = await res.json().catch(() => ({}));
       showNotice("error", err.error ?? "Could not update quiz status.");
@@ -180,7 +194,7 @@ export function QuizManagementPanel({ initialQuizzes = [] }: { initialQuizzes?: 
     });
     if (res.ok) {
       showNotice("success", "Quiz deleted.");
-      if (selectedQuiz?.id === quiz.id) setSelectedQuiz(null);
+      if (selectedQuizId === quiz.id) setSelectedQuizId(null);
       await load();
     } else {
       const err = await res.json().catch(() => ({}));
@@ -193,9 +207,19 @@ export function QuizManagementPanel({ initialQuizzes = [] }: { initialQuizzes?: 
   }
 
   return (
-    <div className="flex gap-5">
+    <div className="space-y-5">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+        <SummaryCard label="Total quizzes" value={String(quizTotals.total)} tone="blue" icon={<Icons.ClipboardList size={14} />} />
+        <SummaryCard label="Published" value={String(quizTotals.published)} tone="emerald" />
+        <SummaryCard label="In review" value={String(quizTotals.review)} tone="amber" />
+        <SummaryCard label="Drafts" value={String(quizTotals.draft)} tone="slate" />
+        <SummaryCard label="Ready to run" value={String(quizTotals.ready)} tone="emerald" />
+        <SummaryCard label="Need attention" value={String(quizTotals.attention + quizTotals.empty)} tone="amber" />
+      </div>
+
+      <div className="flex gap-5">
       {/* Left: quiz list */}
-      <div className={cn("space-y-5", selectedQuiz ? "w-72 shrink-0" : "w-full")}>
+      <div className={cn("space-y-5", selectedQuiz ? "w-80 shrink-0" : "w-full")}>
         {notice && (
           <div className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${notice.type === "success" ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
             {notice.type === "success" ? <Icons.Check size={16} /> : <Icons.X size={16} />}
@@ -206,7 +230,7 @@ export function QuizManagementPanel({ initialQuizzes = [] }: { initialQuizzes?: 
         <div className="rounded-xl border border-black/10 bg-white shadow-sm">
           <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
             <div className="flex items-center gap-2">
-              <Icons.ClipboardList size={18} className="text-[#185FA5]" />
+              <Icons.LayoutDashboard size={18} className="text-[#185FA5]" />
               <h2 className="text-sm font-bold text-slate-900">Quizzes</h2>
               <span className="text-xs text-slate-400">({quizzes.length})</span>
             </div>
@@ -266,9 +290,9 @@ export function QuizManagementPanel({ initialQuizzes = [] }: { initialQuizzes?: 
                 <QuizListRow
                   key={quiz.id}
                   quiz={quiz}
-                  selected={selectedQuiz?.id === quiz.id}
+                  selected={selectedQuizId === quiz.id}
                   compact={!!selectedQuiz}
-                  onSelect={() => setSelectedQuiz(selectedQuiz?.id === quiz.id ? null : quiz)}
+                  onSelect={() => setSelectedQuizId(selectedQuizId === quiz.id ? null : quiz.id)}
                   onPublish={(pub) => publishQuiz(quiz.id, pub)}
                   onDelete={() => deleteQuiz(quiz)}
                 />
@@ -282,13 +306,14 @@ export function QuizManagementPanel({ initialQuizzes = [] }: { initialQuizzes?: 
       {selectedQuiz && (
         <QuizDetailPanel
           quiz={selectedQuiz}
-          onClose={() => setSelectedQuiz(null)}
+          onClose={() => setSelectedQuizId(null)}
           onPublish={(pub) => publishQuiz(selectedQuiz.id, pub)}
           onDelete={() => deleteQuiz(selectedQuiz)}
           onQuestionsChanged={load}
           showNotice={showNotice}
         />
       )}
+    </div>
     </div>
   );
 }
@@ -313,7 +338,10 @@ function QuizListRow({
   const isPublished = quiz.status === "published";
   return (
     <div
-      className={cn("cursor-pointer px-4 py-3 transition-colors", selected ? "bg-[#E6F1FB]" : "hover:bg-slate-50")}
+      className={cn(
+        "cursor-pointer px-4 py-3 transition-colors",
+        selected ? "bg-[#E6F1FB]" : "hover:bg-slate-50"
+      )}
       onClick={onSelect}
     >
       <div className="flex items-start justify-between gap-2">
@@ -321,17 +349,32 @@ function QuizListRow({
           <div className="flex items-center gap-2 flex-wrap">
             <p className={cn("text-sm font-semibold truncate", selected ? "text-[#185FA5]" : "text-slate-800")}>{quiz.title}</p>
             <StatusBadge status={quiz.status} />
+            <ReadinessBadge readiness={quiz.readiness} incompleteQuestionCount={quiz.incompleteQuestionCount} />
           </div>
           {!compact && quiz.description && (
             <p className="text-xs text-slate-500 mt-0.5 truncate">{quiz.description}</p>
           )}
-          {!compact && (
-            <div className="flex flex-wrap gap-3 mt-1 text-[10px] text-slate-400">
-              {quiz.passingScore != null && <span>{quiz.passingScore}% pass</span>}
-              {quiz.timeLimitSeconds != null && <span>{Math.floor(quiz.timeLimitSeconds / 60)} min</span>}
-              {quiz.shuffleQuestions && <span>Shuffled</span>}
+          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Coverage</p>
+              <p className="mt-1 text-xs font-semibold text-slate-700">
+                {quiz.questionCount} question{quiz.questionCount !== 1 ? "s" : ""}
+              </p>
+              <p className="text-[11px] text-slate-500">
+                {quiz.incompleteQuestionCount > 0
+                  ? `${quiz.incompleteQuestionCount} incomplete`
+                  : `${quiz.readyQuestionCount} ready`}
+              </p>
             </div>
-          )}
+            <div className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Rules</p>
+              <div className="mt-1 flex flex-wrap gap-1 text-[10px] text-slate-500">
+                {quiz.passingScore != null && <span>{quiz.passingScore}% pass</span>}
+                <span>{quiz.timeLimitSeconds != null ? `${Math.floor(quiz.timeLimitSeconds / 60)} min` : "Untimed"}</span>
+                <span>{quiz.shuffleQuestions ? "Shuffle questions" : "Fixed order"}</span>
+              </div>
+            </div>
+          </div>
         </div>
         {!compact && (
           <div className="flex items-center gap-1">
@@ -382,10 +425,17 @@ function QuizDetailPanel({
   const [shufflingAll, setShufflingAll] = useState(false);
   // Local copies of mutable quiz settings
   const [settingsShuffle, setSettingsShuffle] = useState(quiz.shuffleQuestions);
-  const [settingsChoiceShuffle, setSettingsChoiceShuffle] = useState(quiz.shuffleChoices);
+  const [settingsChoiceShuffle, setSettingsChoiceShuffle] = useState(quiz.shuffleChoices ?? false);
   const [settingsPassScore, setSettingsPassScore] = useState(String(quiz.passingScore ?? 70));
   const [settingsTimeLimit, setSettingsTimeLimit] = useState(quiz.timeLimitSeconds ? String(Math.round(quiz.timeLimitSeconds / 60)) : "");
   const [settingsBusy, setSettingsBusy] = useState(false);
+
+  useEffect(() => {
+    setSettingsShuffle(quiz.shuffleQuestions);
+    setSettingsChoiceShuffle(quiz.shuffleChoices ?? false);
+    setSettingsPassScore(String(quiz.passingScore ?? 70));
+    setSettingsTimeLimit(quiz.timeLimitSeconds ? String(Math.round(quiz.timeLimitSeconds / 60)) : "");
+  }, [quiz]);
 
   const loadQuestions = useCallback(async () => {
     setLoading(true);
@@ -491,6 +541,13 @@ function QuizDetailPanel({
 
   const isPublished = quiz.status === "published";
   const incomplete = questions.filter((q) => !q.answerChoices_on_question.some((c) => c.isCorrect));
+  const readiness = getQuizReadiness(questions.length, incomplete.length);
+  const readinessText =
+    readiness === "ready"
+      ? "Ready to publish"
+      : readiness === "empty"
+        ? "Needs questions"
+        : "Needs answer key fixes";
 
   return (
     <div className="flex-1 min-w-0 rounded-xl border border-black/10 bg-white shadow-sm overflow-hidden self-start">
@@ -501,9 +558,10 @@ function QuizDetailPanel({
           <p className="text-sm font-bold text-slate-900 truncate">{quiz.title}</p>
           <div className="flex flex-wrap gap-3 mt-0.5 text-[10px] text-slate-400">
             <StatusBadge status={quiz.status} />
+            <ReadinessBadge readiness={readiness} incompleteQuestionCount={incomplete.length} />
             {quiz.passingScore != null && <span>{quiz.passingScore}% passing</span>}
             {quiz.timeLimitSeconds != null && <span>{Math.floor(quiz.timeLimitSeconds / 60)} min</span>}
-            {quiz.shuffleQuestions && <span>Shuffled</span>}
+            <span>{quiz.shuffleQuestions ? "Question shuffle on" : "Fixed question order"}</span>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -530,6 +588,24 @@ function QuizDetailPanel({
       </div>
 
       <div className="p-5 space-y-4">
+        <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2">
+              <Icons.Target size={14} className="text-[#185FA5]" />
+              <p className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">Readiness</p>
+            </div>
+            <ReadinessBadge readiness={readiness} incompleteQuestionCount={incomplete.length} />
+            <span className="text-sm font-semibold text-slate-800">{readinessText}</span>
+          </div>
+          <p className="mt-1 text-xs text-slate-500">
+            {questions.length === 0
+              ? "Add questions from the bank before publishing this quiz."
+              : incomplete.length > 0
+                ? "One or more questions do not have a correct answer marked yet."
+                : "This quiz has questions with answer keys in place and is operationally ready."}
+          </p>
+        </div>
+
         {/* Stats row */}
         <div className="grid grid-cols-4 gap-3">
           <StatCard label="Questions" value={String(questions.length)} />
@@ -633,7 +709,13 @@ function QuizDetailPanel({
           </div>
         )}
 
-        {/* Incomplete warning */}
+        {/* Readiness warnings */}
+        {questions.length === 0 && (
+          <div className="flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-700">
+            <Icons.Info size={13} className="mt-0.5 shrink-0 text-slate-400" />
+            <span>This quiz is empty. Use <strong>Add from bank</strong> to populate it before publishing.</span>
+          </div>
+        )}
         {incomplete.length > 0 && (
           <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800">
             <Icons.AlertTriangle size={13} className="mt-0.5 shrink-0 text-amber-500" />
@@ -913,6 +995,34 @@ function QuizQuestionCard({
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+function SummaryCard({
+  label,
+  value,
+  tone,
+  icon,
+}: {
+  label: string;
+  value: string;
+  tone: "blue" | "emerald" | "amber" | "slate";
+  icon?: ReactNode;
+}) {
+  const tones: Record<string, string> = {
+    blue: "border-[#185FA5]/15 bg-[#E6F1FB]/50 text-[#185FA5]",
+    emerald: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    amber: "border-amber-200 bg-amber-50 text-amber-700",
+    slate: "border-slate-200 bg-white text-slate-700",
+  };
+  return (
+    <div className={cn("rounded-xl border px-4 py-3 shadow-sm", tones[tone])}>
+      <div className="flex items-center gap-2">
+        {icon}
+        <p className="text-[10px] font-bold uppercase tracking-[0.08em]">{label}</p>
+      </div>
+      <p className="mt-2 text-2xl font-extrabold">{value}</p>
+    </div>
+  );
+}
+
 function StatCard({ label, value, warn }: { label: string; value: string; warn?: boolean }) {
   return (
     <div className={cn("rounded-lg border px-3 py-2.5 text-center", warn ? "border-amber-200 bg-amber-50" : "border-slate-200 bg-slate-50")}>
@@ -929,6 +1039,29 @@ function StatusBadge({ status }: { status: string }) {
     published: "bg-emerald-100 text-emerald-700",
   };
   return <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${map[status] ?? "bg-slate-100 text-slate-500"}`}>{status}</span>;
+}
+
+function ReadinessBadge({
+  readiness,
+  incompleteQuestionCount,
+}: {
+  readiness: "empty" | "attention" | "ready";
+  incompleteQuestionCount: number;
+}) {
+  const copy =
+    readiness === "ready"
+      ? "Ready"
+      : readiness === "empty"
+        ? "Empty"
+        : `${incompleteQuestionCount} issue${incompleteQuestionCount === 1 ? "" : "s"}`;
+  const classes =
+    readiness === "ready"
+      ? "bg-emerald-100 text-emerald-700"
+      : readiness === "empty"
+        ? "bg-slate-200 text-slate-600"
+        : "bg-amber-100 text-amber-700";
+
+  return <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold", classes)}>{copy}</span>;
 }
 
 const DOMAIN_CLASSES: Record<string, string> = {

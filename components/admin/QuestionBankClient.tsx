@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { type ReactNode, useState, useMemo, useCallback, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import * as Icons from "@/components/ui/Icons";
 
@@ -111,6 +111,13 @@ export function QuestionBankClient({ questions, quizzes }: Props) {
   const [bulkMessage, setBulkMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const [localStatuses, setLocalStatuses] = useState<Record<string, string>>({});
 
+  const hasActiveFilters = !!(search || filterDomain || filterDifficulty || filterStatus);
+
+  function syncQuestion(questionId: string, updater: (question: Question) => Question) {
+    setQuestionItems((prev) => prev.map((question) => (question.id === questionId ? updater(question) : question)));
+    setDetailQuestion((prev) => (prev?.id === questionId ? updater(prev) : prev));
+  }
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return questionItems.filter((question) => {
@@ -122,6 +129,32 @@ export function QuestionBankClient({ questions, quizzes }: Props) {
       return true;
     });
   }, [questionItems, search, filterDomain, filterDifficulty, filterStatus, localStatuses]);
+
+  const tableStats = useMemo(() => {
+    const counts = {
+      total: questionItems.length,
+      draft: 0,
+      review: 0,
+      published: 0,
+      archived: 0,
+      multiselect: 0,
+      missingCorrect: 0,
+      formulaLinked: 0,
+    };
+
+    for (const question of questionItems) {
+      const effectiveStatus = localStatuses[question.id] ?? question.status;
+      if (effectiveStatus === "draft") counts.draft += 1;
+      if (effectiveStatus === "review") counts.review += 1;
+      if (effectiveStatus === "published") counts.published += 1;
+      if (effectiveStatus === "archived") counts.archived += 1;
+      if (question.isMultiselect) counts.multiselect += 1;
+      if (question.formulaRef) counts.formulaLinked += 1;
+      if (!question.answerChoices_on_question.some((choice) => choice.isCorrect)) counts.missingCorrect += 1;
+    }
+
+    return counts;
+  }, [localStatuses, questionItems]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -152,17 +185,23 @@ export function QuestionBankClient({ questions, quizzes }: Props) {
     setBulkMessage(null);
   }
 
+  function resetFilters() {
+    setSearch("");
+    setFilterDomain("");
+    setFilterDifficulty("");
+    setFilterStatus("");
+    setPage(1);
+  }
+
   const updateOneStatus = useCallback(async (id: string, status: string) => {
     setLocalStatuses((prev) => ({ ...prev, [id]: status }));
+    syncQuestion(id, (question) => ({ ...question, status }));
     await fetch(`/api/admin/questions/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
     }).catch(() => {});
-    if (detailQuestion?.id === id) {
-      setDetailQuestion((prev) => prev ? { ...prev, status } : null);
-    }
-  }, [detailQuestion]);
+  }, []);
 
   async function runBulkStatus() {
     if (selected.size === 0 || bulkBusy) return;
@@ -258,34 +297,76 @@ export function QuestionBankClient({ questions, quizzes }: Props) {
     <div className="flex gap-5">
       {/* Left: table */}
       <div className={cn("min-w-0 space-y-4", detailQuestion ? "flex-1" : "w-full")}>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+          <QuestionStatCard label="Total" value={String(tableStats.total)} tone="blue" icon={<Icons.FileText size={14} />} />
+          <QuestionStatCard label="Published" value={String(tableStats.published)} tone="emerald" />
+          <QuestionStatCard label="In review" value={String(tableStats.review)} tone="amber" />
+          <QuestionStatCard label="Drafts" value={String(tableStats.draft)} tone="slate" />
+          <QuestionStatCard label="Missing key" value={String(tableStats.missingCorrect)} tone="amber" />
+          <QuestionStatCard label="Formula refs" value={String(tableStats.formulaLinked)} tone="slate" />
+        </div>
+
         {/* Filter bar */}
-        <div className="flex flex-wrap items-center gap-2">
-          <input
-            type="search"
-            placeholder="Search questions…"
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            className="admin-input w-52"
-          />
-          <select className="admin-input w-36" value={filterDomain} onChange={(e) => { setFilterDomain(e.target.value); setPage(1); }}>
-            <option value="">All domains</option>
-            {DOMAINS.map((d) => <option key={d} value={d}>{d}</option>)}
-          </select>
-          <select className="admin-input w-36" value={filterDifficulty} onChange={(e) => { setFilterDifficulty(e.target.value); setPage(1); }}>
-            <option value="">All difficulties</option>
-            {DIFFICULTIES.map((d) => <option key={d} value={d}>{d}</option>)}
-          </select>
-          <select className="admin-input w-32" value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}>
-            <option value="">All statuses</option>
-            {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
-          <span className="ml-auto text-xs text-slate-400">{filtered.length} of {questionItems.length} questions</span>
+        <div className="rounded-xl border border-black/10 bg-white shadow-sm">
+          <div className="border-b border-slate-100 px-4 py-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="min-w-[15rem] flex-1">
+                <label className="admin-label mb-1">Search</label>
+                <input
+                  type="search"
+                  placeholder="Search questions, tags, or formula refs…"
+                  value={search}
+                  onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                  className="admin-input"
+                />
+              </div>
+              <div className="w-36">
+                <label className="admin-label mb-1">Domain</label>
+                <select className="admin-input" value={filterDomain} onChange={(e) => { setFilterDomain(e.target.value); setPage(1); }}>
+                  <option value="">All domains</option>
+                  {DOMAINS.map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+              <div className="w-36">
+                <label className="admin-label mb-1">Difficulty</label>
+                <select className="admin-input" value={filterDifficulty} onChange={(e) => { setFilterDifficulty(e.target.value); setPage(1); }}>
+                  <option value="">All difficulties</option>
+                  {DIFFICULTIES.map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+              <div className="w-36">
+                <label className="admin-label mb-1">Status</label>
+                <select className="admin-input" value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}>
+                  <option value="">All statuses</option>
+                  {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 px-4 py-3">
+            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600">
+              Showing {filtered.length} of {questionItems.length}
+            </span>
+            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600">
+              {selected.size} selected
+            </span>
+            {hasActiveFilters && (
+              <span className="rounded-full bg-[#E6F1FB] px-2.5 py-1 text-[11px] font-semibold text-[#185FA5]">
+                Filters active
+              </span>
+            )}
+            <button type="button" onClick={resetFilters} className="ml-auto admin-action secondary text-xs">
+              <Icons.RotateCcw size={12} />
+              Reset filters
+            </button>
+          </div>
         </div>
 
         {/* Bulk bar */}
         {selected.size > 0 && (
           <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[#185FA5]/30 bg-[#E6F1FB] px-4 py-3">
             <span className="text-sm font-semibold text-[#185FA5]">{selected.size} selected</span>
+            <span className="text-xs text-slate-500">Apply changes to the current selection across filtered pages.</span>
             <button type="button" onClick={clearSelection} className="text-xs text-slate-500 underline hover:text-slate-700">Clear</button>
             <div className="h-4 w-px bg-slate-300" />
             <div className="flex items-center gap-2">
@@ -331,8 +412,24 @@ export function QuestionBankClient({ questions, quizzes }: Props) {
 
         {/* Table */}
         {filtered.length === 0 ? (
-          <div className="rounded-xl border border-slate-100 bg-white p-12 text-center text-sm text-slate-400">
-            No questions match the current filters.
+          <div className="rounded-xl border border-slate-100 bg-white p-12 text-center">
+            <Icons.Search size={28} className="mx-auto text-slate-200" />
+            <p className="mt-3 text-sm font-semibold text-slate-600">
+              {questionItems.length === 0 ? "No questions have been added yet." : "No questions match the current filters."}
+            </p>
+            <p className="mt-1 text-sm text-slate-400">
+              {questionItems.length === 0
+                ? "Use CSV import or the manual builder above to populate the bank."
+                : hasActiveFilters
+                  ? "Try resetting the filters to widen the result set."
+                  : "Adjust the current search terms and try again."}
+            </p>
+            {hasActiveFilters && (
+              <button type="button" onClick={resetFilters} className="admin-action secondary mt-4 text-xs">
+                <Icons.RotateCcw size={12} />
+                Clear filters
+              </button>
+            )}
           </div>
         ) : (
           <div className="overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm">
@@ -367,10 +464,16 @@ export function QuestionBankClient({ questions, quizzes }: Props) {
                       </td>
                       <td className="px-4 py-3 max-w-sm">
                         <p className={cn("truncate", isActive ? "font-semibold text-[#185FA5]" : "text-slate-800")}>{q.questionText}</p>
+                        <div className="mt-1 flex flex-wrap gap-1.5">
+                          {q.questionType && <MetaChip label={q.questionType.replace("_", " ")} tone="slate" />}
+                          {q.isMultiselect && <MetaChip label="multiselect" tone="purple" />}
+                          {!q.answerChoices_on_question.some((choice) => choice.isCorrect) && <MetaChip label="missing correct answer" tone="amber" />}
+                          {q.formulaRef && <MetaChip label={q.formulaRef} tone="blue" />}
+                        </div>
                         {q.topicTags && (() => {
                           try {
                             const tags = JSON.parse(q.topicTags) as string[];
-                            return tags.length > 0 ? <p className="mt-0.5 truncate text-[10px] text-slate-400">{tags.join(" · ")}</p> : null;
+                            return tags.length > 0 ? <p className="mt-1 truncate text-[10px] text-slate-400">{tags.join(" · ")}</p> : null;
                           } catch { return null; }
                         })()}
                       </td>
@@ -429,7 +532,7 @@ export function QuestionBankClient({ questions, quizzes }: Props) {
           quizzes={quizzes}
           onClose={() => setDetailQuestion(null)}
           onStatusChange={(status) => updateOneStatus(detailQuestion.id, status)}
-          onSaved={(updated) => setDetailQuestion((prev) => prev ? { ...prev, ...updated } : null)}
+          onSaved={(updated) => syncQuestion(detailQuestion.id, (question) => ({ ...question, ...updated }))}
           onDelete={() => deleteQuestion(detailQuestion)}
         />
       )}
@@ -460,6 +563,11 @@ function QuestionDetailPanel({
   const [draft, setDraft] = useState({ ...question });
   const [addToQuizId, setAddToQuizId] = useState(quizzes[0]?.id ?? "");
   const [addingToQuiz, setAddingToQuiz] = useState(false);
+
+  useEffect(() => {
+    setDraft({ ...question });
+    setEditing(false);
+  }, [question]);
 
   function resetDraft() {
     setDraft({ ...question });
@@ -601,14 +709,29 @@ function QuestionDetailPanel({
         )}
 
         {/* Metadata badges */}
-        <div className="flex flex-wrap gap-2 px-4 py-3">
-          <DomainBadge domain={question.domain} />
-          <DifficultyBadge difficulty={question.difficulty} />
-          <span className={cn("inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize", STATUS_CLASSES[question.status] ?? "bg-slate-100 text-slate-600")}>
-            {question.status}
-          </span>
-          {question.isMultiselect && (
-            <span className="inline-block rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-semibold text-purple-700">multiselect</span>
+        <div className="space-y-3 px-4 py-3">
+          <div className="flex flex-wrap gap-2">
+            <DomainBadge domain={draft.domain} />
+            <DifficultyBadge difficulty={draft.difficulty} />
+            <span className={cn("inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize", STATUS_CLASSES[draft.status] ?? "bg-slate-100 text-slate-600")}>
+              {draft.status}
+            </span>
+            {draft.questionType && <MetaChip label={draft.questionType.replace("_", " ")} tone="slate" />}
+            {draft.isMultiselect && (
+              <span className="inline-block rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-semibold text-purple-700">multiselect</span>
+            )}
+          </div>
+          {!editing && (
+            <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-500">
+              <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
+                <p className="font-semibold text-slate-700">Answer set</p>
+                <p>{sortedChoices.length} choices · {hasCorrect ? "keyed" : "missing correct answer"}</p>
+              </div>
+              <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
+                <p className="font-semibold text-slate-700">References</p>
+                <p>{draft.formulaRef ? draft.formulaRef : "No formula ref"}{draft.sourceRef ? ` · ${draft.sourceRef}` : ""}</p>
+              </div>
+            </div>
           )}
         </div>
 
@@ -624,7 +747,7 @@ function QuestionDetailPanel({
               />
             </div>
           ) : (
-            <p className="text-sm text-slate-900 leading-relaxed">{question.questionText}</p>
+            <p className="text-sm text-slate-900 leading-relaxed">{draft.questionText}</p>
           )}
         </div>
 
@@ -742,7 +865,7 @@ function QuestionDetailPanel({
         </div>
 
         {/* Rationale / Calculation / Source */}
-        {(question.rationale || question.calculation || question.sourceRef || editing) && (
+        {(draft.rationale || draft.calculation || draft.sourceRef || editing) && (
           <div className="px-4 py-3 space-y-3">
             <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Supporting info</p>
             {editing ? (
@@ -762,22 +885,22 @@ function QuestionDetailPanel({
               </>
             ) : (
               <>
-                {question.rationale && (
+                {draft.rationale && (
                   <div>
                     <p className="text-[10px] font-semibold uppercase text-slate-400 mb-1">Rationale</p>
-                    <p className="text-xs text-slate-700 leading-relaxed">{question.rationale}</p>
+                    <p className="text-xs text-slate-700 leading-relaxed">{draft.rationale}</p>
                   </div>
                 )}
-                {question.calculation && (
+                {draft.calculation && (
                   <div>
                     <p className="text-[10px] font-semibold uppercase text-slate-400 mb-1">Calculation</p>
-                    <p className="text-xs text-slate-700 font-mono whitespace-pre-wrap">{question.calculation}</p>
+                    <p className="text-xs text-slate-700 font-mono whitespace-pre-wrap">{draft.calculation}</p>
                   </div>
                 )}
-                {question.sourceRef && (
+                {draft.sourceRef && (
                   <div>
                     <p className="text-[10px] font-semibold uppercase text-slate-400 mb-1">Source</p>
-                    <p className="text-xs text-slate-700">{question.sourceRef}</p>
+                    <p className="text-xs text-slate-700">{draft.sourceRef}</p>
                   </div>
                 )}
               </>
@@ -808,7 +931,7 @@ function QuestionDetailPanel({
                   onClick={() => onStatusChange(s)}
                   className={cn(
                     "rounded-full px-2.5 py-1 text-[10px] font-semibold transition-colors",
-                    (question.status === s) ? (STATUS_CLASSES[s] ?? "bg-slate-200 text-slate-700") + " ring-1 ring-slate-400/40 ring-offset-1" : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                    (draft.status === s) ? (STATUS_CLASSES[s] ?? "bg-slate-200 text-slate-700") + " ring-1 ring-slate-400/40 ring-offset-1" : "bg-slate-100 text-slate-500 hover:bg-slate-200"
                   )}
                 >
                   {s}
@@ -835,10 +958,10 @@ function QuestionDetailPanel({
         )}
 
         {/* Formula ref */}
-        {question.formulaRef && (
+        {draft.formulaRef && (
           <div className="px-4 py-3">
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Formula ref</p>
-            <p className="text-xs font-mono text-slate-600">{question.formulaRef}</p>
+            <p className="text-xs font-mono text-slate-600">{draft.formulaRef}</p>
           </div>
         )}
       </div>
@@ -854,6 +977,56 @@ const STATUS_CLASSES: Record<string, string> = {
   published: "bg-emerald-100 text-emerald-700",
   archived: "bg-red-100 text-red-600",
 };
+
+function QuestionStatCard({
+  label,
+  value,
+  tone,
+  icon,
+}: {
+  label: string;
+  value: string;
+  tone: "blue" | "emerald" | "amber" | "slate";
+  icon?: ReactNode;
+}) {
+  const tones: Record<string, string> = {
+    blue: "border-[#185FA5]/15 bg-[#E6F1FB]/50 text-[#185FA5]",
+    emerald: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    amber: "border-amber-200 bg-amber-50 text-amber-700",
+    slate: "border-slate-200 bg-white text-slate-700",
+  };
+
+  return (
+    <div className={cn("rounded-xl border px-4 py-3 shadow-sm", tones[tone])}>
+      <div className="flex items-center gap-2">
+        {icon}
+        <p className="text-[10px] font-bold uppercase tracking-[0.08em]">{label}</p>
+      </div>
+      <p className="mt-2 text-2xl font-extrabold">{value}</p>
+    </div>
+  );
+}
+
+function MetaChip({
+  label,
+  tone,
+}: {
+  label: string;
+  tone: "amber" | "blue" | "purple" | "slate";
+}) {
+  const tones: Record<string, string> = {
+    amber: "bg-amber-100 text-amber-700",
+    blue: "bg-[#E6F1FB] text-[#185FA5]",
+    purple: "bg-purple-100 text-purple-700",
+    slate: "bg-slate-100 text-slate-600",
+  };
+
+  return (
+    <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold", tones[tone])}>
+      {label}
+    </span>
+  );
+}
 
 function DomainBadge({ domain }: { domain: string }) {
   const map: Record<string, string> = { math: "bg-blue-50 text-blue-700", appraisal: "bg-purple-50 text-purple-700", law: "bg-amber-50 text-amber-700", philly: "bg-emerald-50 text-emerald-700", admin: "bg-slate-100 text-slate-600", ethics: "bg-rose-50 text-rose-700" };

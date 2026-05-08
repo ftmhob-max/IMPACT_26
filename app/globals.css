@@ -21,6 +21,17 @@
   --impact-muted: #4a4a46;
   --impact-faint: #888880;
   --impact-border: rgba(0,0,0,0.11);
+  --sidebar-bg: #0b3a69;
+  --sidebar-bg-strong: #073866;
+  --sidebar-border: rgba(196, 220, 245, 0.18);
+  --sidebar-text: rgba(255, 255, 255, 0.96);
+  --sidebar-muted: rgba(224, 236, 248, 0.72);
+  --sidebar-hover: rgba(255, 255, 255, 0.08);
+  --sidebar-active: #185FA5;
+  --sidebar-active-soft: rgba(230, 241, 251, 0.18);
+  --sidebar-accent: #67c58e;
+  --sidebar-card: rgba(255, 255, 255, 0.07);
+  --sidebar-shadow: 0 20px 45px -28px rgba(7, 31, 61, 0.72);
 }
 
 * {

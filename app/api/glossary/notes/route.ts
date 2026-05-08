@@ -17,10 +17,15 @@ export async function GET(request: NextRequest) {
 
     const db = tryGetAdminFirestore();
     if (!db) return NextResponse.json({ notes: [] });
-    let query = db.collection("glossaryNotes").where("userId", "==", uid);
-    if (termId) query = query.where("termId", "==", termId);
-    const snap = await query.orderBy("updatedAt", "desc").get();
-    const notes = snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
+    let notes: any[] = [];
+    try {
+      let query = db.collection("glossaryNotes").where("userId", "==", uid);
+      if (termId) query = query.where("termId", "==", termId);
+      const snap = await query.orderBy("updatedAt", "desc").get();
+      notes = snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+      console.warn("[api/glossary/notes:GET] Falling back to empty notes", error);
+    }
     return NextResponse.json({ notes });
   } catch (err: any) {
     if (err.message?.includes("Unauthorized")) {

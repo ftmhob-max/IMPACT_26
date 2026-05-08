@@ -43,6 +43,15 @@ interface UploadResult {
   };
 }
 
+async function readApiError(res: Response) {
+  const text = await res.text();
+  try {
+    return JSON.parse(text) as { error?: string };
+  } catch {
+    return { error: text || "Upload failed." };
+  }
+}
+
 export function MaterialsPanel() {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -75,16 +84,19 @@ export function MaterialsPanel() {
     form.set("file", file);
     try {
       const res = await fetch("/api/admin/materials", { method: "POST", body: form });
-      const data = await res.json();
       if (res.ok) {
+        const data = (await res.json()) as UploadResult;
         setUploadResult(data);
         setFile(null);
         setTitle("");
         setNotice(null);
         await load();
       } else {
+        const data = await readApiError(res);
         setNotice({ type: "error", text: data.error ?? "Upload failed." });
       }
+    } catch {
+      setNotice({ type: "error", text: "Upload failed." });
     } finally {
       setBusy(false);
     }

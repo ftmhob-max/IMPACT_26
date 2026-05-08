@@ -617,6 +617,16 @@ function ResourcesTab({
       await onUpdate({ sourceMaterialId: data.id });
       setFile(null);
       setUploadTitle("");
+    } else {
+      const text = await res.text();
+      let message = "Upload failed.";
+      try {
+        const data = JSON.parse(text) as { error?: string };
+        message = data.error ?? message;
+      } catch {
+        if (text) message = text;
+      }
+      alert(message);
     }
     setBusy(false);
   }
