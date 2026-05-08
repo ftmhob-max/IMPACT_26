@@ -1,5 +1,4 @@
-import { getStorage } from "firebase-admin/storage";
-import { adminApp } from "@/lib/firebase/admin";
+import { getAdminStorage } from "@/lib/firebase/admin-storage";
 import { previewAssessmentCsv } from "./csv";
 import { getFileExtension, getSourceMaterialKind, isPreviewableMediaKind } from "./source-materials";
 
@@ -128,7 +127,7 @@ export async function uploadSourceBuffer({
   let lastError: unknown = null;
   for (const bucketName of bucketCandidates.length > 0 ? bucketCandidates : [undefined]) {
     try {
-      const bucket = bucketName ? getStorage(adminApp).bucket(bucketName) : getStorage(adminApp).bucket();
+      const bucket = bucketName ? getAdminStorage().bucket(bucketName) : getAdminStorage().bucket();
       const file = bucket.file(storagePath);
       await file.save(buffer, {
         contentType,

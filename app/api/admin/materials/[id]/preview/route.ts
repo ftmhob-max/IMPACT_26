@@ -1,11 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { parse as parseCsv } from "csv-parse/sync";
-import { getStorage } from "firebase-admin/storage";
+import { getAdminStorage } from "@/lib/firebase/admin-storage";
 import { parse as parseHtml } from "node-html-parser";
 import { requireAdminRequest } from "@/lib/admin/auth";
 import { fetchAdminMaterialLibrary, findMaterialById } from "@/lib/admin/material-library";
 import { ingestBuffer } from "@/lib/admin/ingestion";
-import { adminApp } from "@/lib/firebase/admin";
 import { parseGsPath } from "@/lib/admin/source-materials";
 import { formatUuid } from "@/lib/utils";
 
@@ -34,7 +33,7 @@ async function loadAssetBuffer(material: Awaited<ReturnType<typeof fetchAdminMat
   if (!parsedPath) return null;
 
   try {
-    const file = getStorage(adminApp).bucket(parsedPath.bucket).file(parsedPath.filePath);
+    const file = getAdminStorage().bucket(parsedPath.bucket).file(parsedPath.filePath);
     const [buffer] = await file.download();
     return buffer;
   } catch {

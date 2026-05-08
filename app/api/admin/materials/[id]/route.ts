@@ -1,7 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getStorage } from "firebase-admin/storage";
+import { getAdminStorage } from "@/lib/firebase/admin-storage";
 import { requireAdminRequest } from "@/lib/admin/auth";
-import { adminApp } from "@/lib/firebase/admin";
 import { adminDcMutate, adminDcQuery } from "@/lib/firebase/admin-dc";
 import { parseGsPath } from "@/lib/admin/source-materials";
 import { formatUuid } from "@/lib/utils";
@@ -32,7 +31,7 @@ export async function DELETE(
 
     const parsed = parseGsPath(material.storagePath ?? null);
     if (parsed) {
-      await getStorage(adminApp).bucket(parsed.bucket).file(parsed.filePath).delete().catch(() => null);
+      await getAdminStorage().bucket(parsed.bucket).file(parsed.filePath).delete().catch(() => null);
     }
 
     return NextResponse.json({ ok: true });
