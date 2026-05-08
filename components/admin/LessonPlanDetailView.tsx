@@ -4,11 +4,12 @@ import { useCallback, useRef, useState } from "react";
 import Link from "next/link";
 import * as Icons from "@/components/ui/Icons";
 import { cn } from "@/lib/utils";
-import { LessonContentEditor, type LessonContentEditorHandle } from "@/components/admin/LessonContentEditor";
+import { LessonBuilderEditor, type LessonBuilderEditorHandle } from "@/components/admin/LessonBuilderEditor";
 import { LessonStudentPreview } from "@/components/admin/LessonStudentPreview";
 import { LessonQuizPanel } from "@/components/admin/LessonQuizPanel";
 import { VideoUpload } from "@/components/admin/VideoUpload";
 import { VideoLinkInput } from "@/components/admin/VideoLinkInput";
+import { getLessonReadinessIssues, parseStructuredLessonContent } from "@/lib/lessons/structured-content";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -79,7 +80,7 @@ export function LessonPlanDetailView({
   const [activeTab, setActiveTab] = useState<TabId>("content");
   const [notice, setNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [draftContentByLessonId, setDraftContentByLessonId] = useState<Record<string, string>>({});
-  const contentEditorRef = useRef<LessonContentEditorHandle | null>(null);
+  const contentEditorRef = useRef<LessonBuilderEditorHandle | null>(null);
 
   const selectedLesson = modules.flatMap((m) => m.lessons).find((l) => l.id === selectedLessonId) ?? null;
   const selectedLessonForDisplay = selectedLesson
@@ -379,7 +380,7 @@ function LessonDetailPanel({
   onTabChange: (tab: TabId) => void;
   onUpdate: (updates: Record<string, unknown>) => Promise<void>;
   onReload: () => Promise<void>;
-  editorRef: React.RefObject<LessonContentEditorHandle | null>;
+  editorRef: React.RefObject<LessonBuilderEditorHandle | null>;
   onContentChange: (contentJson: string) => void;
 }) {
   const tabs: { id: TabId; label: string; icon: React.ComponentType<any>; show: boolean }[] = [
@@ -465,7 +466,7 @@ function ContentTab({
 }: {
   lesson: LessonData;
   onUpdate: (updates: Record<string, unknown>) => Promise<void>;
-  editorRef: React.RefObject<LessonContentEditorHandle | null>;
+  editorRef: React.RefObject<LessonBuilderEditorHandle | null>;
   onContentChange: (contentJson: string) => void;
 }) {
   const [videoTab, setVideoTab] = useState<"upload" | "link">(
@@ -486,7 +487,7 @@ function ContentTab({
 
   if (lesson.lessonType === "text") {
     return (
-      <LessonContentEditor
+      <LessonBuilderEditor
         ref={editorRef}
         lessonId={lesson.id}
         initialContent={lesson.contentJson ?? null}
@@ -744,7 +745,9 @@ function SettingsTab({
   function readinessIssues(): string[] {
     const issues: string[] = [];
     if (!title.trim()) issues.push("Lesson needs a title.");
-    if (lessonType === "text" && !lesson.contentJson) issues.push("No text content written yet.");
+    if (lessonType === "text") {
+      issues.push(...getLessonReadinessIssues(parseStructuredLessonContent(lesson.contentJson)));
+    }
     if (lessonType === "video" && !lesson.videoPlaybackId && !lesson.videoUrl) issues.push("No video attached.");
     if (lessonType === "quiz" && !lesson.quiz) issues.push("No quiz linked.");
     return issues;
@@ -809,7 +812,7 @@ function SettingsTab({
           <div>
             <label className="admin-label">Type</label>
             <select className="admin-input" value={lessonType} onChange={(e) => setLessonType(e.target.value)}>
-              <option value="text">Text / Reading</option>
+              <option value="text">Structured lesson</option>
               <option value="video">Video</option>
               <option value="quiz">Quiz</option>
               <option value="source">Source material</option>

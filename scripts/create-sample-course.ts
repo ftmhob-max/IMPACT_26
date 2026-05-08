@@ -5,8 +5,8 @@ import { getAuth } from "firebase-admin/auth";
 const PROJECT_ID = "impact26-aa59b";
 
 async function getAdminToken() {
-  const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-  if (!serviceAccountKey) throw new Error("FIREBASE_SERVICE_ACCOUNT_KEY not set");
+  const serviceAccountKey = process.env.SERVICE_ACCOUNT_KEY;
+  if (!serviceAccountKey) throw new Error("SERVICE_ACCOUNT_KEY not set");
   const config = JSON.parse(serviceAccountKey);
   if (config.private_key) config.private_key = config.private_key.replace(/\\n/g, "\n");
   

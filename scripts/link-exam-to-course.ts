@@ -5,7 +5,7 @@
  * Safe to re-run — duplicate lesson creation errors are caught and skipped.
  *
  * Usage:
- *   FIREBASE_SERVICE_ACCOUNT_KEY='...' npx tsx scripts/link-exam-to-course.ts
+ *   SERVICE_ACCOUNT_KEY='...' npx tsx scripts/link-exam-to-course.ts
  */
 
 import { initializeApp, cert, getApps } from "firebase-admin/app";
@@ -20,8 +20,8 @@ const DC_BASE = process.env.FIREBASE_DATACONNECT_EMULATOR_HOST
 
 // ─── Admin SDK init ───────────────────────────────────────────────────────────
 
-const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-if (!serviceAccountKey) throw new Error("Set FIREBASE_SERVICE_ACCOUNT_KEY before running");
+const serviceAccountKey = process.env.SERVICE_ACCOUNT_KEY;
+if (!serviceAccountKey) throw new Error("Set SERVICE_ACCOUNT_KEY before running");
 
 const config = JSON.parse(serviceAccountKey);
 if (config.private_key) config.private_key = config.private_key.replace(/\\n/g, "\n");

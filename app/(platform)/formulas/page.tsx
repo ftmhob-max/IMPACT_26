@@ -1,21 +1,45 @@
 import { EmptyState, LearnerPage, PageHeader } from "@/components/ui/LearnerPrimitives";
 import { FormulaCompass } from "@/components/layout/FormulaCompass";
-import { getFormulaSections } from "@/lib/firebase/generated";
-import { getPlatformDataConnect } from "@/lib/firebase/dataconnect";
+import { adminDcQuery } from "@/lib/firebase/admin-dc";
+import { DEV_FORMULA_SECTIONS } from "@/lib/dev-content";
+import { ensureDevDataSeeded } from "@/lib/dev-seed";
+import { dedupeFormulaSections } from "@/lib/formula-sections";
 import { listUserFavorites } from "@/lib/firebase/favorites";
 import { getLearnerSession } from "@/lib/firebase/learner-session";
 import * as Icons from "@/components/ui/Icons";
 
 async function getFormulaSectionsData() {
   try {
-    const dc = getPlatformDataConnect();
-    const { data } = await getFormulaSections(dc);
-    return data.formulaSections.map((s) => ({
+    type FormulaSectionsData = {
+      formulaSections: Array<{
+        id: string;
+        code: string;
+        title: string;
+        position: number;
+        formulas_on_section: Array<{
+          id: string;
+          code: string;
+          name: string;
+          expression: string;
+          notes?: string | null;
+        }>;
+      }>;
+    };
+
+    let data = await adminDcQuery<FormulaSectionsData>("GetFormulaSections");
+    if (data.formulaSections.length === 0) {
+      await ensureDevDataSeeded().catch(() => null);
+      data = await adminDcQuery<FormulaSectionsData>("GetFormulaSections").catch(
+        (): FormulaSectionsData => ({ formulaSections: [] })
+      );
+    }
+    const sections = dedupeFormulaSections(data.formulaSections.map((s) => ({
       ...s,
       formulas: s.formulas_on_section,
-    }));
+    })));
+    return sections.length > 0 ? sections : DEV_FORMULA_SECTIONS;
   } catch {
-    return [];
+    return DEV_FORMULA_SECTIONS;
   }
 }
 

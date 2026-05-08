@@ -1,10 +1,10 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { signIn, signInWithGoogle, getIdToken } from "@/lib/firebase/auth";
+import { AuthFlowError, completeAppSignIn, signIn, signInWithGoogle } from "@/lib/firebase/auth";
 import { ArrowRight, ChevronLeft, GraduationCap, ShieldCheck } from "@/components/ui/Icons";
 import { cn } from "@/lib/utils";
 
@@ -19,7 +19,6 @@ export default function SignInPage() {
 }
 
 function SignInForm() {
-  const router = useRouter();
   const params = useSearchParams();
 
   const [mode, setMode] = useState<LoginMode>("student");
@@ -30,14 +29,15 @@ function SignInForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function syncSession() {
-    const token = await getIdToken();
-    if (!token) return;
-    await fetch("/api/auth/sync-user", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      body: JSON.stringify({}),
-    });
+  function getErrorMessage(err: unknown): string {
+    if (err instanceof AuthFlowError) {
+      return err.code ? `${err.message} (${err.code})` : err.message;
+    }
+    return err instanceof Error ? err.message : "Sign-in failed";
+  }
+
+  function completeRedirect(target: string) {
+    window.location.assign(target);
   }
 
   async function handleEmailSignIn(e: React.FormEvent) {
@@ -45,11 +45,11 @@ function SignInForm() {
     setError("");
     setLoading(true);
     try {
-      await signIn(email, password);
-      await syncSession();
-      router.push(redirect);
+      const user = await signIn(email, password);
+      await completeAppSignIn(user);
+      completeRedirect(redirect);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Sign-in failed");
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -60,12 +60,9 @@ function SignInForm() {
     setLoading(true);
     try {
       await signInWithGoogle();
-      await syncSession();
-      router.push(redirect);
-    } catch (err: any) {
-      const code: string = err?.code ?? "";
-      const msg: string = err instanceof Error ? err.message : "Sign-in failed";
-      setError(code ? `${msg} (${code})` : msg);
+      completeRedirect(redirect);
+    } catch (err) {
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }

@@ -433,6 +433,22 @@ export interface DeleteAnswerChoicesForQuestionVariables {
   questionId: UUIDString;
 }
 
+export interface DeleteFormulaSectionData {
+  formulaSection_delete?: FormulaSection_Key | null;
+}
+
+export interface DeleteFormulaSectionVariables {
+  id: UUIDString;
+}
+
+export interface DeleteFormulasForSectionData {
+  formula_deleteMany: number;
+}
+
+export interface DeleteFormulasForSectionVariables {
+  sectionId: UUIDString;
+}
+
 export interface DeleteIngestionJobsForMaterialData {
   ingestionJob_deleteMany: number;
 }
@@ -1742,6 +1758,30 @@ export const createFormulaRef: CreateFormulaRef;
 
 export function createFormula(vars: CreateFormulaVariables): MutationPromise<CreateFormulaData, CreateFormulaVariables>;
 export function createFormula(dc: DataConnect, vars: CreateFormulaVariables): MutationPromise<CreateFormulaData, CreateFormulaVariables>;
+
+interface DeleteFormulasForSectionRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteFormulasForSectionVariables): MutationRef<DeleteFormulasForSectionData, DeleteFormulasForSectionVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteFormulasForSectionVariables): MutationRef<DeleteFormulasForSectionData, DeleteFormulasForSectionVariables>;
+  operationName: string;
+}
+export const deleteFormulasForSectionRef: DeleteFormulasForSectionRef;
+
+export function deleteFormulasForSection(vars: DeleteFormulasForSectionVariables): MutationPromise<DeleteFormulasForSectionData, DeleteFormulasForSectionVariables>;
+export function deleteFormulasForSection(dc: DataConnect, vars: DeleteFormulasForSectionVariables): MutationPromise<DeleteFormulasForSectionData, DeleteFormulasForSectionVariables>;
+
+interface DeleteFormulaSectionRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteFormulaSectionVariables): MutationRef<DeleteFormulaSectionData, DeleteFormulaSectionVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteFormulaSectionVariables): MutationRef<DeleteFormulaSectionData, DeleteFormulaSectionVariables>;
+  operationName: string;
+}
+export const deleteFormulaSectionRef: DeleteFormulaSectionRef;
+
+export function deleteFormulaSection(vars: DeleteFormulaSectionVariables): MutationPromise<DeleteFormulaSectionData, DeleteFormulaSectionVariables>;
+export function deleteFormulaSection(dc: DataConnect, vars: DeleteFormulaSectionVariables): MutationPromise<DeleteFormulaSectionData, DeleteFormulaSectionVariables>;
 
 interface CreateContentSourceLinkRef {
   /* Allow users to create refs without passing in DataConnect */

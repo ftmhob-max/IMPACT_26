@@ -10,7 +10,7 @@ export interface LearnerSession {
 
 export async function getLearnerSession(): Promise<LearnerSession | null> {
   const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get("session")?.value;
+  const sessionCookie = cookieStore.get("__session")?.value;
   if (!sessionCookie) return null;
   try {
     const decoded = await adminAuth.verifySessionCookie(sessionCookie, true);

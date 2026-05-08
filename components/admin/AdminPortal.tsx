@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { adminFetch } from "@/lib/admin/client-fetch";
 import { DOMAINS, DIFFICULTIES } from "@/lib/utils";
 import * as Icons from "@/components/ui/Icons";
 
@@ -25,15 +26,19 @@ const emptyOverview: Overview = {
 const sampleCsv = `question_text,question_type,difficulty,domain,choices,correct_answers,explanation,rationale,source_ref,topic_tags,formula_ref,point_value
 "Which USPAP standards govern mass appraisal development and reporting?",multiple_choice,proficient,law,"Standards 1 & 2|Standards 3 & 4|Standards 5 & 6|Ethics Rule only",C,"Standards 5 and 6 apply to mass appraisal.","Mass appraisal has specific USPAP development/reporting standards.","USPAP 2024-2025","USPAP|mass appraisal",,1`;
 
-export function AdminPortal() {
-  const [overview, setOverview] = useState<Overview>(emptyOverview);
+export function AdminPortal({ initialOverview = emptyOverview }: { initialOverview?: Overview }) {
+  const [overview, setOverview] = useState<Overview>(initialOverview);
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState<string | null>(null);
 
   async function refresh() {
     setLoading(true);
-    const res = await fetch("/api/admin/overview", { cache: "no-store" });
-    if (res.ok) setOverview(await res.json());
+    const res = await adminFetch("/api/admin/overview", { cache: "no-store" });
+    if (res.ok) {
+      setOverview(await res.json());
+    } else if (overview.questions.length === 0 && overview.courses.length === 0 && overview.quizzes.length === 0) {
+      setNotice("Unable to refresh admin overview data.");
+    }
     setLoading(false);
   }
 

@@ -67,6 +67,7 @@ export function CsvImportPanel({ onImported }: CsvImportPanelProps) {
     if (!editedRows.length) return;
     setBusy(true);
     setNotice(null);
+    const attemptedCount = editedRows.length;
     const res = await fetch("/api/admin/assessments/import", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -83,12 +84,25 @@ export function CsvImportPanel({ onImported }: CsvImportPanelProps) {
     });
     setBusy(false);
     if (res.ok) {
+      const data = await res.json().catch(() => ({}));
+      const importedCount = Array.isArray(data.importedQuestionIds) ? data.importedQuestionIds.length : 0;
+      const duplicatesSkipped = Number(data.duplicatesSkipped ?? 0);
       setPreview(null);
       setEditedRows([]);
       setCsvText("");
       setFile(null);
-      setNotice({ type: "success", text: `${editedRows.length} questions imported as a draft quiz.` });
-      onImported(`Assessment imported: "${quizTitle}" (${editedRows.length} questions)`);
+      setNotice({
+        type: "success",
+        text:
+          duplicatesSkipped > 0
+            ? `${importedCount} questions imported. ${duplicatesSkipped} duplicate question${duplicatesSkipped !== 1 ? "s were" : " was"} skipped.`
+            : `${importedCount} questions imported as a draft quiz.`,
+      });
+      onImported(
+        duplicatesSkipped > 0
+          ? `Assessment imported: "${quizTitle}" (${importedCount} added, ${duplicatesSkipped} duplicate${duplicatesSkipped !== 1 ? "s" : ""} skipped out of ${attemptedCount})`
+          : `Assessment imported: "${quizTitle}" (${importedCount} questions)`
+      );
     } else {
       const err = await res.json().catch(() => ({}));
       setNotice({ type: "error", text: err.error ?? "Import failed." });

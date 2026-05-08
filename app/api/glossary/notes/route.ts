@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { verifyIdToken } from "@/lib/firebase/auth-server";
-import { getAdminFirestore, FieldValue } from "@/lib/firebase/admin-firestore";
+import { getAdminFirestore, tryGetAdminFirestore, FieldValue } from "@/lib/firebase/admin-firestore";
 import { z } from "zod";
 
 const noteSchema = z.object({
@@ -15,7 +15,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const termId = searchParams.get("termId");
 
-    const db = getAdminFirestore();
+    const db = tryGetAdminFirestore();
+    if (!db) return NextResponse.json({ notes: [] });
     let query = db.collection("glossaryNotes").where("userId", "==", uid);
     if (termId) query = query.where("termId", "==", termId);
     const snap = await query.orderBy("updatedAt", "desc").get();

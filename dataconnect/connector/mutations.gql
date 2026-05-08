@@ -1,7 +1,7 @@
 # ─── User management ─────────────────────────────────────────────────────────
 
 # Called from Clerk/Firebase Auth webhook on user creation
-mutation CreateUser($id: String!, $email: String!, $fullName: String) @auth(level: PUBLIC) {
+mutation CreateUser($id: String!, $email: String!, $fullName: String) @auth(level: NO_ACCESS) {
   user_insert(data: {
     id: $id
     email: $email
@@ -10,13 +10,13 @@ mutation CreateUser($id: String!, $email: String!, $fullName: String) @auth(leve
   })
 }
 
-mutation UpdateUserRole($id: String!, $role: String!) @auth(level: PUBLIC) {
+mutation UpdateUserRole($id: String!, $role: String!) @auth(level: NO_ACCESS) {
   user_update(id: $id, data: { role: $role })
 }
 
 # ─── Course management (admin/instructor only) ────────────────────────────────
 
-mutation CreateCourse($id: UUID!, $slug: String!, $title: String!, $description: String, $thumbnailUrl: String, $createdById: String!) @auth(level: PUBLIC) {
+mutation CreateCourse($id: UUID!, $slug: String!, $title: String!, $description: String, $thumbnailUrl: String, $createdById: String!) @auth(level: NO_ACCESS) {
   course_insert(data: {
     id: $id
     slug: $slug
@@ -28,7 +28,7 @@ mutation CreateCourse($id: UUID!, $slug: String!, $title: String!, $description:
   })
 }
 
-mutation UpdateCourse($id: UUID!, $title: String, $description: String, $thumbnailUrl: String, $status: String, $isPublished: Boolean, $updatedById: String, $publishedAt: Date) @auth(level: PUBLIC) {
+mutation UpdateCourse($id: UUID!, $title: String, $description: String, $thumbnailUrl: String, $status: String, $isPublished: Boolean, $updatedById: String, $publishedAt: Date) @auth(level: NO_ACCESS) {
   course_update(id: $id, data: {
     title: $title
     description: $description
@@ -40,7 +40,7 @@ mutation UpdateCourse($id: UUID!, $title: String, $description: String, $thumbna
   })
 }
 
-mutation CreateModule($id: UUID!, $courseId: UUID!, $title: String!, $position: Int!) @auth(level: PUBLIC) {
+mutation CreateModule($id: UUID!, $courseId: UUID!, $title: String!, $position: Int!) @auth(level: NO_ACCESS) {
   module_insert(data: {
     id: $id
     course: { id: $courseId }
@@ -49,7 +49,7 @@ mutation CreateModule($id: UUID!, $courseId: UUID!, $title: String!, $position: 
   })
 }
 
-mutation UpdateModule($id: UUID!, $title: String, $description: String, $learningObjectives: String, $prerequisiteModuleIds: String, $position: Int, $status: String) @auth(level: PUBLIC) {
+mutation UpdateModule($id: UUID!, $title: String, $description: String, $learningObjectives: String, $prerequisiteModuleIds: String, $position: Int, $status: String) @auth(level: NO_ACCESS) {
   module_update(id: $id, data: {
     title: $title
     description: $description
@@ -60,7 +60,7 @@ mutation UpdateModule($id: UUID!, $title: String, $description: String, $learnin
   })
 }
 
-mutation CreateLessonVersion($id: UUID!, $lessonId: UUID!, $contentJson: String, $videoPlaybackId: String, $versionNote: String, $createdById: String!) @auth(level: PUBLIC) {
+mutation CreateLessonVersion($id: UUID!, $lessonId: UUID!, $contentJson: String, $videoPlaybackId: String, $versionNote: String, $createdById: String!) @auth(level: NO_ACCESS) {
   lessonVersion_insert(data: {
     id: $id
     lesson: { id: $lessonId }
@@ -71,7 +71,7 @@ mutation CreateLessonVersion($id: UUID!, $lessonId: UUID!, $contentJson: String,
   })
 }
 
-mutation CreateLesson($id: UUID!, $moduleId: UUID!, $title: String!, $position: Int!, $lessonType: String!) @auth(level: PUBLIC) {
+mutation CreateLesson($id: UUID!, $moduleId: UUID!, $title: String!, $position: Int!, $lessonType: String!) @auth(level: NO_ACCESS) {
   lesson_insert(data: {
     id: $id
     module: { id: $moduleId }
@@ -81,7 +81,7 @@ mutation CreateLesson($id: UUID!, $moduleId: UUID!, $title: String!, $position: 
   })
 }
 
-mutation UpdateLesson($id: UUID!, $title: String, $contentJson: String, $videoPlaybackId: String, $videoUrl: String, $quizId: UUID, $sourceMaterialId: UUID, $durationSeconds: Int, $status: String, $isPublished: Boolean, $updatedById: String, $publishedAt: Date) @auth(level: PUBLIC) {
+mutation UpdateLesson($id: UUID!, $title: String, $contentJson: String, $videoPlaybackId: String, $videoUrl: String, $quizId: UUID, $sourceMaterialId: UUID, $durationSeconds: Int, $status: String, $isPublished: Boolean, $updatedById: String, $publishedAt: Date) @auth(level: NO_ACCESS) {
   lesson_update(id: $id, data: {
     title: $title
     contentJson: $contentJson
@@ -97,43 +97,43 @@ mutation UpdateLesson($id: UUID!, $title: String, $contentJson: String, $videoPl
   })
 }
 
-mutation DeleteLesson($id: UUID!) @auth(level: PUBLIC) {
+mutation DeleteLesson($id: UUID!) @auth(level: NO_ACCESS) {
   lesson_delete(id: $id)
 }
 
-mutation DeleteModule($id: UUID!) @auth(level: PUBLIC) {
+mutation DeleteModule($id: UUID!) @auth(level: NO_ACCESS) {
   module_delete(id: $id)
 }
 
-mutation DeleteLessonVersionsForLesson($lessonId: UUID!) @auth(level: PUBLIC) {
+mutation DeleteLessonVersionsForLesson($lessonId: UUID!) @auth(level: NO_ACCESS) {
   lessonVersion_deleteMany(where: { lesson: { id: { eq: $lessonId } } })
 }
 
-mutation DeleteSourceLinksForLesson($lessonId: UUID!) @auth(level: PUBLIC) {
+mutation DeleteSourceLinksForLesson($lessonId: UUID!) @auth(level: NO_ACCESS) {
   contentSourceLink_deleteMany(where: { lesson: { id: { eq: $lessonId } } })
 }
 
-mutation DeleteSourceLinksForQuestion($questionId: UUID!) @auth(level: PUBLIC) {
+mutation DeleteSourceLinksForQuestion($questionId: UUID!) @auth(level: NO_ACCESS) {
   contentSourceLink_deleteMany(where: { question: { id: { eq: $questionId } } })
 }
 
-mutation DeleteSourceLinksForMaterial($sourceMaterialId: UUID!) @auth(level: PUBLIC) {
+mutation DeleteSourceLinksForMaterial($sourceMaterialId: UUID!) @auth(level: NO_ACCESS) {
   contentSourceLink_deleteMany(where: { sourceMaterial: { id: { eq: $sourceMaterialId } } })
 }
 
-mutation DeleteUserLessonProgressForLesson($lessonId: UUID!) @auth(level: PUBLIC) {
+mutation DeleteUserLessonProgressForLesson($lessonId: UUID!) @auth(level: NO_ACCESS) {
   userLessonProgress_deleteMany(where: { lesson: { id: { eq: $lessonId } } })
 }
 
-mutation DeleteIngestionJobsForMaterial($sourceMaterialId: UUID!) @auth(level: PUBLIC) {
+mutation DeleteIngestionJobsForMaterial($sourceMaterialId: UUID!) @auth(level: NO_ACCESS) {
   ingestionJob_deleteMany(where: { sourceMaterial: { id: { eq: $sourceMaterialId } } })
 }
 
-mutation DeleteSourceMaterial($id: UUID!) @auth(level: PUBLIC) {
+mutation DeleteSourceMaterial($id: UUID!) @auth(level: NO_ACCESS) {
   sourceMaterial_delete(id: $id)
 }
 
-mutation CreateSourceMaterial($id: UUID!, $title: String!, $fileName: String!, $fileType: String!, $storagePath: String!, $downloadUrl: String, $extractedText: String, $metadataJson: String, $status: String!, $uploadedById: String) @auth(level: PUBLIC) {
+mutation CreateSourceMaterial($id: UUID!, $title: String!, $fileName: String!, $fileType: String!, $storagePath: String!, $downloadUrl: String, $extractedText: String, $metadataJson: String, $status: String!, $uploadedById: String) @auth(level: NO_ACCESS) {
   sourceMaterial_insert(data: {
     id: $id
     title: $title
@@ -148,7 +148,7 @@ mutation CreateSourceMaterial($id: UUID!, $title: String!, $fileName: String!, $
   })
 }
 
-mutation CreateIngestionJob($id: UUID!, $sourceMaterialId: UUID!, $status: String!, $parser: String!, $extractedCharacters: Int!, $errorMessage: String, $completedAt: Date) @auth(level: PUBLIC) {
+mutation CreateIngestionJob($id: UUID!, $sourceMaterialId: UUID!, $status: String!, $parser: String!, $extractedCharacters: Int!, $errorMessage: String, $completedAt: Date) @auth(level: NO_ACCESS) {
   ingestionJob_insert(data: {
     id: $id
     sourceMaterial: { id: $sourceMaterialId }
@@ -162,7 +162,7 @@ mutation CreateIngestionJob($id: UUID!, $sourceMaterialId: UUID!, $status: Strin
 
 # ─── Question bank (admin/instructor only) ────────────────────────────────────
 
-mutation CreateQuestion($id: UUID!, $questionText: String!, $questionType: String!, $difficulty: String!, $domain: String!, $formulaRef: String, $topicTags: String, $status: String!, $isMultiselect: Boolean!, $rationale: String, $calculation: String, $sourceRef: String, $createdById: String) @auth(level: PUBLIC) {
+mutation CreateQuestion($id: UUID!, $questionText: String!, $questionType: String!, $difficulty: String!, $domain: String!, $formulaRef: String, $topicTags: String, $status: String!, $isMultiselect: Boolean!, $rationale: String, $calculation: String, $sourceRef: String, $createdById: String) @auth(level: NO_ACCESS) {
   question_insert(data: {
     id: $id
     questionText: $questionText
@@ -180,7 +180,7 @@ mutation CreateQuestion($id: UUID!, $questionText: String!, $questionType: Strin
   })
 }
 
-mutation UpdateQuestion($id: UUID!, $questionText: String, $difficulty: String, $domain: String, $formulaRef: String, $rationale: String, $calculation: String, $sourceRef: String) @auth(level: PUBLIC) {
+mutation UpdateQuestion($id: UUID!, $questionText: String, $difficulty: String, $domain: String, $formulaRef: String, $rationale: String, $calculation: String, $sourceRef: String) @auth(level: NO_ACCESS) {
   question_update(id: $id, data: {
     questionText: $questionText
     difficulty: $difficulty
@@ -192,11 +192,11 @@ mutation UpdateQuestion($id: UUID!, $questionText: String, $difficulty: String, 
   })
 }
 
-mutation UpdateQuestionStatus($id: UUID!, $status: String!) @auth(level: PUBLIC) {
+mutation UpdateQuestionStatus($id: UUID!, $status: String!) @auth(level: NO_ACCESS) {
   question_update(id: $id, data: { status: $status })
 }
 
-mutation CreateAnswerChoice($questionId: UUID!, $letter: String!, $choiceText: String!, $isCorrect: Boolean!, $explanation: String, $position: Int!) @auth(level: PUBLIC) {
+mutation CreateAnswerChoice($questionId: UUID!, $letter: String!, $choiceText: String!, $isCorrect: Boolean!, $explanation: String, $position: Int!) @auth(level: NO_ACCESS) {
   answerChoice_insert(data: {
     question: { id: $questionId }
     letter: $letter
@@ -207,7 +207,7 @@ mutation CreateAnswerChoice($questionId: UUID!, $letter: String!, $choiceText: S
   })
 }
 
-mutation UpdateAnswerChoice($id: UUID!, $choiceText: String, $isCorrect: Boolean, $explanation: String) @auth(level: PUBLIC) {
+mutation UpdateAnswerChoice($id: UUID!, $choiceText: String, $isCorrect: Boolean, $explanation: String) @auth(level: NO_ACCESS) {
   answerChoice_update(id: $id, data: {
     choiceText: $choiceText
     isCorrect: $isCorrect
@@ -215,21 +215,21 @@ mutation UpdateAnswerChoice($id: UUID!, $choiceText: String, $isCorrect: Boolean
   })
 }
 
-mutation DeleteAnswerChoicesForQuestion($questionId: UUID!) @auth(level: PUBLIC) {
+mutation DeleteAnswerChoicesForQuestion($questionId: UUID!) @auth(level: NO_ACCESS) {
   answerChoice_deleteMany(where: { question: { id: { eq: $questionId } } })
 }
 
-mutation DeleteQuizQuestionsForQuestion($questionId: UUID!) @auth(level: PUBLIC) {
+mutation DeleteQuizQuestionsForQuestion($questionId: UUID!) @auth(level: NO_ACCESS) {
   quizQuestion_deleteMany(where: { question: { id: { eq: $questionId } } })
 }
 
-mutation DeleteQuestion($id: UUID!) @auth(level: PUBLIC) {
+mutation DeleteQuestion($id: UUID!) @auth(level: NO_ACCESS) {
   question_delete(id: $id)
 }
 
 # ─── Quiz management ──────────────────────────────────────────────────────────
 
-mutation CreateQuiz($id: UUID!, $title: String!, $description: String, $timeLimitSeconds: Int, $passingScore: Float, $shuffleQuestions: Boolean!, $shuffleChoices: Boolean!, $status: String!, $createdById: String) @auth(level: PUBLIC) {
+mutation CreateQuiz($id: UUID!, $title: String!, $description: String, $timeLimitSeconds: Int, $passingScore: Float, $shuffleQuestions: Boolean!, $shuffleChoices: Boolean!, $status: String!, $createdById: String) @auth(level: NO_ACCESS) {
   quiz_insert(data: {
     id: $id
     title: $title
@@ -243,7 +243,7 @@ mutation CreateQuiz($id: UUID!, $title: String!, $description: String, $timeLimi
   })
 }
 
-mutation AddQuestionToQuiz($quizId: UUID!, $questionId: UUID!, $position: Int!, $pointValue: Float!) @auth(level: PUBLIC) {
+mutation AddQuestionToQuiz($quizId: UUID!, $questionId: UUID!, $position: Int!, $pointValue: Float!) @auth(level: NO_ACCESS) {
   quizQuestion_insert(data: {
     quiz: { id: $quizId }
     question: { id: $questionId }
@@ -252,7 +252,7 @@ mutation AddQuestionToQuiz($quizId: UUID!, $questionId: UUID!, $position: Int!, 
   })
 }
 
-mutation UpdateQuizStatus($id: UUID!, $status: String!, $updatedById: String, $publishedAt: Date) @auth(level: PUBLIC) {
+mutation UpdateQuizStatus($id: UUID!, $status: String!, $updatedById: String, $publishedAt: Date) @auth(level: NO_ACCESS) {
   quiz_update(id: $id, data: {
     status: $status
     updatedBy: { id: $updatedById }
@@ -260,32 +260,32 @@ mutation UpdateQuizStatus($id: UUID!, $status: String!, $updatedById: String, $p
   })
 }
 
-mutation DeleteQuizQuestionsForQuiz($quizId: UUID!) @auth(level: PUBLIC) {
+mutation DeleteQuizQuestionsForQuiz($quizId: UUID!) @auth(level: NO_ACCESS) {
   quizQuestion_deleteMany(where: { quiz: { id: { eq: $quizId } } })
 }
 
-mutation DeleteQuizResponsesForQuiz($quizId: UUID!) @auth(level: PUBLIC) {
+mutation DeleteQuizResponsesForQuiz($quizId: UUID!) @auth(level: NO_ACCESS) {
   quizResponse_deleteMany(where: { attempt: { quiz: { id: { eq: $quizId } } } })
 }
 
-mutation DeleteQuizAttemptsForQuiz($quizId: UUID!) @auth(level: PUBLIC) {
+mutation DeleteQuizAttemptsForQuiz($quizId: UUID!) @auth(level: NO_ACCESS) {
   quizAttempt_deleteMany(where: { quiz: { id: { eq: $quizId } } })
 }
 
-mutation DeleteQuiz($id: UUID!) @auth(level: PUBLIC) {
+mutation DeleteQuiz($id: UUID!) @auth(level: NO_ACCESS) {
   quiz_delete(id: $id)
 }
 
 # ─── Progress tracking (learner — own records only) ───────────────────────────
 
-mutation EnrollInCourse($userId: String!, $courseId: UUID!) @auth(level: PUBLIC) {
+mutation EnrollInCourse($userId: String!, $courseId: UUID!) @auth(level: NO_ACCESS) {
   userCourseProgress_insert(data: {
     user: { id: $userId }
     course: { id: $courseId }
   })
 }
 
-mutation UpsertLessonProgress($userId: String!, $lessonId: UUID!, $status: String!, $videoPositionSeconds: Int) @auth(level: PUBLIC) {
+mutation UpsertLessonProgress($userId: String!, $lessonId: UUID!, $status: String!, $videoPositionSeconds: Int) @auth(level: NO_ACCESS) {
   userLessonProgress_upsert(data: {
     user: { id: $userId }
     lesson: { id: $lessonId }
@@ -298,7 +298,7 @@ mutation UpsertLessonProgress($userId: String!, $lessonId: UUID!, $status: Strin
 # These mutations are called from Next.js API routes using the Admin SDK.
 # NO_ACCESS means client SDK cannot call them directly.
 
-mutation CreateQuizAttempt($userId: String!, $quizId: UUID!, $questionOrder: String!) @auth(level: PUBLIC) {
+mutation CreateQuizAttempt($userId: String!, $quizId: UUID!, $questionOrder: String!) @auth(level: NO_ACCESS) {
   quizAttempt_insert(data: {
     user: { id: $userId }
     quiz: { id: $quizId }
@@ -307,7 +307,7 @@ mutation CreateQuizAttempt($userId: String!, $quizId: UUID!, $questionOrder: Str
   })
 }
 
-mutation UpsertQuizResponse($attemptId: UUID!, $questionId: UUID!, $selectedLetters: String!, $isCorrect: Boolean, $pointsEarned: Float, $pointsPossible: Float, $answeredAt: Date) @auth(level: PUBLIC) {
+mutation UpsertQuizResponse($attemptId: UUID!, $questionId: UUID!, $selectedLetters: String!, $isCorrect: Boolean, $pointsEarned: Float, $pointsPossible: Float, $answeredAt: Date) @auth(level: NO_ACCESS) {
   quizResponse_upsert(data: {
     attempt: { id: $attemptId }
     question: { id: $questionId }
@@ -319,7 +319,7 @@ mutation UpsertQuizResponse($attemptId: UUID!, $questionId: UUID!, $selectedLett
   })
 }
 
-mutation CompleteQuizAttempt($id: UUID!, $scoreRaw: Float!, $scoreMax: Float!, $scorePct: Float!, $passed: Boolean!) @auth(level: PUBLIC) {
+mutation CompleteQuizAttempt($id: UUID!, $scoreRaw: Float!, $scoreMax: Float!, $scorePct: Float!, $passed: Boolean!) @auth(level: NO_ACCESS) {
   quizAttempt_update(id: $id, data: {
     status: "completed"
     scoreRaw: $scoreRaw
@@ -329,13 +329,13 @@ mutation CompleteQuizAttempt($id: UUID!, $scoreRaw: Float!, $scoreMax: Float!, $
   })
 }
 
-mutation MarkAnsweredAt($attemptId: UUID!, $questionId: UUID!, $answeredAt: Date!) @auth(level: PUBLIC) {
+mutation MarkAnsweredAt($attemptId: UUID!, $questionId: UUID!, $answeredAt: Date!) @auth(level: NO_ACCESS) {
   quizResponse_update(key: { attemptId: $attemptId, questionId: $questionId }, data: { answeredAt: $answeredAt })
 }
 
 # ─── Formula Reference (admin only) ───────────────────────────────────────────
 
-mutation CreateFormulaSection($id: UUID!, $code: String!, $title: String!, $position: Int!) @auth(level: PUBLIC) {
+mutation CreateFormulaSection($id: UUID!, $code: String!, $title: String!, $position: Int!) @auth(level: NO_ACCESS) {
   formulaSection_insert(data: {
     id: $id
     code: $code
@@ -344,7 +344,7 @@ mutation CreateFormulaSection($id: UUID!, $code: String!, $title: String!, $posi
   })
 }
 
-mutation CreateFormula($sectionId: UUID!, $code: String!, $name: String!, $expression: String!, $notes: String, $position: Int!) @auth(level: PUBLIC) {
+mutation CreateFormula($sectionId: UUID!, $code: String!, $name: String!, $expression: String!, $notes: String, $position: Int!) @auth(level: NO_ACCESS) {
   formula_insert(data: {
     section: { id: $sectionId }
     code: $code
@@ -355,9 +355,17 @@ mutation CreateFormula($sectionId: UUID!, $code: String!, $name: String!, $expre
   })
 }
 
+mutation DeleteFormulasForSection($sectionId: UUID!) @auth(level: NO_ACCESS) {
+  formula_deleteMany(where: { section: { id: { eq: $sectionId } } })
+}
+
+mutation DeleteFormulaSection($id: UUID!) @auth(level: NO_ACCESS) {
+  formulaSection_delete(id: $id)
+}
+
 # ─── Content source links (instructor only) ───────────────────────────────────
 
-mutation CreateContentSourceLink($id: UUID!, $sourceMaterialId: UUID!, $lessonId: UUID, $courseId: UUID, $questionId: UUID, $referenceLabel: String) @auth(level: PUBLIC) {
+mutation CreateContentSourceLink($id: UUID!, $sourceMaterialId: UUID!, $lessonId: UUID, $courseId: UUID, $questionId: UUID, $referenceLabel: String) @auth(level: NO_ACCESS) {
   contentSourceLink_insert(data: {
     id: $id
     sourceMaterial: { id: $sourceMaterialId }

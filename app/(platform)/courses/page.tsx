@@ -1,16 +1,24 @@
 import Link from "next/link";
 import { EmptyState, LearnerPage, PageHeader, PrimaryAction, StatusBadge } from "@/components/ui/LearnerPrimitives";
-import { listPublishedCourses } from "@/lib/firebase/generated";
-import { getPlatformDataConnect } from "@/lib/firebase/dataconnect";
+import { adminDcQuery } from "@/lib/firebase/admin-dc";
+import { getDevPublishedCourses } from "@/lib/dev-content";
+import { ensureDevDataSeeded } from "@/lib/dev-seed";
 import * as Icons from "@/components/ui/Icons";
 
 async function getCourses() {
   try {
-    const dc = getPlatformDataConnect();
-    const { data } = await listPublishedCourses(dc);
-    return data.courses;
+    type CoursesData = {
+      courses: Array<{ id: string; slug: string; title: string; description?: string | null; thumbnailUrl?: string | null }>;
+    };
+
+    let data = await adminDcQuery<CoursesData>("ListPublishedCourses");
+    if (data.courses.length === 0) {
+      await ensureDevDataSeeded().catch(() => null);
+      data = await adminDcQuery<CoursesData>("ListPublishedCourses").catch((): CoursesData => ({ courses: [] }));
+    }
+    return data.courses.length > 0 ? data.courses : getDevPublishedCourses();
   } catch {
-    return [];
+    return getDevPublishedCourses();
   }
 }
 
@@ -31,7 +39,7 @@ export default async function CoursesPage() {
         <EmptyState
           title="No courses available"
           description="Courses could not be loaded or none are published yet. If you are developing locally, confirm the Data Connect service you intend to use is available."
-          action={<PrimaryAction href="/admin/courses">Go to admin courses</PrimaryAction>}
+          action={<PrimaryAction href="/formulas">Review formulas</PrimaryAction>}
           icon={Icons.Search}
         />
       ) : (

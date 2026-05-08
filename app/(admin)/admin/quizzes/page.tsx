@@ -1,6 +1,9 @@
+import { adminDcQuery } from "@/lib/firebase/admin-dc";
 import { QuizManagementPanel } from "@/components/admin/QuizManagementPanel";
 
-export default function AdminQuizzesPage() {
+export default async function AdminQuizzesPage() {
+  const quizzesData = await adminDcQuery<{ quizzes: any[] }>("ListAdminQuizzes").catch(() => ({ quizzes: [] }));
+
   return (
     <div className="mx-auto max-w-4xl px-6 py-8">
       <div className="mb-6">
@@ -9,7 +12,7 @@ export default function AdminQuizzesPage() {
           Create quizzes, assign questions from the bank, and control publish status.
         </p>
       </div>
-      <QuizManagementPanel />
+      <QuizManagementPanel initialQuizzes={quizzesData.quizzes ?? []} />
     </div>
   );
 }

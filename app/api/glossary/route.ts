@@ -1,11 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { verifyIdToken } from "@/lib/firebase/auth-server";
-import { getAdminFirestore } from "@/lib/firebase/admin-firestore";
+import { tryGetAdminFirestore } from "@/lib/firebase/admin-firestore";
 
 export async function GET(request: NextRequest) {
   try {
     await verifyIdToken(request.headers.get("Authorization"));
-    const db = getAdminFirestore();
+    const db = tryGetAdminFirestore();
+    if (!db) return NextResponse.json({ terms: [] });
     const snap = await db
       .collection("glossaryTerms")
       .where("isPublished", "==", true)

@@ -9,9 +9,18 @@ const PUBLIC_PATHS = [
 ];
 
 const ADMIN_PATHS = ["/admin"];
+const AUTH_PAGES = new Set(["/sign-in", "/sign-up", "/reset-password"]);
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  const next = () => {
+    const response = NextResponse.next();
+    if (AUTH_PAGES.has(pathname)) {
+      response.headers.set("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+    }
+    return response;
+  };
 
   // Allow public paths and static assets
   if (
@@ -21,18 +30,18 @@ export function proxy(request: NextRequest) {
     pathname === "/icon.svg" ||
     pathname === "/impact-logo.svg"
   ) {
-    return NextResponse.next();
+    return next();
   }
 
   // Check for session cookie (set by /api/auth/sync-user after login)
-  const session = request.cookies.get("session")?.value;
+  const session = request.cookies.get("__session")?.value;
   if (!session) {
     const signInUrl = new URL("/sign-in", request.url);
     signInUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(signInUrl);
   }
 
-  return NextResponse.next();
+  return next();
 }
 
 export const config = {

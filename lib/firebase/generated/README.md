@@ -81,6 +81,8 @@ This README will guide you through the process of using the generated JavaScript
   - [*MarkAnsweredAt*](#markansweredat)
   - [*CreateFormulaSection*](#createformulasection)
   - [*CreateFormula*](#createformula)
+  - [*DeleteFormulasForSection*](#deleteformulasforsection)
+  - [*DeleteFormulaSection*](#deleteformulasection)
   - [*CreateContentSourceLink*](#createcontentsourcelink)
 
 # Accessing the connector
@@ -8660,6 +8662,224 @@ console.log(data.formula_insert);
 executeMutation(ref).then((response) => {
   const data = response.data;
   console.log(data.formula_insert);
+});
+```
+
+## DeleteFormulasForSection
+You can execute the `DeleteFormulasForSection` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+deleteFormulasForSection(vars: DeleteFormulasForSectionVariables): MutationPromise<DeleteFormulasForSectionData, DeleteFormulasForSectionVariables>;
+
+interface DeleteFormulasForSectionRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteFormulasForSectionVariables): MutationRef<DeleteFormulasForSectionData, DeleteFormulasForSectionVariables>;
+}
+export const deleteFormulasForSectionRef: DeleteFormulasForSectionRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+deleteFormulasForSection(dc: DataConnect, vars: DeleteFormulasForSectionVariables): MutationPromise<DeleteFormulasForSectionData, DeleteFormulasForSectionVariables>;
+
+interface DeleteFormulasForSectionRef {
+  ...
+  (dc: DataConnect, vars: DeleteFormulasForSectionVariables): MutationRef<DeleteFormulasForSectionData, DeleteFormulasForSectionVariables>;
+}
+export const deleteFormulasForSectionRef: DeleteFormulasForSectionRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the deleteFormulasForSectionRef:
+```typescript
+const name = deleteFormulasForSectionRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `DeleteFormulasForSection` mutation requires an argument of type `DeleteFormulasForSectionVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface DeleteFormulasForSectionVariables {
+  sectionId: UUIDString;
+}
+```
+### Return Type
+Recall that executing the `DeleteFormulasForSection` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `DeleteFormulasForSectionData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface DeleteFormulasForSectionData {
+  formula_deleteMany: number;
+}
+```
+### Using `DeleteFormulasForSection`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, deleteFormulasForSection, DeleteFormulasForSectionVariables } from '@impact26/dataconnect-sdk';
+
+// The `DeleteFormulasForSection` mutation requires an argument of type `DeleteFormulasForSectionVariables`:
+const deleteFormulasForSectionVars: DeleteFormulasForSectionVariables = {
+  sectionId: ..., 
+};
+
+// Call the `deleteFormulasForSection()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await deleteFormulasForSection(deleteFormulasForSectionVars);
+// Variables can be defined inline as well.
+const { data } = await deleteFormulasForSection({ sectionId: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await deleteFormulasForSection(dataConnect, deleteFormulasForSectionVars);
+
+console.log(data.formula_deleteMany);
+
+// Or, you can use the `Promise` API.
+deleteFormulasForSection(deleteFormulasForSectionVars).then((response) => {
+  const data = response.data;
+  console.log(data.formula_deleteMany);
+});
+```
+
+### Using `DeleteFormulasForSection`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, deleteFormulasForSectionRef, DeleteFormulasForSectionVariables } from '@impact26/dataconnect-sdk';
+
+// The `DeleteFormulasForSection` mutation requires an argument of type `DeleteFormulasForSectionVariables`:
+const deleteFormulasForSectionVars: DeleteFormulasForSectionVariables = {
+  sectionId: ..., 
+};
+
+// Call the `deleteFormulasForSectionRef()` function to get a reference to the mutation.
+const ref = deleteFormulasForSectionRef(deleteFormulasForSectionVars);
+// Variables can be defined inline as well.
+const ref = deleteFormulasForSectionRef({ sectionId: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = deleteFormulasForSectionRef(dataConnect, deleteFormulasForSectionVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.formula_deleteMany);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.formula_deleteMany);
+});
+```
+
+## DeleteFormulaSection
+You can execute the `DeleteFormulaSection` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+deleteFormulaSection(vars: DeleteFormulaSectionVariables): MutationPromise<DeleteFormulaSectionData, DeleteFormulaSectionVariables>;
+
+interface DeleteFormulaSectionRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteFormulaSectionVariables): MutationRef<DeleteFormulaSectionData, DeleteFormulaSectionVariables>;
+}
+export const deleteFormulaSectionRef: DeleteFormulaSectionRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+deleteFormulaSection(dc: DataConnect, vars: DeleteFormulaSectionVariables): MutationPromise<DeleteFormulaSectionData, DeleteFormulaSectionVariables>;
+
+interface DeleteFormulaSectionRef {
+  ...
+  (dc: DataConnect, vars: DeleteFormulaSectionVariables): MutationRef<DeleteFormulaSectionData, DeleteFormulaSectionVariables>;
+}
+export const deleteFormulaSectionRef: DeleteFormulaSectionRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the deleteFormulaSectionRef:
+```typescript
+const name = deleteFormulaSectionRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `DeleteFormulaSection` mutation requires an argument of type `DeleteFormulaSectionVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface DeleteFormulaSectionVariables {
+  id: UUIDString;
+}
+```
+### Return Type
+Recall that executing the `DeleteFormulaSection` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `DeleteFormulaSectionData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface DeleteFormulaSectionData {
+  formulaSection_delete?: FormulaSection_Key | null;
+}
+```
+### Using `DeleteFormulaSection`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, deleteFormulaSection, DeleteFormulaSectionVariables } from '@impact26/dataconnect-sdk';
+
+// The `DeleteFormulaSection` mutation requires an argument of type `DeleteFormulaSectionVariables`:
+const deleteFormulaSectionVars: DeleteFormulaSectionVariables = {
+  id: ..., 
+};
+
+// Call the `deleteFormulaSection()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await deleteFormulaSection(deleteFormulaSectionVars);
+// Variables can be defined inline as well.
+const { data } = await deleteFormulaSection({ id: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await deleteFormulaSection(dataConnect, deleteFormulaSectionVars);
+
+console.log(data.formulaSection_delete);
+
+// Or, you can use the `Promise` API.
+deleteFormulaSection(deleteFormulaSectionVars).then((response) => {
+  const data = response.data;
+  console.log(data.formulaSection_delete);
+});
+```
+
+### Using `DeleteFormulaSection`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, deleteFormulaSectionRef, DeleteFormulaSectionVariables } from '@impact26/dataconnect-sdk';
+
+// The `DeleteFormulaSection` mutation requires an argument of type `DeleteFormulaSectionVariables`:
+const deleteFormulaSectionVars: DeleteFormulaSectionVariables = {
+  id: ..., 
+};
+
+// Call the `deleteFormulaSectionRef()` function to get a reference to the mutation.
+const ref = deleteFormulaSectionRef(deleteFormulaSectionVars);
+// Variables can be defined inline as well.
+const ref = deleteFormulaSectionRef({ id: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = deleteFormulaSectionRef(dataConnect, deleteFormulaSectionVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.formulaSection_delete);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.formulaSection_delete);
 });
 ```
 

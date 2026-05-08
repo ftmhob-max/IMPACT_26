@@ -22,6 +22,7 @@ interface ImportResult {
   lessonsCreated: number;
   questionsCreated: number;
   quizzesCreated: number;
+  duplicatesSkipped?: number;
 }
 
 type Phase = "upload" | "preview" | "options" | "importing" | "done" | "error";
@@ -566,6 +567,8 @@ export function DocxImportClient() {
                 {importResult.questionsCreated} questions · {importResult.modulesCreated} modules ·{" "}
                 {importResult.lessonsCreated} lessons
                 {importResult.quizzesCreated > 0 && ` · ${importResult.quizzesCreated} quizzes`}
+                {(importResult.duplicatesSkipped ?? 0) > 0 &&
+                  ` · ${importResult.duplicatesSkipped} duplicate${importResult.duplicatesSkipped !== 1 ? "s" : ""} skipped`}
               </p>
             </div>
           </div>

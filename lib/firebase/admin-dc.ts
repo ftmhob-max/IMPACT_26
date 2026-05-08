@@ -1,67 +1,74 @@
-import { getAdminAccessToken } from "./admin";
+import { getAdminApp } from "./admin";
+import { getDataConnectEmulatorHost, getDataConnectEmulatorPort, shouldUseDataConnectEmulator } from "./dataconnect-emulator";
 
-const DC_SERVICE   = "impact26-dataconnect";
+const DC_SERVICE = "impact26-dataconnect";
 const DC_CONNECTOR = "impact26-connector";
+const DC_LOCATION = "us-central1";
+const DEFAULT_PROJECT_ID = "impact26-aa59b";
 
-function dcBaseUrl() {
-  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!;
+let _dc: any = null;
 
-  // Use the local emulator in development so the connector reflects the
-  // current local schema (avoids prod-vs-local drift errors like "UUID vs String").
-  const useEmulator = process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR === "true";
+function getAdminAppForDataConnect() {
+  if (!shouldUseDataConnectEmulator()) return getAdminApp();
 
-  if (useEmulator) {
-    return `http://127.0.0.1:9400/v1beta/projects/${projectId}/locations/us-central1/services/${DC_SERVICE}/connectors/${DC_CONNECTOR}`;
+  const { getApp, initializeApp } = eval("require")("firebase-admin/app");
+  const projectId =
+    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? process.env.GCLOUD_PROJECT ?? DEFAULT_PROJECT_ID;
+  const emulatorAppName = "__dataconnect_emulator__";
+
+  if (!projectId) {
+    throw new Error("Firebase project ID is not set");
   }
-  return `https://firebasedataconnect.googleapis.com/v1beta/projects/${projectId}/locations/us-central1/services/${DC_SERVICE}/connectors/${DC_CONNECTOR}`;
+
+  try {
+    return getApp(emulatorAppName);
+  } catch {
+    return initializeApp({ projectId }, emulatorAppName);
+  }
 }
 
-async function adminHeaders(): Promise<Record<string, string>> {
-  // The local emulator accepts any (or no) auth header; keep it consistent.
-  const useEmulator = process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR === "true";
-  if (useEmulator) {
-    return { "Content-Type": "application/json", "x-manualcurl": "true" };
+function getAdminDc() {
+  if (_dc) return _dc;
+
+  if (shouldUseDataConnectEmulator()) {
+    process.env.FIREBASE_DATACONNECT_EMULATOR_HOST ??=
+      `${getDataConnectEmulatorHost()}:${getDataConnectEmulatorPort()}`;
   }
-  const token = await getAdminAccessToken();
-  return { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
+
+  const { getDataConnect } = eval("require")("firebase-admin/data-connect");
+  _dc = getDataConnect(
+    { serviceId: DC_SERVICE, connector: DC_CONNECTOR, location: DC_LOCATION },
+    getAdminAppForDataConnect()
+  );
+  return _dc;
 }
 
 export async function adminDcQuery<T = Record<string, unknown>>(
   operation: string,
   variables: Record<string, unknown> = {}
 ): Promise<T> {
-  const res = await fetch(`${dcBaseUrl()}:executeQuery`, {
-    method: "POST",
-    headers: await adminHeaders(),
-    body: JSON.stringify({ operationName: operation, variables }),
-  });
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok || json.errors?.length) {
-    const msg = json.errors?.map((e: any) => e.message).join("; ") || res.statusText || "Query failed";
-    throw new Error(`[DC:Query:${operation}] ${msg}`);
+  try {
+    const dc = getAdminDc();
+    const result = await (Object.keys(variables).length
+      ? dc.executeQuery(operation, variables)
+      : dc.executeQuery(operation));
+    return result.data as T;
+  } catch (err: any) {
+    throw new Error(`[DC:Query:${operation}] ${err.message ?? err}`);
   }
-  if (!json.data) {
-    throw new Error(`[DC:Query:${operation}] No data returned`);
-  }
-  return json.data as T;
 }
 
 export async function adminDcMutate<T = Record<string, unknown>>(
   operation: string,
   variables: Record<string, unknown> = {}
 ): Promise<T> {
-  const res = await fetch(`${dcBaseUrl()}:executeMutation`, {
-    method: "POST",
-    headers: await adminHeaders(),
-    body: JSON.stringify({ operationName: operation, variables }),
-  });
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok || json.errors?.length) {
-    const msg = json.errors?.map((e: any) => e.message).join("; ") || res.statusText || "Mutation failed";
-    throw new Error(`[DC:Mutate:${operation}] ${msg}`);
+  try {
+    const dc = getAdminDc();
+    const result = await (Object.keys(variables).length
+      ? dc.executeMutation(operation, variables)
+      : dc.executeMutation(operation));
+    return result.data as T;
+  } catch (err: any) {
+    throw new Error(`[DC:Mutate:${operation}] ${err.message ?? err}`);
   }
-  if (!json.data) {
-    throw new Error(`[DC:Mutate:${operation}] No data returned`);
-  }
-  return json.data as T;
 }

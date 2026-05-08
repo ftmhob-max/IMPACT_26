@@ -1,6 +1,11 @@
 import { randomUUID } from "crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAdminRequest } from "@/lib/admin/auth";
+import {
+  isDuplicateQuestionText,
+  loadExistingQuestionDedupSet,
+  rememberQuestionText,
+} from "@/lib/admin/question-dedup";
 import { adminDcMutate } from "@/lib/firebase/admin-dc";
 import { z } from "zod";
 import type { ParsedSection } from "@/lib/admin/docx-question-parser";
@@ -76,8 +81,10 @@ export async function POST(request: NextRequest) {
   let lessonsCreated = 0;
   let questionsCreated = 0;
   let quizzesCreated = 0;
+  let duplicatesSkipped = 0;
 
   try {
+    const seenQuestions = await loadExistingQuestionDedupSet();
     // ── Create course ────────────────────────────────────────────────────────
     await adminDcMutate("CreateCourse", {
       id: courseId,
@@ -171,8 +178,17 @@ export async function POST(request: NextRequest) {
         // ── Questions → Question bank ────────────────────────────────────────
         if (!importQuestions || formula.questions.length === 0) continue;
 
+        const uniqueQuestions = formula.questions.filter((question) => {
+          if (isDuplicateQuestionText(question.questionText, seenQuestions)) {
+            duplicatesSkipped++;
+            return false;
+          }
+          rememberQuestionText(question.questionText, seenQuestions);
+          return true;
+        });
+
         let quizId: string | null = null;
-        if (quizPerLesson) {
+        if (quizPerLesson && uniqueQuestions.length > 0) {
           quizId = randomUUID();
           await adminDcMutate("CreateQuiz", {
             id: quizId,
@@ -205,7 +221,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Insert questions (concurrency limited to avoid DB timeouts)
-        const questionTasks = formula.questions.map((q, qIdx) => async () => {
+        const questionTasks = uniqueQuestions.map((q, qIdx) => async () => {
           const questionId = randomUUID();
           const isMultiselect = q.choices.filter((c) => c.isCorrect).length > 1;
 
@@ -252,7 +268,7 @@ export async function POST(request: NextRequest) {
         });
 
         await pAll(questionTasks, 4);
-        questionsCreated += formula.questions.length;
+        questionsCreated += uniqueQuestions.length;
       }
     }
 
@@ -264,6 +280,7 @@ export async function POST(request: NextRequest) {
         lessonsCreated,
         questionsCreated,
         quizzesCreated,
+        duplicatesSkipped,
       },
       { status: 201 }
     );

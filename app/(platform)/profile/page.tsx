@@ -12,10 +12,10 @@ import {
 import * as Icons from "@/components/ui/Icons";
 import { getLearnerSession } from "@/lib/firebase/learner-session";
 import { adminDcQuery } from "@/lib/firebase/admin-dc";
+import { DEV_FORMULA_SECTIONS } from "@/lib/dev-content";
 import { getAdminFirestore } from "@/lib/firebase/admin-firestore";
 import { listUserFavorites } from "@/lib/firebase/favorites";
-import { getFormulaSections } from "@/lib/firebase/generated";
-import { getPlatformDataConnect } from "@/lib/firebase/dataconnect";
+import { dedupeFormulaSections } from "@/lib/formula-sections";
 import { DOMAINS, type Domain } from "@/lib/utils";
 import { ProfileSection } from "@/components/profile/ProfileSection";
 
@@ -70,9 +70,32 @@ async function getFavoriteFormulas(userId: string): Promise<FavoriteFormula[]> {
   if (favorites.length === 0) return [];
 
   try {
-    const dc = getPlatformDataConnect();
-    const { data } = await getFormulaSections(dc);
-    const formulas = data.formulaSections.flatMap((section) => section.formulas_on_section);
+    const data = await adminDcQuery<{
+      formulaSections: Array<{
+        id: string;
+        code: string;
+        title: string;
+        position: number;
+        formulas_on_section: Array<{
+          id: string;
+          code: string;
+          name: string;
+          expression: string;
+        }>;
+      }>;
+    }>("GetFormulaSections");
+    const formulas = (data.formulaSections.length > 0
+        ? dedupeFormulaSections(
+            data.formulaSections.map((section) => ({
+              id: section.id,
+              code: section.code,
+              title: section.title,
+              position: section.position,
+              formulas: section.formulas_on_section,
+            }))
+          ).map((section) => ({ formulas_on_section: section.formulas }))
+        : DEV_FORMULA_SECTIONS.map((section) => ({ formulas_on_section: section.formulas }))
+    ).flatMap((section) => section.formulas_on_section);
     const favoriteIds = new Set(favorites.map((favorite) => favorite.itemId));
 
     return formulas
@@ -84,7 +107,15 @@ async function getFavoriteFormulas(userId: string): Promise<FavoriteFormula[]> {
         expression: formula.expression,
       }));
   } catch {
-    return [];
+    const favoriteIds = new Set(favorites.map((favorite) => favorite.itemId));
+    return DEV_FORMULA_SECTIONS.flatMap((section) => section.formulas)
+      .filter((formula) => favoriteIds.has(formula.id))
+      .map((formula) => ({
+        id: formula.id,
+        code: formula.code,
+        name: formula.name,
+        expression: formula.expression,
+      }));
   }
 }
 

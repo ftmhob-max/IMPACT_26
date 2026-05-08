@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAdminRequest } from "@/lib/admin/auth";
+import { isDuplicateQuestionText, loadExistingQuestionDedupSet } from "@/lib/admin/question-dedup";
 import { adminDcMutate } from "@/lib/firebase/admin-dc";
 import { manualQuestionSchema } from "@/lib/validations/admin";
 
@@ -17,6 +18,14 @@ export async function POST(request: NextRequest) {
   const questionId = randomUUID();
 
   try {
+    const seenQuestions = await loadExistingQuestionDedupSet();
+    if (isDuplicateQuestionText(input.questionText, seenQuestions)) {
+      return NextResponse.json(
+        { error: "This question already exists in the question bank." },
+        { status: 409 }
+      );
+    }
+
     const correctCount = input.choices.filter((choice) => choice.isCorrect).length;
     await adminDcMutate("CreateQuestion", {
       id: questionId,

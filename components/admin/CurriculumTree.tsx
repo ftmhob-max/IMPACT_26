@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as Icons from "@/components/ui/Icons";
+import { adminFetch } from "@/lib/admin/client-fetch";
 import { cn } from "@/lib/utils";
 import { VideoUpload } from "@/components/admin/VideoUpload";
 import { VideoLinkInput } from "@/components/admin/VideoLinkInput";
@@ -54,8 +55,16 @@ interface LessonVersion {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export function CurriculumTree() {
-  const [courses, setCourses] = useState<Course[]>([]);
+export function CurriculumTree({
+  initialCourses = [],
+  initialQuizzes = [],
+  initialMaterials = [],
+}: {
+  initialCourses?: Course[];
+  initialQuizzes?: Array<{ id: string; title: string }>;
+  initialMaterials?: Array<{ id: string; title: string }>;
+}) {
+  const [courses, setCourses] = useState<Course[]>(initialCourses);
   const [loading, setLoading] = useState(true);
   const [editTarget, setEditTarget] = useState<EditTarget | null>(null);
   const [expandedCourses, setExpandedCourses] = useState<Set<string>>(new Set());
@@ -63,25 +72,34 @@ export function CurriculumTree() {
   const [selectedLessonIds, setSelectedLessonIds] = useState<Set<string>>(new Set());
   const [notice, setNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [showCreateCourse, setShowCreateCourse] = useState(false);
-  const [quizzes, setQuizzes] = useState<Array<{ id: string; title: string }>>([]);
-  const [materials, setMaterials] = useState<Array<{ id: string; title: string }>>([]);
+  const [quizzes, setQuizzes] = useState<Array<{ id: string; title: string }>>(initialQuizzes);
+  const [materials, setMaterials] = useState<Array<{ id: string; title: string }>>(initialMaterials);
 
   async function load() {
     setLoading(true);
     const [courseRes, overviewRes] = await Promise.all([
-      fetch("/api/admin/courses", { cache: "no-store" }),
-      fetch("/api/admin/overview", { cache: "no-store" }),
+      adminFetch("/api/admin/courses", { cache: "no-store" }),
+      adminFetch("/api/admin/overview", { cache: "no-store" }),
     ]);
-    if (courseRes.ok) setCourses((await courseRes.json()).courses ?? []);
+    if (courseRes.ok) {
+      setCourses((await courseRes.json()).courses ?? []);
+    } else if (!courses.length) {
+      showNotice("error", "Unable to load courses from the admin API.");
+    }
     if (overviewRes.ok) {
       const data = await overviewRes.json();
       setQuizzes(data.quizzes ?? []);
       setMaterials(data.materials ?? []);
+    } else if (!quizzes.length && !materials.length) {
+      showNotice("error", "Unable to load admin overview data.");
     }
     setLoading(false);
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    setLoading(false);
+    void load();
+  }, []);
 
   function toggleCourse(id: string) {
     setExpandedCourses((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });

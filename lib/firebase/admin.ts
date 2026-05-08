@@ -18,7 +18,7 @@ function buildAdminApp() {
     return cachedAdminApp;
   }
 
-  const key = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+  const key = process.env.SERVICE_ACCOUNT_KEY;
   const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? process.env.GCLOUD_PROJECT;
 
   if (!projectId) {
@@ -44,17 +44,25 @@ function buildAdminApp() {
   return cachedAdminApp;
 }
 
+export function getAdminApp() {
+  return buildAdminApp();
+}
+
 // Lazy proxy — defers initialization to first use, never throws at import time
 export const adminApp = new Proxy({} as any, {
   get(_, key: string) {
-    return (buildAdminApp() as any)[key];
+    const app = buildAdminApp();
+    const val = (app as any)[key];
+    return typeof val === "function" ? val.bind(app) : val;
   },
 });
 
 export const adminAuth = new Proxy({} as any, {
   get(_, key: string) {
     const { getAuth } = loadAdminAuthModule();
-    return (getAuth(buildAdminApp()) as any)[key];
+    const authInstance = getAuth(buildAdminApp());
+    const val = (authInstance as any)[key];
+    return typeof val === "function" ? val.bind(authInstance) : val;
   },
 });
 

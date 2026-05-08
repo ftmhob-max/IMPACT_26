@@ -9,7 +9,7 @@ dist/
 build/
 out/
 
-# Environment files (NEVER commit these)
+# Environment files
 .env
 .env.local
 .env.*.local
@@ -17,6 +17,13 @@ out/
 # Firebase
 .firebase/
 firebase-debug.log
+dataconnect-debug.log
+pglite-debug.log
+
+# Service-account keys / Cloud Run service exports — never commit
+service.json
+service-account*.json
+*-firebase-adminsdk-*.json
 
 # Logs
 *.log

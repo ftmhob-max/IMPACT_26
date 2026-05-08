@@ -1,4 +1,4 @@
-import { getAdminFirestore, FieldValue } from "@/lib/firebase/admin-firestore";
+import { getAdminFirestore, tryGetAdminFirestore, FieldValue } from "@/lib/firebase/admin-firestore";
 
 export type FavoriteItemType = "formula" | "glossary";
 
@@ -14,7 +14,8 @@ export function favoriteDocId(userId: string, itemType: FavoriteItemType, itemId
 }
 
 export async function listUserFavorites(userId: string, itemType?: FavoriteItemType) {
-  const db = getAdminFirestore();
+  const db = tryGetAdminFirestore();
+  if (!db) return [];
   let query = db.collection("userFavorites").where("userId", "==", userId);
   if (itemType) query = query.where("itemType", "==", itemType);
   const snap = await query.get();

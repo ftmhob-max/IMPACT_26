@@ -1,6 +1,11 @@
 import { randomUUID } from "crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAdminRequest } from "@/lib/admin/auth";
+import {
+  isDuplicateQuestionText,
+  loadExistingQuestionDedupSet,
+  rememberQuestionText,
+} from "@/lib/admin/question-dedup";
 import { adminDcMutate } from "@/lib/firebase/admin-dc";
 import { csvImportSchema, type CsvQuestionRow } from "@/lib/validations/admin";
 
@@ -22,10 +27,25 @@ export async function POST(request: NextRequest) {
 
   const { rows, quiz } = parsed.data;
   const importedQuestionIds: string[] = [];
-  const quizId = quiz ? randomUUID() : null;
+  const duplicateRows: Array<{ row: number; questionText: string }> = [];
+  let quizId: string | null = null;
 
   try {
-    if (quiz && quizId) {
+    const seenQuestions = await loadExistingQuestionDedupSet();
+    const rowsToImport: Array<{ row: CsvQuestionRow; rowIndex: number }> = [];
+
+    for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+      const row = rows[rowIndex];
+      if (isDuplicateQuestionText(row.question_text, seenQuestions)) {
+        duplicateRows.push({ row: rowIndex + 1, questionText: row.question_text });
+        continue;
+      }
+      rememberQuestionText(row.question_text, seenQuestions);
+      rowsToImport.push({ row, rowIndex });
+    }
+
+    if (quiz && rowsToImport.length > 0) {
+      quizId = randomUUID();
       await adminDcMutate("CreateQuiz", {
         id: quizId,
         title: quiz.title,
@@ -39,8 +59,8 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
-      const row = rows[rowIndex];
+    for (let importIndex = 0; importIndex < rowsToImport.length; importIndex++) {
+      const { row } = rowsToImport[importIndex];
       const questionId = randomUUID();
       const correctCount = row.choices.filter((choice, index) =>
         isCorrectChoice(row, String.fromCharCode(65 + index), choice)
@@ -79,14 +99,22 @@ export async function POST(request: NextRequest) {
         await adminDcMutate("AddQuestionToQuiz", {
           quizId,
           questionId,
-          position: rowIndex,
+          position: importIndex,
           pointValue: row.point_value,
         });
       }
       importedQuestionIds.push(questionId);
     }
 
-    return NextResponse.json({ quizId, importedQuestionIds }, { status: 201 });
+    return NextResponse.json(
+      {
+        quizId,
+        importedQuestionIds,
+        duplicatesSkipped: duplicateRows.length,
+        duplicateRows,
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("[admin/assessments/import]", error);
     return NextResponse.json({ error: "Unable to import assessment" }, { status: 500 });

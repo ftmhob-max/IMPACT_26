@@ -4,7 +4,7 @@
  * and imports them into Firebase Data Connect via the Admin SDK.
  *
  * Usage:
- *   FIREBASE_SERVICE_ACCOUNT_KEY='...' \
+ *   SERVICE_ACCOUNT_KEY='...' \
  *   NEXT_PUBLIC_FIREBASE_PROJECT_ID='impact26-aa59b' \
  *   node --loader ts-node/esm scripts/import-questions.ts
  *
@@ -22,7 +22,7 @@ import { getAuth } from "firebase-admin/auth";
 // ─── Config ──────────────────────────────────────────────────────────────────
 
 const PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? "impact26-aa59b";
-const SERVICE_ACCOUNT_KEY = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+const SERVICE_ACCOUNT_KEY = process.env.SERVICE_ACCOUNT_KEY;
 const HTML_PATH = join(process.cwd(), "public", "index.html");
 const DC_BASE_URL = process.env.FIREBASE_DATACONNECT_EMULATOR_HOST
   ? `http://${process.env.FIREBASE_DATACONNECT_EMULATOR_HOST}/v1beta/projects/${PROJECT_ID}/locations/us-central1/services/impact26-dataconnect/connectors/impact26-connector`
@@ -37,7 +37,7 @@ if (!getApps().length) {
   if (SERVICE_ACCOUNT_KEY) {
     app = initializeApp({ credential: cert(JSON.parse(SERVICE_ACCOUNT_KEY)), projectId: PROJECT_ID });
   } else if (!isEmulator) {
-    throw new Error("Set FIREBASE_SERVICE_ACCOUNT_KEY env var before running");
+    throw new Error("Set SERVICE_ACCOUNT_KEY env var before running");
   }
 } else {
   app = getApps()[0];

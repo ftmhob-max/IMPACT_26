@@ -1,20 +1,53 @@
 import { IconTile, LearnerPage, PageHeader, SectionPanel } from "@/components/ui/LearnerPrimitives";
-import { getLesson } from "@/lib/firebase/generated";
-import { getPlatformDataConnect } from "@/lib/firebase/dataconnect";
+import { adminDcQuery } from "@/lib/firebase/admin-dc";
+import { getDevLessonById } from "@/lib/dev-content";
+import { ensureDevDataSeeded } from "@/lib/dev-seed";
 import { StartExamButton } from "./StartExamButton";
 import { parseVideoUrl } from "@/lib/video-url";
 import { LessonMuxPlayer } from "@/components/platform/LessonMuxPlayer";
 import { LessonExternalVideo } from "@/components/platform/LessonExternalVideo";
 import { LessonMarkComplete } from "@/components/platform/LessonMarkComplete";
 import * as Icons from "@/components/ui/Icons";
+import { StructuredLessonExperience } from "@/components/lessons/StructuredLessonExperience";
+import { parseStructuredLessonContent } from "@/lib/lessons/structured-content";
 
 async function fetchLesson(id: string) {
   try {
-    const dc = getPlatformDataConnect();
-    const { data } = await getLesson(dc, { id });
-    return data.lesson ?? null;
+    type LessonData = {
+      lesson?: {
+        id: string;
+        title: string;
+        lessonType: string;
+        contentJson?: string | null;
+        videoPlaybackId?: string | null;
+        videoUrl?: string | null;
+        durationSeconds?: number | null;
+        quiz?: {
+          id: string;
+          title: string;
+          timeLimitSeconds?: number | null;
+          shuffleQuestions: boolean;
+          shuffleChoices: boolean;
+        } | null;
+        module: {
+          course: {
+            slug: string;
+            title: string;
+          };
+        };
+      } | null;
+    };
+
+    let data = await adminDcQuery<LessonData>("GetLesson", { id });
+    if (!data.lesson) {
+      await ensureDevDataSeeded().catch(() => null);
+      data = await adminDcQuery<LessonData>("GetLesson", { id }).catch(
+        (): LessonData => ({ lesson: null })
+      );
+    }
+    return data.lesson ?? getDevLessonById(id);
   } catch {
-    return null;
+    return getDevLessonById(id);
   }
 }
 
@@ -45,6 +78,30 @@ export default async function LessonPage({
         <div className="rounded-lg border border-dashed border-slate-200 bg-white px-6 py-12 text-center text-sm text-slate-500">
           Return to the course catalog and try opening the lesson again.
         </div>
+      </LearnerPage>
+    );
+  }
+
+  const structuredDocument = parseStructuredLessonContent(lesson.contentJson ?? null);
+  const hasStructuredBlocks = structuredDocument.blocks.some((block) => block.isStudentVisible);
+
+  if (lesson.contentJson && hasStructuredBlocks) {
+    return (
+      <LearnerPage width="wide">
+        <PageHeader
+          eyebrow={lesson.lessonType === "video" ? "Video lesson" : lesson.lessonType === "quiz" ? "Practice lesson" : "Structured lesson"}
+          title={lesson.title}
+          description={structuredDocument.summary || "Move through the lesson map, review each block, and track your progress as you study."}
+          backHref={backHref}
+          backLabel={backLabel}
+          icon={lesson.lessonType === "video" ? Icons.Video : lesson.lessonType === "quiz" ? Icons.ClipboardList : Icons.BookOpen}
+        />
+        <StructuredLessonExperience
+          lessonId={lesson.id}
+          lessonTitle={lesson.title}
+          contentJson={lesson.contentJson ?? null}
+          fallbackDurationSeconds={lesson.durationSeconds ?? null}
+        />
       </LearnerPage>
     );
   }
@@ -153,9 +210,12 @@ export default async function LessonPage({
           icon={Icons.BookOpen}
         />
         <SectionPanel>
-          <div className="prose prose-slate max-w-none p-6 text-sm leading-7">
-            {lesson.contentJson}
-          </div>
+          <StructuredLessonExperience
+            lessonId={lesson.id}
+            lessonTitle={lesson.title}
+            contentJson={lesson.contentJson}
+            fallbackDurationSeconds={lesson.durationSeconds ?? null}
+          />
         </SectionPanel>
         <LessonMarkComplete lessonId={lesson.id} />
       </LearnerPage>

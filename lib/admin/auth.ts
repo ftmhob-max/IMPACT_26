@@ -29,15 +29,23 @@ export function isElevatedRole(role: unknown): role is AdminRole {
   return isAdminRole(role);
 }
 
+function resolveAdminRole(role: unknown): AdminRole | null {
+  return isAdminRole(role) ? role : null;
+}
+
+async function decodeSessionCookieValue(sessionCookie: string) {
+  return adminAuth.verifySessionCookie(sessionCookie, true);
+}
+
 export async function getSessionFromCookie(): Promise<AdminSession | null> {
   const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get("session")?.value;
+  const sessionCookie = cookieStore.get("__session")?.value;
   if (!sessionCookie) return null;
 
   try {
-    const decoded = await adminAuth.verifySessionCookie(sessionCookie, true);
-    // If no role is present, default to admin for now
-    const role = isAdminRole(decoded.role) ? decoded.role : "admin";
+    const decoded = await decodeSessionCookieValue(sessionCookie);
+    const role = resolveAdminRole(decoded.role);
+    if (!role) return null;
     return {
       uid: decoded.uid,
       email: decoded.email ?? "",
@@ -50,16 +58,34 @@ export async function getSessionFromCookie(): Promise<AdminSession | null> {
 }
 
 export async function requireAdminPage(minimumRole: AdminRole = "viewer") {
-  const session = await getSessionFromCookie();
-  if (!session) redirect("/sign-in?redirect=/admin");
-  // Allow all authenticated users for now
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get("__session")?.value;
+  if (!sessionCookie) redirect("/sign-in?redirect=/admin");
+
+  let decoded: Awaited<ReturnType<typeof decodeSessionCookieValue>>;
+  try {
+    decoded = await decodeSessionCookieValue(sessionCookie);
+  } catch {
+    redirect("/sign-in?redirect=/admin");
+  }
+
+  const role = resolveAdminRole(decoded.role);
+  if (!role) redirect("/dashboard");
+
+  const session: AdminSession = {
+    uid: decoded.uid,
+    email: decoded.email ?? "",
+    fullName: decoded.name,
+    role,
+  };
+  if (!canAccess(session.role, minimumRole)) redirect("/dashboard");
   return session;
 }
 
 export async function requireAdminRequest(request: Request, minimumRole: AdminRole = "viewer") {
   const authHeader = request.headers.get("Authorization");
   const bearer = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
-  const sessionCookie = request.headers.get("Cookie")?.match(/(?:^|;\s*)session=([^;]+)/)?.[1];
+  const sessionCookie = request.headers.get("Cookie")?.match(/(?:^|;\s*)__session=([^;]+)/)?.[1];
 
   try {
     const decoded = bearer
@@ -69,9 +95,10 @@ export async function requireAdminRequest(request: Request, minimumRole: AdminRo
         : null;
 
     if (!decoded) throw new Error("Missing admin session");
-    
-    // Default to admin if role is missing or invalid
-    const role = isAdminRole(decoded.role) ? decoded.role : "admin";
+    const role = resolveAdminRole(decoded.role);
+    if (!role) {
+      return { ok: false as const, response: Response.json({ error: "Forbidden" }, { status: 403 }) };
+    }
     
     const session: AdminSession = {
       uid: decoded.uid,
@@ -79,6 +106,9 @@ export async function requireAdminRequest(request: Request, minimumRole: AdminRo
       fullName: decoded.name,
       role,
     };
+    if (!canAccess(session.role, minimumRole)) {
+      return { ok: false as const, response: Response.json({ error: "Forbidden" }, { status: 403 }) };
+    }
     await ensureDataConnectUser(session);
     return { ok: true as const, session };
   } catch {

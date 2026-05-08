@@ -1,7 +1,7 @@
 # ─── Learner queries (no sensitive fields) ───────────────────────────────────
 
 # Get published courses for the catalog
-query ListPublishedCourses @auth(level: PUBLIC) {
+query ListPublishedCourses @auth(level: NO_ACCESS) {
   courses(where: { isPublished: { eq: true } }, orderBy: { createdAt: DESC }) {
     id
     slug
@@ -13,7 +13,7 @@ query ListPublishedCourses @auth(level: PUBLIC) {
 }
 
 # Get a course with its full module/lesson tree (learner view)
-query GetCourseBySlug($slug: String!) @auth(level: PUBLIC) {
+query GetCourseBySlug($slug: String!) @auth(level: NO_ACCESS) {
   courses(where: { slug: { eq: $slug } }, limit: 1) {
     id
     slug
@@ -40,7 +40,7 @@ query GetCourseBySlug($slug: String!) @auth(level: PUBLIC) {
 }
 
 # Get a single lesson (learner view — no isCorrect on choices)
-query GetLesson($id: UUID!) @auth(level: PUBLIC) {
+query GetLesson($id: UUID!) @auth(level: NO_ACCESS) {
   lesson(id: $id) {
     id
     title
@@ -67,7 +67,7 @@ query GetLesson($id: UUID!) @auth(level: PUBLIC) {
 
 # Get quiz questions with choices — OMITS isCorrect and explanation
 # (those fields blocked by @auth for learner tokens)
-query GetQuizQuestions($quizId: UUID!) @auth(level: PUBLIC) {
+query GetQuizQuestions($quizId: UUID!) @auth(level: NO_ACCESS) {
   quizQuestions(
     where: { quiz: { id: { eq: $quizId } } }
     orderBy: { position: ASC }
@@ -94,7 +94,7 @@ query GetQuizQuestions($quizId: UUID!) @auth(level: PUBLIC) {
 }
 
 # Get a user's in-progress attempt for a quiz (for session resume)
-query GetInProgressAttempt($userId: String!, $quizId: UUID!) @auth(level: PUBLIC) {
+query GetInProgressAttempt($userId: String!, $quizId: UUID!) @auth(level: NO_ACCESS) {
   quizAttempts(
     where: {
       user: { id: { eq: $userId } }
@@ -120,7 +120,7 @@ query GetInProgressAttempt($userId: String!, $quizId: UUID!) @auth(level: PUBLIC
 }
 
 # Get learner progress for all lessons in a course
-query GetUserCourseProgress($userId: String!, $courseId: UUID!) @auth(level: PUBLIC) {
+query GetUserCourseProgress($userId: String!, $courseId: UUID!) @auth(level: NO_ACCESS) {
   userLessonProgresses(
     where: {
       user: { id: { eq: $userId } }
@@ -135,7 +135,7 @@ query GetUserCourseProgress($userId: String!, $courseId: UUID!) @auth(level: PUB
 }
 
 # Get a single lesson's progress record for a user
-query GetLessonProgress($userId: String!, $lessonId: UUID!) @auth(level: PUBLIC) {
+query GetLessonProgress($userId: String!, $lessonId: UUID!) @auth(level: NO_ACCESS) {
   userLessonProgresses(
     where: { user: { id: { eq: $userId } }, lesson: { id: { eq: $lessonId } } }
     limit: 1
@@ -147,7 +147,7 @@ query GetLessonProgress($userId: String!, $lessonId: UUID!) @auth(level: PUBLIC)
 }
 
 # Get enrollment status + all lesson progress for a user in a course
-query GetUserCourseProgressFull($userId: String!, $courseId: UUID!) @auth(level: PUBLIC) {
+query GetUserCourseProgressFull($userId: String!, $courseId: UUID!) @auth(level: NO_ACCESS) {
   userCourseProgress: userCourseProgresses(
     where: { user: { id: { eq: $userId } }, course: { id: { eq: $courseId } } }
     limit: 1
@@ -168,7 +168,7 @@ query GetUserCourseProgressFull($userId: String!, $courseId: UUID!) @auth(level:
 }
 
 # Get all quiz attempts for a user (attempt history)
-query GetUserAttemptHistory($userId: String!) @auth(level: PUBLIC) {
+query GetUserAttemptHistory($userId: String!) @auth(level: NO_ACCESS) {
   quizAttempts(
     where: { user: { id: { eq: $userId } }, status: { eq: "completed" } }
     orderBy: { completedAt: DESC }
@@ -182,7 +182,7 @@ query GetUserAttemptHistory($userId: String!) @auth(level: PUBLIC) {
 }
 
 # Get completed attempt with full response detail (results page)
-query GetAttemptResults($attemptId: UUID!) @auth(level: PUBLIC) {
+query GetAttemptResults($attemptId: UUID!) @auth(level: NO_ACCESS) {
   quizAttempt(id: $attemptId) {
     id
     status
@@ -213,7 +213,7 @@ query GetAttemptResults($attemptId: UUID!) @auth(level: PUBLIC) {
 }
 
 # Get formula reference index (public — no auth required)
-query GetFormulaSections @auth(level: PUBLIC) {
+query GetFormulaSections @auth(level: NO_ACCESS) {
   formulaSections(orderBy: { position: ASC }) {
     id
     code
@@ -230,7 +230,7 @@ query GetFormulaSections @auth(level: PUBLIC) {
 }
 
 # Get all completed attempts with per-question responses for a user (domain breakdown + history)
-query GetUserProgressDetails($userId: String!) @auth(level: PUBLIC) {
+query GetUserProgressDetails($userId: String!) @auth(level: NO_ACCESS) {
   quizAttempts(
     where: { user: { id: { eq: $userId } }, status: { eq: "completed" } }
     orderBy: { completedAt: DESC }
@@ -253,7 +253,7 @@ query GetUserProgressDetails($userId: String!) @auth(level: PUBLIC) {
 }
 
 # List all quizzes — admin/script use only (admin token bypasses NO_ACCESS)
-query ListAdminQuizzes @auth(level: PUBLIC) {
+query ListAdminQuizzes @auth(level: NO_ACCESS) {
   quizzes(orderBy: { createdAt: ASC }) {
     id
     title
@@ -267,7 +267,7 @@ query ListAdminQuizzes @auth(level: PUBLIC) {
 }
 
 # Get position count of questions in a quiz (for append position)
-query GetQuizQuestionCount($quizId: UUID!) @auth(level: PUBLIC) {
+query GetQuizQuestionCount($quizId: UUID!) @auth(level: NO_ACCESS) {
   quizQuestions(where: { quiz: { id: { eq: $quizId } } }) {
     position
   }
@@ -308,7 +308,7 @@ query GetQuizQuestionsAdmin($quizId: UUID!) @auth(level: NO_ACCESS) {
   }
 }
 
-query GetAttemptForEvaluation($attemptId: UUID!) @auth(level: PUBLIC) {
+query GetAttemptForEvaluation($attemptId: UUID!) @auth(level: NO_ACCESS) {
   quizAttempt(id: $attemptId) {
     id
     status
@@ -322,7 +322,7 @@ query GetAttemptForEvaluation($attemptId: UUID!) @auth(level: PUBLIC) {
   }
 }
 
-query GetQuestionWithAnswers($questionId: UUID!) @auth(level: PUBLIC) {
+query GetQuestionWithAnswers($questionId: UUID!) @auth(level: NO_ACCESS) {
   question(id: $questionId) {
     id
     questionText
@@ -344,7 +344,7 @@ query GetQuestionWithAnswers($questionId: UUID!) @auth(level: PUBLIC) {
   }
 }
 
-query GetQuizQuestionPointValue($quizId: UUID!, $questionId: UUID!) @auth(level: PUBLIC) {
+query GetQuizQuestionPointValue($quizId: UUID!, $questionId: UUID!) @auth(level: NO_ACCESS) {
   quizQuestions(
     where: { quiz: { id: { eq: $quizId } }, question: { id: { eq: $questionId } } }
     limit: 1
@@ -353,7 +353,7 @@ query GetQuizQuestionPointValue($quizId: UUID!, $questionId: UUID!) @auth(level:
   }
 }
 
-query GetAttemptForCompletion($attemptId: UUID!) @auth(level: PUBLIC) {
+query GetAttemptForCompletion($attemptId: UUID!) @auth(level: NO_ACCESS) {
   quizAttempt(id: $attemptId) {
     id
     status
@@ -367,7 +367,7 @@ query GetAttemptForCompletion($attemptId: UUID!) @auth(level: PUBLIC) {
   }
 }
 
-query GetAttemptOwner($attemptId: UUID!) @auth(level: PUBLIC) {
+query GetAttemptOwner($attemptId: UUID!) @auth(level: NO_ACCESS) {
   quizAttempt(id: $attemptId) {
     id
     user { id }
@@ -377,7 +377,7 @@ query GetAttemptOwner($attemptId: UUID!) @auth(level: PUBLIC) {
 # ─── Admin queries ─────────────────────────────────────────────────────────────
 
 # Get all questions for admin question bank (includes sensitive fields)
-query AdminListQuestions @auth(level: PUBLIC) {
+query AdminListQuestions @auth(level: NO_ACCESS) {
   questions(orderBy: { createdAt: DESC }, limit: 500) {
     id
     questionText
@@ -405,7 +405,7 @@ query AdminListQuestions @auth(level: PUBLIC) {
 }
 
 # Lightweight question list for question bank table (no answer choices, paginated)
-query AdminListQuestionsPage($limit: Int!, $offset: Int!) @auth(level: PUBLIC) {
+query AdminListQuestionsPage($limit: Int!, $offset: Int!) @auth(level: NO_ACCESS) {
   questions(orderBy: { createdAt: DESC }, limit: $limit, offset: $offset) {
     id
     questionText
@@ -422,13 +422,13 @@ query AdminListQuestionsPage($limit: Int!, $offset: Int!) @auth(level: PUBLIC) {
 }
 
 # Count of all questions (for pagination total)
-query AdminCountQuestions @auth(level: PUBLIC) {
+query AdminCountQuestions @auth(level: NO_ACCESS) {
   questions {
     id
   }
 }
 
-query AdminListQuizQuestionUsage @auth(level: PUBLIC) {
+query AdminListQuizQuestionUsage @auth(level: NO_ACCESS) {
   quizQuestions {
     quiz { id title }
     question { id }
@@ -444,7 +444,7 @@ query AdminListQuizQuestionUsage @auth(level: PUBLIC) {
   }
 }
 
-query AdminListCourses @auth(level: PUBLIC) {
+query AdminListCourses @auth(level: NO_ACCESS) {
   courses(orderBy: { updatedAt: DESC }) {
     id
     slug
@@ -484,7 +484,7 @@ query AdminListCourses @auth(level: PUBLIC) {
 }
 
 # Get lesson version history
-query GetLessonVersions($lessonId: UUID!) @auth(level: PUBLIC) {
+query GetLessonVersions($lessonId: UUID!) @auth(level: NO_ACCESS) {
   lessonVersions(
     where: { lesson: { id: { eq: $lessonId } } }
     orderBy: { createdAt: DESC }
@@ -498,7 +498,7 @@ query GetLessonVersions($lessonId: UUID!) @auth(level: PUBLIC) {
   }
 }
 
-query AdminListSourceMaterials @auth(level: PUBLIC) {
+query AdminListSourceMaterials @auth(level: NO_ACCESS) {
   sourceMaterials(orderBy: { createdAt: DESC }) {
     id
     title
@@ -523,7 +523,7 @@ query AdminListSourceMaterials @auth(level: PUBLIC) {
   }
 }
 
-query AdminListUsers @auth(level: PUBLIC) {
+query AdminListUsers @auth(level: NO_ACCESS) {
   users(orderBy: { createdAt: DESC }) {
     id
     email
@@ -534,7 +534,7 @@ query AdminListUsers @auth(level: PUBLIC) {
 }
 
 # Get cohort performance data for admin dashboard
-query AdminCohortStats @auth(level: PUBLIC) {
+query AdminCohortStats @auth(level: NO_ACCESS) {
   quizAttempts(where: { status: { eq: "completed" } }, orderBy: { completedAt: DESC }) {
     id
     user { id email fullName }

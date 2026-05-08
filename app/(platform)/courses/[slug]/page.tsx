@@ -1,24 +1,61 @@
 import { StartQuizButton } from "@/components/quiz/StartQuizButton";
 import { IconTile, LearnerPage, PageHeader, PrimaryAction, SectionPanel } from "@/components/ui/LearnerPrimitives";
 import { CourseEnrollmentClient } from "@/components/platform/CourseEnrollmentClient";
-import { getCourseBySlug, listAdminQuizzes } from "@/lib/firebase/generated";
-import { getPlatformDataConnect } from "@/lib/firebase/dataconnect";
+import { adminDcQuery } from "@/lib/firebase/admin-dc";
+import { getDevCourseBySlug } from "@/lib/dev-content";
+import { ensureDevDataSeeded } from "@/lib/dev-seed";
 import * as Icons from "@/components/ui/Icons";
 
 async function getCourse(slug: string) {
   try {
-    const dc = getPlatformDataConnect();
-    const { data } = await getCourseBySlug(dc, { slug });
-    return data.courses[0] ?? null;
+    type CourseData = {
+      courses: Array<{
+        id: string;
+        slug: string;
+        title: string;
+        description?: string | null;
+        thumbnailUrl?: string | null;
+        modules_on_course: Array<{
+          id: string;
+          title: string;
+          position: number;
+          prerequisiteModuleIds?: string | null;
+          lessons_on_module: Array<{
+            id: string;
+            title: string;
+            position: number;
+            lessonType: string;
+            durationSeconds?: number | null;
+            videoPlaybackId?: string | null;
+            videoUrl?: string | null;
+            quiz?: { id: string } | null;
+          }>;
+        }>;
+      }>;
+    };
+
+    let data = await adminDcQuery<CourseData>("GetCourseBySlug", { slug });
+    if (!data.courses[0]) {
+      await ensureDevDataSeeded().catch(() => null);
+      data = await adminDcQuery<CourseData>("GetCourseBySlug", { slug }).catch(
+        (): CourseData => ({ courses: [] })
+      );
+    }
+    return data.courses[0] ?? getDevCourseBySlug(slug);
   } catch {
-    return null;
+    return getDevCourseBySlug(slug);
   }
 }
 
 async function getFallbackPracticeQuiz() {
   try {
-    const dc = getPlatformDataConnect();
-    const { data } = await listAdminQuizzes(dc);
+    const data = await adminDcQuery<{
+      quizzes: Array<{
+        id: string;
+        title: string;
+        description?: string | null;
+      }>;
+    }>("ListAdminQuizzes");
     return (
       data.quizzes.find((quiz) =>
         /impact|practice|exam/i.test(`${quiz.title} ${quiz.description ?? ""}`)

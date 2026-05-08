@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import * as Icons from "@/components/ui/Icons";
+import { adminFetch } from "@/lib/admin/client-fetch";
 import { cn } from "@/lib/utils";
 import { QuestionBankPicker } from "@/components/admin/QuestionBankPicker";
 
@@ -92,8 +93,8 @@ const DEFAULT_FORM: NewQuizForm = {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export function QuizManagementPanel() {
-  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+export function QuizManagementPanel({ initialQuizzes = [] }: { initialQuizzes?: Quiz[] }) {
+  const [quizzes, setQuizzes] = useState<Quiz[]>(initialQuizzes);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState<NewQuizForm>(DEFAULT_FORM);
   const [busy, setBusy] = useState(false);
@@ -103,15 +104,20 @@ export function QuizManagementPanel() {
 
   async function load() {
     setLoading(true);
-    const quizRes = await fetch("/api/admin/overview", { cache: "no-store" });
+    const quizRes = await adminFetch("/api/admin/overview", { cache: "no-store" });
     if (quizRes.ok) {
       const data = await quizRes.json();
       setQuizzes(data.quizzes ?? []);
+    } else if (!quizzes.length) {
+      showNotice("error", "Unable to load quizzes from the admin API.");
     }
     setLoading(false);
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    setLoading(false);
+    void load();
+  }, []);
 
   function showNotice(type: "success" | "error", text: string) {
     setNotice({ type, text });

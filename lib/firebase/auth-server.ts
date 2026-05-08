@@ -19,7 +19,7 @@ export async function verifyIdToken(authHeader: string | null): Promise<Verified
 export async function requireLearnerRequest(request: Request) {
   const authHeader = request.headers.get("Authorization");
   const bearer = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
-  const sessionCookie = request.headers.get("Cookie")?.match(/(?:^|;\s*)session=([^;]+)/)?.[1];
+  const sessionCookie = request.headers.get("Cookie")?.match(/(?:^|;\s*)__session=([^;]+)/)?.[1];
 
   try {
     const decoded = bearer
