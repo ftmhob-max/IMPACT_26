@@ -8,10 +8,14 @@ import { ProgressBar } from "./ProgressBar";
 import { FilterPanel } from "./FilterPanel";
 import { FormulaQuickRef, type FormulaSectionData } from "./FormulaQuickRef";
 import { ScrollToTop } from "./ScrollToTop";
+import { FormulaCalculatorPopup } from "./FormulaCalculatorPopup";
+import { QuizCalculatorLauncher } from "./QuizCalculatorLauncher";
+import { FormulaCalculatorProvider, useFormulaCalc } from "@/components/layout/FormulaCalculatorProvider";
 import type { SafeQuestion } from "@/lib/quiz-engine/sanitize";
 import type { EvaluationResult } from "@/lib/quiz-engine/evaluate";
 import { getIdToken } from "@/lib/firebase/auth";
 import { shuffleArray } from "@/lib/utils";
+
 
 export interface QuizSession {
   attemptId: string;
@@ -26,6 +30,8 @@ export interface QuizSession {
     pointsPossible: number | null;
   }>;
   questions: SafeQuestion[];
+  /** Optional quiz-level calculator settings (from quiz config) */
+  calculatorSettingsJson?: string | null;
 }
 
 interface QuizEngineProps {
@@ -44,6 +50,25 @@ type QuestionState = {
 type DiffFilter = "all" | "easy" | "proficient" | "expert" | "random";
 
 export function QuizEngine({ session, onComplete, onBack }: QuizEngineProps) {
+  // Parse calculator settings from quiz config
+  let calcSettings = null;
+  if (session.calculatorSettingsJson) {
+    try { calcSettings = JSON.parse(session.calculatorSettingsJson); } catch { /* ignore */ }
+  }
+  // Default: calculator enabled, all formulas, always show steps
+  if (!calcSettings) {
+    calcSettings = { enabled: true, formulaScope: "all", showSteps: "always", recordUsage: false };
+  }
+
+  return (
+    <FormulaCalculatorProvider calculatorSettings={calcSettings}>
+      <QuizEngineInner session={session} onComplete={onComplete} onBack={onBack} />
+    </FormulaCalculatorProvider>
+  );
+}
+
+function QuizEngineInner({ session, onComplete, onBack }: QuizEngineProps) {
+  const { isOpen, isMinimized, open, restore, calculatorSettings } = useFormulaCalc();
   const buildInitialState = (): Record<string, QuestionState> => {
     const state: Record<string, QuestionState> = {};
     const answeredSet = new Set(session.answeredQuestionIds);
@@ -257,6 +282,15 @@ export function QuizEngine({ session, onComplete, onBack }: QuizEngineProps) {
         onFinish={handleComplete}
         onBack={onBack}
         isCompleting={isCompleting}
+        calculatorLauncher={
+          calculatorSettings?.enabled !== false ? (
+            <QuizCalculatorLauncher
+              isOpen={isOpen}
+              isMinimized={isMinimized}
+              onClick={() => (isOpen ? (isMinimized ? restore() : undefined) : open())}
+            />
+          ) : null
+        }
       />
 
       <div className="mx-auto max-w-6xl">
@@ -304,6 +338,9 @@ export function QuizEngine({ session, onComplete, onBack }: QuizEngineProps) {
       </div>
 
       <ScrollToTop />
+
+      {/* Global quiz calculator popup — persists across question navigation */}
+      {calculatorSettings?.enabled !== false && <FormulaCalculatorPopup />}
     </div>
   );
 }

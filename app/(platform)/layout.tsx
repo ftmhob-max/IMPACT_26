@@ -7,9 +7,9 @@ export default async function PlatformLayout({ children }: { children: React.Rea
   const isAdmin = isAdminRole(session?.role);
 
   return (
-    <div className="min-h-screen bg-[#f7f8f6] lg:flex">
+    <div className="min-h-screen bg-[#f7f8f6] lg:flex lg:h-screen lg:overflow-hidden">
       <Sidebar isAdmin={isAdmin} />
-      <main className="min-w-0 flex-1">{children}</main>
+      <main className="min-w-0 flex-1 lg:h-screen lg:overflow-y-auto">{children}</main>
     </div>
   );
 }

@@ -99,22 +99,25 @@ export default async function CourseDetailPage({
   const firstLesson = course.modules_on_course.flatMap((m) => m.lessons_on_module)[0];
   const shouldShowFallbackQuiz = totalLessons === 0 && fallbackQuiz;
 
-  // Shape modules for the client component (include prerequisiteModuleIds from query if available)
-  const modules = course.modules_on_course.map((m: any) => ({
-    id: m.id,
-    title: m.title,
-    position: m.position,
-    prerequisiteModuleIds: m.prerequisiteModuleIds ?? null,
-    lessons_on_module: m.lessons_on_module.map((l: any) => ({
-      id: l.id,
-      title: l.title,
-      position: l.position,
-      lessonType: l.lessonType,
-      durationSeconds: l.durationSeconds ?? null,
-      videoPlaybackId: l.videoPlaybackId ?? null,
-      quiz: l.quiz ?? null,
-    })),
-  }));
+  // Shape modules — only include modules that have at least one published lesson
+  // (GetCourseBySlug already filters lessons to isPublished=true, so empty arrays mean no live content)
+  const modules = course.modules_on_course
+    .map((m: any) => ({
+      id: m.id,
+      title: m.title,
+      position: m.position,
+      prerequisiteModuleIds: m.prerequisiteModuleIds ?? null,
+      lessons_on_module: m.lessons_on_module.map((l: any) => ({
+        id: l.id,
+        title: l.title,
+        position: l.position,
+        lessonType: l.lessonType,
+        durationSeconds: l.durationSeconds ?? null,
+        videoPlaybackId: l.videoPlaybackId ?? null,
+        quiz: l.quiz ?? null,
+      })),
+    }))
+    .filter((m: { lessons_on_module: unknown[] }) => m.lessons_on_module.length > 0);
 
   return (
     <LearnerPage width="narrow">

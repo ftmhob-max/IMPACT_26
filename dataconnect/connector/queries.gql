@@ -167,6 +167,15 @@ query GetUserCourseProgressFull($userId: String!, $courseId: UUID!) @auth(level:
   }
 }
 
+# Get a lightweight summary of all lesson progress records for a user (for Study Rhythm sidebar)
+query GetUserLessonProgressSummary($userId: String!) @auth(level: NO_ACCESS) {
+  userLessonProgresses(
+    where: { user: { id: { eq: $userId } } }
+  ) {
+    status
+  }
+}
+
 # Get all quiz attempts for a user (attempt history)
 query GetUserAttemptHistory($userId: String!) @auth(level: NO_ACCESS) {
   quizAttempts(
@@ -263,6 +272,8 @@ query ListAdminQuizzes @auth(level: NO_ACCESS) {
     passingScore
     timeLimitSeconds
     shuffleQuestions
+    shuffleChoices
+    calculatorSettingsJson
     createdAt
   }
 }

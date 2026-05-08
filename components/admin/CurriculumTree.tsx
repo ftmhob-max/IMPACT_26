@@ -18,6 +18,7 @@ interface Lesson {
   isPublished: boolean;
   durationSeconds?: number | null;
   videoPlaybackId?: string | null;
+  videoUrl?: string | null;
   contentJson?: string | null;
 }
 
@@ -42,7 +43,10 @@ interface Course {
   modules_on_course: Module[];
 }
 
-type EditTarget = { type: "course"; item: Course } | { type: "module"; item: Module; courseId: string } | { type: "lesson"; item: Lesson; moduleId: string; courseId: string };
+type EditTarget =
+  | { type: "course"; item: Course }
+  | { type: "module"; item: Module; courseId: string }
+  | { type: "lesson"; item: Lesson; moduleId: string; courseId: string };
 
 interface LessonVersion {
   id: string;
@@ -90,8 +94,6 @@ export function CurriculumTree({
       const data = await overviewRes.json();
       setQuizzes(data.quizzes ?? []);
       setMaterials(data.materials ?? []);
-    } else if (!quizzes.length && !materials.length) {
-      showNotice("error", "Unable to load admin overview data.");
     }
     setLoading(false);
   }
@@ -135,7 +137,7 @@ export function CurriculumTree({
 
   async function publishLessons(lessonIds: string[]) {
     if (!lessonIds.length) return;
-    const res = await fetch("/api/admin/courses", {
+    const res = await adminFetch("/api/admin/courses", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "publish-lessons", lessonIds, publish: true }),
@@ -154,6 +156,20 @@ export function CurriculumTree({
     showNotice("error", err.error ?? "Failed to publish lessons.");
   }
 
+  async function unpublishLesson(lessonId: string) {
+    const res = await adminFetch("/api/admin/courses", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "publish-lessons", lessonIds: [lessonId], publish: false }),
+    });
+    if (res.ok) {
+      showNotice("success", "Lesson unpublished.");
+      await load();
+    } else {
+      showNotice("error", "Failed to unpublish lesson.");
+    }
+  }
+
   async function deleteLessons(lessonIds: string[]) {
     if (!lessonIds.length) return;
     const confirmed = window.confirm(
@@ -161,7 +177,7 @@ export function CurriculumTree({
     );
     if (!confirmed) return;
 
-    const res = await fetch("/api/admin/courses", {
+    const res = await adminFetch("/api/admin/courses", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "delete-lessons", lessonIds }),
@@ -184,7 +200,7 @@ export function CurriculumTree({
     const confirmed = window.confirm(`Delete module "${moduleTitle}" and all of its lessons? This cannot be undone.`);
     if (!confirmed) return;
 
-    const res = await fetch("/api/admin/courses", {
+    const res = await adminFetch("/api/admin/courses", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "delete-module", moduleId }),
@@ -198,9 +214,52 @@ export function CurriculumTree({
     showNotice("error", err.error ?? "Failed to delete module.");
   }
 
+  async function publishCourse(courseId: string, publish: boolean) {
+    const res = await adminFetch("/api/admin/courses/publish", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ courseId, publish }),
+    });
+    if (res.ok) {
+      showNotice("success", publish ? "Course published — students can now find it." : "Course unpublished.");
+      await load();
+    } else {
+      showNotice("error", "Failed to update course visibility.");
+    }
+  }
+
+  async function publishModule(module: Module, courseId: string, courseIsPublished: boolean) {
+    const lessonIds = module.lessons_on_module.map((l) => l.id);
+    if (!lessonIds.length) { showNotice("error", "No lessons in this module."); return; }
+
+    const res = await adminFetch("/api/admin/courses", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "publish-lessons", lessonIds, publish: true }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      showNotice("error", err.error ?? "Failed to publish lessons.");
+      return;
+    }
+
+    if (!courseIsPublished) {
+      const shouldPublishCourse = window.confirm(
+        `All ${lessonIds.length} lesson${lessonIds.length !== 1 ? "s" : ""} in "${module.title}" are now published.\n\nThe course is currently hidden from students. Publish the course now?`
+      );
+      if (shouldPublishCourse) {
+        await publishCourse(courseId, true);
+        return;
+      }
+    }
+
+    showNotice("success", `${lessonIds.length} lesson${lessonIds.length !== 1 ? "s" : ""} published.`);
+    await load();
+  }
+
   async function addModule(courseId: string) {
-    const title = `Module ${courses.find((c) => c.id === courseId)?.modules_on_course.length ?? 0 + 1}`;
-    const res = await fetch("/api/admin/courses", {
+    const title = `Module ${(courses.find((c) => c.id === courseId)?.modules_on_course.length ?? 0) + 1}`;
+    const res = await adminFetch("/api/admin/courses", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -216,7 +275,7 @@ export function CurriculumTree({
   }
 
   async function addLesson(courseId: string, moduleId: string) {
-    const res = await fetch("/api/admin/courses", {
+    const res = await adminFetch("/api/admin/courses", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -236,7 +295,7 @@ export function CurriculumTree({
   }
 
   async function reorderItems(type: "module" | "lesson", items: Array<{ id: string; position: number }>) {
-    await fetch("/api/admin/courses", {
+    await adminFetch("/api/admin/courses", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "reorder", type, items }),
@@ -302,8 +361,11 @@ export function CurriculumTree({
               onToggleLessonSelection={toggleLessonSelection}
               onToggleModuleLessonSelection={toggleModuleLessonSelection}
               onPublishLessons={publishLessons}
+              onUnpublishLesson={unpublishLesson}
               onDeleteLessons={deleteLessons}
               onDeleteModule={deleteModule}
+              onPublishModule={(mod) => publishModule(mod, course.id, course.isPublished)}
+              onPublishCourse={(publish) => publishCourse(course.id, publish)}
               onReorder={reorderItems}
             />
           ))
@@ -340,8 +402,11 @@ function CourseNode({
   onToggleLessonSelection,
   onToggleModuleLessonSelection,
   onPublishLessons,
+  onUnpublishLesson,
   onDeleteLessons,
   onDeleteModule,
+  onPublishModule,
+  onPublishCourse,
   onReorder,
 }: {
   course: Course;
@@ -356,10 +421,16 @@ function CourseNode({
   onToggleLessonSelection: (lessonId: string, checked: boolean) => void;
   onToggleModuleLessonSelection: (lessonIds: string[], checked: boolean) => void;
   onPublishLessons: (lessonIds: string[]) => void;
+  onUnpublishLesson: (lessonId: string) => void;
   onDeleteLessons: (lessonIds: string[]) => void;
   onDeleteModule: (moduleId: string, moduleTitle: string) => void;
+  onPublishModule: (mod: Module) => void;
+  onPublishCourse: (publish: boolean) => void;
   onReorder: (type: "module" | "lesson", items: Array<{ id: string; position: number }>) => void;
 }) {
+  const totalLessons = course.modules_on_course.reduce((s, m) => s + m.lessons_on_module.length, 0);
+  const publishedLessons = course.modules_on_course.reduce((s, m) => s + m.lessons_on_module.filter((l) => l.isPublished).length, 0);
+
   return (
     <div className="rounded-xl border border-black/10 bg-white shadow-sm overflow-hidden">
       {/* Course header */}
@@ -374,15 +445,33 @@ function CourseNode({
           title="Open lesson plan detail view"
         >
           <span className="font-semibold text-slate-900 text-sm truncate group-hover:text-[#185FA5] transition-colors">{course.title}</span>
-          <StatusDot status={course.status} published={course.isPublished} />
+          <PublishBadge published={course.isPublished} />
           <Icons.ExternalLink size={11} className="shrink-0 text-slate-300 group-hover:text-[#185FA5] transition-colors" />
         </a>
-        <div className="flex items-center gap-1 shrink-0">
-          <span className="text-[10px] text-slate-400">{course.modules_on_course.length} modules</span>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {totalLessons > 0 && (
+            <span className="text-[10px] text-slate-400">
+              {publishedLessons}/{totalLessons} published
+            </span>
+          )}
+          {/* Quick publish/unpublish course toggle */}
+          <button
+            type="button"
+            title={course.isPublished ? "Unpublish course (hide from students)" : "Publish course (make visible to students)"}
+            onClick={() => onPublishCourse(!course.isPublished)}
+            className={cn(
+              "rounded-md px-2 py-1 text-[10px] font-semibold transition-colors",
+              course.isPublished
+                ? "border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                : "border border-slate-200 bg-slate-50 text-slate-500 hover:border-[#185FA5] hover:text-[#185FA5]"
+            )}
+          >
+            {course.isPublished ? "Published" : "Publish"}
+          </button>
           <button type="button" onClick={() => onEdit({ type: "course", item: course })} className="p-1.5 text-slate-400 hover:text-[#185FA5] transition-colors rounded">
             <Icons.Pencil size={13} />
           </button>
-          <button type="button" onClick={onAddModule} className="p-1.5 text-slate-400 hover:text-[#185FA5] transition-colors rounded">
+          <button type="button" onClick={onAddModule} className="p-1.5 text-slate-400 hover:text-[#185FA5] transition-colors rounded" title="Add module">
             <Icons.Plus size={13} />
           </button>
         </div>
@@ -403,8 +492,10 @@ function CourseNode({
               onToggleLessonSelection={onToggleLessonSelection}
               onToggleModuleLessonSelection={onToggleModuleLessonSelection}
               onPublishLessons={onPublishLessons}
+              onUnpublishLesson={onUnpublishLesson}
               onDeleteLessons={onDeleteLessons}
               onDeleteModule={onDeleteModule}
+              onPublishModule={() => onPublishModule(mod)}
             />
           ))}
           {course.modules_on_course.length === 0 && (
@@ -429,8 +520,10 @@ function ModuleNode({
   onToggleLessonSelection,
   onToggleModuleLessonSelection,
   onPublishLessons,
+  onUnpublishLesson,
   onDeleteLessons,
   onDeleteModule,
+  onPublishModule,
 }: {
   module: Module;
   courseId: string;
@@ -442,17 +535,20 @@ function ModuleNode({
   onToggleLessonSelection: (lessonId: string, checked: boolean) => void;
   onToggleModuleLessonSelection: (lessonIds: string[], checked: boolean) => void;
   onPublishLessons: (lessonIds: string[]) => void;
+  onUnpublishLesson: (lessonId: string) => void;
   onDeleteLessons: (lessonIds: string[]) => void;
   onDeleteModule: (moduleId: string, moduleTitle: string) => void;
+  onPublishModule: () => void;
 }) {
-  let objectives: string[] = [];
   let prereqs: string[] = [];
-  try { objectives = JSON.parse(module.learningObjectives ?? "[]"); } catch { /* ignore */ }
   try { prereqs = JSON.parse(module.prerequisiteModuleIds ?? "[]"); } catch { /* ignore */ }
   const lessonIds = module.lessons_on_module.map((lesson) => lesson.id);
   const selectedIds = lessonIds.filter((lessonId) => selectedLessonIds.has(lessonId));
   const allSelected = lessonIds.length > 0 && selectedIds.length === lessonIds.length;
   const someSelected = selectedIds.length > 0;
+  const unpublishedIds = module.lessons_on_module.filter((l) => !l.isPublished).map((l) => l.id);
+  const publishedCount = module.lessons_on_module.filter((l) => l.isPublished).length;
+  const allPublished = lessonIds.length > 0 && publishedCount === lessonIds.length;
 
   return (
     <div className="pl-4">
@@ -461,19 +557,40 @@ function ModuleNode({
           {expanded ? <Icons.ChevronDown size={13} className="text-slate-300 shrink-0" /> : <Icons.ChevronRight size={13} className="text-slate-300 shrink-0" />}
           <Icons.BookMarked size={14} className="text-slate-400 shrink-0" />
           <span className="text-sm font-medium text-slate-700 truncate">{module.title}</span>
-          <StatusDot status={module.status} />
           {prereqs.length > 0 && (
             <span title="Has prerequisites"><Icons.Lock size={11} className="text-amber-400 shrink-0" /></span>
           )}
         </button>
         <div className="flex items-center gap-1 shrink-0">
           {module.lessons_on_module.length > 0 && (
+            <>
+              <span className="text-[10px] text-slate-400">{publishedCount}/{module.lessons_on_module.length}</span>
+              {/* Publish module — publishes all unpublished lessons */}
+              {!allPublished && (
+                <button
+                  type="button"
+                  onClick={onPublishModule}
+                  title={`Publish all ${unpublishedIds.length} unpublished lessons in this module`}
+                  className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors"
+                >
+                  Publish module
+                </button>
+              )}
+              {allPublished && (
+                <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700">
+                  ✓ All published
+                </span>
+              )}
+            </>
+          )}
+          {/* Bulk selection */}
+          {module.lessons_on_module.length > 0 && (
             <input
               type="checkbox"
               checked={allSelected}
               onChange={(e) => onToggleModuleLessonSelection(lessonIds, e.target.checked)}
               aria-label={`Select all lessons in ${module.title}`}
-              className={cn("h-3.5 w-3.5 rounded border-slate-300", someSelected && !allSelected && "accent-[#185FA5]")}
+              className={cn("h-3.5 w-3.5 rounded border-slate-300 ml-1", someSelected && !allSelected && "accent-[#185FA5]")}
             />
           )}
           {someSelected && (
@@ -483,18 +600,17 @@ function ModuleNode({
                 onClick={() => onPublishLessons(selectedIds)}
                 className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700 hover:bg-emerald-100"
               >
-                Publish selected
+                Publish ({selectedIds.length})
               </button>
               <button
                 type="button"
                 onClick={() => onDeleteLessons(selectedIds)}
                 className="rounded-md border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-semibold text-red-700 hover:bg-red-100"
               >
-                Delete selected
+                Delete ({selectedIds.length})
               </button>
             </>
           )}
-          <span className="text-[10px] text-slate-400">{module.lessons_on_module.length} lessons</span>
           <button type="button" onClick={() => onEdit({ type: "module", item: module, courseId })} className="p-1 text-slate-300 hover:text-slate-600 transition-colors rounded">
             <Icons.Pencil size={12} />
           </button>
@@ -506,7 +622,7 @@ function ModuleNode({
           >
             <Icons.Trash2 size={12} />
           </button>
-          <button type="button" onClick={onAddLesson} className="p-1 text-slate-300 hover:text-slate-600 transition-colors rounded">
+          <button type="button" onClick={onAddLesson} className="p-1 text-slate-300 hover:text-slate-600 transition-colors rounded" title="Add lesson">
             <Icons.Plus size={12} />
           </button>
         </div>
@@ -524,6 +640,11 @@ function ModuleNode({
               onToggleSelected={(checked) => onToggleLessonSelection(lesson.id, checked)}
               onEdit={(t) => onEdit(t)}
               onDelete={() => onDeleteLessons([lesson.id])}
+              onTogglePublish={() =>
+                lesson.isPublished
+                  ? onUnpublishLesson(lesson.id)
+                  : onPublishLessons([lesson.id])
+              }
             />
           ))}
           {module.lessons_on_module.length === 0 && (
@@ -545,6 +666,7 @@ function LessonRow({
   onToggleSelected,
   onEdit,
   onDelete,
+  onTogglePublish,
 }: {
   lesson: Lesson;
   moduleId: string;
@@ -553,6 +675,7 @@ function LessonRow({
   onToggleSelected: (checked: boolean) => void;
   onEdit: (t: EditTarget) => void;
   onDelete: () => void;
+  onTogglePublish: () => void;
 }) {
   const typeIcons: Record<string, React.ComponentType<any>> = {
     text: Icons.FileText,
@@ -576,7 +699,20 @@ function LessonRow({
       <span className="flex-1 min-w-0 text-xs text-slate-600 truncate">{lesson.title}</span>
       <div className="flex items-center gap-1.5 shrink-0">
         <LessonTypeBadge type={lesson.lessonType} />
-        <StatusDot status={lesson.status} published={lesson.isPublished} />
+        {/* Quick publish toggle */}
+        <button
+          type="button"
+          title={lesson.isPublished ? "Click to unpublish (hide from students)" : "Click to publish (make visible to students)"}
+          onClick={onTogglePublish}
+          className={cn(
+            "rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider transition-colors",
+            lesson.isPublished
+              ? "bg-emerald-100 text-emerald-700 hover:bg-red-50 hover:text-red-600"
+              : "bg-slate-100 text-slate-400 hover:bg-emerald-50 hover:text-emerald-700"
+          )}
+        >
+          {lesson.isPublished ? "Live" : "Draft"}
+        </button>
         {lesson.durationSeconds && (
           <span className="text-[10px] text-slate-400">{Math.ceil(lesson.durationSeconds / 60)}m</span>
         )}
@@ -649,14 +785,14 @@ function CourseEditForm({ course, onSaved }: { course: Course; onSaved: () => vo
   async function save() {
     setBusy(true);
     setError(null);
-    const res = await fetch("/api/admin/courses", {
-      method: "POST",
+    const res = await adminFetch("/api/admin/courses", {
+      method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        action: "update-course",
+        courseId: course.id,
         title,
-        slug: course.slug,
         description: description || null,
-        publish: course.isPublished,
       }),
     });
     setBusy(false);
@@ -671,7 +807,7 @@ function CourseEditForm({ course, onSaved }: { course: Course; onSaved: () => vo
   async function togglePublish() {
     setBusy(true);
     setError(null);
-    const res = await fetch("/api/admin/courses/publish", {
+    const res = await adminFetch("/api/admin/courses/publish", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ courseId: course.id, publish: !course.isPublished }),
@@ -693,13 +829,29 @@ function CourseEditForm({ course, onSaved }: { course: Course; onSaved: () => vo
       <Field label="Description">
         <textarea className="admin-input min-h-16" value={description} onChange={(e) => setDescription(e.target.value)} />
       </Field>
+
+      {/* Publish status summary */}
+      <div className={cn(
+        "rounded-lg border px-3 py-2 text-xs",
+        course.isPublished ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-slate-200 bg-slate-50 text-slate-500"
+      )}>
+        {course.isPublished ? (
+          <span className="flex items-center gap-1.5"><Icons.Eye size={11} /> Visible to students in the course catalog.</span>
+        ) : (
+          <span className="flex items-center gap-1.5"><Icons.EyeOff size={11} /> Hidden — students cannot see this course.</span>
+        )}
+      </div>
+
       {error && <p className="text-xs text-red-600">{error}</p>}
       <div className="flex gap-2 pt-1">
         <button type="button" className="admin-action flex-1" onClick={save} disabled={busy}>Save</button>
-        <button type="button" className="admin-action secondary" onClick={togglePublish} disabled={busy}>
-          {course.isPublished ? "Unpublish" : "Publish"}
+        <button type="button" className={cn("admin-action", course.isPublished ? "secondary" : "")} onClick={togglePublish} disabled={busy}>
+          {course.isPublished ? "Unpublish" : "Publish course"}
         </button>
       </div>
+      <p className="text-[10px] text-slate-400 leading-relaxed">
+        Publishing a course makes it appear in the student catalog. Lessons must also be individually published to be visible.
+      </p>
     </div>
   );
 }
@@ -732,7 +884,7 @@ function ModuleEditForm({
   async function save() {
     setBusy(true);
     const objectives = objText.split("\n").map((s) => s.trim()).filter(Boolean);
-    await fetch("/api/admin/courses", {
+    await adminFetch("/api/admin/courses", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -801,7 +953,6 @@ function LessonEditForm({
   const [lessonType, setLessonType] = useState(lesson.lessonType);
   const [videoPlaybackId, setVideoPlaybackId] = useState(lesson.videoPlaybackId ?? "");
   const [videoUrl, setVideoUrl] = useState((lesson as any).videoUrl ?? "");
-  // Determine initial video tab: "link" if a videoUrl exists, otherwise "upload"
   const [videoTab, setVideoTab] = useState<"upload" | "link">(
     (lesson as any).videoUrl ? "link" : "upload"
   );
@@ -817,7 +968,7 @@ function LessonEditForm({
 
   async function save() {
     setBusy(true);
-    await fetch("/api/admin/courses", {
+    await adminFetch("/api/admin/courses", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -842,14 +993,14 @@ function LessonEditForm({
 
   async function loadVersions() {
     setLoadingVersions(true);
-    const res = await fetch(`/api/admin/courses/versions?lessonId=${lesson.id}`);
+    const res = await adminFetch(`/api/admin/courses/versions?lessonId=${lesson.id}`);
     if (res.ok) setVersions((await res.json()).versions ?? []);
     setLoadingVersions(false);
   }
 
   async function restoreVersion(v: LessonVersion) {
     setBusy(true);
-    await fetch("/api/admin/courses", {
+    await adminFetch("/api/admin/courses", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -882,7 +1033,6 @@ function LessonEditForm({
 
       {lessonType === "video" && (
         <Field label="Video source">
-          {/* Tab switcher */}
           <div className="mb-3 flex rounded-md border border-slate-200 bg-slate-50 p-0.5 text-xs font-semibold">
             {(["upload", "link"] as const).map((tab) => (
               <button
@@ -916,10 +1066,7 @@ function LessonEditForm({
               />
             </>
           ) : (
-            <VideoLinkInput
-              value={videoUrl}
-              onChange={setVideoUrl}
-            />
+            <VideoLinkInput value={videoUrl} onChange={setVideoUrl} />
           )}
         </Field>
       )}
@@ -1022,7 +1169,7 @@ function CreateCourseForm({ onCreated, onCancel }: { onCreated: () => void; onCa
 
   async function create() {
     setBusy(true);
-    const res = await fetch("/api/admin/courses", {
+    const res = await adminFetch("/api/admin/courses", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title, slug, description: description || null, publish: false }),
@@ -1058,9 +1205,16 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function StatusDot({ status, published }: { status: string; published?: boolean }) {
-  const color = published ? "bg-emerald-400" : status === "draft" ? "bg-slate-300" : status === "review" ? "bg-amber-400" : "bg-slate-300";
-  return <span className={`inline-block h-1.5 w-1.5 rounded-full ${color} shrink-0`} title={published ? "Published" : status} />;
+function PublishBadge({ published }: { published: boolean }) {
+  return (
+    <span className={cn(
+      "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider",
+      published ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-400"
+    )}>
+      <span className={cn("inline-block h-1.5 w-1.5 rounded-full", published ? "bg-emerald-500" : "bg-slate-300")} />
+      {published ? "Published" : "Draft"}
+    </span>
+  );
 }
 
 function LessonTypeBadge({ type }: { type: string }) {

@@ -183,6 +183,7 @@ export default async function LessonPage({
                 timeLimitSeconds={lesson.quiz.timeLimitSeconds ?? null}
                 shuffleQuestions={lesson.quiz.shuffleQuestions}
                 shuffleChoices={lesson.quiz.shuffleChoices}
+                calculatorSettingsJson={(lesson.quiz as any).calculatorSettingsJson ?? null}
               />
             </div>
           </div>

@@ -5,7 +5,7 @@ import { ingestBuffer, uploadSourceBuffer } from "@/lib/admin/ingestion";
 import { listAdminMaterials, fetchAdminMaterialLibrary } from "@/lib/admin/material-library";
 import { adminDcMutate } from "@/lib/firebase/admin-dc";
 
-export const maxDuration = 120;
+export const maxDuration = 600;
 
 function isFormDataFile(
   value: FormDataEntryValue | null
@@ -32,6 +32,11 @@ function parseTitlesJson(value: FormDataEntryValue | null) {
   } catch {
     return [];
   }
+}
+
+function isMultipartFormData(contentType: string) {
+  const lower = contentType.toLowerCase();
+  return lower.startsWith("multipart/form-data") && lower.includes("boundary=");
 }
 
 async function ingestSourceMaterial({
@@ -193,8 +198,23 @@ export async function POST(request: NextRequest) {
     let parsedTitles: string[] = [];
     let singleTitle = "";
 
-    if (contentType.includes("multipart/form-data")) {
-      const form = await request.formData();
+    if (contentType.toLowerCase().startsWith("multipart/form-data")) {
+      if (!isMultipartFormData(contentType)) {
+        return NextResponse.json(
+          { error: "Malformed multipart upload. Let the browser set the multipart boundary automatically." },
+          { status: 400 }
+        );
+      }
+
+      let form: FormData;
+      try {
+        form = await request.formData();
+      } catch {
+        return NextResponse.json(
+          { error: "Malformed multipart upload. Please retry the upload." },
+          { status: 400 }
+        );
+      }
       const batchFiles = form.getAll("files").filter(isFormDataFile);
       const singleFile = form.get("file");
       files = batchFiles.length

@@ -1019,6 +1019,16 @@ export interface GetUserCourseProgressVariables {
   courseId: UUIDString;
 }
 
+export interface GetUserLessonProgressSummaryData {
+  userLessonProgresses: ({
+    status: string;
+  })[];
+}
+
+export interface GetUserLessonProgressSummaryVariables {
+  userId: string;
+}
+
 export interface GetUserProgressDetailsData {
   quizAttempts: ({
     id: UUIDString;
@@ -1072,6 +1082,8 @@ export interface ListAdminQuizzesData {
     passingScore?: number | null;
     timeLimitSeconds?: number | null;
     shuffleQuestions: boolean;
+    shuffleChoices: boolean;
+    calculatorSettingsJson?: string | null;
     createdAt: DateString;
   } & Quiz_Key)[];
 }
@@ -1244,6 +1256,15 @@ export interface UpdateQuestionVariables {
   sourceRef?: string | null;
 }
 
+export interface UpdateQuizCalculatorSettingsData {
+  quiz_update?: Quiz_Key | null;
+}
+
+export interface UpdateQuizCalculatorSettingsVariables {
+  id: UUIDString;
+  calculatorSettingsJson?: string | null;
+}
+
 export interface UpdateQuizStatusData {
   quiz_update?: Quiz_Key | null;
 }
@@ -1253,6 +1274,17 @@ export interface UpdateQuizStatusVariables {
   status: string;
   updatedById?: string | null;
   publishedAt?: DateString | null;
+}
+
+export interface UpdateSourceMaterialData {
+  sourceMaterial_update?: SourceMaterial_Key | null;
+}
+
+export interface UpdateSourceMaterialVariables {
+  id: UUIDString;
+  extractedText?: string | null;
+  metadataJson?: string | null;
+  status?: string | null;
 }
 
 export interface UpdateUserRoleData {
@@ -1522,6 +1554,18 @@ export const deleteSourceMaterialRef: DeleteSourceMaterialRef;
 export function deleteSourceMaterial(vars: DeleteSourceMaterialVariables): MutationPromise<DeleteSourceMaterialData, DeleteSourceMaterialVariables>;
 export function deleteSourceMaterial(dc: DataConnect, vars: DeleteSourceMaterialVariables): MutationPromise<DeleteSourceMaterialData, DeleteSourceMaterialVariables>;
 
+interface UpdateSourceMaterialRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateSourceMaterialVariables): MutationRef<UpdateSourceMaterialData, UpdateSourceMaterialVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: UpdateSourceMaterialVariables): MutationRef<UpdateSourceMaterialData, UpdateSourceMaterialVariables>;
+  operationName: string;
+}
+export const updateSourceMaterialRef: UpdateSourceMaterialRef;
+
+export function updateSourceMaterial(vars: UpdateSourceMaterialVariables): MutationPromise<UpdateSourceMaterialData, UpdateSourceMaterialVariables>;
+export function updateSourceMaterial(dc: DataConnect, vars: UpdateSourceMaterialVariables): MutationPromise<UpdateSourceMaterialData, UpdateSourceMaterialVariables>;
+
 interface CreateSourceMaterialRef {
   /* Allow users to create refs without passing in DataConnect */
   (vars: CreateSourceMaterialVariables): MutationRef<CreateSourceMaterialData, CreateSourceMaterialVariables>;
@@ -1665,6 +1709,18 @@ export const addQuestionToQuizRef: AddQuestionToQuizRef;
 
 export function addQuestionToQuiz(vars: AddQuestionToQuizVariables): MutationPromise<AddQuestionToQuizData, AddQuestionToQuizVariables>;
 export function addQuestionToQuiz(dc: DataConnect, vars: AddQuestionToQuizVariables): MutationPromise<AddQuestionToQuizData, AddQuestionToQuizVariables>;
+
+interface UpdateQuizCalculatorSettingsRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateQuizCalculatorSettingsVariables): MutationRef<UpdateQuizCalculatorSettingsData, UpdateQuizCalculatorSettingsVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: UpdateQuizCalculatorSettingsVariables): MutationRef<UpdateQuizCalculatorSettingsData, UpdateQuizCalculatorSettingsVariables>;
+  operationName: string;
+}
+export const updateQuizCalculatorSettingsRef: UpdateQuizCalculatorSettingsRef;
+
+export function updateQuizCalculatorSettings(vars: UpdateQuizCalculatorSettingsVariables): MutationPromise<UpdateQuizCalculatorSettingsData, UpdateQuizCalculatorSettingsVariables>;
+export function updateQuizCalculatorSettings(dc: DataConnect, vars: UpdateQuizCalculatorSettingsVariables): MutationPromise<UpdateQuizCalculatorSettingsData, UpdateQuizCalculatorSettingsVariables>;
 
 interface UpdateQuizStatusRef {
   /* Allow users to create refs without passing in DataConnect */
@@ -1989,6 +2045,18 @@ export const getUserCourseProgressFullRef: GetUserCourseProgressFullRef;
 
 export function getUserCourseProgressFull(vars: GetUserCourseProgressFullVariables, options?: ExecuteQueryOptions): QueryPromise<GetUserCourseProgressFullData, GetUserCourseProgressFullVariables>;
 export function getUserCourseProgressFull(dc: DataConnect, vars: GetUserCourseProgressFullVariables, options?: ExecuteQueryOptions): QueryPromise<GetUserCourseProgressFullData, GetUserCourseProgressFullVariables>;
+
+interface GetUserLessonProgressSummaryRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetUserLessonProgressSummaryVariables): QueryRef<GetUserLessonProgressSummaryData, GetUserLessonProgressSummaryVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: GetUserLessonProgressSummaryVariables): QueryRef<GetUserLessonProgressSummaryData, GetUserLessonProgressSummaryVariables>;
+  operationName: string;
+}
+export const getUserLessonProgressSummaryRef: GetUserLessonProgressSummaryRef;
+
+export function getUserLessonProgressSummary(vars: GetUserLessonProgressSummaryVariables, options?: ExecuteQueryOptions): QueryPromise<GetUserLessonProgressSummaryData, GetUserLessonProgressSummaryVariables>;
+export function getUserLessonProgressSummary(dc: DataConnect, vars: GetUserLessonProgressSummaryVariables, options?: ExecuteQueryOptions): QueryPromise<GetUserLessonProgressSummaryData, GetUserLessonProgressSummaryVariables>;
 
 interface GetUserAttemptHistoryRef {
   /* Allow users to create refs without passing in DataConnect */

@@ -1,0 +1,90 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - generic [ref=e7]:
+            - link "IMPACT_26 Property Assessment" [ref=e9] [cursor=pointer]:
+              - /url: /dashboard
+              - paragraph [ref=e10]: IMPACT_26
+              - paragraph [ref=e11]: Property Assessment
+            - generic [ref=e13]: Admin
+          - generic [ref=e14]:
+            - button "Collapse sidebar" [ref=e15]:
+              - img [ref=e16]
+            - button "Enable auto-hide" [ref=e18]:
+              - img [ref=e19]
+        - navigation [ref=e22]:
+          - generic [ref=e23]:
+            - link "Dashboard" [ref=e24] [cursor=pointer]:
+              - /url: /dashboard
+              - img [ref=e26]
+              - generic [ref=e31]: Dashboard
+            - link "Courses" [ref=e34] [cursor=pointer]:
+              - /url: /courses
+              - img [ref=e36]
+              - generic [ref=e39]: Courses
+            - link "Formula Compass" [ref=e42] [cursor=pointer]:
+              - /url: /formulas
+              - img [ref=e44]
+              - generic [ref=e46]: Formula Compass
+            - link "Glossary Current page" [ref=e49] [cursor=pointer]:
+              - /url: /glossary
+              - img [ref=e51]
+              - generic [ref=e54]: Glossary
+              - generic [ref=e56]: Current page
+            - link "My Progress" [ref=e57] [cursor=pointer]:
+              - /url: /profile
+              - img [ref=e59]
+              - generic [ref=e62]: My Progress
+          - generic [ref=e65]:
+            - paragraph [ref=e67]: Admin Tools
+            - link "Admin Home" [ref=e68] [cursor=pointer]:
+              - /url: /admin
+              - img [ref=e70]
+              - generic [ref=e73]: Admin Home
+            - link "Question Bank" [ref=e76] [cursor=pointer]:
+              - /url: /admin/questions
+              - img [ref=e78]
+              - generic [ref=e81]: Question Bank
+            - link "Quizzes" [ref=e84] [cursor=pointer]:
+              - /url: /admin/quizzes
+              - img [ref=e86]
+              - generic [ref=e89]: Quizzes
+            - link "Courses" [ref=e92] [cursor=pointer]:
+              - /url: /admin/courses
+              - img [ref=e94]
+              - generic [ref=e97]: Courses
+            - link "Student Preview" [ref=e100] [cursor=pointer]:
+              - /url: /admin/preview/courses
+              - img [ref=e102]
+              - generic [ref=e105]: Student Preview
+            - link "Formula Compass" [ref=e108] [cursor=pointer]:
+              - /url: /admin/formulas
+              - img [ref=e110]
+              - generic [ref=e112]: Formula Compass
+            - link "Glossary" [ref=e115] [cursor=pointer]:
+              - /url: /admin/glossary
+              - img [ref=e117]
+              - generic [ref=e120]: Glossary
+            - link "Source Materials" [ref=e123] [cursor=pointer]:
+              - /url: /admin/materials
+              - img [ref=e125]
+              - generic [ref=e129]: Source Materials
+            - link "Cohort Stats" [ref=e132] [cursor=pointer]:
+              - /url: /admin/cohorts
+              - img [ref=e134]
+              - generic [ref=e136]: Cohort Stats
+            - link "Users" [ref=e139] [cursor=pointer]:
+              - /url: /admin/users
+              - img [ref=e141]
+              - generic [ref=e146]: Users
+        - button "Sign out" [ref=e151]:
+          - img [ref=e153]
+          - text: Sign out
+    - main [ref=e156]:
+      - generic [ref=e157]:
+        - img [ref=e158]
+        - generic [ref=e167]: Loading glossary…
+  - button "Open Next.js Dev Tools" [ref=e173] [cursor=pointer]:
+    - img [ref=e174]

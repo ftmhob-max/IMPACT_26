@@ -16,6 +16,7 @@ This README will guide you through the process of using the generated JavaScript
   - [*GetUserCourseProgress*](#getusercourseprogress)
   - [*GetLessonProgress*](#getlessonprogress)
   - [*GetUserCourseProgressFull*](#getusercourseprogressfull)
+  - [*GetUserLessonProgressSummary*](#getuserlessonprogresssummary)
   - [*GetUserAttemptHistory*](#getuserattempthistory)
   - [*GetAttemptResults*](#getattemptresults)
   - [*GetFormulaSections*](#getformulasections)
@@ -56,6 +57,7 @@ This README will guide you through the process of using the generated JavaScript
   - [*DeleteUserLessonProgressForLesson*](#deleteuserlessonprogressforlesson)
   - [*DeleteIngestionJobsForMaterial*](#deleteingestionjobsformaterial)
   - [*DeleteSourceMaterial*](#deletesourcematerial)
+  - [*UpdateSourceMaterial*](#updatesourcematerial)
   - [*CreateSourceMaterial*](#createsourcematerial)
   - [*CreateIngestionJob*](#createingestionjob)
   - [*CreateQuestion*](#createquestion)
@@ -68,6 +70,7 @@ This README will guide you through the process of using the generated JavaScript
   - [*DeleteQuestion*](#deletequestion)
   - [*CreateQuiz*](#createquiz)
   - [*AddQuestionToQuiz*](#addquestiontoquiz)
+  - [*UpdateQuizCalculatorSettings*](#updatequizcalculatorsettings)
   - [*UpdateQuizStatus*](#updatequizstatus)
   - [*DeleteQuizQuestionsForQuiz*](#deletequizquestionsforquiz)
   - [*DeleteQuizResponsesForQuiz*](#deletequizresponsesforquiz)
@@ -1113,6 +1116,117 @@ executeQuery(ref).then((response) => {
 });
 ```
 
+## GetUserLessonProgressSummary
+You can execute the `GetUserLessonProgressSummary` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+getUserLessonProgressSummary(vars: GetUserLessonProgressSummaryVariables, options?: ExecuteQueryOptions): QueryPromise<GetUserLessonProgressSummaryData, GetUserLessonProgressSummaryVariables>;
+
+interface GetUserLessonProgressSummaryRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetUserLessonProgressSummaryVariables): QueryRef<GetUserLessonProgressSummaryData, GetUserLessonProgressSummaryVariables>;
+}
+export const getUserLessonProgressSummaryRef: GetUserLessonProgressSummaryRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `QueryRef` function.
+```typescript
+getUserLessonProgressSummary(dc: DataConnect, vars: GetUserLessonProgressSummaryVariables, options?: ExecuteQueryOptions): QueryPromise<GetUserLessonProgressSummaryData, GetUserLessonProgressSummaryVariables>;
+
+interface GetUserLessonProgressSummaryRef {
+  ...
+  (dc: DataConnect, vars: GetUserLessonProgressSummaryVariables): QueryRef<GetUserLessonProgressSummaryData, GetUserLessonProgressSummaryVariables>;
+}
+export const getUserLessonProgressSummaryRef: GetUserLessonProgressSummaryRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the getUserLessonProgressSummaryRef:
+```typescript
+const name = getUserLessonProgressSummaryRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `GetUserLessonProgressSummary` query requires an argument of type `GetUserLessonProgressSummaryVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface GetUserLessonProgressSummaryVariables {
+  userId: string;
+}
+```
+### Return Type
+Recall that executing the `GetUserLessonProgressSummary` query returns a `QueryPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `GetUserLessonProgressSummaryData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface GetUserLessonProgressSummaryData {
+  userLessonProgresses: ({
+    status: string;
+  })[];
+}
+```
+### Using `GetUserLessonProgressSummary`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, getUserLessonProgressSummary, GetUserLessonProgressSummaryVariables } from '@impact26/dataconnect-sdk';
+
+// The `GetUserLessonProgressSummary` query requires an argument of type `GetUserLessonProgressSummaryVariables`:
+const getUserLessonProgressSummaryVars: GetUserLessonProgressSummaryVariables = {
+  userId: ..., 
+};
+
+// Call the `getUserLessonProgressSummary()` function to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await getUserLessonProgressSummary(getUserLessonProgressSummaryVars);
+// Variables can be defined inline as well.
+const { data } = await getUserLessonProgressSummary({ userId: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await getUserLessonProgressSummary(dataConnect, getUserLessonProgressSummaryVars);
+
+console.log(data.userLessonProgresses);
+
+// Or, you can use the `Promise` API.
+getUserLessonProgressSummary(getUserLessonProgressSummaryVars).then((response) => {
+  const data = response.data;
+  console.log(data.userLessonProgresses);
+});
+```
+
+### Using `GetUserLessonProgressSummary`'s `QueryRef` function
+
+```typescript
+import { getDataConnect, executeQuery } from 'firebase/data-connect';
+import { connectorConfig, getUserLessonProgressSummaryRef, GetUserLessonProgressSummaryVariables } from '@impact26/dataconnect-sdk';
+
+// The `GetUserLessonProgressSummary` query requires an argument of type `GetUserLessonProgressSummaryVariables`:
+const getUserLessonProgressSummaryVars: GetUserLessonProgressSummaryVariables = {
+  userId: ..., 
+};
+
+// Call the `getUserLessonProgressSummaryRef()` function to get a reference to the query.
+const ref = getUserLessonProgressSummaryRef(getUserLessonProgressSummaryVars);
+// Variables can be defined inline as well.
+const ref = getUserLessonProgressSummaryRef({ userId: ..., });
+
+// You can also pass in a `DataConnect` instance to the `QueryRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = getUserLessonProgressSummaryRef(dataConnect, getUserLessonProgressSummaryVars);
+
+// Call `executeQuery()` on the reference to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeQuery(ref);
+
+console.log(data.userLessonProgresses);
+
+// Or, you can use the `Promise` API.
+executeQuery(ref).then((response) => {
+  const data = response.data;
+  console.log(data.userLessonProgresses);
+});
+```
+
 ## GetUserAttemptHistory
 You can execute the `GetUserAttemptHistory` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
 ```typescript
@@ -1648,6 +1762,8 @@ export interface ListAdminQuizzesData {
     passingScore?: number | null;
     timeLimitSeconds?: number | null;
     shuffleQuestions: boolean;
+    shuffleChoices: boolean;
+    calculatorSettingsJson?: string | null;
     createdAt: DateString;
   } & Quiz_Key)[];
 }
@@ -5723,6 +5839,124 @@ executeMutation(ref).then((response) => {
 });
 ```
 
+## UpdateSourceMaterial
+You can execute the `UpdateSourceMaterial` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+updateSourceMaterial(vars: UpdateSourceMaterialVariables): MutationPromise<UpdateSourceMaterialData, UpdateSourceMaterialVariables>;
+
+interface UpdateSourceMaterialRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateSourceMaterialVariables): MutationRef<UpdateSourceMaterialData, UpdateSourceMaterialVariables>;
+}
+export const updateSourceMaterialRef: UpdateSourceMaterialRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+updateSourceMaterial(dc: DataConnect, vars: UpdateSourceMaterialVariables): MutationPromise<UpdateSourceMaterialData, UpdateSourceMaterialVariables>;
+
+interface UpdateSourceMaterialRef {
+  ...
+  (dc: DataConnect, vars: UpdateSourceMaterialVariables): MutationRef<UpdateSourceMaterialData, UpdateSourceMaterialVariables>;
+}
+export const updateSourceMaterialRef: UpdateSourceMaterialRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the updateSourceMaterialRef:
+```typescript
+const name = updateSourceMaterialRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `UpdateSourceMaterial` mutation requires an argument of type `UpdateSourceMaterialVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface UpdateSourceMaterialVariables {
+  id: UUIDString;
+  extractedText?: string | null;
+  metadataJson?: string | null;
+  status?: string | null;
+}
+```
+### Return Type
+Recall that executing the `UpdateSourceMaterial` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `UpdateSourceMaterialData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface UpdateSourceMaterialData {
+  sourceMaterial_update?: SourceMaterial_Key | null;
+}
+```
+### Using `UpdateSourceMaterial`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, updateSourceMaterial, UpdateSourceMaterialVariables } from '@impact26/dataconnect-sdk';
+
+// The `UpdateSourceMaterial` mutation requires an argument of type `UpdateSourceMaterialVariables`:
+const updateSourceMaterialVars: UpdateSourceMaterialVariables = {
+  id: ..., 
+  extractedText: ..., // optional
+  metadataJson: ..., // optional
+  status: ..., // optional
+};
+
+// Call the `updateSourceMaterial()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await updateSourceMaterial(updateSourceMaterialVars);
+// Variables can be defined inline as well.
+const { data } = await updateSourceMaterial({ id: ..., extractedText: ..., metadataJson: ..., status: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await updateSourceMaterial(dataConnect, updateSourceMaterialVars);
+
+console.log(data.sourceMaterial_update);
+
+// Or, you can use the `Promise` API.
+updateSourceMaterial(updateSourceMaterialVars).then((response) => {
+  const data = response.data;
+  console.log(data.sourceMaterial_update);
+});
+```
+
+### Using `UpdateSourceMaterial`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, updateSourceMaterialRef, UpdateSourceMaterialVariables } from '@impact26/dataconnect-sdk';
+
+// The `UpdateSourceMaterial` mutation requires an argument of type `UpdateSourceMaterialVariables`:
+const updateSourceMaterialVars: UpdateSourceMaterialVariables = {
+  id: ..., 
+  extractedText: ..., // optional
+  metadataJson: ..., // optional
+  status: ..., // optional
+};
+
+// Call the `updateSourceMaterialRef()` function to get a reference to the mutation.
+const ref = updateSourceMaterialRef(updateSourceMaterialVars);
+// Variables can be defined inline as well.
+const ref = updateSourceMaterialRef({ id: ..., extractedText: ..., metadataJson: ..., status: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = updateSourceMaterialRef(dataConnect, updateSourceMaterialVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.sourceMaterial_update);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.sourceMaterial_update);
+});
+```
+
 ## CreateSourceMaterial
 You can execute the `CreateSourceMaterial` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
 ```typescript
@@ -7190,6 +7424,118 @@ console.log(data.quizQuestion_insert);
 executeMutation(ref).then((response) => {
   const data = response.data;
   console.log(data.quizQuestion_insert);
+});
+```
+
+## UpdateQuizCalculatorSettings
+You can execute the `UpdateQuizCalculatorSettings` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+updateQuizCalculatorSettings(vars: UpdateQuizCalculatorSettingsVariables): MutationPromise<UpdateQuizCalculatorSettingsData, UpdateQuizCalculatorSettingsVariables>;
+
+interface UpdateQuizCalculatorSettingsRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateQuizCalculatorSettingsVariables): MutationRef<UpdateQuizCalculatorSettingsData, UpdateQuizCalculatorSettingsVariables>;
+}
+export const updateQuizCalculatorSettingsRef: UpdateQuizCalculatorSettingsRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+updateQuizCalculatorSettings(dc: DataConnect, vars: UpdateQuizCalculatorSettingsVariables): MutationPromise<UpdateQuizCalculatorSettingsData, UpdateQuizCalculatorSettingsVariables>;
+
+interface UpdateQuizCalculatorSettingsRef {
+  ...
+  (dc: DataConnect, vars: UpdateQuizCalculatorSettingsVariables): MutationRef<UpdateQuizCalculatorSettingsData, UpdateQuizCalculatorSettingsVariables>;
+}
+export const updateQuizCalculatorSettingsRef: UpdateQuizCalculatorSettingsRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the updateQuizCalculatorSettingsRef:
+```typescript
+const name = updateQuizCalculatorSettingsRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `UpdateQuizCalculatorSettings` mutation requires an argument of type `UpdateQuizCalculatorSettingsVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface UpdateQuizCalculatorSettingsVariables {
+  id: UUIDString;
+  calculatorSettingsJson?: string | null;
+}
+```
+### Return Type
+Recall that executing the `UpdateQuizCalculatorSettings` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `UpdateQuizCalculatorSettingsData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface UpdateQuizCalculatorSettingsData {
+  quiz_update?: Quiz_Key | null;
+}
+```
+### Using `UpdateQuizCalculatorSettings`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, updateQuizCalculatorSettings, UpdateQuizCalculatorSettingsVariables } from '@impact26/dataconnect-sdk';
+
+// The `UpdateQuizCalculatorSettings` mutation requires an argument of type `UpdateQuizCalculatorSettingsVariables`:
+const updateQuizCalculatorSettingsVars: UpdateQuizCalculatorSettingsVariables = {
+  id: ..., 
+  calculatorSettingsJson: ..., // optional
+};
+
+// Call the `updateQuizCalculatorSettings()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await updateQuizCalculatorSettings(updateQuizCalculatorSettingsVars);
+// Variables can be defined inline as well.
+const { data } = await updateQuizCalculatorSettings({ id: ..., calculatorSettingsJson: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await updateQuizCalculatorSettings(dataConnect, updateQuizCalculatorSettingsVars);
+
+console.log(data.quiz_update);
+
+// Or, you can use the `Promise` API.
+updateQuizCalculatorSettings(updateQuizCalculatorSettingsVars).then((response) => {
+  const data = response.data;
+  console.log(data.quiz_update);
+});
+```
+
+### Using `UpdateQuizCalculatorSettings`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, updateQuizCalculatorSettingsRef, UpdateQuizCalculatorSettingsVariables } from '@impact26/dataconnect-sdk';
+
+// The `UpdateQuizCalculatorSettings` mutation requires an argument of type `UpdateQuizCalculatorSettingsVariables`:
+const updateQuizCalculatorSettingsVars: UpdateQuizCalculatorSettingsVariables = {
+  id: ..., 
+  calculatorSettingsJson: ..., // optional
+};
+
+// Call the `updateQuizCalculatorSettingsRef()` function to get a reference to the mutation.
+const ref = updateQuizCalculatorSettingsRef(updateQuizCalculatorSettingsVars);
+// Variables can be defined inline as well.
+const ref = updateQuizCalculatorSettingsRef({ id: ..., calculatorSettingsJson: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = updateQuizCalculatorSettingsRef(dataConnect, updateQuizCalculatorSettingsVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.quiz_update);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.quiz_update);
 });
 ```
 

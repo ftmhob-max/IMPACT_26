@@ -13,17 +13,42 @@
  *   args     = expr ( ',' expr )*
  */
 
+const DEG = Math.PI / 180;
+
 const ALLOWED_FNS: Record<string, (...args: number[]) => number> = {
+  // Arithmetic
   sqrt: Math.sqrt,
   abs: Math.abs,
-  log: Math.log10,
-  ln: Math.log,
   round: Math.round,
   floor: Math.floor,
   ceil: Math.ceil,
   pow: Math.pow,
   min: Math.min,
   max: Math.max,
+  exp: Math.exp,
+
+  // Logarithms
+  log: Math.log10,
+  log10: Math.log10,
+  log2: Math.log2,
+  ln: Math.log,
+
+  // Trig — radians
+  sin: Math.sin,
+  cos: Math.cos,
+  tan: Math.tan,
+  asin: Math.asin,
+  acos: Math.acos,
+  atan: Math.atan,
+  atan2: Math.atan2,
+
+  // Trig — degrees (suffix "d")
+  sind:  (x) => Math.sin(x * DEG),
+  cosd:  (x) => Math.cos(x * DEG),
+  tand:  (x) => Math.tan(x * DEG),
+  asind: (x) => Math.asin(x) / DEG,
+  acosd: (x) => Math.acos(x) / DEG,
+  atand: (x) => Math.atan(x) / DEG,
 };
 
 class ParseError extends Error {}

@@ -9,6 +9,7 @@ interface QuizDashboardBase {
   timeLimitSeconds?: number | null;
   shuffleQuestions: boolean;
   shuffleChoices?: boolean;
+  calculatorSettingsJson?: string | null;
   createdAt: string;
 }
 

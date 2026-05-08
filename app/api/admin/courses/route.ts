@@ -72,6 +72,14 @@ const reorderSchema = z.object({
   type: z.enum(["module", "lesson"]),
 });
 
+const courseUpdateSchema = z.object({
+  action: z.literal("update-course"),
+  courseId: uuidSchema,
+  title: z.string().trim().min(2).optional(),
+  description: z.string().trim().optional().nullable(),
+  thumbnailUrl: z.string().url().optional().nullable(),
+});
+
 function withDefinedFields<T extends Record<string, unknown>>(fields: T) {
   return Object.fromEntries(Object.entries(fields).filter(([, value]) => value !== undefined));
 }
@@ -136,6 +144,25 @@ export async function PUT(request: NextRequest) {
   const body = await request.json();
 
   // Action-based dispatch for curriculum builder operations
+  if (body.action === "update-course") {
+    const parsed = courseUpdateSchema.safeParse(body);
+    if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    const { courseId, ...rest } = parsed.data;
+    try {
+      await adminDcMutate("UpdateCourse", withDefinedFields({
+        id: courseId,
+        title: rest.title,
+        description: rest.description,
+        thumbnailUrl: rest.thumbnailUrl,
+        updatedById: auth.session.uid,
+      }));
+      return NextResponse.json({ ok: true });
+    } catch (err) {
+      console.error("[admin/courses:update-course]", err);
+      return NextResponse.json({ error: "Unable to update course" }, { status: 500 });
+    }
+  }
+
   if (body.action === "update-module") {
     const parsed = moduleUpdateSchema.safeParse(body);
     if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });

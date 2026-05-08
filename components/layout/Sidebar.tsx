@@ -2,13 +2,23 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
 import { auth } from "@/lib/firebase/client";
 import { cn } from "@/lib/utils";
 import * as Icons from "@/components/ui/Icons";
 
 const DESKTOP_SIDEBAR_MODE_KEY = "impact26:desktop-sidebar-mode";
+const STUDY_RHYTHM_OPEN_KEY = "impact26:study-rhythm-open";
+
+type StudyRhythmData = {
+  lessonsCompleted: number;
+  quizAttempts: number;
+  bestScore: number | null;
+  hasPassed: boolean;
+  formulaFavorites: number;
+  overallPct: number;
+};
 
 type NavItem = {
   href: string;
@@ -39,11 +49,7 @@ const adminItems: NavItem[] = [
   { href: "/admin/users", label: "Users", icon: Icons.Users },
 ];
 
-const learnerMilestones = [
-  { label: "Learn", value: "Courses", state: "complete" as const },
-  { label: "Apply", value: "Formulas", state: "active" as const },
-  { label: "Review", value: "Rationale", state: "upcoming" as const },
-];
+
 
 interface SidebarProps {
   isAdmin?: boolean;
@@ -77,7 +83,7 @@ export function Sidebar({ isAdmin }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "isolate border-b border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] text-[var(--sidebar-text)] shadow-[var(--sidebar-shadow)] lg:sticky lg:top-0 lg:z-40 lg:shrink-0 lg:border-b-0",
+        "isolate border-b border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] text-[var(--sidebar-text)] shadow-[var(--sidebar-shadow)] lg:sticky lg:top-0 lg:z-40 lg:h-screen lg:shrink-0 lg:self-start lg:border-b-0",
         desktopMode === "expanded" && "lg:w-72",
         desktopMode === "collapsed" && "lg:w-[5.5rem]",
         desktopMode === "auto" && "lg:w-[4.5rem]"
@@ -99,42 +105,27 @@ export function Sidebar({ isAdmin }: SidebarProps) {
         }
       }}
     >
-      <div className="border-b border-[var(--sidebar-border)] bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0))] px-4 py-4 sm:px-5 lg:hidden">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <Link href="/dashboard" className="block">
-              <p className="text-lg font-extrabold tracking-[-0.03em] text-white">IMPACT_26</p>
-              <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--sidebar-muted)]">
-                Property Assessment
-              </p>
-            </Link>
-          </div>
+      {/* Mobile top header */}
+      <div className="border-b border-[var(--sidebar-border)] bg-[linear-gradient(160deg,rgba(255,255,255,0.08),rgba(255,255,255,0))] px-4 py-4 sm:px-5 lg:hidden">
+        <div className="flex items-center justify-between gap-4">
+          <Link href="/dashboard" className="block min-w-0">
+            <p className="text-base font-extrabold tracking-[-0.03em] text-white">IMPACT_26</p>
+            <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--sidebar-muted)]">
+              Property Assessment
+            </p>
+          </Link>
 
-          <div className="flex items-center gap-2">
-            <div className="inline-flex rounded-full border border-[var(--sidebar-border)] bg-white/10 px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#d9eaf9]">
-              {isAdmin ? "Admin" : "Learner"}
-            </div>
-            {user && (
-              <Link
-                href="/profile"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/[0.12] text-[11px] font-bold text-white ring-1 ring-white/10 transition-transform hover:scale-105 active:scale-95"
-              >
-                {user.displayName
-                  ? user.displayName
-                      .split(" ")
-                      .map((name) => name[0])
-                      .join("")
-                      .toUpperCase()
-                  : user.email?.[0].toUpperCase()}
-              </Link>
-            )}
+          <div className="flex items-center gap-2 shrink-0">
+            <RolePill isAdmin={isAdmin} />
+            {user && <UserAvatar user={user} />}
           </div>
         </div>
       </div>
 
+      {/* Desktop sidebar */}
       <div
         className={cn(
-          "hidden lg:block lg:relative lg:h-screen",
+          "hidden lg:block lg:relative lg:h-screen lg:min-h-0",
           desktopMode === "expanded" && "lg:w-72",
           desktopMode === "collapsed" && "lg:w-[5.5rem] lg:overflow-hidden",
           desktopMode === "auto" && "lg:w-[4.5rem] lg:overflow-visible"
@@ -142,15 +133,13 @@ export function Sidebar({ isAdmin }: SidebarProps) {
       >
         {isAutoMode ? (
           <>
-            <div className="flex h-full w-[4.5rem] flex-col border-r border-[var(--sidebar-border)] bg-[var(--sidebar-bg)]">
-              <div className="border-b border-[var(--sidebar-border)] bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0))] px-3 py-4">
+            <div className="flex h-full min-h-0 w-[4.5rem] flex-col border-r border-[var(--sidebar-border)] bg-[var(--sidebar-bg)]">
+              <div className="border-b border-[var(--sidebar-border)] bg-[linear-gradient(160deg,rgba(255,255,255,0.08),rgba(255,255,255,0))] px-3 py-4">
                 <div className="flex flex-col items-center gap-3">
                   <Link href="/dashboard" className="flex flex-col items-center text-center" title="IMPACT_26">
-                    <p className="text-lg font-extrabold tracking-[-0.03em] text-white">IM</p>
+                    <p className="text-base font-extrabold tracking-[-0.03em] text-white">IM</p>
                   </Link>
-                  <div className="inline-flex rounded-full border border-[var(--sidebar-border)] bg-white/10 px-2 py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#d9eaf9]">
-                    {isAdmin ? "A" : "L"}
-                  </div>
+                  <RolePill isAdmin={isAdmin} compact />
                   <SidebarModeButton
                     label="Disable auto-hide"
                     active
@@ -159,12 +148,12 @@ export function Sidebar({ isAdmin }: SidebarProps) {
                       setDesktopMode("expanded");
                     }}
                   >
-                    <Icons.Eye size={15} />
+                    <Icons.Eye size={14} />
                   </SidebarModeButton>
                 </div>
               </div>
 
-              <nav className="flex flex-1 flex-col items-center gap-2 overflow-y-auto px-2.5 py-5">
+              <nav className="flex min-h-0 flex-1 flex-col items-center gap-2 overflow-y-auto px-2.5 py-5">
                 {navItems.map((item) => (
                   <NavLink
                     key={item.href}
@@ -195,7 +184,7 @@ export function Sidebar({ isAdmin }: SidebarProps) {
 
             <div
               className={cn(
-                "absolute left-0 top-0 z-50 flex h-full w-72 flex-col border-r border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] shadow-[var(--sidebar-shadow)] transition-transform duration-300",
+                "absolute left-0 top-0 z-50 flex h-full min-h-0 w-72 flex-col border-r border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] shadow-[var(--sidebar-shadow)] transition-transform duration-300",
                 autoReveal ? "translate-x-0" : "-translate-x-full"
               )}
             >
@@ -215,7 +204,7 @@ export function Sidebar({ isAdmin }: SidebarProps) {
         ) : (
           <div
             className={cn(
-              "flex h-full flex-col border-r border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] transition-[width] duration-300",
+              "flex h-full min-h-0 flex-col border-r border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] transition-[width] duration-300",
               isDesktopExpanded ? "w-72" : "w-[5.5rem]"
             )}
           >
@@ -230,6 +219,7 @@ export function Sidebar({ isAdmin }: SidebarProps) {
         )}
       </div>
 
+      {/* Mobile bottom nav scroll */}
       <nav className="flex gap-2 overflow-x-auto px-3 py-3 sm:px-4 lg:hidden">
         <div className="flex gap-2">
           {navItems.map((item) => (
@@ -274,68 +264,46 @@ function SidebarPanelContent({
 }) {
   return (
     <>
+      {/* Header */}
       <div
         className={cn(
-          "border-b border-[var(--sidebar-border)] bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0))]",
-          compact ? "px-3 py-4" : "px-6 py-6"
+          "border-b border-[var(--sidebar-border)] bg-[linear-gradient(160deg,rgba(255,255,255,0.08),rgba(255,255,255,0))]",
+          compact ? "px-3 py-4" : "px-5 py-5"
         )}
       >
-        <div className={cn("flex gap-3", compact ? "flex-col items-center" : "items-start justify-between")}>
-          <div className={cn("min-w-0", compact && "w-full")}>
+        {/* Brand + user row */}
+        <div className={cn("flex", compact ? "flex-col items-center gap-3" : "items-start justify-between gap-3")}>
+          <div className={cn("min-w-0", compact && "w-full flex flex-col items-center")}>
             <Link
               href="/dashboard"
               className={cn("block", compact && "flex flex-col items-center text-center")}
               title="IMPACT_26"
             >
-              <p className="text-lg font-extrabold tracking-[-0.03em] text-white">IMPACT_26</p>
+              <p className="text-base font-extrabold tracking-[-0.03em] text-white">IMPACT_26</p>
               {!compact && (
-                <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--sidebar-muted)]">
+                <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--sidebar-muted)]">
                   Property Assessment
                 </p>
               )}
             </Link>
-            {!isAdmin && !compact && (
-              <div className="mt-4">
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#8ebbe9]">Learning Path</p>
-                <p className="mt-1 text-sm font-bold leading-6 text-white/82">Build confidence in each assessment step.</p>
-              </div>
-            )}
           </div>
 
-          <div className={cn("flex items-center gap-2", compact && "w-full flex-col")}>
-            <div
-              className={cn(
-                "inline-flex rounded-full border border-[var(--sidebar-border)] bg-white/10 text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#d9eaf9]",
-                compact ? "px-2 py-1" : "px-2.5 py-1"
-              )}
-            >
-              {compact ? (isAdmin ? "A" : "L") : isAdmin ? "Admin" : "Learner"}
-            </div>
-            {user && (
-              <Link
-                href="/profile"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/[0.12] text-[11px] font-bold text-white ring-1 ring-white/10 transition-transform hover:scale-105 active:scale-95"
-                title="Profile"
-              >
-                {user.displayName
-                  ? user.displayName
-                      .split(" ")
-                      .map((name) => name[0])
-                      .join("")
-                      .toUpperCase()
-                  : user.email?.[0].toUpperCase()}
-              </Link>
-            )}
+          <div className={cn("flex items-center gap-2 shrink-0", compact && "flex-col")}>
+            <RolePill isAdmin={isAdmin} compact={compact} />
+            {user && <UserAvatar user={user} />}
           </div>
         </div>
 
-        <div className={cn("mt-4 flex items-center gap-2", compact && "justify-center")}>
+
+
+        {/* Mode controls */}
+        <div className={cn("flex items-center gap-2", compact ? "mt-4 justify-center" : "mt-3")}>
           <SidebarModeButton
             label={compact ? "Expand sidebar" : "Collapse sidebar"}
             active={compact}
             onClick={() => onSetDesktopMode(compact ? "expanded" : "collapsed")}
           >
-            {compact ? <Icons.ChevronRight size={15} /> : <Icons.ChevronLeft size={15} />}
+            {compact ? <Icons.ChevronRight size={14} /> : <Icons.ChevronLeft size={14} />}
           </SidebarModeButton>
           <SidebarModeButton
             label={onDisableAutoHide ? "Disable auto-hide" : "Enable auto-hide"}
@@ -348,18 +316,19 @@ function SidebarPanelContent({
               onSetDesktopMode("auto");
             }}
           >
-            {onDisableAutoHide ? <Icons.Eye size={15} /> : <Icons.EyeOff size={15} />}
+            {onDisableAutoHide ? <Icons.Eye size={14} /> : <Icons.EyeOff size={14} />}
           </SidebarModeButton>
         </div>
       </div>
 
+      {/* Nav */}
       <nav
         className={cn(
-          "flex flex-1 overflow-y-auto py-5",
-          compact ? "flex-col items-center gap-2 px-2.5" : "flex-col gap-1.5 px-4"
+          "flex min-h-0 flex-1 overflow-y-auto py-4",
+          compact ? "flex-col items-center gap-1.5 px-2.5" : "flex-col gap-1 px-3"
         )}
       >
-        <div className={cn("flex w-full flex-col", compact ? "items-center gap-2" : "gap-1.5")}>
+        <div className={cn("flex w-full flex-col", compact ? "items-center gap-1.5" : "gap-1")}>
           {navItems.map((item) => (
             <NavLink
               key={item.href}
@@ -371,10 +340,10 @@ function SidebarPanelContent({
         </div>
 
         {isAdmin && (
-          <div className={cn("mt-5 flex w-full flex-col", compact ? "items-center gap-2" : "gap-1.5")}>
+          <div className={cn("mt-4 flex w-full flex-col", compact ? "items-center gap-1.5" : "gap-1")}>
             {!compact && (
-              <div className="px-3 pb-2 pt-2">
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#8ebbe9]">Admin tools</p>
+              <div className="px-3 pb-2 pt-3">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8ebbe9]">Admin Tools</p>
               </div>
             )}
             {adminItems.map((item) => (
@@ -389,13 +358,50 @@ function SidebarPanelContent({
         )}
       </nav>
 
-      <div className={cn("border-t border-[var(--sidebar-border)]", compact ? "px-3 py-4" : "px-4 py-4")}>
+      {/* Footer */}
+      <div className={cn("border-t border-[var(--sidebar-border)]", compact ? "px-3 py-4" : "px-3 py-4")}>
         {!isAdmin && !compact && <LearnerProgressCard />}
-        <div className={cn(!isAdmin && !compact && "mt-4")}>
+        <div className={cn(!isAdmin && !compact && "mt-3")}>
           <SignOutButton compact={compact} />
         </div>
       </div>
     </>
+  );
+}
+
+/** Small role pill — "Learner" / "Admin" (or initial when compact) */
+function RolePill({ isAdmin, compact }: { isAdmin?: boolean; compact?: boolean }) {
+  return (
+    <div
+      className={cn(
+        "inline-flex shrink-0 items-center rounded-full border border-[var(--sidebar-border)] bg-white/[0.10] font-extrabold uppercase tracking-[0.12em] text-[#d9eaf9]",
+        compact ? "px-2 py-0.5 text-[10px]" : "px-2.5 py-1 text-[10px]"
+      )}
+    >
+      {compact ? (isAdmin ? "A" : "L") : isAdmin ? "Admin" : "Learner"}
+    </div>
+  );
+}
+
+/** Circular avatar linking to /profile */
+function UserAvatar({ user }: { user: FirebaseUser }) {
+  const initials = user.displayName
+    ? user.displayName
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : user.email?.[0].toUpperCase() ?? "?";
+
+  return (
+    <Link
+      href="/profile"
+      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/25 bg-white/[0.14] text-[11px] font-bold text-white ring-1 ring-white/10 transition-all hover:scale-105 hover:bg-white/20 active:scale-95"
+      title="Profile"
+    >
+      {initials}
+    </Link>
   );
 }
 
@@ -414,72 +420,171 @@ function NavLink({
       href={href}
       title={compact ? label : undefined}
       className={cn(
-        "group flex min-h-11 shrink-0 items-center gap-3 rounded-2xl border px-3 py-2.5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--sidebar-bg)] lg:min-h-11",
-        compact && "justify-center px-0 lg:h-11 lg:min-h-11 lg:w-11",
+        "group relative flex min-h-10 shrink-0 items-center gap-3 rounded-xl border px-3 py-2 text-sm font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--sidebar-bg)]",
+        compact && "justify-center px-0 lg:h-10 lg:min-h-10 lg:w-10",
         active
-          ? "border-white/10 bg-[var(--sidebar-active)] text-white shadow-lg shadow-[#031d35]/25"
-          : "border-transparent bg-transparent text-[var(--sidebar-muted)] hover:border-white/[0.06] hover:bg-[var(--sidebar-hover)] hover:text-white"
+          ? "border-white/[0.12] bg-[var(--sidebar-active)] text-white shadow-md shadow-[#031d35]/30"
+          : "border-transparent text-[var(--sidebar-muted)] hover:border-white/[0.08] hover:bg-[var(--sidebar-hover)] hover:text-white"
       )}
     >
       <span
         className={cn(
-          "flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-colors",
-          active ? "bg-[var(--sidebar-active-soft)] text-white" : "bg-white/[0.06] text-[#d9eaf9] group-hover:bg-white/10"
+          "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors",
+          active
+            ? "bg-white/[0.18] text-white"
+            : "bg-white/[0.05] text-[#c8e0f4] group-hover:bg-white/[0.10] group-hover:text-white"
         )}
       >
-        <Icon size={16} />
+        <Icon size={15} />
       </span>
-      {!compact && <span className="min-w-0 flex-1 whitespace-nowrap text-sm font-bold">{label}</span>}
+      {!compact && <span className="min-w-0 flex-1 whitespace-nowrap">{label}</span>}
       {!compact && (
         <span
           aria-hidden="true"
           className={cn(
-            "hidden h-2 w-2 shrink-0 rounded-full transition-all lg:block",
-            active ? "bg-[var(--sidebar-accent)]" : "bg-transparent group-hover:bg-white/[0.18]"
+            "hidden h-1.5 w-1.5 shrink-0 rounded-full transition-all lg:block",
+            active ? "bg-[var(--sidebar-accent)]" : "bg-transparent group-hover:bg-white/20"
           )}
         />
       )}
-      <span className="sr-only">
-        {active ? "Current page" : ""}
-      </span>
+      <span className="sr-only">{active ? "Current page" : ""}</span>
     </Link>
   );
 }
 
 function LearnerProgressCard() {
+  const [open, setOpen] = useState(() => {
+    if (typeof window === "undefined") return true;
+    const stored = window.localStorage.getItem(STUDY_RHYTHM_OPEN_KEY);
+    return stored === null ? true : stored === "true";
+  });
+  const [data, setData] = useState<StudyRhythmData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const fetchedRef = useRef(false);
+
+  useEffect(() => {
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
+
+    // Get a fresh Firebase ID token to call the API
+    import("@/lib/firebase/client").then(({ auth: clientAuth }) => {
+      const user = clientAuth.currentUser;
+      if (!user) { setLoading(false); return; }
+      user.getIdToken().then((token) =>
+        fetch("/api/study-rhythm", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+      ).then((res) => res.ok ? res.json() : null)
+        .then((json) => { if (json) setData(json); })
+        .catch(() => {})
+        .finally(() => setLoading(false));
+    });
+  }, []);
+
+  function toggle() {
+    setOpen((prev) => {
+      const next = !prev;
+      window.localStorage.setItem(STUDY_RHYTHM_OPEN_KEY, String(next));
+      return next;
+    });
+  }
+
+  const pct = data?.overallPct ?? 0;
+
+  // Derive milestone states from real data
+  const learnState: "complete" | "active" | "upcoming" =
+    (data?.lessonsCompleted ?? 0) > 0 ? "complete" : "active";
+  const applyState: "complete" | "active" | "upcoming" =
+    learnState === "complete"
+      ? (data?.formulaFavorites ?? 0) > 0 ? "complete" : "active"
+      : "upcoming";
+  const reviewState: "complete" | "active" | "upcoming" =
+    applyState === "complete"
+      ? (data?.hasPassed ? "complete" : "active")
+      : "upcoming";
+
+  const milestones = [
+    { label: "Learn", value: `${data?.lessonsCompleted ?? 0} lesson${(data?.lessonsCompleted ?? 0) !== 1 ? "s" : ""} done`, state: learnState, href: "/courses" },
+    { label: "Apply", value: `${data?.formulaFavorites ?? 0} formula${(data?.formulaFavorites ?? 0) !== 1 ? "s" : ""} saved`, state: applyState, href: "/formulas" },
+    { label: "Review", value: data?.bestScore != null ? `Best ${data.bestScore.toFixed(0)}%` : "No attempts yet", state: reviewState, href: "/courses" },
+  ];
+
   return (
-    <div className="rounded-3xl border border-[var(--sidebar-border)] bg-[var(--sidebar-card)] p-4">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#8ebbe9]">Study rhythm</p>
-          <p className="mt-1 text-sm font-bold text-white">Assessment reasoning loop</p>
+    <div className="rounded-2xl border border-[var(--sidebar-border)] bg-[var(--sidebar-card)] overflow-hidden">
+      {/* Header — always visible, acts as collapse toggle */}
+      <button
+        type="button"
+        onClick={toggle}
+        aria-expanded={open}
+        className="flex w-full items-center gap-2 px-4 py-3 text-left transition-colors hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+      >
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8ebbe9]">Study Rhythm</p>
         </div>
-        <div className="rounded-full bg-white/[0.12] px-2.5 py-1 text-xs font-extrabold text-white">62%</div>
-      </div>
-      <div className="mt-4 h-2 rounded-full bg-white/10">
-        <div className="h-full w-[62%] rounded-full bg-[var(--sidebar-accent)]" />
-      </div>
-      <div className="mt-4 space-y-3">
-        {learnerMilestones.map((milestone) => (
-          <div key={milestone.label} className="flex items-center gap-3">
-            <span
-              className={cn(
-                "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border",
-                milestone.state === "complete" && "border-[#67c58e] bg-[#2f7a4d] text-white",
-                milestone.state === "active" && "border-white/[0.24] bg-white/[0.12] text-white",
-                milestone.state === "upcoming" && "border-white/[0.16] bg-transparent text-[#d9eaf9]"
-              )}
-            >
-              {milestone.state === "complete" ? <Icons.Check size={12} /> : null}
-            </span>
-            <div className="min-w-0">
-              <p className="text-sm font-bold text-white">{milestone.label}</p>
-              <p className="text-[11px] font-semibold text-[var(--sidebar-muted)]">{milestone.value}</p>
-            </div>
+        {loading ? (
+          <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/20 border-t-white/60" />
+        ) : (
+          <span className="shrink-0 rounded-full bg-white/[0.12] px-2 py-0.5 text-[10px] font-extrabold tabular-nums text-white">
+            {pct}%
+          </span>
+        )}
+        <Icons.ChevronDown
+          size={14}
+          className={cn("shrink-0 text-[#c8e0f4] transition-transform duration-200", open && "rotate-180")}
+        />
+      </button>
+
+      {/* Collapsible body */}
+      {open && (
+        <div className="px-4 pb-4">
+          {/* Progress bar */}
+          <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.10]">
+            <div
+              className="h-full rounded-full bg-[var(--sidebar-accent)] transition-all duration-700"
+              style={{ width: `${pct}%` }}
+            />
           </div>
-        ))}
-      </div>
+
+          {/* Milestones */}
+          <div className="mt-3.5 space-y-2.5">
+            {milestones.map((m) => (
+              <Link key={m.label} href={m.href} className="group flex items-center gap-3">
+                <MilestoneIcon state={m.state} />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-white group-hover:text-[#d9eaf9] transition-colors">{m.label}</p>
+                  <p className="text-[11px] font-medium text-[var(--sidebar-muted)]">{m.value}</p>
+                </div>
+                {m.state === "active" && (
+                  <span className="ml-auto shrink-0 rounded-full bg-[#185FA5]/60 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[#d9eaf9] ring-1 ring-white/10">
+                    Now
+                  </span>
+                )}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+function MilestoneIcon({ state }: { state: "complete" | "active" | "upcoming" }) {
+  if (state === "complete") {
+    return (
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#67c58e]/60 bg-[#2f7a4d] text-white shadow-sm">
+        <Icons.Check size={11} />
+      </span>
+    );
+  }
+  if (state === "active") {
+    return (
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/30 bg-[var(--sidebar-active)] shadow-sm">
+        <span className="h-2 w-2 rounded-full bg-white" />
+      </span>
+    );
+  }
+  return (
+    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/[0.14] bg-white/[0.05]" />
   );
 }
 
@@ -501,8 +606,8 @@ function SidebarModeButton({
       aria-label={label}
       title={label}
       className={cn(
-        "flex h-9 w-9 items-center justify-center rounded-xl border text-[#d9eaf9] transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--sidebar-bg)]",
-        active ? "border-white/18 bg-white/[0.14]" : "border-white/10 bg-white/[0.06]"
+        "flex h-8 w-8 items-center justify-center rounded-lg border text-[#c8e0f4] transition-all duration-150 hover:bg-white/[0.12] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--sidebar-bg)]",
+        active ? "border-white/20 bg-white/[0.12]" : "border-white/[0.08] bg-white/[0.05]"
       )}
     >
       {children}
@@ -523,12 +628,12 @@ function SignOutButton({ compact }: { compact?: boolean }) {
       onClick={handleSignOut}
       title={compact ? "Sign out" : undefined}
       className={cn(
-        "flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.06] text-sm font-semibold text-[#d9eaf9] transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--sidebar-bg)]",
-        compact ? "w-11 justify-center px-0 py-2.5" : "w-full px-3 py-3"
+        "group flex items-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.05] text-sm font-semibold text-[var(--sidebar-muted)] transition-all duration-150 hover:border-white/[0.14] hover:bg-white/[0.10] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--sidebar-bg)]",
+        compact ? "w-10 justify-center px-0 py-2.5" : "w-full px-3 py-2.5"
       )}
     >
-      <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/[0.08] text-white">
-        <Icons.LogOut size={16} />
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/[0.06] text-[#c8e0f4] transition-colors group-hover:bg-white/[0.12] group-hover:text-white">
+        <Icons.LogOut size={14} />
       </span>
       {!compact && "Sign out"}
     </button>

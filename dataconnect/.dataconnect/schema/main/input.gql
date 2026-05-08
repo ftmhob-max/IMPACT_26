@@ -4457,6 +4457,14 @@ input Quiz_Data {
   """
   updatedBy: User_Key @fdc_forbiddenInVariables
   """
+  ✨ Generated from Field `Quiz`.`calculatorSettingsJson` of type `String`
+  """
+  calculatorSettingsJson: String
+  """
+  ✨ `_expr` server value variant of `calculatorSettingsJson` (✨ Generated from Field `Quiz`.`calculatorSettingsJson` of type `String`)
+  """
+  calculatorSettingsJson_expr: String_Expr @fdc_forbiddenInVariables
+  """
   ✨ Generated from Field `Quiz`.`createdAt` of type `Date!`
   """
   createdAt: Date
@@ -4602,6 +4610,10 @@ input Quiz_Filter {
   """
   updatedBy: User_Filter
   """
+  ✨ Generated from Field `Quiz`.`calculatorSettingsJson` of type `String`
+  """
+  calculatorSettingsJson: String_Filter
+  """
   ✨ Generated from Field `Quiz`.`createdAt` of type `Date!`
   """
   createdAt: Date_Filter
@@ -4695,6 +4707,10 @@ input Quiz_Having {
   ✨ Generated from Field `Quiz`.`_count` of type `Int!`
   """
   _count: Int_Filter
+  """
+  ✨ Generated from Field `Quiz`.`calculatorSettingsJson_count` of type `Int!`
+  """
+  calculatorSettingsJson_count: Int_Filter
   """
   ✨ Generated from Field `Quiz`.`createdAt_count` of type `Int!`
   """
@@ -4863,6 +4879,10 @@ input Quiz_Order {
   """
   updatedBy: User_Order
   """
+  ✨ Generated from Field `Quiz`.`calculatorSettingsJson` of type `String`
+  """
+  calculatorSettingsJson: OrderDirection
+  """
   ✨ Generated from Field `Quiz`.`createdAt` of type `Date!`
   """
   createdAt: OrderDirection
@@ -4906,6 +4926,10 @@ input Quiz_Order {
   ✨ Generated from Field `Quiz`.`_count` of type `Int!`
   """
   _count: OrderDirection
+  """
+  ✨ Generated from Field `Quiz`.`calculatorSettingsJson_count` of type `Int!`
+  """
+  calculatorSettingsJson_count: OrderDirection
   """
   ✨ Generated from Field `Quiz`.`createdAt_count` of type `Int!`
   """

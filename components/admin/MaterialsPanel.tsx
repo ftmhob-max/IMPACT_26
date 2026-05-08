@@ -142,6 +142,7 @@ const PARSER_LABELS: Record<string, string> = {
   "csv-parse": "CSV",
   text: "Text",
   media: "Media",
+  whisper: "Transcript",
 };
 
 async function readApiError(res: Response) {
@@ -218,6 +219,10 @@ function isDocxMaterial(material: Pick<MaterialListItem, "parser" | "fileType" |
   return material.parser === "mammoth"
     || material.fileType.toLowerCase().includes("wordprocessingml")
     || material.fileName.toLowerCase().endsWith(".docx");
+}
+
+function isTranscribableMediaMaterial(material: Pick<MaterialListItem, "kind">) {
+  return material.kind === "audio" || material.kind === "video";
 }
 
 function DocumentStage({
@@ -855,6 +860,7 @@ export function MaterialsPanel() {
               <option value="mammoth">DOCX</option>
               <option value="csv-parse">CSV</option>
               <option value="text">Text</option>
+              <option value="whisper">Transcript</option>
               <option value="media">Media</option>
             </select>
 
@@ -1070,6 +1076,7 @@ export function MaterialsPanel() {
                 searchQuery={deferredSearch}
                 onLink={() => selectedId && setLinkingMaterialId(selectedId)}
                 onDelete={() => selectedListItem && void deleteMaterial(selectedListItem)}
+                onRefresh={() => setRefreshKey((k) => k + 1)}
               />
             </div>
           </div>
@@ -1226,6 +1233,7 @@ function MaterialPreviewPane({
   searchQuery,
   onLink,
   onDelete,
+  onRefresh,
 }: {
   material: MaterialPreviewResponse | null;
   fallbackMaterial: MaterialListItem | null;
@@ -1235,7 +1243,30 @@ function MaterialPreviewPane({
   searchQuery: string;
   onLink: () => void;
   onDelete: () => void;
+  onRefresh: () => void;
 }) {
+  const [reparseLoading, setReparseLoading] = useState(false);
+  const [reparseError, setReparseError] = useState<string | null>(null);
+
+  async function handleReparse() {
+    const id = material?.material?.id ?? fallbackMaterial?.id;
+    if (!id) return;
+    setReparseLoading(true);
+    setReparseError(null);
+    try {
+      const res = await fetch(`/api/admin/materials/${id}?action=reparse`, { method: "PATCH" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setReparseError(data.error ?? "Re-parse failed.");
+      } else {
+        onRefresh();
+      }
+    } catch {
+      setReparseError("Network error — re-parse could not complete.");
+    } finally {
+      setReparseLoading(false);
+    }
+  }
   const materialInfo = material?.material ?? fallbackMaterial;
   const tabs: Array<{ id: PreviewTab; label: string }> = [
     { id: "preview", label: "Preview" },
@@ -1289,6 +1320,14 @@ function MaterialPreviewPane({
             <ActionIconLink href={assetDownloadHref} label="Download">
               <Icons.Upload size={14} className="rotate-180" />
             </ActionIconLink>
+            {(isPdfMaterial(materialInfo) || isDocxMaterial(materialInfo) || isTranscribableMediaMaterial(materialInfo)) && (
+              <ActionIconButton
+                label={reparseLoading ? "Re-parsing…" : "Re-parse content"}
+                onClick={handleReparse}
+              >
+                <Icons.RotateCcw size={14} className={reparseLoading ? "animate-spin" : undefined} />
+              </ActionIconButton>
+            )}
             <ActionIconButton label="Link material" onClick={onLink}>
               <Icons.Link2 size={14} />
             </ActionIconButton>
@@ -1331,6 +1370,12 @@ function MaterialPreviewPane({
       </div>
 
       <div className="px-5 py-4">
+        {reparseError && (
+          <div className="mb-3 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+            <Icons.AlertCircle size={13} className="mt-0.5 shrink-0" />
+            {reparseError}
+          </div>
+        )}
         {loading && (
           <div className="flex items-center gap-2 text-sm text-slate-400">
             <Icons.Loader size={16} className="animate-spin" />
@@ -1402,8 +1447,22 @@ function PreviewTabPanel({
               src={assetHref ?? undefined}
               title={`${material.title} PDF preview`}
               className="h-[760px] w-full bg-white"
+              allow="fullscreen"
             />
           </div>
+          {assetHref && (
+            <div className="mt-3 flex items-center justify-end gap-4">
+              <a
+                href={assetHref}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#185FA5] transition hover:underline"
+              >
+                <Icons.ExternalLink size={12} />
+                Open PDF in new tab
+              </a>
+            </div>
+          )}
         </DocumentStage>
       ) : hasFormattedDocx && preview.formattedHtml ? (
         <DocumentStage

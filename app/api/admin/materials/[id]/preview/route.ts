@@ -46,6 +46,7 @@ async function hydrateExtractedTextFromAsset(
   assetBuffer?: Buffer | null
 ) {
   if (material.hasExtractedText) return material;
+  if (material.kind === "audio" || material.kind === "video") return material;
 
   const buffer = assetBuffer ?? await loadAssetBuffer(material);
   if (!buffer) return material;
@@ -130,7 +131,13 @@ export async function GET(
       return NextResponse.json({ error: "Material not found" }, { status: 404 });
     }
 
-    const assetBuffer = await loadAssetBuffer(selected);
+    // Only download the asset buffer when we actually need its bytes (DOCX HTML rendering,
+    // text hydration for materials without extractedText). PDFs are served on-demand by
+    // /asset route so we don't re-download them here.
+    const isPdf = selected.parser === "pdf-parse"
+      || selected.fileType.toLowerCase().includes("pdf")
+      || selected.fileName.toLowerCase().endsWith(".pdf");
+    const assetBuffer = isPdf ? null : await loadAssetBuffer(selected);
     const hydrated = await hydrateExtractedTextFromAsset(selected, assetBuffer);
     const csvPreview = hydrated.parser === "csv-parse" && hydrated.extractedText
       ? buildCsvPreview(hydrated.extractedText)
@@ -138,7 +145,10 @@ export async function GET(
     const formattedHtml = hydrated.parser === "mammoth" && assetBuffer
       ? await buildFormattedDocxHtml(assetBuffer).catch(() => null)
       : null;
-    const formattedMode = hydrated.parser === "pdf-parse" && assetBuffer
+    // PDFs: show iframe whenever the asset file exists in storage (hasAsset = true).
+    // The /asset route handles auth + signed-URL/streaming — no need to prove
+    // the buffer is downloadable here.
+    const formattedMode = hydrated.hasAsset && isPdf
       ? "pdf"
       : formattedHtml
         ? "docx"

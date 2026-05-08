@@ -39,6 +39,7 @@ const PARSER_LABELS: Record<string, string> = {
   "csv-parse": "CSV",
   text: "Text",
   media: "Media",
+  whisper: "Transcript",
 };
 
 export function MaterialPreview({ material, courses, onLinked }: MaterialPreviewProps) {

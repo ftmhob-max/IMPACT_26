@@ -1,5 +1,6 @@
 import { EmptyState, LearnerPage, PageHeader } from "@/components/ui/LearnerPrimitives";
 import { FormulaCompass } from "@/components/layout/FormulaCompass";
+import { FormulaCalculatorProvider } from "@/components/layout/FormulaCalculatorProvider";
 import { adminDcQuery } from "@/lib/firebase/admin-dc";
 import { DEV_FORMULA_SECTIONS } from "@/lib/dev-content";
 import { ensureDevDataSeeded } from "@/lib/dev-seed";
@@ -66,7 +67,7 @@ export default async function FormulasPage() {
   const totalFormulas = sections.reduce((sum, section) => sum + section.formulas.length, 0);
 
   return (
-    <LearnerPage width="narrow">
+    <LearnerPage width="wide">
       <PageHeader
         eyebrow="Formula Compass"
         title="Assessment formula reference"
@@ -80,11 +81,13 @@ export default async function FormulasPage() {
           icon={Icons.Search}
         />
       ) : (
-        <FormulaCompass
-          sections={sections}
-          initialFavoriteFormulaIds={favoriteFormulaIds}
-          canFavorite={Boolean(session)}
-        />
+        <FormulaCalculatorProvider initialSections={sections as any}>
+          <FormulaCompass
+            sections={sections}
+            initialFavoriteFormulaIds={favoriteFormulaIds}
+            canFavorite={Boolean(session)}
+          />
+        </FormulaCalculatorProvider>
       )}
     </LearnerPage>
   );

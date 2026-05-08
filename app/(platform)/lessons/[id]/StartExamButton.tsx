@@ -7,6 +7,7 @@ interface Props {
   timeLimitSeconds: number | null;
   shuffleQuestions: boolean;
   shuffleChoices: boolean;
+  calculatorSettingsJson?: string | null;
 }
 
 export function StartExamButton(props: Props) {

@@ -157,6 +157,7 @@ type Quiz @table(name: "quizzes", singular: "quiz", plural: "quizzes", key: ["id
   shuffleQuestions: Boolean! @default(value: false)
   shuffleChoices: Boolean! @default(value: false)
   status: String! @col(dataType: "text") @default(value: "draft")
+  calculatorSettingsJson: String @col(dataType: "text")
   version: Int! @default(value: 1)
   createdBy: User
   updatedBy: User

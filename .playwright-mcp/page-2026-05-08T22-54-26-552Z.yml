@@ -1,0 +1,863 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - generic [ref=e7]:
+            - link "IMPACT_26 Property Assessment" [ref=e9] [cursor=pointer]:
+              - /url: /dashboard
+              - paragraph [ref=e10]: IMPACT_26
+              - paragraph [ref=e11]: Property Assessment
+            - generic [ref=e13]: Admin
+          - generic [ref=e14]:
+            - button "Collapse sidebar" [ref=e15]:
+              - img [ref=e16]
+            - button "Enable auto-hide" [ref=e18]:
+              - img [ref=e19]
+        - navigation [ref=e22]:
+          - generic [ref=e23]:
+            - link "Dashboard" [ref=e24] [cursor=pointer]:
+              - /url: /dashboard
+              - img [ref=e26]
+              - generic [ref=e31]: Dashboard
+            - link "Courses" [ref=e34] [cursor=pointer]:
+              - /url: /courses
+              - img [ref=e36]
+              - generic [ref=e39]: Courses
+            - link "Formula Compass Current page" [ref=e42] [cursor=pointer]:
+              - /url: /formulas
+              - img [ref=e44]
+              - generic [ref=e46]: Formula Compass
+              - generic [ref=e48]: Current page
+            - link "Glossary" [ref=e49] [cursor=pointer]:
+              - /url: /glossary
+              - img [ref=e51]
+              - generic [ref=e54]: Glossary
+            - link "My Progress" [ref=e57] [cursor=pointer]:
+              - /url: /profile
+              - img [ref=e59]
+              - generic [ref=e62]: My Progress
+          - generic [ref=e65]:
+            - paragraph [ref=e67]: Admin Tools
+            - link "Admin Home" [ref=e68] [cursor=pointer]:
+              - /url: /admin
+              - img [ref=e70]
+              - generic [ref=e73]: Admin Home
+            - link "Question Bank" [ref=e76] [cursor=pointer]:
+              - /url: /admin/questions
+              - img [ref=e78]
+              - generic [ref=e81]: Question Bank
+            - link "Quizzes" [ref=e84] [cursor=pointer]:
+              - /url: /admin/quizzes
+              - img [ref=e86]
+              - generic [ref=e89]: Quizzes
+            - link "Courses" [ref=e92] [cursor=pointer]:
+              - /url: /admin/courses
+              - img [ref=e94]
+              - generic [ref=e97]: Courses
+            - link "Student Preview" [ref=e100] [cursor=pointer]:
+              - /url: /admin/preview/courses
+              - img [ref=e102]
+              - generic [ref=e105]: Student Preview
+            - link "Formula Compass" [ref=e108] [cursor=pointer]:
+              - /url: /admin/formulas
+              - img [ref=e110]
+              - generic [ref=e112]: Formula Compass
+            - link "Glossary" [ref=e115] [cursor=pointer]:
+              - /url: /admin/glossary
+              - img [ref=e117]
+              - generic [ref=e120]: Glossary
+            - link "Source Materials" [ref=e123] [cursor=pointer]:
+              - /url: /admin/materials
+              - img [ref=e125]
+              - generic [ref=e129]: Source Materials
+            - link "Cohort Stats" [ref=e132] [cursor=pointer]:
+              - /url: /admin/cohorts
+              - img [ref=e134]
+              - generic [ref=e136]: Cohort Stats
+            - link "Users" [ref=e139] [cursor=pointer]:
+              - /url: /admin/users
+              - img [ref=e141]
+              - generic [ref=e146]: Users
+        - button "Sign out" [ref=e151]:
+          - img [ref=e153]
+          - text: Sign out
+    - main [ref=e156]:
+      - generic [ref=e157]:
+        - generic [ref=e162]:
+          - img [ref=e164]
+          - generic [ref=e166]:
+            - paragraph [ref=e167]: Formula Compass
+            - heading "Assessment formula reference" [level=1] [ref=e168]
+            - paragraph [ref=e169]: 53 formulas organized by assessment method section for fast study and exam review.
+        - generic [ref=e170]:
+          - generic [ref=e171]:
+            - generic [ref=e172]:
+              - generic [ref=e173]:
+                - img [ref=e175]
+                - generic [ref=e178]:
+                  - paragraph [ref=e179]: "53"
+                  - paragraph [ref=e180]: Total formulas
+              - generic [ref=e181]:
+                - img [ref=e183]
+                - generic [ref=e186]:
+                  - paragraph [ref=e187]: "0"
+                  - paragraph [ref=e188]: Saved
+              - generic [ref=e189]:
+                - img [ref=e191]
+                - generic [ref=e194]:
+                  - paragraph [ref=e195]: "53"
+                  - paragraph [ref=e196]: Visible now
+            - generic [ref=e198]:
+              - img [ref=e200]
+              - generic [ref=e202]:
+                - generic [ref=e203]:
+                  - generic [ref=e204]:
+                    - paragraph [ref=e205]: Formula Compass controls
+                    - paragraph [ref=e206]: Search formulas, narrow by assessment section, then open the calculator from the formula you need.
+                  - button "Reset" [disabled] [ref=e207]:
+                    - img [ref=e208]
+                    - text: Reset
+                - generic [ref=e211]:
+                  - generic [ref=e212]:
+                    - text: Search formulas
+                    - generic [ref=e213]:
+                      - img
+                      - searchbox "Search formulas" [ref=e214]
+                  - generic [ref=e215]:
+                    - text: Sort formulas
+                    - combobox "Sort formulas" [ref=e216]:
+                      - option "Manual order" [selected]
+                      - option "Name A-Z"
+                      - option "Code A-Z"
+                - generic [ref=e217]:
+                  - generic [ref=e218]:
+                    - generic [ref=e219]: Filter by section
+                    - paragraph [ref=e220]: All sections
+                  - generic [ref=e221]:
+                    - button "All sections" [ref=e222]
+                    - button "S1 Sales Comparison & Regression" [ref=e223]:
+                      - generic [ref=e224]: S1
+                      - generic [ref=e226]: Sales Comparison & Regression
+                    - button "S2 Cost Approach" [ref=e227]:
+                      - generic [ref=e228]: S2
+                      - generic [ref=e230]: Cost Approach
+                    - button "S3 Income Approach (Direct Cap.)" [ref=e231]:
+                      - generic [ref=e232]: S3
+                      - generic [ref=e234]: Income Approach (Direct Cap.)
+                    - button "S4 GRM / GIM" [ref=e235]:
+                      - generic [ref=e236]: S4
+                      - generic [ref=e238]: GRM / GIM
+                    - button "S5 DCF / Yield Analysis" [ref=e239]:
+                      - generic [ref=e240]: S5
+                      - generic [ref=e242]: DCF / Yield Analysis
+                    - button "S6 Land Valuation" [ref=e243]:
+                      - generic [ref=e244]: S6
+                      - generic [ref=e246]: Land Valuation
+                    - button "S7 Ratio Studies" [ref=e247]:
+                      - generic [ref=e248]: S7
+                      - generic [ref=e250]: Ratio Studies
+                    - button "S8 Industrial Valuation" [ref=e251]:
+                      - generic [ref=e252]: S8
+                      - generic [ref=e254]: Industrial Valuation
+                    - button "S9 Legal Framework" [ref=e255]:
+                      - generic [ref=e256]: S9
+                      - generic [ref=e258]: Legal Framework
+                    - button "S10 Ethics & Data" [ref=e259]:
+                      - generic [ref=e260]: S10
+                      - generic [ref=e262]: Ethics & Data
+                - paragraph [ref=e264]: Showing 53 of 53 formulas across 10 sections.
+          - generic [ref=e265]:
+            - button "S1 Sales Comparison & Regression 8 formulas in this view 8" [ref=e266]:
+              - generic [ref=e267]:
+                - generic [ref=e268]: S1
+                - generic [ref=e269]:
+                  - heading "Sales Comparison & Regression" [level=2] [ref=e270]
+                  - paragraph [ref=e271]: 8 formulas in this view
+              - generic [ref=e272]:
+                - generic [ref=e273]: "8"
+                - img [ref=e274]
+            - generic [ref=e276]:
+              - article [ref=e277]:
+                - generic [ref=e278]:
+                  - generic [ref=e279]:
+                    - paragraph [ref=e280]: S1·F1
+                    - heading "F1 Trending Forward" [level=3] [ref=e281]
+                  - generic [ref=e282]:
+                    - button "Open calculator for F1 Trending Forward" [ref=e283]:
+                      - img [ref=e284]
+                    - button "Save formula" [ref=e286]:
+                      - img [ref=e287]
+                - paragraph [ref=e290]: Adjusted = Sale × (1+r)^n
+              - article [ref=e291]:
+                - generic [ref=e292]:
+                  - generic [ref=e293]:
+                    - paragraph [ref=e294]: S1·F2
+                    - heading "F2 Trending Backward" [level=3] [ref=e295]
+                  - generic [ref=e296]:
+                    - button "Open calculator for F2 Trending Backward" [ref=e297]:
+                      - img [ref=e298]
+                    - button "Save formula" [ref=e300]:
+                      - img [ref=e301]
+                - paragraph [ref=e304]: Back-Trended = Sale ÷ (1+r)^n
+              - article [ref=e305]:
+                - generic [ref=e306]:
+                  - generic [ref=e307]:
+                    - paragraph [ref=e308]: S1·F3
+                    - heading "F3 Annual→Monthly Rate" [level=3] [ref=e309]
+                  - generic [ref=e310]:
+                    - button "Open calculator for F3 Annual→Monthly Rate" [ref=e311]:
+                      - img [ref=e312]
+                    - button "Save formula" [ref=e314]:
+                      - img [ref=e315]
+                - paragraph [ref=e318]: r_mo = (1+r_yr)^(1/12) − 1
+              - article [ref=e319]:
+                - generic [ref=e320]:
+                  - generic [ref=e321]:
+                    - paragraph [ref=e322]: S1·F4
+                    - heading "F4 Assessment Ratio" [level=3] [ref=e323]
+                  - generic [ref=e324]:
+                    - button "Open calculator for F4 Assessment Ratio" [ref=e325]:
+                      - img [ref=e326]
+                    - button "Save formula" [ref=e328]:
+                      - img [ref=e329]
+                - paragraph [ref=e332]: Ratio = AV ÷ Sale Price
+              - article [ref=e333]:
+                - generic [ref=e334]:
+                  - generic [ref=e335]:
+                    - paragraph [ref=e336]: S1·F5
+                    - heading "F5 Paired Sales Adj." [level=3] [ref=e337]
+                  - generic [ref=e338]:
+                    - button "Open calculator for F5 Paired Sales Adj." [ref=e339]:
+                      - img [ref=e340]
+                    - button "Save formula" [ref=e342]:
+                      - img [ref=e343]
+                - paragraph [ref=e346]: Adj/Unit = ΔPrice ÷ ΔFeature
+              - article [ref=e347]:
+                - generic [ref=e348]:
+                  - generic [ref=e349]:
+                    - paragraph [ref=e350]: S1·F6
+                    - heading "F6 Regression Prediction" [level=3] [ref=e351]
+                  - generic [ref=e352]:
+                    - button "Open calculator for F6 Regression Prediction" [ref=e353]:
+                      - img [ref=e354]
+                    - button "Save formula" [ref=e356]:
+                      - img [ref=e357]
+                - paragraph [ref=e360]: V = β₀ + β₁X₁ + β₂X₂ + …
+              - article [ref=e361]:
+                - generic [ref=e362]:
+                  - generic [ref=e363]:
+                    - paragraph [ref=e364]: S1·F7
+                    - heading "F7 Dummy Variable" [level=3] [ref=e365]
+                  - generic [ref=e366]:
+                    - button "Open calculator for F7 Dummy Variable" [ref=e367]:
+                      - img [ref=e368]
+                    - button "Save formula" [ref=e370]:
+                      - img [ref=e371]
+                - paragraph [ref=e374]: ΔV = β_dummy × 1 or × 0
+              - article [ref=e375]:
+                - generic [ref=e376]:
+                  - generic [ref=e377]:
+                    - paragraph [ref=e378]: S1·F8
+                    - heading "F8 Regression Diagnostics" [level=3] [ref=e379]
+                  - generic [ref=e380]:
+                    - button "Open calculator for F8 Regression Diagnostics" [ref=e381]:
+                      - img [ref=e382]
+                    - button "Save formula" [ref=e384]:
+                      - img [ref=e385]
+                - paragraph [ref=e388]: R² · t=β÷SE · VIF=1÷(1−R²) · RMSE
+          - generic [ref=e389]:
+            - button "S2 Cost Approach 5 formulas in this view 5" [ref=e390]:
+              - generic [ref=e391]:
+                - generic [ref=e392]: S2
+                - generic [ref=e393]:
+                  - heading "Cost Approach" [level=2] [ref=e394]
+                  - paragraph [ref=e395]: 5 formulas in this view
+              - generic [ref=e396]:
+                - generic [ref=e397]: "5"
+                - img [ref=e398]
+            - generic [ref=e400]:
+              - article [ref=e401]:
+                - generic [ref=e402]:
+                  - generic [ref=e403]:
+                    - paragraph [ref=e404]: S2·F1
+                    - heading "F1 Age-Life Dep." [level=3] [ref=e405]
+                  - generic [ref=e406]:
+                    - button "Open calculator for F1 Age-Life Dep." [ref=e407]:
+                      - img [ref=e408]
+                    - button "Save formula" [ref=e410]:
+                      - img [ref=e411]
+                - paragraph [ref=e414]: Dep% = Eff. Age ÷ Econ. Life
+              - article [ref=e415]:
+                - generic [ref=e416]:
+                  - generic [ref=e417]:
+                    - paragraph [ref=e418]: S2·F2
+                    - heading "F2 Remaining Life Dep." [level=3] [ref=e419]
+                  - generic [ref=e420]:
+                    - button "Open calculator for F2 Remaining Life Dep." [ref=e421]:
+                      - img [ref=e422]
+                    - button "Save formula" [ref=e424]:
+                      - img [ref=e425]
+                - paragraph [ref=e428]: Dep% = (EL − RL) ÷ EL
+              - article [ref=e429]:
+                - generic [ref=e430]:
+                  - generic [ref=e431]:
+                    - paragraph [ref=e432]: S2·F3
+                    - heading "F3 RCNLD" [level=3] [ref=e433]
+                  - generic [ref=e434]:
+                    - button "Open calculator for F3 RCNLD" [ref=e435]:
+                      - img [ref=e436]
+                    - button "Save formula" [ref=e438]:
+                      - img [ref=e439]
+                - paragraph [ref=e442]: RCNLD = RCN × (1 − Dep%)
+              - article [ref=e443]:
+                - generic [ref=e444]:
+                  - generic [ref=e445]:
+                    - paragraph [ref=e446]: S2·F4
+                    - heading "F4 Combined Dep." [level=3] [ref=e447]
+                  - generic [ref=e448]:
+                    - button "Open calculator for F4 Combined Dep." [ref=e449]:
+                      - img [ref=e450]
+                    - button "Save formula" [ref=e452]:
+                      - img [ref=e453]
+                - paragraph [ref=e456]: Dep = 1 − [(1−P)(1−F)(1−E)]
+              - article [ref=e457]:
+                - generic [ref=e458]:
+                  - generic [ref=e459]:
+                    - paragraph [ref=e460]: S2·F5
+                    - heading "F5 External Obsolescence" [level=3] [ref=e461]
+                  - generic [ref=e462]:
+                    - button "Open calculator for F5 External Obsolescence" [ref=e463]:
+                      - img [ref=e464]
+                    - button "Save formula" [ref=e466]:
+                      - img [ref=e467]
+                - paragraph [ref=e470]: EO% = (RCNLD_before − MV) ÷ RCNLD
+          - generic [ref=e471]:
+            - button "S3 Income Approach (Direct Cap.) 9 formulas in this view 9" [ref=e472]:
+              - generic [ref=e473]:
+                - generic [ref=e474]: S3
+                - generic [ref=e475]:
+                  - heading "Income Approach (Direct Cap.)" [level=2] [ref=e476]
+                  - paragraph [ref=e477]: 9 formulas in this view
+              - generic [ref=e478]:
+                - generic [ref=e479]: "9"
+                - img [ref=e480]
+            - generic [ref=e482]:
+              - article [ref=e483]:
+                - generic [ref=e484]:
+                  - generic [ref=e485]:
+                    - paragraph [ref=e486]: S3·F1
+                    - heading "F1 IRV — Value" [level=3] [ref=e487]
+                  - generic [ref=e488]:
+                    - button "Open calculator for F1 IRV — Value" [ref=e489]:
+                      - img [ref=e490]
+                    - button "Save formula" [ref=e492]:
+                      - img [ref=e493]
+                - paragraph [ref=e496]: V = I ÷ R
+              - article [ref=e497]:
+                - generic [ref=e498]:
+                  - generic [ref=e499]:
+                    - paragraph [ref=e500]: S3·F2
+                    - heading "F2 IRV — Rate" [level=3] [ref=e501]
+                  - generic [ref=e502]:
+                    - button "Open calculator for F2 IRV — Rate" [ref=e503]:
+                      - img [ref=e504]
+                    - button "Save formula" [ref=e506]:
+                      - img [ref=e507]
+                - paragraph [ref=e510]: R = I ÷ V
+              - article [ref=e511]:
+                - generic [ref=e512]:
+                  - generic [ref=e513]:
+                    - paragraph [ref=e514]: S3·F3
+                    - heading "F3 IRV — Income" [level=3] [ref=e515]
+                  - generic [ref=e516]:
+                    - button "Open calculator for F3 IRV — Income" [ref=e517]:
+                      - img [ref=e518]
+                    - button "Save formula" [ref=e520]:
+                      - img [ref=e521]
+                - paragraph [ref=e524]: I = V × R
+              - article [ref=e525]:
+                - generic [ref=e526]:
+                  - generic [ref=e527]:
+                    - paragraph [ref=e528]: S3·F4
+                    - heading "F4 PGI" [level=3] [ref=e529]
+                  - generic [ref=e530]:
+                    - button "Open calculator for F4 PGI" [ref=e531]:
+                      - img [ref=e532]
+                    - button "Save formula" [ref=e534]:
+                      - img [ref=e535]
+                - paragraph [ref=e538]: PGI = Units × Rent/mo × 12
+              - article [ref=e539]:
+                - generic [ref=e540]:
+                  - generic [ref=e541]:
+                    - paragraph [ref=e542]: S3·F5
+                    - heading "F5 EGI" [level=3] [ref=e543]
+                  - generic [ref=e544]:
+                    - button "Open calculator for F5 EGI" [ref=e545]:
+                      - img [ref=e546]
+                    - button "Save formula" [ref=e548]:
+                      - img [ref=e549]
+                - paragraph [ref=e552]: EGI = PGI × (1−Vac%) + Other
+              - article [ref=e553]:
+                - generic [ref=e554]:
+                  - generic [ref=e555]:
+                    - paragraph [ref=e556]: S3·F6
+                    - heading "F6 NOI" [level=3] [ref=e557]
+                  - generic [ref=e558]:
+                    - button "Open calculator for F6 NOI" [ref=e559]:
+                      - img [ref=e560]
+                    - button "Save formula" [ref=e562]:
+                      - img [ref=e563]
+                - paragraph [ref=e566]: NOI = EGI − Expenses − Reserves
+              - article [ref=e567]:
+                - generic [ref=e568]:
+                  - generic [ref=e569]:
+                    - paragraph [ref=e570]: S3·F7
+                    - heading "F7 Cap Rate Extraction" [level=3] [ref=e571]
+                  - generic [ref=e572]:
+                    - button "Open calculator for F7 Cap Rate Extraction" [ref=e573]:
+                      - img [ref=e574]
+                    - button "Save formula" [ref=e576]:
+                      - img [ref=e577]
+                - paragraph [ref=e580]: Cap Rate = NOI ÷ Sale Price
+              - article [ref=e581]:
+                - generic [ref=e582]:
+                  - generic [ref=e583]:
+                    - paragraph [ref=e584]: S3·F8
+                    - heading "F8 Band of Investment" [level=3] [ref=e585]
+                  - generic [ref=e586]:
+                    - button "Open calculator for F8 Band of Investment" [ref=e587]:
+                      - img [ref=e588]
+                    - button "Save formula" [ref=e590]:
+                      - img [ref=e591]
+                - paragraph [ref=e594]: Cap = (LTV×MC) + (Eq%×ER)
+              - article [ref=e595]:
+                - generic [ref=e596]:
+                  - generic [ref=e597]:
+                    - paragraph [ref=e598]: S3·F9
+                    - heading "F9 DSCR" [level=3] [ref=e599]
+                  - generic [ref=e600]:
+                    - button "Open calculator for F9 DSCR" [ref=e601]:
+                      - img [ref=e602]
+                    - button "Save formula" [ref=e604]:
+                      - img [ref=e605]
+                - paragraph [ref=e608]: DSCR = NOI ÷ Annual Debt Service
+          - generic [ref=e609]:
+            - button "S4 GRM / GIM 6 formulas in this view 6" [ref=e610]:
+              - generic [ref=e611]:
+                - generic [ref=e612]: S4
+                - generic [ref=e613]:
+                  - heading "GRM / GIM" [level=2] [ref=e614]
+                  - paragraph [ref=e615]: 6 formulas in this view
+              - generic [ref=e616]:
+                - generic [ref=e617]: "6"
+                - img [ref=e618]
+            - generic [ref=e620]:
+              - article [ref=e621]:
+                - generic [ref=e622]:
+                  - generic [ref=e623]:
+                    - paragraph [ref=e624]: S4·F1
+                    - heading "F1 GRM Derivation" [level=3] [ref=e625]
+                  - generic [ref=e626]:
+                    - button "Open calculator for F1 GRM Derivation" [ref=e627]:
+                      - img [ref=e628]
+                    - button "Save formula" [ref=e630]:
+                      - img [ref=e631]
+                - paragraph [ref=e634]: GRM = Sale Price ÷ Gross Annual Rent
+              - article [ref=e635]:
+                - generic [ref=e636]:
+                  - generic [ref=e637]:
+                    - paragraph [ref=e638]: S4·F2
+                    - heading "F2 Value from GRM" [level=3] [ref=e639]
+                  - generic [ref=e640]:
+                    - button "Open calculator for F2 Value from GRM" [ref=e641]:
+                      - img [ref=e642]
+                    - button "Save formula" [ref=e644]:
+                      - img [ref=e645]
+                - paragraph [ref=e648]: Value = GRM × Gross Annual Rent
+              - article [ref=e649]:
+                - generic [ref=e650]:
+                  - generic [ref=e651]:
+                    - paragraph [ref=e652]: S4·F3
+                    - heading "F3 GIM Derivation" [level=3] [ref=e653]
+                  - generic [ref=e654]:
+                    - button "Open calculator for F3 GIM Derivation" [ref=e655]:
+                      - img [ref=e656]
+                    - button "Save formula" [ref=e658]:
+                      - img [ref=e659]
+                - paragraph [ref=e662]: GIM = Sale Price ÷ Gross Annual Income
+              - article [ref=e663]:
+                - generic [ref=e664]:
+                  - generic [ref=e665]:
+                    - paragraph [ref=e666]: S4·F4
+                    - heading "F4 Value from GIM" [level=3] [ref=e667]
+                  - generic [ref=e668]:
+                    - button "Open calculator for F4 Value from GIM" [ref=e669]:
+                      - img [ref=e670]
+                    - button "Save formula" [ref=e672]:
+                      - img [ref=e673]
+                - paragraph [ref=e676]: Value = GIM × Gross Annual Income
+              - article [ref=e677]:
+                - generic [ref=e678]:
+                  - generic [ref=e679]:
+                    - paragraph [ref=e680]: S4·F5
+                    - heading "F5 Weighted GRM" [level=3] [ref=e681]
+                  - generic [ref=e682]:
+                    - button "Open calculator for F5 Weighted GRM" [ref=e683]:
+                      - img [ref=e684]
+                    - button "Save formula" [ref=e686]:
+                      - img [ref=e687]
+                - paragraph [ref=e690]: W.GRM = Σ(GRM×GI) ÷ Σ(GI)
+              - article [ref=e691]:
+                - generic [ref=e692]:
+                  - generic [ref=e693]:
+                    - paragraph [ref=e694]: S4·F6
+                    - heading "F6 GRM Trending" [level=3] [ref=e695]
+                  - generic [ref=e696]:
+                    - button "Open calculator for F6 GRM Trending" [ref=e697]:
+                      - img [ref=e698]
+                    - button "Save formula" [ref=e700]:
+                      - img [ref=e701]
+                - paragraph [ref=e704]: Trended GRM = (SP×Factor) ÷ Rent
+          - generic [ref=e705]:
+            - button "S5 DCF / Yield Analysis 8 formulas in this view 8" [ref=e706]:
+              - generic [ref=e707]:
+                - generic [ref=e708]: S5
+                - generic [ref=e709]:
+                  - heading "DCF / Yield Analysis" [level=2] [ref=e710]
+                  - paragraph [ref=e711]: 8 formulas in this view
+              - generic [ref=e712]:
+                - generic [ref=e713]: "8"
+                - img [ref=e714]
+            - generic [ref=e716]:
+              - article [ref=e717]:
+                - generic [ref=e718]:
+                  - generic [ref=e719]:
+                    - paragraph [ref=e720]: S5·F1
+                    - heading "F1 PV — Single CF" [level=3] [ref=e721]
+                  - generic [ref=e722]:
+                    - button "Open calculator for F1 PV — Single CF" [ref=e723]:
+                      - img [ref=e724]
+                    - button "Save formula" [ref=e726]:
+                      - img [ref=e727]
+                - paragraph [ref=e730]: PV = CF ÷ (1+r)^n
+              - article [ref=e731]:
+                - generic [ref=e732]:
+                  - generic [ref=e733]:
+                    - paragraph [ref=e734]: S5·F2
+                    - heading "F2 NPV" [level=3] [ref=e735]
+                  - generic [ref=e736]:
+                    - button "Open calculator for F2 NPV" [ref=e737]:
+                      - img [ref=e738]
+                    - button "Save formula" [ref=e740]:
+                      - img [ref=e741]
+                - paragraph [ref=e744]: NPV = Σ[CF_t÷(1+r)^t] − Investment
+              - article [ref=e745]:
+                - generic [ref=e746]:
+                  - generic [ref=e747]:
+                    - paragraph [ref=e748]: S5·F3
+                    - heading "F3 Terminal Value" [level=3] [ref=e749]
+                  - generic [ref=e750]:
+                    - button "Open calculator for F3 Terminal Value" [ref=e751]:
+                      - img [ref=e752]
+                    - button "Save formula" [ref=e754]:
+                      - img [ref=e755]
+                - paragraph [ref=e758]: TV = NOI_(n+1) ÷ Terminal Cap Rate
+              - article [ref=e759]:
+                - generic [ref=e760]:
+                  - generic [ref=e761]:
+                    - paragraph [ref=e762]: S5·F4
+                    - heading "F4 PV of Terminal Value" [level=3] [ref=e763]
+                  - generic [ref=e764]:
+                    - button "Open calculator for F4 PV of Terminal Value" [ref=e765]:
+                      - img [ref=e766]
+                    - button "Save formula" [ref=e768]:
+                      - img [ref=e769]
+                - paragraph [ref=e772]: PV_TV = TV ÷ (1+r)^n
+              - article [ref=e773]:
+                - generic [ref=e774]:
+                  - generic [ref=e775]:
+                    - paragraph [ref=e776]: S5·F5
+                    - heading "F5 Yield Approximation" [level=3] [ref=e777]
+                  - generic [ref=e778]:
+                    - button "Open calculator for F5 Yield Approximation" [ref=e779]:
+                      - img [ref=e780]
+                    - button "Save formula" [ref=e782]:
+                      - img [ref=e783]
+                - paragraph [ref=e786]: Discount Rate ≈ Cap Rate + Growth
+              - article [ref=e787]:
+                - generic [ref=e788]:
+                  - generic [ref=e789]:
+                    - paragraph [ref=e790]: S5·F6
+                    - heading "F6 PV — Level Annuity" [level=3] [ref=e791]
+                  - generic [ref=e792]:
+                    - button "Open calculator for F6 PV — Level Annuity" [ref=e793]:
+                      - img [ref=e794]
+                    - button "Save formula" [ref=e796]:
+                      - img [ref=e797]
+                - paragraph [ref=e800]: PV = PMT × [(1−(1+r)^−n) ÷ r]
+              - article [ref=e801]:
+                - generic [ref=e802]:
+                  - generic [ref=e803]:
+                    - paragraph [ref=e804]: S5·F7
+                    - heading "F7 PV — Growing Annuity" [level=3] [ref=e805]
+                  - generic [ref=e806]:
+                    - button "Open calculator for F7 PV — Growing Annuity" [ref=e807]:
+                      - img [ref=e808]
+                    - button "Save formula" [ref=e810]:
+                      - img [ref=e811]
+                - paragraph [ref=e814]: "PV = NOI₁ × {[1−((1+g)÷(1+r))^n]÷(r−g)}"
+              - article [ref=e815]:
+                - generic [ref=e816]:
+                  - generic [ref=e817]:
+                    - paragraph [ref=e818]: S5·F8
+                    - heading "F8 IRR" [level=3] [ref=e819]
+                  - generic [ref=e820]:
+                    - button "Open calculator for F8 IRR" [ref=e821]:
+                      - img [ref=e822]
+                    - button "Save formula" [ref=e824]:
+                      - img [ref=e825]
+                - paragraph [ref=e828]: Solve r where NPV = 0
+          - generic [ref=e829]:
+            - button "S6 Land Valuation 6 formulas in this view 6" [ref=e830]:
+              - generic [ref=e831]:
+                - generic [ref=e832]: S6
+                - generic [ref=e833]:
+                  - heading "Land Valuation" [level=2] [ref=e834]
+                  - paragraph [ref=e835]: 6 formulas in this view
+              - generic [ref=e836]:
+                - generic [ref=e837]: "6"
+                - img [ref=e838]
+            - generic [ref=e840]:
+              - article [ref=e841]:
+                - generic [ref=e842]:
+                  - generic [ref=e843]:
+                    - paragraph [ref=e844]: S6·F1
+                    - heading "F1 Land Residual (Simple)" [level=3] [ref=e845]
+                  - generic [ref=e846]:
+                    - button "Open calculator for F1 Land Residual (Simple)" [ref=e847]:
+                      - img [ref=e848]
+                    - button "Save formula" [ref=e850]:
+                      - img [ref=e851]
+                - paragraph [ref=e854]: LV = Total Value − RCNLD
+              - article [ref=e855]:
+                - generic [ref=e856]:
+                  - generic [ref=e857]:
+                    - paragraph [ref=e858]: S6·F2
+                    - heading "F2 Land Residual (Development)" [level=3] [ref=e859]
+                  - generic [ref=e860]:
+                    - button "Open calculator for F2 Land Residual (Development)" [ref=e861]:
+                      - img [ref=e862]
+                    - button "Save formula" [ref=e864]:
+                      - img [ref=e865]
+                - paragraph [ref=e868]: LV = Dev. Value − (Hard + Soft + Profit)
+              - article [ref=e869]:
+                - generic [ref=e870]:
+                  - generic [ref=e871]:
+                    - paragraph [ref=e872]: S6·F3
+                    - heading "F3 Allocation" [level=3] [ref=e873]
+                  - generic [ref=e874]:
+                    - button "Open calculator for F3 Allocation" [ref=e875]:
+                      - img [ref=e876]
+                    - button "Save formula" [ref=e878]:
+                      - img [ref=e879]
+                - paragraph [ref=e882]: LV = Sale Price × Land-to-Value %
+              - article [ref=e883]:
+                - generic [ref=e884]:
+                  - generic [ref=e885]:
+                    - paragraph [ref=e886]: S6·F4
+                    - heading "F4 FAR Buildable SF" [level=3] [ref=e887]
+                  - generic [ref=e888]:
+                    - button "Open calculator for F4 FAR Buildable SF" [ref=e889]:
+                      - img [ref=e890]
+                    - button "Save formula" [ref=e892]:
+                      - img [ref=e893]
+                - paragraph [ref=e896]: Buildable SF = Site SF × FAR
+              - article [ref=e897]:
+                - generic [ref=e898]:
+                  - generic [ref=e899]:
+                    - paragraph [ref=e900]: S6·F5
+                    - heading "F5 Price per SF" [level=3] [ref=e901]
+                  - generic [ref=e902]:
+                    - button "Open calculator for F5 Price per SF" [ref=e903]:
+                      - img [ref=e904]
+                    - button "Save formula" [ref=e906]:
+                      - img [ref=e907]
+                - paragraph [ref=e910]: $/SF = Sale Price ÷ Land Area (SF)
+              - article [ref=e911]:
+                - generic [ref=e912]:
+                  - generic [ref=e913]:
+                    - paragraph [ref=e914]: S6·F6
+                    - heading "F6 Acre/SF Conversion" [level=3] [ref=e915]
+                  - generic [ref=e916]:
+                    - button "Open calculator for F6 Acre/SF Conversion" [ref=e917]:
+                      - img [ref=e918]
+                    - button "Save formula" [ref=e920]:
+                      - img [ref=e921]
+                - paragraph [ref=e924]: 1 Acre = 43,560 SF
+          - generic [ref=e925]:
+            - button "S7 Ratio Studies 5 formulas in this view 5" [ref=e926]:
+              - generic [ref=e927]:
+                - generic [ref=e928]: S7
+                - generic [ref=e929]:
+                  - heading "Ratio Studies" [level=2] [ref=e930]
+                  - paragraph [ref=e931]: 5 formulas in this view
+              - generic [ref=e932]:
+                - generic [ref=e933]: "5"
+                - img [ref=e934]
+            - generic [ref=e936]:
+              - article [ref=e937]:
+                - generic [ref=e938]:
+                  - generic [ref=e939]:
+                    - paragraph [ref=e940]: S7·F1
+                    - heading "F1 Median" [level=3] [ref=e941]
+                  - generic [ref=e942]:
+                    - button "Open calculator for F1 Median" [ref=e943]:
+                      - img [ref=e944]
+                    - button "Save formula" [ref=e946]:
+                      - img [ref=e947]
+                - paragraph [ref=e950]: Middle value of ordered distribution
+              - article [ref=e951]:
+                - generic [ref=e952]:
+                  - generic [ref=e953]:
+                    - paragraph [ref=e954]: S7·F2
+                    - heading "F2 Mean" [level=3] [ref=e955]
+                  - generic [ref=e956]:
+                    - button "Open calculator for F2 Mean" [ref=e957]:
+                      - img [ref=e958]
+                    - button "Save formula" [ref=e960]:
+                      - img [ref=e961]
+                - paragraph [ref=e964]: Mean = Σ(Ratios) ÷ n
+              - article [ref=e965]:
+                - generic [ref=e966]:
+                  - generic [ref=e967]:
+                    - paragraph [ref=e968]: S7·F3
+                    - heading "F3 COD" [level=3] [ref=e969]
+                  - generic [ref=e970]:
+                    - button "Open calculator for F3 COD" [ref=e971]:
+                      - img [ref=e972]
+                    - button "Save formula" [ref=e974]:
+                      - img [ref=e975]
+                - paragraph [ref=e978]: COD = (Avg|Dev from Median|÷Median)×100
+              - article [ref=e979]:
+                - generic [ref=e980]:
+                  - generic [ref=e981]:
+                    - paragraph [ref=e982]: S7·F4
+                    - heading "F4 PRD" [level=3] [ref=e983]
+                  - generic [ref=e984]:
+                    - button "Open calculator for F4 PRD" [ref=e985]:
+                      - img [ref=e986]
+                    - button "Save formula" [ref=e988]:
+                      - img [ref=e989]
+                - paragraph [ref=e992]: PRD = Mean Ratio ÷ Median Ratio
+              - article [ref=e993]:
+                - generic [ref=e994]:
+                  - generic [ref=e995]:
+                    - paragraph [ref=e996]: S7·F5
+                    - heading "F5 Weighted Mean Ratio" [level=3] [ref=e997]
+                  - generic [ref=e998]:
+                    - button "Open calculator for F5 Weighted Mean Ratio" [ref=e999]:
+                      - img [ref=e1000]
+                    - button "Save formula" [ref=e1002]:
+                      - img [ref=e1003]
+                - paragraph [ref=e1006]: W.Mean = Σ(AV) ÷ Σ(Sale Prices)
+          - generic [ref=e1007]:
+            - button "S8 Industrial Valuation 3 formulas in this view 3" [ref=e1008]:
+              - generic [ref=e1009]:
+                - generic [ref=e1010]: S8
+                - generic [ref=e1011]:
+                  - heading "Industrial Valuation" [level=2] [ref=e1012]
+                  - paragraph [ref=e1013]: 3 formulas in this view
+              - generic [ref=e1014]:
+                - generic [ref=e1015]: "3"
+                - img [ref=e1016]
+            - generic [ref=e1018]:
+              - article [ref=e1019]:
+                - generic [ref=e1020]:
+                  - generic [ref=e1021]:
+                    - paragraph [ref=e1022]: S8·F1
+                    - heading "F1 Clear Height Rent Premium" [level=3] [ref=e1023]
+                  - generic [ref=e1024]:
+                    - button "Open calculator for F1 Clear Height Rent Premium" [ref=e1025]:
+                      - img [ref=e1026]
+                    - button "Save formula" [ref=e1028]:
+                      - img [ref=e1029]
+                - paragraph [ref=e1032]: Rent_adj = Base + (Premium/ft × Extra ft)
+              - article [ref=e1033]:
+                - generic [ref=e1034]:
+                  - generic [ref=e1035]:
+                    - paragraph [ref=e1036]: S8·F2
+                    - heading "F2 Cost Premium per Foot" [level=3] [ref=e1037]
+                  - generic [ref=e1038]:
+                    - button "Open calculator for F2 Cost Premium per Foot" [ref=e1039]:
+                      - img [ref=e1040]
+                    - button "Save formula" [ref=e1042]:
+                      - img [ref=e1043]
+                - paragraph [ref=e1046]: Cost Premium = $/ft × Extra ft × Bldg SF
+              - article [ref=e1047]:
+                - generic [ref=e1048]:
+                  - generic [ref=e1049]:
+                    - paragraph [ref=e1050]: S8·F3
+                    - heading "F3 Office Finish Adjustment" [level=3] [ref=e1051]
+                  - generic [ref=e1052]:
+                    - button "Open calculator for F3 Office Finish Adjustment" [ref=e1053]:
+                      - img [ref=e1054]
+                    - button "Save formula" [ref=e1056]:
+                      - img [ref=e1057]
+                - paragraph [ref=e1060]: Adj = (Subj% − Base%) × SF × Premium
+          - generic [ref=e1061]:
+            - button "S9 Legal Framework 2 formulas in this view 2" [ref=e1062]:
+              - generic [ref=e1063]:
+                - generic [ref=e1064]: S9
+                - generic [ref=e1065]:
+                  - heading "Legal Framework" [level=2] [ref=e1066]
+                  - paragraph [ref=e1067]: 2 formulas in this view
+              - generic [ref=e1068]:
+                - generic [ref=e1069]: "2"
+                - img [ref=e1070]
+            - generic [ref=e1072]:
+              - article [ref=e1073]:
+                - generic [ref=e1074]:
+                  - generic [ref=e1075]:
+                    - paragraph [ref=e1076]: S9·F1
+                    - heading "F1 CLR-Implied Market Value" [level=3] [ref=e1077]
+                  - generic [ref=e1078]:
+                    - button "Open calculator for F1 CLR-Implied Market Value" [ref=e1079]:
+                      - img [ref=e1080]
+                    - button "Save formula" [ref=e1082]:
+                      - img [ref=e1083]
+                - paragraph [ref=e1086]: MV ≈ Assessed Value ÷ CLR
+              - article [ref=e1087]:
+                - generic [ref=e1088]:
+                  - generic [ref=e1089]:
+                    - paragraph [ref=e1090]: S9·F2
+                    - heading "F2 Target Assessment" [level=3] [ref=e1091]
+                  - generic [ref=e1092]:
+                    - button "Open calculator for F2 Target Assessment" [ref=e1093]:
+                      - img [ref=e1094]
+                    - button "Save formula" [ref=e1096]:
+                      - img [ref=e1097]
+                - paragraph [ref=e1100]: Target AV = MV × Assessment Level %
+          - generic [ref=e1101]:
+            - button "S10 Ethics & Data 1 formula in this view 1" [ref=e1102]:
+              - generic [ref=e1103]:
+                - generic [ref=e1104]: S10
+                - generic [ref=e1105]:
+                  - heading "Ethics & Data" [level=2] [ref=e1106]
+                  - paragraph [ref=e1107]: 1 formula in this view
+              - generic [ref=e1108]:
+                - generic [ref=e1109]: "1"
+                - img [ref=e1110]
+            - article [ref=e1113]:
+              - generic [ref=e1114]:
+                - generic [ref=e1115]:
+                  - paragraph [ref=e1116]: S10·F1
+                  - heading "F1 Concession-Adjusted Price" [level=3] [ref=e1117]
+                - generic [ref=e1118]:
+                  - button "Open calculator for F1 Concession-Adjusted Price" [ref=e1119]:
+                    - img [ref=e1120]
+                  - button "Save formula" [ref=e1122]:
+                    - img [ref=e1123]
+              - paragraph [ref=e1126]: Adj. Price = Recorded Price − Concessions
+  - button "Open Next.js Dev Tools" [ref=e1132] [cursor=pointer]:
+    - img [ref=e1133]

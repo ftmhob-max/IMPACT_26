@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ComponentType } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase/client";
 import * as Icons from "@/components/ui/Icons";
+import { EmptyState, IconTile, PageHeader, StatusBadge } from "@/components/ui/LearnerPrimitives";
 import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -37,6 +38,7 @@ export function GlossaryViewer() {
   const [filterDomain, setFilterDomain] = useState("");
   const [activeLetter, setActiveLetter] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [authResolved, setAuthResolved] = useState(false);
   const letterRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // Resolve Firebase auth token
@@ -45,7 +47,11 @@ export function GlossaryViewer() {
       if (user) {
         const t = await user.getIdToken();
         setToken(t);
+      } else {
+        setToken(null);
+        setLoading(false);
       }
+      setAuthResolved(true);
     });
   }, []);
 
@@ -141,13 +147,23 @@ export function GlossaryViewer() {
   const letters = Object.keys(grouped).sort();
 
   const domains = [...new Set(terms.map((t) => t.domain).filter(Boolean))] as string[];
+  const notedCount = Object.keys(notes).length;
+  const favoriteCount = favoriteIds.size;
+  const resultLabel = filtered.length === 1 ? "1 term" : `${filtered.length} terms`;
+  const hasActiveFilters = Boolean(search.trim()) || Boolean(filterDomain);
 
   function scrollToLetter(letter: string) {
     setActiveLetter(letter);
     letterRefs.current[letter]?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  if (loading) {
+  function clearFilters() {
+    setSearch("");
+    setFilterDomain("");
+    setActiveLetter(null);
+  }
+
+  if (!authResolved || loading) {
     return (
       <div className="flex items-center justify-center py-20 gap-2 text-slate-400">
         <Icons.Loader size={20} className="animate-spin" />
@@ -156,50 +172,102 @@ export function GlossaryViewer() {
     );
   }
 
-  return (
-    <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-extrabold text-slate-950 tracking-tight">Glossary</h1>
-        <p className="mt-2 text-sm text-slate-500">
-          {terms.length} terms · Browse definitions, add your own notes to any term
-        </p>
+  if (!token) {
+    return (
+      <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 sm:py-8 lg:py-10">
+        <PageHeader
+          eyebrow="Glossary"
+          title="Concept reference"
+          description="Sign in to browse definitions, examples, private notes, and saved study markers."
+          icon={Icons.BookOpen}
+        />
+        <EmptyState
+          icon={Icons.Lock}
+          title="Sign in required"
+          description="Your glossary notes and saved terms are private to your learner account."
+        />
       </div>
+    );
+  }
 
-      {/* Search + filter */}
-      <div className="flex flex-wrap gap-3">
-        <div className="relative flex-1 min-w-56">
-          <Icons.Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-          <input
-            type="search"
-            placeholder="Search terms and definitions…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-4 py-2.5 text-sm text-slate-800 shadow-sm focus:border-[#185FA5] focus:outline-none focus:ring-1 focus:ring-[#185FA5]"
-          />
+  return (
+    <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 sm:py-8 lg:py-10">
+      <PageHeader
+        eyebrow="Glossary"
+        title="Concept reference"
+        description={`${terms.length} terms with definitions, examples, private notes, and saved study markers.`}
+        icon={Icons.BookOpen}
+      />
+
+      <section className="mb-5 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div className="grid border-b border-slate-100 sm:grid-cols-3">
+          <GlossaryMetric icon={Icons.BookOpen} label="Published terms" value={terms.length} />
+          <GlossaryMetric icon={Icons.BookMarked} label="Saved" value={favoriteCount} />
+          <GlossaryMetric icon={Icons.Pencil} label="My notes" value={notedCount} />
         </div>
-        {domains.length > 0 && (
-          <select
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 shadow-sm focus:border-[#185FA5] focus:outline-none"
-            value={filterDomain}
-            onChange={(e) => setFilterDomain(e.target.value)}
-          >
-            <option value="">All domains</option>
-            {domains.map((d) => <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>)}
-          </select>
-        )}
-      </div>
+
+        <div className="p-4 sm:p-5">
+          <div className="flex flex-col gap-3 lg:flex-row">
+            <div className="relative min-w-0 flex-1">
+              <Icons.Search size={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="search"
+                placeholder="Search by term, definition, or example..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-11 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-4 text-sm text-slate-800 outline-none transition focus:border-[#185FA5] focus:ring-2 focus:ring-[#E6F1FB]"
+              />
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              {domains.length > 0 && (
+                <select
+                  className="h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-[#185FA5] focus:ring-2 focus:ring-[#E6F1FB]"
+                  value={filterDomain}
+                  onChange={(e) => setFilterDomain(e.target.value)}
+                  aria-label="Filter glossary by domain"
+                >
+                  <option value="">All domains</option>
+                  {domains.map((d) => <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>)}
+                </select>
+              )}
+              <button
+                type="button"
+                onClick={clearFilters}
+                disabled={!hasActiveFilters}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold text-slate-600 transition hover:border-[#185FA5] hover:text-[#185FA5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Icons.X size={14} />
+                Clear
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs font-semibold text-slate-500">
+              Showing <span className="text-slate-900">{resultLabel}</span>
+              {filterDomain ? ` in ${filterDomain}` : ""}.
+            </p>
+            {hasActiveFilters && (
+              <div className="flex flex-wrap gap-1.5">
+                {search.trim() && <StatusBadge tone="blue">Search active</StatusBadge>}
+                {filterDomain && <StatusBadge tone="slate">{filterDomain}</StatusBadge>}
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
 
       {/* Alphabet jump bar */}
       {letters.length > 5 && (
-        <div className="flex flex-wrap gap-1">
+        <div className="sticky top-0 z-20 mb-5 rounded-lg border border-slate-200 bg-white/95 p-2 shadow-sm backdrop-blur">
+          <div className="flex flex-wrap gap-1">
           {letters.map((l) => (
             <button
               key={l}
               type="button"
               onClick={() => scrollToLetter(l)}
               className={cn(
-                "h-8 w-8 rounded-lg text-xs font-bold transition-colors",
+                "h-8 w-8 rounded-md text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2",
                 activeLetter === l
                   ? "bg-[#185FA5] text-white"
                   : "bg-white border border-slate-200 text-slate-600 hover:border-[#185FA5] hover:text-[#185FA5]"
@@ -208,29 +276,42 @@ export function GlossaryViewer() {
               {l}
             </button>
           ))}
+          </div>
         </div>
       )}
 
       {/* Empty state */}
       {filtered.length === 0 && (
-        <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-8 py-16 text-center">
-          <Icons.BookOpen size={40} className="mx-auto text-slate-200 mb-3" />
-          <p className="text-sm font-semibold text-slate-600">
-            {terms.length === 0 ? "No glossary terms have been published yet." : "No terms match your search."}
-          </p>
-        </div>
+        <EmptyState
+          icon={Icons.BookOpen}
+          title={terms.length === 0 ? "No glossary terms have been published yet." : "No terms match your search."}
+          description={terms.length === 0 ? "Published glossary entries will appear here for learners." : "Clear the current search or domain filter to get back to the full concept list."}
+          action={hasActiveFilters ? (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-[#185FA5] bg-white px-4 py-2 text-sm font-bold text-[#185FA5] shadow-sm transition-colors hover:bg-[#E6F1FB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2"
+            >
+              <Icons.X size={15} />
+              Clear filters
+            </button>
+          ) : null}
+        />
       )}
 
       {/* Term groups */}
-      <div className="space-y-8">
+      <div className="space-y-6">
         {letters.map((letter) => (
           <div
             key={letter}
             ref={(el) => { letterRefs.current[letter] = el; }}
           >
-            <div className="sticky top-0 z-10 -mx-4 px-4 py-2 bg-[#f7f8f6]/95 backdrop-blur">
-              <span className="text-lg font-extrabold text-[#185FA5]">{letter}</span>
-              <span className="ml-2 text-xs text-slate-400">{grouped[letter].length} term{grouped[letter].length !== 1 ? "s" : ""}</span>
+            <div className="mb-2 flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#b8d7f0] bg-[#E6F1FB] text-sm font-extrabold text-[#185FA5]">
+                {letter}
+              </div>
+              <div className="h-px flex-1 bg-slate-200" />
+              <span className="text-xs font-bold uppercase tracking-[0.08em] text-slate-400">{grouped[letter].length} term{grouped[letter].length !== 1 ? "s" : ""}</span>
             </div>
             <div className="space-y-2 mt-2">
               {grouped[letter].map((term) => (
@@ -248,6 +329,26 @@ export function GlossaryViewer() {
             </div>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+function GlossaryMetric({
+  icon,
+  label,
+  value,
+}: {
+  icon: ComponentType<Icons.IconProps>;
+  label: string;
+  value: number;
+}) {
+  return (
+    <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-4 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0">
+      <IconTile icon={icon} size={16} className="h-9 w-9" />
+      <div>
+        <p className="text-xl font-extrabold leading-none tracking-[-0.02em] text-slate-950">{value}</p>
+        <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-400">{label}</p>
       </div>
     </div>
   );
@@ -296,12 +397,12 @@ function TermCard({
   useEffect(() => () => { if (saveTimer.current) clearTimeout(saveTimer.current); }, []);
 
   return (
-    <div className={cn("rounded-2xl border bg-white shadow-sm overflow-hidden transition-shadow", expanded && "shadow-md border-[#185FA5]/20")}>
+    <div className={cn("overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition-all hover:border-slate-300", expanded && "border-[#b8d7f0] shadow-md")}>
       <div className="flex items-start gap-3 px-5 py-4">
         <button
           type="button"
           onClick={onToggle}
-          className="flex min-w-0 flex-1 items-start gap-3 text-left hover:bg-slate-50 transition-colors -m-2 rounded-xl p-2"
+          className="flex min-w-0 flex-1 items-start gap-3 rounded-lg p-1 text-left transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2"
         >
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
@@ -324,7 +425,7 @@ function TermCard({
               )}
             </div>
             {!expanded && (
-              <p className="text-sm text-slate-500 mt-0.5 line-clamp-1">{term.definition}</p>
+              <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-500">{term.definition}</p>
             )}
           </div>
           <div className="shrink-0 mt-0.5">
@@ -352,15 +453,15 @@ function TermCard({
         <div className="border-t border-slate-100 px-5 pb-5 pt-4 space-y-4">
           {/* Definition */}
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">Definition</p>
-            <p className="text-sm text-slate-800 leading-relaxed">{term.definition}</p>
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-slate-400 mb-1.5">Definition</p>
+            <p className="text-[15px] leading-7 text-slate-800">{term.definition}</p>
           </div>
 
           {/* Example */}
           {term.example && (
-            <div className="rounded-xl bg-[#E6F1FB]/40 border border-[#b8d7f0]/60 px-4 py-3">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-[#185FA5] mb-1">Example</p>
-              <p className="text-sm text-slate-700 italic leading-relaxed">{term.example}</p>
+            <div className="rounded-lg bg-[#E6F1FB]/45 border border-[#b8d7f0]/70 px-4 py-3">
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-[#185FA5] mb-1">Example</p>
+              <p className="text-sm leading-6 text-slate-700">{term.example}</p>
             </div>
           )}
 
@@ -370,7 +471,7 @@ function TermCard({
               <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">Related terms</p>
               <div className="flex flex-wrap gap-1.5">
                 {term.relatedTerms.map((t) => (
-                  <span key={t} className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600">{t}</span>
+                  <span key={t} className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">{t}</span>
                 ))}
               </div>
             </div>

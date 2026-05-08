@@ -13,6 +13,8 @@ interface QuizHeaderProps {
   isCompleting: boolean;
   answeredCount: number;
   total: number;
+  /** Optional slot for the calculator launcher button */
+  calculatorLauncher?: React.ReactNode;
 }
 
 const DOMAIN_PILLS = ["Math", "Appraisal", "PA Law", "Philly", "Admin", "Ethics"];
@@ -27,6 +29,7 @@ export function QuizHeader({
   onFinish,
   onBack,
   isCompleting,
+  calculatorLauncher,
 }: QuizHeaderProps) {
   const allAnswered = answeredCount === total && total > 0;
 
@@ -93,6 +96,9 @@ export function QuizHeader({
                 <Icons.Check size={13} className="text-green-300" />
                 {isCompleting ? "Finishing..." : "Finish exam"}
               </button>
+            )}
+            {calculatorLauncher && (
+              <div className="ml-auto">{calculatorLauncher}</div>
             )}
           </div>
         </div>

@@ -5,6 +5,7 @@ import * as Icons from "@/components/ui/Icons";
 import { adminFetch } from "@/lib/admin/client-fetch";
 import { cn } from "@/lib/utils";
 import { QuestionBankPicker } from "@/components/admin/QuestionBankPicker";
+import { CalculatorAccessSettings } from "@/components/admin/CalculatorAccessSettings";
 import {
   getQuizReadiness,
   type QuizDashboardSummary,
@@ -746,6 +747,21 @@ function QuizDetailPanel({
             </div>
           </div>
         )}
+
+        {/* Calculator Access Settings */}
+        <details className="rounded-xl border border-slate-200 overflow-hidden">
+          <summary className="flex cursor-pointer list-none items-center gap-2 bg-slate-50 px-4 py-3 text-xs font-bold text-slate-700 hover:bg-slate-100">
+            <Icons.Calculator size={13} className="text-[#185FA5]" />
+            Calculator settings
+            <Icons.ChevronDown size={12} className="ml-auto text-slate-400" />
+          </summary>
+          <div className="p-4">
+            <CalculatorAccessSettings
+              quizId={quiz.id}
+              initialSettingsJson={quiz.calculatorSettingsJson}
+            />
+          </div>
+        </details>
 
         {/* Readiness warnings */}
         {questions.length === 0 && (

@@ -21,6 +21,7 @@ export async function POST(
     const timeLimitSeconds: number | null = body.timeLimitSeconds ?? null;
     const shuffleQuestions: boolean = body.shuffleQuestions ?? false;
     const shuffleChoices: boolean = body.shuffleChoices ?? false;
+    const calculatorSettingsJson: string | null = body.calculatorSettingsJson ?? null;
 
     // ── Check for an existing in-progress attempt ───────────────────────────
     // Wrapped in try/catch: if the deployed connector is out of sync with the
@@ -53,21 +54,42 @@ export async function POST(
           .filter((r: { answeredAt: string | null }) => r.answeredAt !== null)
           .map((r: { question: { id: string } }) => r.question.id)
       );
-      const questionOrder: string[] = JSON.parse(existing.questionOrder);
-      const questionsMap = new Map(quizQuestions.map((qq: any) => [qq.question.id, qq.question]));
-      const orderedQuestions = questionOrder
-        .map((id) => questionsMap.get(id))
+
+      // Build a map keyed by both hyphenated and raw hex forms so UUID format
+      // differences between stored questionOrder and live DB IDs don't break resume.
+      const questionsMap = new Map<string, any>();
+      for (const qq of quizQuestions) {
+        const q = qq.question;
+        if (!q) continue;
+        const id: string = q.id;
+        questionsMap.set(id, q);
+        // Also register the stripped (no-hyphen) form as an alternate key
+        questionsMap.set(id.replace(/-/g, ""), q);
+      }
+
+      let storedOrder: string[] = [];
+      try { storedOrder = JSON.parse(existing.questionOrder); } catch { /* fall through */ }
+
+      const orderedQuestions = storedOrder
+        .map((id) => questionsMap.get(id) ?? questionsMap.get(id.replace(/-/g, "")))
         .filter(Boolean)
         .map((q: any) => ({ ...q, answerChoices: q.answerChoices_on_question ?? [] }));
+
+      // Fallback: if no IDs matched (format mismatch or stale data), present
+      // questions in their natural fetch order so the user isn't stuck at 0/0.
+      const finalQuestions = orderedQuestions.length > 0
+        ? orderedQuestions
+        : quizQuestions.map((qq: any) => ({ ...qq.question, answerChoices: qq.question.answerChoices_on_question ?? [] }));
 
       return NextResponse.json({
         attemptId: existing.id,
         quizId,
         isResume: true,
         timeLimitSeconds,
+        calculatorSettingsJson,
         answeredQuestionIds: [...answeredIds],
         previousResponses: existing.quizResponses_on_attempt ?? [],
-        questions: orderedQuestions.map(sanitizeQuestion),
+        questions: finalQuestions.map(sanitizeQuestion),
       });
     }
 
@@ -107,6 +129,7 @@ export async function POST(
       quizId,
       isResume: false,
       timeLimitSeconds,
+      calculatorSettingsJson,
       answeredQuestionIds: [],
       previousResponses: [],
       questions: questionList.map(sanitizeQuestion),

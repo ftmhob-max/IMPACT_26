@@ -9,6 +9,7 @@ import { DOMAINS, type Difficulty, type Domain } from "@/lib/utils";
 import type { SafeQuestion } from "@/lib/quiz-engine/sanitize";
 import type { EvaluationResult } from "@/lib/quiz-engine/evaluate";
 import * as Icons from "@/components/ui/Icons";
+import { useFormulaCalc } from "@/components/layout/FormulaCalculatorProvider";
 
 interface QuestionCardProps {
   question: SafeQuestion;
@@ -39,6 +40,24 @@ export function QuestionCard({
   const [panelData, setPanelData] = useState<EvaluationResult | null>(null);
   const [isPeeking, setIsPeeking] = useState(false);
   const domainConfig = DOMAINS[question.domain as Domain];
+
+  // Get calculator context (may be null if not inside FormulaCalculatorProvider)
+  let calcCtx: ReturnType<typeof useFormulaCalc> | null = null;
+  try { calcCtx = useFormulaCalc(); } catch { /* not in provider */ }
+
+  function handleOpenCalculator() {
+    if (!calcCtx || calcCtx.calculatorSettings?.enabled === false) return;
+    if (question.formulaRef) {
+      calcCtx.open(question.formulaRef);
+    } else {
+      calcCtx.open();
+    }
+  }
+
+  const canUseCalc =
+    calcCtx !== null &&
+    calcCtx.calculatorSettings?.enabled !== false &&
+    Boolean(question.formulaRef || true); // show button if calc is enabled, even without ref
 
   // Submission result: auto-open panel and sync panelData (real result wins)
   useEffect(() => {
@@ -160,6 +179,18 @@ export function QuestionCard({
               className="mt-1 w-full rounded-lg bg-[#185FA5] px-4 py-2 text-sm font-bold text-white transition-colors duration-150 hover:bg-[#0d3d6e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2 disabled:opacity-50"
             >
               {isSubmitting ? "Checking..." : "Submit answer"}
+            </button>
+          )}
+
+          {/* Use Calculator button — shown when quiz allows calculator */}
+          {canUseCalc && (
+            <button
+              type="button"
+              onClick={handleOpenCalculator}
+              className="mt-1 inline-flex items-center gap-1.5 rounded-md border border-[#b8d7f0] bg-[#f8fbff] px-3.5 py-1.5 text-left text-[11.5px] font-semibold text-[#185FA5] transition-colors hover:border-[#185FA5] hover:bg-[#E6F1FB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2"
+            >
+              <Icons.Calculator size={12} />
+              {question.formulaRef ? `${question.formulaRef} Calculator` : "Use Calculator"}
             </button>
           )}
 

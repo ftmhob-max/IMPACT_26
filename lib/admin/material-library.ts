@@ -149,7 +149,9 @@ function inferParser(material: RawSourceMaterial) {
   if (lowerType.includes("pdf") || lowerName.endsWith(".pdf")) return "pdf-parse";
   if (lowerType.includes("wordprocessingml") || lowerType.includes("msword") || lowerName.endsWith(".docx")) return "mammoth";
   if (lowerType.includes("csv") || lowerName.endsWith(".csv")) return "csv-parse";
-  if (lowerType.startsWith("audio/") || lowerType.startsWith("video/")) return "media";
+  if (lowerType.startsWith("audio/") || lowerType.startsWith("video/")) {
+    return material.extractedText?.trim() ? "whisper" : "media";
+  }
   return "text";
 }
 

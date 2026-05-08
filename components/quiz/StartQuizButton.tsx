@@ -9,6 +9,7 @@ interface StartQuizButtonProps {
   timeLimitSeconds?: number | null;
   shuffleQuestions?: boolean;
   shuffleChoices?: boolean;
+  calculatorSettingsJson?: string | null;
   label?: string;
 }
 
@@ -17,6 +18,7 @@ export function StartQuizButton({
   timeLimitSeconds = null,
   shuffleQuestions = false,
   shuffleChoices = false,
+  calculatorSettingsJson = null,
   label = "Start practice exam",
 }: StartQuizButtonProps) {
   const [loading, setLoading] = useState(false);
@@ -34,7 +36,7 @@ export function StartQuizButton({
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ timeLimitSeconds, shuffleQuestions, shuffleChoices }),
+        body: JSON.stringify({ timeLimitSeconds, shuffleQuestions, shuffleChoices, calculatorSettingsJson }),
       });
 
       if (res.status === 401) {

@@ -1,185 +1,123 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as Icons from "@/components/ui/Icons";
 import { cn } from "@/lib/utils";
 import { StatusBadge } from "@/components/ui/LearnerPrimitives";
-import {
-  getFormulaCalculator,
-  formatValue,
-  type FormulaCalculatorConfig,
-  type InputType,
-} from "@/lib/formula-calculator";
-import { evalExpression } from "@/lib/admin/formula-eval";
+import { useFormulaCalc } from "./FormulaCalculatorProvider";
+import { useFormulaCalculationEngine } from "@/lib/hooks/useFormulaCalculationEngine";
+import { FormulaVariableHelper } from "./FormulaVariableHelper";
+import { FormulaResultPanel } from "./FormulaResultPanel";
+import { FormulaSelector } from "./FormulaSelector";
+import { BasicCalculator } from "./BasicCalculator";
+import type { CalculationHistoryEntry } from "./FormulaCalculatorProvider";
 
-interface FormulaSlim {
-  id: string;
-  code: string;
-  name: string;
-  expression: string;
-  notes?: string | null;
-  calcMetaJson?: string | null;
-}
+type CalcMode = "formula" | "basic" | "scientific";
 
-interface SectionSlim {
-  code: string;
-  title: string;
-}
+/**
+ * Full-screen modal calculator for the Formula Compass page.
+ * Reads from FormulaCalculatorProvider — must be rendered inside the provider.
+ * Counterpart to FormulaCalculatorPopup (which is used in quizzes).
+ */
+export function FormulaCalculatorPanel() {
+  const {
+    isOpen,
+    activeFormula,
+    activeConfig,
+    activeFormulaCode,
+    showSelectorPane,
+    sections,
+    getValues,
+    setValues,
+    setResult,
+    addToHistory,
+    close,
+    toggleSelectorPane,
+    calculatorSettings,
+  } = useFormulaCalc();
 
-interface FormulaCalculatorPanelProps {
-  formula: FormulaSlim;
-  section: SectionSlim;
-  onClose(): void;
-}
-
-function parseNum(raw: string, defaultValue?: number): number {
-  const n = parseFloat(raw);
-  if (isNaN(n)) return defaultValue ?? NaN;
-  return n;
-}
-
-function InputTypePrefix({ type }: { type: InputType }) {
-  if (type === "currency") return <span className="pointer-events-none select-none px-2.5 text-slate-400 text-sm">$</span>;
-  if (type === "percentage") return null;
-  return null;
-}
-
-function InputTypeSuffix({ type }: { type: InputType }) {
-  if (type === "percentage") return <span className="pointer-events-none select-none px-2.5 text-slate-400 text-sm">%</span>;
-  return null;
-}
-
-export function FormulaCalculatorPanel({ formula, section, onClose }: FormulaCalculatorPanelProps) {
-  const config = useMemo((): FormulaCalculatorConfig | null => {
-    const staticConfig = getFormulaCalculator(formula.code);
-    if (staticConfig) return staticConfig;
-    if (formula.calcMetaJson) {
-      try {
-        const meta = JSON.parse(formula.calcMetaJson) as {
-          variables: FormulaCalculatorConfig["variables"];
-          expression: string;
-          output: FormulaCalculatorConfig["output"];
-          explanation?: string;
-        };
-        return {
-          variables: meta.variables,
-          output: meta.output,
-          explanation: meta.explanation,
-          compute: (vars) => {
-            try { return evalExpression(meta.expression, vars); } catch { return null; }
-          },
-        };
-      } catch { return null; }
-    }
-    return null;
-  }, [formula.code, formula.calcMetaJson]);
-
-  const [values, setValues] = useState<Record<string, string>>({});
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [result, setResult] = useState<number | null>(null);
-  const [calcError, setCalcError] = useState<string | null>(null);
-  const [hasCalculated, setHasCalculated] = useState(false);
-  const [showWork, setShowWork] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [calcMode, setCalcMode] = useState<CalcMode>("formula");
 
   const panelRef = useRef<HTMLDivElement>(null);
+  const firstFocusableRef = useRef<HTMLButtonElement>(null);
 
-  // Reset state whenever the formula changes
+  // ── Focus trap ──────────────────────────────────────────────────────────────
   useEffect(() => {
-    setValues({});
-    setErrors({});
-    setResult(null);
-    setCalcError(null);
-    setHasCalculated(false);
-    setShowWork(false);
-    setCopied(false);
-    panelRef.current?.focus();
-  }, [formula.id]);
+    if (!isOpen) return;
+    firstFocusableRef.current?.focus();
 
-  // Close on Escape
-  useEffect(() => {
+    function trapTab(e: KeyboardEvent) {
+      if (e.key !== "Tab") return;
+      const panel = panelRef.current;
+      if (!panel) return;
+      const focusable = Array.from(
+        panel.querySelectorAll<HTMLElement>(
+          'button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'
+        )
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        last.focus(); e.preventDefault();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        first.focus(); e.preventDefault();
+      }
+    }
+
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") close();
+      trapTab(e);
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [isOpen, close]);
 
-  function handleChange(key: string, value: string) {
-    setValues((prev) => ({ ...prev, [key]: value }));
-    if (errors[key]) setErrors((prev) => { const next = { ...prev }; delete next[key]; return next; });
-  }
+  // ── Calculation engine ──────────────────────────────────────────────────────
+  const initialValues = activeFormulaCode ? getValues(activeFormulaCode) : {};
+  const engine = useFormulaCalculationEngine(activeConfig, initialValues);
 
-  function handleReset() {
-    setValues({});
-    setErrors({});
-    setResult(null);
-    setCalcError(null);
-    setHasCalculated(false);
-    setShowWork(false);
-    setCopied(false);
-  }
+  // Sync values → provider (sessionStorage persistence)
+  useEffect(() => {
+    if (!activeFormulaCode) return;
+    setValues(activeFormulaCode, engine.values);
+  }, [engine.values, activeFormulaCode, setValues]);
 
-  function handleCalculate() {
-    if (!config) return;
-    const nextErrors: Record<string, string> = {};
-    const numVars: Record<string, number> = {};
+  // Sync result → provider
+  useEffect(() => {
+    if (!activeFormulaCode) return;
+    setResult(activeFormulaCode, engine.result?.value ?? null);
+  }, [engine.result, activeFormulaCode, setResult]);
 
-    for (const variable of config.variables) {
-      const raw = values[variable.key] ?? "";
-      if (raw.trim() === "") {
-        if (variable.required) {
-          nextErrors[variable.key] = "This field is required.";
-        } else {
-          numVars[variable.key] = variable.defaultValue ?? 0;
-        }
-        continue;
-      }
-      const n = parseNum(raw, variable.defaultValue);
-      if (isNaN(n)) {
-        nextErrors[variable.key] = "Enter a valid number.";
-        continue;
-      }
-      if (variable.min !== undefined && n < variable.min) {
-        nextErrors[variable.key] = `Must be at least ${variable.min}.`;
-        continue;
-      }
-      numVars[variable.key] = n;
-    }
+  // Add to history on successful calculation
+  useEffect(() => {
+    if (!engine.result || !activeFormula || !activeConfig) return;
+    const entry: CalculationHistoryEntry = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      timestamp: Date.now(),
+      formulaCode: activeFormula.code,
+      formulaName: activeFormula.name,
+      expressionText: activeFormula.expression,
+      values: { ...engine.values },
+      result: engine.result.value,
+      formattedResult: engine.result.formatted,
+      outputLabel: activeConfig.output.label,
+    };
+    addToHistory(entry);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [engine.result]);
 
-    setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) return;
+  if (!isOpen) return null;
 
-    const computed = config.compute(numVars);
-    setHasCalculated(true);
-    if (computed === null || !isFinite(computed)) {
-      setResult(null);
-      setCalcError("Cannot compute — check for division by zero or invalid inputs.");
-    } else {
-      setResult(computed);
-      setCalcError(null);
-    }
-  }
+  // Active section for the formula badge
+  const activeSection = sections.find((s) =>
+    s.formulas.some((f) => f.code === activeFormulaCode)
+  );
 
-  function handleCopy() {
-    if (result === null || !config) return;
-    navigator.clipboard.writeText(formatValue(result, config.output.type)).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  }
-
-  const workSteps =
-    config?.showWork && result !== null && hasCalculated
-      ? (() => {
-          const numVars: Record<string, number> = {};
-          for (const v of config.variables) {
-            const raw = values[v.key] ?? "";
-            numVars[v.key] = raw.trim() === "" ? (v.defaultValue ?? 0) : parseNum(raw, v.defaultValue ?? 0);
-          }
-          return config.showWork(numVars, result);
-        })()
-      : null;
+  const showSteps =
+    !calculatorSettings ||
+    calculatorSettings.showSteps === "always" ||
+    (calculatorSettings.showSteps === "after" && engine.hasCalculated);
 
   return (
     <>
@@ -187,201 +125,215 @@ export function FormulaCalculatorPanel({ formula, section, onClose }: FormulaCal
       <div
         className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
         aria-hidden="true"
-        onClick={onClose}
+        onClick={close}
       />
 
-      {/* Panel */}
+      {/* Panel — full-screen on mobile, centered modal on desktop */}
       <div
         ref={panelRef}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="calc-panel-title"
+        aria-label="Formula Calculator"
+        aria-labelledby="fcpanel-title"
         tabIndex={-1}
-        className="fixed inset-0 z-50 overflow-y-auto bg-white outline-none sm:inset-auto sm:left-1/2 sm:top-8 sm:mb-8 sm:w-full sm:max-w-[560px] sm:-translate-x-1/2 sm:rounded-xl sm:shadow-2xl sm:ring-1 sm:ring-slate-200"
+        className={cn(
+          // Mobile: full screen
+          "fixed inset-0 z-50 flex flex-col bg-white outline-none",
+          // Desktop: centered modal
+          "sm:inset-auto sm:left-1/2 sm:top-[5vh] sm:mb-8 sm:-translate-x-1/2",
+          "sm:w-full sm:max-w-[600px] sm:rounded-2xl sm:shadow-2xl sm:ring-1 sm:ring-black/10",
+          // Max height
+          "sm:max-h-[90vh]"
+        )}
       >
         {/* Header */}
-        <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-5 py-4">
-          <div className="min-w-0">
-            <StatusBadge tone="blue" className="mb-1.5">{section.code}</StatusBadge>
-            <h2 id="calc-panel-title" className="text-base font-extrabold leading-snug text-slate-900">
-              {formula.name}
-            </h2>
-            <p className="mt-0.5 text-xs text-slate-400">{formula.code}</p>
+        <div className="shrink-0 border-b border-slate-100">
+          <div className="flex items-start justify-between gap-3 px-5 py-3">
+            <div className="min-w-0 flex-1">
+              {calcMode === "formula" && activeSection && (
+                <StatusBadge tone="blue" className="mb-1">{activeSection.code}</StatusBadge>
+              )}
+              <h2
+                id="fcpanel-title"
+                className="text-sm font-extrabold leading-snug text-slate-900"
+              >
+                {calcMode === "formula"
+                  ? (activeFormula?.name ?? "Formula Calculator")
+                  : calcMode === "scientific" ? "Scientific Calculator" : "Basic Calculator"}
+              </h2>
+              {calcMode === "formula" && activeFormula && (
+                <p className="font-mono text-[10px] text-slate-400">{activeFormula.code}</p>
+              )}
+            </div>
+            <div className="flex shrink-0 items-center gap-1.5 pt-0.5">
+              {calcMode === "formula" && (
+                <button
+                  ref={firstFocusableRef}
+                  type="button"
+                  onClick={toggleSelectorPane}
+                  aria-pressed={showSelectorPane}
+                  title="Switch formula"
+                  className={cn(
+                    "flex h-7 w-7 items-center justify-center rounded-lg border transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-1",
+                    showSelectorPane
+                      ? "border-[#185FA5] bg-[#E6F1FB] text-[#185FA5]"
+                      : "border-slate-200 text-slate-500 hover:border-[#185FA5] hover:text-[#185FA5]"
+                  )}
+                >
+                  <Icons.ArrowLeftRight size={12} />
+                </button>
+              )}
+              <button
+                ref={calcMode !== "formula" ? firstFocusableRef : undefined}
+                type="button"
+                onClick={close}
+                aria-label="Close calculator"
+                className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-red-400 hover:text-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-1"
+              >
+                <Icons.X size={14} />
+              </button>
+            </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close calculator"
-            className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-[#185FA5] hover:text-[#185FA5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2"
-          >
-            <Icons.X size={16} />
-          </button>
+
+          {/* Mode tabs */}
+          <div className="flex gap-0 border-t border-slate-100">
+            {(["formula", "basic", "scientific"] as CalcMode[]).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => setCalcMode(mode)}
+                className={cn(
+                  "flex-1 py-2 text-[11px] font-bold capitalize transition border-b-2",
+                  calcMode === mode
+                    ? "border-[#185FA5] text-[#185FA5]"
+                    : "border-transparent text-slate-500 hover:text-slate-700"
+                )}
+              >
+                {mode === "formula" ? "Formula" : mode === "basic" ? "Basic" : "Scientific"}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="px-5 pb-8 pt-5 space-y-5">
-          {/* Formula expression */}
-          <div>
-            <p className="mb-1.5 text-xs font-extrabold uppercase tracking-[0.08em] text-[#185FA5]">Formula</p>
-            <p className="font-calc rounded-md border border-[#b8d7f0] bg-[#f8fbff] px-3 py-2.5 text-[13px] text-slate-800">
-              {formula.expression}
-            </p>
-          </div>
-
-          {/* No config fallback */}
-          {!config ? (
-            <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-5 py-6 text-center">
-              <Icons.Calculator size={28} className="mx-auto mb-2 text-slate-300" />
-              <p className="text-sm font-semibold text-slate-600">Interactive calculator coming soon</p>
-              <p className="mt-1 text-xs text-slate-400">
-                Use the formula expression above to compute this value manually.
-              </p>
+        {/* Body */}
+        <div className="flex min-h-0 flex-1 overflow-hidden">
+          {/* Basic / Scientific calculator */}
+          {calcMode !== "formula" && (
+            <div className="flex-1 overflow-y-auto px-4 pb-5 pt-4">
+              <BasicCalculator isScientific={calcMode === "scientific"} isVisible={isOpen} />
             </div>
-          ) : (
-            <>
-              {/* Explanation */}
-              {config.explanation && (
-                <p className="text-sm italic leading-relaxed text-slate-500">{config.explanation}</p>
-              )}
-
-              {/* Input fields */}
-              <div>
-                <p className="mb-3 text-xs font-extrabold uppercase tracking-[0.08em] text-[#185FA5]">Inputs</p>
-                <div className="space-y-3">
-                  {config.variables.map((variable) => {
-                    const hasError = Boolean(errors[variable.key]);
-                    return (
-                      <div key={variable.key}>
-                        <label
-                          htmlFor={`calc-input-${variable.key}`}
-                          className="mb-1 block text-xs font-semibold text-slate-700"
-                        >
-                          {variable.label}
-                          {!variable.required && (
-                            <span className="ml-1 font-normal text-slate-400">(optional)</span>
-                          )}
-                        </label>
-                        <div
-                          className={cn(
-                            "flex items-center overflow-hidden rounded-lg border bg-white transition",
-                            hasError
-                              ? "border-red-400 focus-within:ring-2 focus-within:ring-red-200"
-                              : "border-slate-200 focus-within:border-[#185FA5] focus-within:ring-2 focus-within:ring-[#E6F1FB]"
-                          )}
-                        >
-                          <InputTypePrefix type={variable.type} />
-                          <input
-                            id={`calc-input-${variable.key}`}
-                            type="number"
-                            inputMode="decimal"
-                            step="any"
-                            placeholder={variable.placeholder ?? ""}
-                            value={values[variable.key] ?? ""}
-                            onChange={(e) => handleChange(variable.key, e.target.value)}
-                            onKeyDown={(e) => { if (e.key === "Enter") handleCalculate(); }}
-                            className="min-w-0 flex-1 bg-transparent px-3 py-2 text-sm text-slate-800 outline-none placeholder:text-slate-300"
-                            aria-invalid={hasError}
-                            aria-describedby={hasError ? `error-${variable.key}` : variable.helperText ? `help-${variable.key}` : undefined}
-                          />
-                          <InputTypeSuffix type={variable.type} />
-                        </div>
-                        {hasError ? (
-                          <p id={`error-${variable.key}`} className="mt-1 text-xs font-medium text-red-500">
-                            {errors[variable.key]}
-                          </p>
-                        ) : variable.helperText ? (
-                          <p id={`help-${variable.key}`} className="mt-1 text-xs text-slate-400">
-                            {variable.helperText}
-                          </p>
-                        ) : null}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={handleCalculate}
-                  className="flex-1 rounded-lg bg-[#185FA5] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#134d88] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2"
-                >
-                  Calculate
-                </button>
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:border-[#185FA5] hover:text-[#185FA5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2"
-                >
-                  Reset
-                </button>
-              </div>
-
-              {/* Result */}
-              {hasCalculated && (
-                <div className="rounded-lg border border-slate-200 bg-[#f8fbff] px-5 py-4">
-                  {calcError ? (
-                    <div className="flex items-start gap-2 text-sm text-red-600">
-                      <Icons.AlertCircle size={16} className="mt-0.5 shrink-0" />
-                      <p>{calcError}</p>
-                    </div>
-                  ) : result !== null ? (
-                    <>
-                      <p className="text-xs font-extrabold uppercase tracking-[0.08em] text-[#185FA5]">
-                        {config.output.label}
-                      </p>
-                      <p className="mt-1 text-3xl font-extrabold tabular-nums text-slate-900">
-                        {formatValue(result, config.output.type)}
-                      </p>
-
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={handleCopy}
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-[#185FA5] hover:text-[#185FA5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2"
-                        >
-                          {copied ? (
-                            <><Icons.Check size={12} /> Copied!</>
-                          ) : (
-                            <><Icons.Copy size={12} /> Copy result</>
-                          )}
-                        </button>
-                        {workSteps && (
-                          <button
-                            type="button"
-                            onClick={() => setShowWork((v) => !v)}
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-[#185FA5] hover:text-[#185FA5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2"
-                          >
-                            {showWork ? <><Icons.ChevronUp size={12} /> Hide work</> : <><Icons.ChevronDown size={12} /> Show work</>}
-                          </button>
-                        )}
-                      </div>
-
-                      {/* Show work */}
-                      {showWork && workSteps && (
-                        <ol className="mt-4 space-y-2 border-t border-slate-200 pt-4">
-                          {workSteps.map((step, i) => (
-                            <li key={i} className="flex items-baseline justify-between gap-4 text-xs">
-                              <span className="text-slate-500">
-                                <span className="mr-1.5 font-bold text-slate-400">{i + 1}.</span>
-                                {step.label}
-                                <span className="ml-1.5 font-mono text-[10px] text-slate-400">= {step.expression}</span>
-                              </span>
-                              {step.value !== undefined && (
-                                <span className="shrink-0 font-mono font-semibold text-slate-800">
-                                  {isFinite(step.value) ? step.value.toLocaleString("en-US", { maximumFractionDigits: 6 }) : "∞"}
-                                </span>
-                              )}
-                            </li>
-                          ))}
-                        </ol>
-                      )}
-                    </>
-                  ) : null}
-                </div>
-              )}
-            </>
           )}
+
+          {/* Formula mode: selector pane + main area */}
+          {calcMode === "formula" && showSelectorPane && (
+            <div className="w-56 shrink-0 overflow-y-auto border-r border-slate-100 p-3 sm:w-60">
+              <FormulaSelector />
+            </div>
+          )}
+
+          {/* Formula mode — main calculator area */}
+          {calcMode === "formula" && <div className="min-w-0 flex-1 overflow-y-auto px-5 pb-6 pt-4 space-y-4">
+            {!activeFormula ? (
+              <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+                <Icons.Calculator size={32} className="text-slate-300" />
+                <p className="text-sm font-semibold text-slate-500">No formula selected</p>
+                <button
+                  type="button"
+                  onClick={toggleSelectorPane}
+                  className="rounded-lg bg-[#185FA5] px-4 py-2 text-sm font-bold text-white hover:bg-[#134d88] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5]"
+                >
+                  Pick a Formula
+                </button>
+              </div>
+            ) : (
+              <>
+                {/* Formula expression */}
+                <p className="font-calc rounded-lg border border-[#b8d7f0] bg-[#f8fbff] px-3.5 py-3 text-[13px] text-slate-800">
+                  {activeFormula.expression}
+                </p>
+
+                {/* Notes / explanation */}
+                {activeFormula.notes && (
+                  <p className="text-[12px] italic leading-relaxed text-slate-500">
+                    {activeFormula.notes}
+                  </p>
+                )}
+
+                {!activeConfig ? (
+                  <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-slate-200 bg-slate-50 py-8 text-center">
+                    <Icons.Calculator size={26} className="text-slate-300" />
+                    <p className="text-sm font-semibold text-slate-500">Interactive calculator coming soon</p>
+                    <p className="text-xs text-slate-400">Use the expression above to compute manually.</p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Config explanation */}
+                    {activeConfig.explanation && (
+                      <p className="text-[12px] italic leading-relaxed text-slate-500">
+                        {activeConfig.explanation}
+                      </p>
+                    )}
+
+                    {/* Input fields */}
+                    <div className="space-y-3">
+                      {activeConfig.variables.map((variable) => (
+                        <FormulaVariableHelper
+                          key={variable.key}
+                          variable={variable}
+                          value={engine.values[variable.key] ?? ""}
+                          onChange={(val) => engine.handleChange(variable.key, val)}
+                          onBlur={() => engine.handleBlurValidate(variable.key)}
+                          onEnter={engine.handleCalculate}
+                          error={engine.errors[variable.key]}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={engine.handleCalculate}
+                        className="flex-1 rounded-lg bg-[#185FA5] py-2.5 text-sm font-bold text-white transition hover:bg-[#134d88] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2"
+                      >
+                        Calculate
+                      </button>
+                      <button
+                        type="button"
+                        onClick={engine.handleReset}
+                        className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:border-[#185FA5] hover:text-[#185FA5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2"
+                      >
+                        Reset
+                      </button>
+                    </div>
+
+                    {/* Calculation error */}
+                    {engine.hasCalculated && engine.calcError && (
+                      <div
+                        role="alert"
+                        className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-xs text-red-600"
+                      >
+                        <Icons.AlertCircle size={13} className="mt-0.5 shrink-0" />
+                        {engine.calcError}
+                      </div>
+                    )}
+
+                    {/* Result */}
+                    {engine.hasCalculated && engine.result && (
+                      <FormulaResultPanel
+                        config={activeConfig}
+                        values={engine.values}
+                        engineResult={engine.result}
+                        showStepsDefault={showSteps}
+                        copyState={engine.copyState}
+                        onCopy={engine.handleCopy}
+                      />
+                    )}
+                  </>
+                )}
+              </>
+            )}
+          </div>}
         </div>
       </div>
     </>

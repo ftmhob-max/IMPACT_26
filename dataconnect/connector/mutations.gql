@@ -133,6 +133,14 @@ mutation DeleteSourceMaterial($id: UUID!) @auth(level: NO_ACCESS) {
   sourceMaterial_delete(id: $id)
 }
 
+mutation UpdateSourceMaterial($id: UUID!, $extractedText: String, $metadataJson: String, $status: String) @auth(level: NO_ACCESS) {
+  sourceMaterial_update(id: $id, data: {
+    extractedText: $extractedText
+    metadataJson: $metadataJson
+    status: $status
+  })
+}
+
 mutation CreateSourceMaterial($id: UUID!, $title: String!, $fileName: String!, $fileType: String!, $storagePath: String!, $downloadUrl: String, $extractedText: String, $metadataJson: String, $status: String!, $uploadedById: String) @auth(level: NO_ACCESS) {
   sourceMaterial_insert(data: {
     id: $id
@@ -250,6 +258,10 @@ mutation AddQuestionToQuiz($quizId: UUID!, $questionId: UUID!, $position: Int!, 
     position: $position
     pointValue: $pointValue
   })
+}
+
+mutation UpdateQuizCalculatorSettings($id: UUID!, $calculatorSettingsJson: String) @auth(level: NO_ACCESS) {
+  quiz_update(id: $id, data: { calculatorSettingsJson: $calculatorSettingsJson })
 }
 
 mutation UpdateQuizStatus($id: UUID!, $status: String!, $updatedById: String, $publishedAt: Date) @auth(level: NO_ACCESS) {
