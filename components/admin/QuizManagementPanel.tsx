@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
+import { type DragEvent, type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import * as Icons from "@/components/ui/Icons";
 import { adminFetch } from "@/lib/admin/client-fetch";
 import { cn } from "@/lib/utils";
@@ -31,6 +31,28 @@ function shuffleChoiceContent<T extends ChoiceContent>(arr: T[]): T[] {
     [content[i], content[j]] = [content[j], content[i]];
   }
   return arr.map((c, idx) => ({ ...c, ...content[idx] }));
+}
+
+function reorderChoiceContent<T extends ChoiceContent>(arr: T[], fromIndex: number, toIndex: number): T[] {
+  if (
+    fromIndex === toIndex ||
+    fromIndex < 0 ||
+    toIndex < 0 ||
+    fromIndex >= arr.length ||
+    toIndex >= arr.length
+  ) {
+    return arr;
+  }
+
+  const content = arr.map(({ choiceText, isCorrect, explanation }) => ({
+    choiceText,
+    isCorrect,
+    explanation,
+  }));
+  const [moved] = content.splice(fromIndex, 1);
+  content.splice(toIndex, 0, moved);
+
+  return arr.map((choice, idx) => ({ ...choice, ...content[idx] }));
 }
 
 async function saveChoices(questionId: string, choices: Array<{ id: string; choiceText: string; isCorrect: boolean; explanation?: string | null }>): Promise<boolean> {
@@ -113,6 +135,17 @@ export function QuizManagementPanel({
   const [notice, setNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [selectedQuizId, setSelectedQuizId] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [summaryFilter, setSummaryFilter] = useState<
+    "all" | "published" | "review" | "draft" | "ready" | "attention"
+  >("all");
+  const filteredQuizzes = useMemo(() => {
+    if (summaryFilter === "all") return quizzes;
+    if (summaryFilter === "published") return quizzes.filter((quiz) => quiz.status === "published");
+    if (summaryFilter === "review") return quizzes.filter((quiz) => quiz.status === "review");
+    if (summaryFilter === "draft") return quizzes.filter((quiz) => quiz.status === "draft");
+    if (summaryFilter === "ready") return quizzes.filter((quiz) => quiz.readiness === "ready");
+    return quizzes.filter((quiz) => quiz.readiness === "attention" || quiz.readiness === "empty");
+  }, [quizzes, summaryFilter]);
   const selectedQuiz = useMemo(
     () => quizzes.find((quiz) => quiz.id === selectedQuizId) ?? null,
     [quizzes, selectedQuizId]
@@ -209,12 +242,12 @@ export function QuizManagementPanel({
   return (
     <div className="space-y-5">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
-        <SummaryCard label="Total quizzes" value={String(quizTotals.total)} tone="blue" icon={<Icons.ClipboardList size={14} />} />
-        <SummaryCard label="Published" value={String(quizTotals.published)} tone="emerald" />
-        <SummaryCard label="In review" value={String(quizTotals.review)} tone="amber" />
-        <SummaryCard label="Drafts" value={String(quizTotals.draft)} tone="slate" />
-        <SummaryCard label="Ready to run" value={String(quizTotals.ready)} tone="emerald" />
-        <SummaryCard label="Need attention" value={String(quizTotals.attention + quizTotals.empty)} tone="amber" />
+        <SummaryCard label="Total quizzes" value={String(quizTotals.total)} tone="blue" icon={<Icons.ClipboardList size={14} />} active={summaryFilter === "all"} onClick={() => setSummaryFilter("all")} />
+        <SummaryCard label="Published" value={String(quizTotals.published)} tone="emerald" active={summaryFilter === "published"} onClick={() => setSummaryFilter(summaryFilter === "published" ? "all" : "published")} />
+        <SummaryCard label="In review" value={String(quizTotals.review)} tone="amber" active={summaryFilter === "review"} onClick={() => setSummaryFilter(summaryFilter === "review" ? "all" : "review")} />
+        <SummaryCard label="Drafts" value={String(quizTotals.draft)} tone="slate" active={summaryFilter === "draft"} onClick={() => setSummaryFilter(summaryFilter === "draft" ? "all" : "draft")} />
+        <SummaryCard label="Ready to run" value={String(quizTotals.ready)} tone="emerald" active={summaryFilter === "ready"} onClick={() => setSummaryFilter(summaryFilter === "ready" ? "all" : "ready")} />
+        <SummaryCard label="Need attention" value={String(quizTotals.attention + quizTotals.empty)} tone="amber" active={summaryFilter === "attention"} onClick={() => setSummaryFilter(summaryFilter === "attention" ? "all" : "attention")} />
       </div>
 
       <div className="flex gap-5">
@@ -232,8 +265,13 @@ export function QuizManagementPanel({
             <div className="flex items-center gap-2">
               <Icons.LayoutDashboard size={18} className="text-[#185FA5]" />
               <h2 className="text-sm font-bold text-slate-900">Quizzes</h2>
-              <span className="text-xs text-slate-400">({quizzes.length})</span>
+              <span className="text-xs text-slate-400">({filteredQuizzes.length})</span>
             </div>
+            {summaryFilter !== "all" && (
+              <button type="button" onClick={() => setSummaryFilter("all")} className="text-xs font-semibold text-[#185FA5] hover:underline">
+                Clear filter
+              </button>
+            )}
             <button type="button" onClick={() => setShowCreate((v) => !v)} className="admin-action secondary flex items-center gap-1.5 text-xs">
               <Icons.Plus size={13} />
               New quiz
@@ -280,13 +318,13 @@ export function QuizManagementPanel({
           <div className="divide-y divide-slate-100">
             {loading ? (
               <p className="px-4 py-6 text-center text-sm text-slate-400">Loading…</p>
-            ) : quizzes.length === 0 ? (
+            ) : filteredQuizzes.length === 0 ? (
               <div className="px-4 py-8 text-center">
                 <Icons.ClipboardList size={32} className="mx-auto text-slate-200 mb-2" />
-                <p className="text-sm text-slate-400">No quizzes yet.</p>
+                <p className="text-sm text-slate-400">No quizzes match the selected summary filter.</p>
               </div>
             ) : (
-              quizzes.map((quiz) => (
+              filteredQuizzes.map((quiz) => (
                 <QuizListRow
                   key={quiz.id}
                   quiz={quiz}
@@ -798,8 +836,15 @@ function QuizQuestionCard({
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [draft, setDraft] = useState<QuizQuestion>({ ...question });
+  const [draggedChoiceId, setDraggedChoiceId] = useState<string | null>(null);
+  const [dropChoiceId, setDropChoiceId] = useState<string | null>(null);
 
-  useEffect(() => { setDraft({ ...question }); setEditing(false); }, [question]);
+  useEffect(() => {
+    setDraft({ ...question });
+    setEditing(false);
+    setDraggedChoiceId(null);
+    setDropChoiceId(null);
+  }, [question]);
 
   const hasCorrect = draft.answerChoices_on_question.some((c) => c.isCorrect);
   const sortedChoices = [...draft.answerChoices_on_question].sort((a, b) => a.position - b.position);
@@ -823,15 +868,13 @@ function QuizQuestionCard({
     }));
   }
 
-  function moveChoice(idx: number, dir: -1 | 1) {
-    const target = idx + dir;
-    if (target < 0 || target >= sortedChoices.length) return;
+  function reorderChoices(fromIndex: number, toIndex: number) {
     setDraft((prev) => ({
       ...prev,
-      answerChoices_on_question: swapChoiceContent(
+      answerChoices_on_question: reorderChoiceContent(
         [...prev.answerChoices_on_question].sort((a, b) => a.position - b.position),
-        idx,
-        target
+        fromIndex,
+        toIndex
       ),
     }));
   }
@@ -843,6 +886,46 @@ function QuizQuestionCard({
         [...prev.answerChoices_on_question].sort((a, b) => a.position - b.position)
       ),
     }));
+  }
+
+  function handleDragStart(choiceId: string, event: DragEvent<HTMLButtonElement>) {
+    event.stopPropagation();
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", choiceId);
+    setDraggedChoiceId(choiceId);
+    setDropChoiceId(choiceId);
+  }
+
+  function handleDragOver(choiceId: string, event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    if (draggedChoiceId && draggedChoiceId !== choiceId) {
+      setDropChoiceId(choiceId);
+    }
+  }
+
+  function handleDrop(choiceId: string, event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+    const sourceId = draggedChoiceId ?? event.dataTransfer.getData("text/plain");
+    if (!sourceId || sourceId === choiceId) {
+      setDraggedChoiceId(null);
+      setDropChoiceId(null);
+      return;
+    }
+
+    const fromIndex = sortedChoices.findIndex((choice) => choice.id === sourceId);
+    const toIndex = sortedChoices.findIndex((choice) => choice.id === choiceId);
+    if (fromIndex >= 0 && toIndex >= 0) {
+      reorderChoices(fromIndex, toIndex);
+    }
+    setDraggedChoiceId(null);
+    setDropChoiceId(null);
+  }
+
+  function handleDragEnd() {
+    setDraggedChoiceId(null);
+    setDropChoiceId(null);
   }
 
   async function handleSave() {
@@ -927,26 +1010,27 @@ function QuizQuestionCard({
                 </div>
                 <div className="space-y-2">
                   {sortedChoices.map((c, cidx) => (
-                    <div key={c.id} className="grid grid-cols-[20px_24px_1fr_auto] items-start gap-2">
-                      {/* Up/down */}
-                      <div className="flex flex-col gap-0.5 mt-1">
-                        <button
-                          type="button"
-                          onClick={() => moveChoice(cidx, -1)}
-                          disabled={cidx === 0}
-                          className="flex h-4 w-4 items-center justify-center rounded text-slate-300 hover:bg-slate-200 hover:text-slate-600 disabled:opacity-20"
-                        >
-                          <Icons.ChevronUp size={10} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => moveChoice(cidx, 1)}
-                          disabled={cidx === sortedChoices.length - 1}
-                          className="flex h-4 w-4 items-center justify-center rounded text-slate-300 hover:bg-slate-200 hover:text-slate-600 disabled:opacity-20"
-                        >
-                          <Icons.ChevronDown size={10} />
-                        </button>
-                      </div>
+                    <div
+                      key={c.id}
+                      className={cn(
+                        "grid grid-cols-[28px_24px_1fr_auto] items-start gap-2 rounded-lg border border-transparent px-2 py-2 transition-colors",
+                        draggedChoiceId === c.id && "bg-slate-100 opacity-70",
+                        dropChoiceId === c.id && draggedChoiceId !== c.id && "border-[#185FA5] bg-[#E6F1FB]/50"
+                      )}
+                      onDragOver={(event) => handleDragOver(c.id, event)}
+                      onDrop={(event) => handleDrop(c.id, event)}
+                    >
+                      <button
+                        type="button"
+                        draggable
+                        onDragStart={(event) => handleDragStart(c.id, event)}
+                        onDragEnd={handleDragEnd}
+                        onClick={(event) => event.preventDefault()}
+                        className="mt-1.5 flex h-5 w-5 cursor-grab items-center justify-center rounded text-slate-400 hover:bg-slate-200 hover:text-slate-700 active:cursor-grabbing"
+                        title="Drag to reorder answer choice"
+                      >
+                        <Icons.GripVertical size={12} />
+                      </button>
                       <button
                         type="button"
                         onClick={() => toggleCorrect(c.id)}
@@ -1000,11 +1084,15 @@ function SummaryCard({
   value,
   tone,
   icon,
+  active,
+  onClick,
 }: {
   label: string;
   value: string;
   tone: "blue" | "emerald" | "amber" | "slate";
   icon?: ReactNode;
+  active?: boolean;
+  onClick?: () => void;
 }) {
   const tones: Record<string, string> = {
     blue: "border-[#185FA5]/15 bg-[#E6F1FB]/50 text-[#185FA5]",
@@ -1013,13 +1101,21 @@ function SummaryCard({
     slate: "border-slate-200 bg-white text-slate-700",
   };
   return (
-    <div className={cn("rounded-xl border px-4 py-3 shadow-sm", tones[tone])}>
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "rounded-xl border px-4 py-3 text-left shadow-sm transition hover:-translate-y-0.5",
+        tones[tone],
+        active && "ring-2 ring-[#185FA5]/25"
+      )}
+    >
       <div className="flex items-center gap-2">
         {icon}
         <p className="text-[10px] font-bold uppercase tracking-[0.08em]">{label}</p>
       </div>
       <p className="mt-2 text-2xl font-extrabold">{value}</p>
-    </div>
+    </button>
   );
 }
 

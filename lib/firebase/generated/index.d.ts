@@ -181,6 +181,7 @@ export interface AdminListSourceMaterialsData {
     fileType: string;
     storagePath: string;
     downloadUrl?: string | null;
+    extractedText?: string | null;
     metadataJson?: string | null;
     status: string;
     createdAt: DateString;
@@ -199,6 +200,33 @@ export interface AdminListSourceMaterialsData {
         createdAt: DateString;
         completedAt?: DateString | null;
       } & IngestionJob_Key)[];
+        contentSourceLinks_on_sourceMaterial: ({
+          id: UUIDString;
+          referenceLabel?: string | null;
+          createdAt: DateString;
+          course?: {
+            id: UUIDString;
+            title: string;
+          } & Course_Key;
+            lesson?: {
+              id: UUIDString;
+              title: string;
+              module: {
+                id: UUIDString;
+                title: string;
+                course: {
+                  id: UUIDString;
+                  title: string;
+                } & Course_Key;
+              } & Module_Key;
+            } & Lesson_Key;
+              question?: {
+                id: UUIDString;
+                questionText: string;
+                domain: string;
+                difficulty: string;
+              } & Question_Key;
+        } & ContentSourceLink_Key)[];
   } & SourceMaterial_Key)[];
 }
 
@@ -300,6 +328,7 @@ export interface CreateFormulaVariables {
   expression: string;
   notes?: string | null;
   position: number;
+  calcMetaJson?: string | null;
 }
 
 export interface CreateIngestionJobData {
@@ -433,11 +462,19 @@ export interface DeleteAnswerChoicesForQuestionVariables {
   questionId: UUIDString;
 }
 
+export interface DeleteFormulaData {
+  formula_delete?: Formula_Key | null;
+}
+
 export interface DeleteFormulaSectionData {
   formulaSection_delete?: FormulaSection_Key | null;
 }
 
 export interface DeleteFormulaSectionVariables {
+  id: UUIDString;
+}
+
+export interface DeleteFormulaVariables {
   id: UUIDString;
 }
 
@@ -731,6 +768,7 @@ export interface GetFormulaSectionsData {
       name: string;
       expression: string;
       notes?: string | null;
+      calcMetaJson?: string | null;
     } & Formula_Key)[];
   } & FormulaSection_Key)[];
 }
@@ -1122,6 +1160,31 @@ export interface UpdateCourseVariables {
   isPublished?: boolean | null;
   updatedById?: string | null;
   publishedAt?: DateString | null;
+}
+
+export interface UpdateFormulaData {
+  formula_update?: Formula_Key | null;
+}
+
+export interface UpdateFormulaSectionData {
+  formulaSection_update?: FormulaSection_Key | null;
+}
+
+export interface UpdateFormulaSectionVariables {
+  id: UUIDString;
+  code?: string | null;
+  title?: string | null;
+  position?: number | null;
+}
+
+export interface UpdateFormulaVariables {
+  id: UUIDString;
+  code?: string | null;
+  name?: string | null;
+  expression?: string | null;
+  notes?: string | null;
+  calcMetaJson?: string | null;
+  position?: number | null;
 }
 
 export interface UpdateLessonData {
@@ -1758,6 +1821,42 @@ export const createFormulaRef: CreateFormulaRef;
 
 export function createFormula(vars: CreateFormulaVariables): MutationPromise<CreateFormulaData, CreateFormulaVariables>;
 export function createFormula(dc: DataConnect, vars: CreateFormulaVariables): MutationPromise<CreateFormulaData, CreateFormulaVariables>;
+
+interface UpdateFormulaRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateFormulaVariables): MutationRef<UpdateFormulaData, UpdateFormulaVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: UpdateFormulaVariables): MutationRef<UpdateFormulaData, UpdateFormulaVariables>;
+  operationName: string;
+}
+export const updateFormulaRef: UpdateFormulaRef;
+
+export function updateFormula(vars: UpdateFormulaVariables): MutationPromise<UpdateFormulaData, UpdateFormulaVariables>;
+export function updateFormula(dc: DataConnect, vars: UpdateFormulaVariables): MutationPromise<UpdateFormulaData, UpdateFormulaVariables>;
+
+interface DeleteFormulaRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteFormulaVariables): MutationRef<DeleteFormulaData, DeleteFormulaVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteFormulaVariables): MutationRef<DeleteFormulaData, DeleteFormulaVariables>;
+  operationName: string;
+}
+export const deleteFormulaRef: DeleteFormulaRef;
+
+export function deleteFormula(vars: DeleteFormulaVariables): MutationPromise<DeleteFormulaData, DeleteFormulaVariables>;
+export function deleteFormula(dc: DataConnect, vars: DeleteFormulaVariables): MutationPromise<DeleteFormulaData, DeleteFormulaVariables>;
+
+interface UpdateFormulaSectionRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateFormulaSectionVariables): MutationRef<UpdateFormulaSectionData, UpdateFormulaSectionVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: UpdateFormulaSectionVariables): MutationRef<UpdateFormulaSectionData, UpdateFormulaSectionVariables>;
+  operationName: string;
+}
+export const updateFormulaSectionRef: UpdateFormulaSectionRef;
+
+export function updateFormulaSection(vars: UpdateFormulaSectionVariables): MutationPromise<UpdateFormulaSectionData, UpdateFormulaSectionVariables>;
+export function updateFormulaSection(dc: DataConnect, vars: UpdateFormulaSectionVariables): MutationPromise<UpdateFormulaSectionData, UpdateFormulaSectionVariables>;
 
 interface DeleteFormulasForSectionRef {
   /* Allow users to create refs without passing in DataConnect */

@@ -9,7 +9,11 @@ import { LessonStudentPreview } from "@/components/admin/LessonStudentPreview";
 import { LessonQuizPanel } from "@/components/admin/LessonQuizPanel";
 import { VideoUpload } from "@/components/admin/VideoUpload";
 import { VideoLinkInput } from "@/components/admin/VideoLinkInput";
-import { getLessonReadinessIssues, parseStructuredLessonContent } from "@/lib/lessons/structured-content";
+import {
+  getLessonReadinessIssues,
+  getLessonReadinessReport,
+  parseStructuredLessonContent,
+} from "@/lib/lessons/structured-content";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -58,7 +62,7 @@ interface CourseData {
 }
 
 type TabId = "content" | "questions" | "resources" | "settings";
-type PreviewMode = "edit" | "preview";
+type PreviewMode = "edit" | "split" | "preview";
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
@@ -76,7 +80,7 @@ export function LessonPlanDetailView({
   const [expandedModules, setExpandedModules] = useState<Set<string>>(
     new Set(initialModules.map((m) => m.id))
   );
-  const [mode, setMode] = useState<PreviewMode>("edit");
+  const [mode, setMode] = useState<PreviewMode>("split");
   const [activeTab, setActiveTab] = useState<TabId>("content");
   const [notice, setNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [draftContentByLessonId, setDraftContentByLessonId] = useState<Record<string, string>>({});
@@ -116,7 +120,7 @@ export function LessonPlanDetailView({
 
   function selectLesson(lessonId: string) {
     setSelectedLessonId(lessonId);
-    setMode("edit");
+    setMode("split");
     setActiveTab("content");
   }
 
@@ -215,7 +219,7 @@ export function LessonPlanDetailView({
         </div>
         {/* Mode toggle */}
         <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 text-xs font-semibold">
-          {(["edit", "preview"] as const).map((m) => (
+          {(["edit", "split", "preview"] as const).map((m) => (
             <button
               key={m}
               type="button"
@@ -227,8 +231,8 @@ export function LessonPlanDetailView({
                   : "text-slate-500 hover:text-slate-700"
               )}
             >
-              {m === "edit" ? <Icons.Pencil size={12} /> : <Icons.Eye size={12} />}
-              {m === "edit" ? "Edit" : "Preview"}
+              {m === "edit" ? <Icons.Pencil size={12} /> : m === "split" ? <Icons.LayoutDashboard size={12} /> : <Icons.Eye size={12} />}
+              {m === "edit" ? "Edit" : m === "split" ? "Split view" : "Preview"}
             </button>
           ))}
         </div>
@@ -331,22 +335,12 @@ function ModuleSidebarSection({
       {expanded && (
         <div className="ml-4 space-y-0.5 mt-0.5">
           {module.lessons.map((lesson) => (
-            <button
+            <LessonSidebarButton
               key={lesson.id}
-              type="button"
-              onClick={() => onSelectLesson(lesson.id)}
-              className={cn(
-                "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs transition-colors",
-                selectedLessonId === lesson.id
-                  ? "bg-[#E6F1FB] text-[#185FA5] font-semibold"
-                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-              )}
-            >
-              <LessonStatusDot lesson={lesson} />
-              <LessonTypeIcon type={lesson.lessonType} size={11} />
-              <span className="flex-1 truncate">{lesson.title}</span>
-              <LessonTypeBadgeTiny type={lesson.lessonType} />
-            </button>
+              lesson={lesson}
+              selected={selectedLessonId === lesson.id}
+              onSelect={() => onSelectLesson(lesson.id)}
+            />
           ))}
           <button
             type="button"
@@ -359,6 +353,60 @@ function ModuleSidebarSection({
         </div>
       )}
     </div>
+  );
+}
+
+function LessonSidebarButton({
+  lesson,
+  selected,
+  onSelect,
+}: {
+  lesson: LessonData;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const insight = getLessonSidebarInsight(lesson);
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={cn(
+        "w-full rounded-xl border px-2.5 py-2 text-left transition-colors",
+        selected
+          ? "border-[#b8d7f0] bg-[#E6F1FB] text-[#185FA5]"
+          : "border-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900"
+      )}
+    >
+      <div className="flex items-start gap-2">
+        <LessonStatusDot lesson={lesson} />
+        <LessonTypeIcon type={lesson.lessonType} size={11} />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="truncate text-xs font-semibold">{lesson.title}</span>
+            <LessonTypeBadgeTiny type={lesson.lessonType} />
+          </div>
+          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+            <span className="text-[10px] text-slate-400">{insight.durationLabel}</span>
+            <span className="text-[10px] text-slate-300">•</span>
+            <span className={cn(
+              "text-[10px] font-bold",
+              insight.readinessTone === "ready" && "text-emerald-600",
+              insight.readinessTone === "warn" && "text-amber-600",
+              insight.readinessTone === "blocked" && "text-red-500"
+            )}>
+              {insight.readinessLabel}
+            </span>
+            {insight.blockCountLabel && (
+              <>
+                <span className="text-[10px] text-slate-300">•</span>
+                <span className="text-[10px] text-slate-400">{insight.blockCountLabel}</span>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </button>
   );
 }
 
@@ -384,15 +432,16 @@ function LessonDetailPanel({
   onContentChange: (contentJson: string) => void;
 }) {
   const tabs: { id: TabId; label: string; icon: React.ComponentType<any>; show: boolean }[] = [
-    { id: "content", label: "Content", icon: Icons.FileText, show: true },
-    { id: "questions", label: "Questions", icon: Icons.ClipboardList, show: lesson.lessonType === "quiz" },
+    { id: "content", label: "Structure", icon: Icons.FileText, show: true },
+    { id: "questions", label: "Assessment", icon: Icons.ClipboardList, show: lesson.lessonType === "quiz" },
     { id: "resources", label: "Resources", icon: Icons.Database, show: true },
-    { id: "settings", label: "Settings", icon: Icons.Settings, show: true },
+    { id: "settings", label: "Publishing", icon: Icons.Settings, show: true },
   ];
   const visibleTabs = tabs.filter((t) => t.show);
+  const showInlinePreview = mode === "split" && activeTab === "content";
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4">
+    <div className={cn("mx-auto space-y-4", showInlinePreview ? "max-w-7xl" : "max-w-3xl")}>
       {/* Lesson header */}
       <div className="flex items-center gap-3 flex-wrap">
         <LessonTypeIcon type={lesson.lessonType} size={18} className="text-[#185FA5]" />
@@ -434,12 +483,35 @@ function LessonDetailPanel({
       ) : (
         <>
           {activeTab === "content" && (
-            <ContentTab
-              lesson={lesson}
-              onUpdate={onUpdate}
-              editorRef={editorRef}
-              onContentChange={onContentChange}
-            />
+            showInlinePreview ? (
+              <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+                <ContentTab
+                  lesson={lesson}
+                  onUpdate={onUpdate}
+                  editorRef={editorRef}
+                  onContentChange={onContentChange}
+                />
+                <div className="space-y-3 xl:sticky xl:top-5 xl:self-start">
+                  <div className="rounded-2xl border border-[#b8d7f0] bg-[#f8fbff] px-4 py-3">
+                    <div className="flex items-center gap-2 text-[#185FA5]">
+                      <Icons.Eye size={15} />
+                      <p className="text-xs font-extrabold uppercase tracking-[0.12em]">Live learner preview</p>
+                    </div>
+                    <p className="mt-1 text-xs leading-5 text-slate-600">
+                      This panel mirrors the student lesson using the current draft so authors can tune flow and clarity without leaving the editor.
+                    </p>
+                  </div>
+                  <LessonStudentPreview lesson={{ ...lesson, quiz: lesson.quiz ?? undefined }} />
+                </div>
+              </div>
+            ) : (
+              <ContentTab
+                lesson={lesson}
+                onUpdate={onUpdate}
+                editorRef={editorRef}
+                onContentChange={onContentChange}
+              />
+            )
           )}
           {activeTab === "questions" && lesson.quiz && (
             <LessonQuizPanel quizId={lesson.quiz.id} />
@@ -934,6 +1006,30 @@ function SettingsTab({
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function getLessonSidebarInsight(lesson: LessonData) {
+  const document = parseStructuredLessonContent(lesson.contentJson ?? null);
+  const visibleBlocks = document.blocks.filter((block) => block.isStudentVisible).length;
+  const readinessCount = lesson.lessonType === "text" ? getLessonReadinessReport(document).length : 0;
+  const durationMinutes =
+    document.estimatedDurationMinutes ??
+    (lesson.durationSeconds ? Math.max(1, Math.round(lesson.durationSeconds / 60)) : null);
+
+  return {
+    durationLabel: durationMinutes ? `${durationMinutes} min` : "No duration",
+    blockCountLabel: lesson.lessonType === "text" ? `${visibleBlocks} blocks` : null,
+    readinessLabel:
+      lesson.isPublished
+        ? "Published"
+        : readinessCount === 0
+        ? "Ready to preview"
+        : readinessCount <= 2
+        ? `${readinessCount} item${readinessCount === 1 ? "" : "s"} to finish`
+        : `${readinessCount} issues to finish`,
+    readinessTone:
+      lesson.isPublished ? "ready" : readinessCount === 0 ? "ready" : readinessCount <= 2 ? "warn" : "blocked",
+  };
+}
 
 function LessonStatusDot({ lesson }: { lesson: LessonData }) {
   const hasContent =

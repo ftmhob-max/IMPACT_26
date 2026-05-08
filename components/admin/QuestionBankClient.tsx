@@ -101,6 +101,9 @@ export function QuestionBankClient({ questions, quizzes }: Props) {
   const [filterDomain, setFilterDomain] = useState("");
   const [filterDifficulty, setFilterDifficulty] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+  const [statFilter, setStatFilter] = useState<
+    "all" | "draft" | "review" | "published" | "missing-correct" | "formula-linked"
+  >("all");
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [detailQuestion, setDetailQuestion] = useState<Question | null>(null);
@@ -111,7 +114,7 @@ export function QuestionBankClient({ questions, quizzes }: Props) {
   const [bulkMessage, setBulkMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const [localStatuses, setLocalStatuses] = useState<Record<string, string>>({});
 
-  const hasActiveFilters = !!(search || filterDomain || filterDifficulty || filterStatus);
+  const hasActiveFilters = !!(search || filterDomain || filterDifficulty || filterStatus || statFilter !== "all");
 
   function syncQuestion(questionId: string, updater: (question: Question) => Question) {
     setQuestionItems((prev) => prev.map((question) => (question.id === questionId ? updater(question) : question)));
@@ -126,9 +129,14 @@ export function QuestionBankClient({ questions, quizzes }: Props) {
       if (filterDifficulty && question.difficulty !== filterDifficulty) return false;
       const effectiveStatus = localStatuses[question.id] ?? question.status;
       if (filterStatus && effectiveStatus !== filterStatus) return false;
+      if (statFilter === "draft" && effectiveStatus !== "draft") return false;
+      if (statFilter === "review" && effectiveStatus !== "review") return false;
+      if (statFilter === "published" && effectiveStatus !== "published") return false;
+      if (statFilter === "missing-correct" && question.answerChoices_on_question.some((choice) => choice.isCorrect)) return false;
+      if (statFilter === "formula-linked" && !question.formulaRef) return false;
       return true;
     });
-  }, [questionItems, search, filterDomain, filterDifficulty, filterStatus, localStatuses]);
+  }, [questionItems, search, filterDomain, filterDifficulty, filterStatus, localStatuses, statFilter]);
 
   const tableStats = useMemo(() => {
     const counts = {
@@ -190,6 +198,12 @@ export function QuestionBankClient({ questions, quizzes }: Props) {
     setFilterDomain("");
     setFilterDifficulty("");
     setFilterStatus("");
+    setStatFilter("all");
+    setPage(1);
+  }
+
+  function toggleStatFilter(next: typeof statFilter) {
+    setStatFilter((prev) => (prev === next ? "all" : next));
     setPage(1);
   }
 
@@ -298,12 +312,12 @@ export function QuestionBankClient({ questions, quizzes }: Props) {
       {/* Left: table */}
       <div className={cn("min-w-0 space-y-4", detailQuestion ? "flex-1" : "w-full")}>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
-          <QuestionStatCard label="Total" value={String(tableStats.total)} tone="blue" icon={<Icons.FileText size={14} />} />
-          <QuestionStatCard label="Published" value={String(tableStats.published)} tone="emerald" />
-          <QuestionStatCard label="In review" value={String(tableStats.review)} tone="amber" />
-          <QuestionStatCard label="Drafts" value={String(tableStats.draft)} tone="slate" />
-          <QuestionStatCard label="Missing key" value={String(tableStats.missingCorrect)} tone="amber" />
-          <QuestionStatCard label="Formula refs" value={String(tableStats.formulaLinked)} tone="slate" />
+          <QuestionStatCard label="Total" value={String(tableStats.total)} tone="blue" icon={<Icons.FileText size={14} />} active={statFilter === "all"} onClick={() => toggleStatFilter("all")} />
+          <QuestionStatCard label="Published" value={String(tableStats.published)} tone="emerald" active={statFilter === "published"} onClick={() => toggleStatFilter("published")} />
+          <QuestionStatCard label="In review" value={String(tableStats.review)} tone="amber" active={statFilter === "review"} onClick={() => toggleStatFilter("review")} />
+          <QuestionStatCard label="Drafts" value={String(tableStats.draft)} tone="slate" active={statFilter === "draft"} onClick={() => toggleStatFilter("draft")} />
+          <QuestionStatCard label="Missing key" value={String(tableStats.missingCorrect)} tone="amber" active={statFilter === "missing-correct"} onClick={() => toggleStatFilter("missing-correct")} />
+          <QuestionStatCard label="Formula refs" value={String(tableStats.formulaLinked)} tone="slate" active={statFilter === "formula-linked"} onClick={() => toggleStatFilter("formula-linked")} />
         </div>
 
         {/* Filter bar */}
@@ -352,7 +366,7 @@ export function QuestionBankClient({ questions, quizzes }: Props) {
             </span>
             {hasActiveFilters && (
               <span className="rounded-full bg-[#E6F1FB] px-2.5 py-1 text-[11px] font-semibold text-[#185FA5]">
-                Filters active
+                Filters active{statFilter !== "all" ? ` · ${statFilter}` : ""}
               </span>
             )}
             <button type="button" onClick={resetFilters} className="ml-auto admin-action secondary text-xs">
@@ -983,11 +997,15 @@ function QuestionStatCard({
   value,
   tone,
   icon,
+  active,
+  onClick,
 }: {
   label: string;
   value: string;
   tone: "blue" | "emerald" | "amber" | "slate";
   icon?: ReactNode;
+  active?: boolean;
+  onClick?: () => void;
 }) {
   const tones: Record<string, string> = {
     blue: "border-[#185FA5]/15 bg-[#E6F1FB]/50 text-[#185FA5]",
@@ -997,13 +1015,21 @@ function QuestionStatCard({
   };
 
   return (
-    <div className={cn("rounded-xl border px-4 py-3 shadow-sm", tones[tone])}>
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "rounded-xl border px-4 py-3 text-left shadow-sm transition hover:-translate-y-0.5",
+        tones[tone],
+        active && "ring-2 ring-[#185FA5]/25"
+      )}
+    >
       <div className="flex items-center gap-2">
         {icon}
         <p className="text-[10px] font-bold uppercase tracking-[0.08em]">{label}</p>
       </div>
       <p className="mt-2 text-2xl font-extrabold">{value}</p>
-    </div>
+    </button>
   );
 }
 

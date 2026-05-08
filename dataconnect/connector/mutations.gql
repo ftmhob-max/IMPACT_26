@@ -344,13 +344,37 @@ mutation CreateFormulaSection($id: UUID!, $code: String!, $title: String!, $posi
   })
 }
 
-mutation CreateFormula($sectionId: UUID!, $code: String!, $name: String!, $expression: String!, $notes: String, $position: Int!) @auth(level: NO_ACCESS) {
+mutation CreateFormula($sectionId: UUID!, $code: String!, $name: String!, $expression: String!, $notes: String, $position: Int!, $calcMetaJson: String) @auth(level: NO_ACCESS) {
   formula_insert(data: {
     section: { id: $sectionId }
     code: $code
     name: $name
     expression: $expression
     notes: $notes
+    position: $position
+    calcMetaJson: $calcMetaJson
+  })
+}
+
+mutation UpdateFormula($id: UUID!, $code: String, $name: String, $expression: String, $notes: String, $calcMetaJson: String, $position: Int) @auth(level: NO_ACCESS) {
+  formula_update(id: $id, data: {
+    code: $code
+    name: $name
+    expression: $expression
+    notes: $notes
+    calcMetaJson: $calcMetaJson
+    position: $position
+  })
+}
+
+mutation DeleteFormula($id: UUID!) @auth(level: NO_ACCESS) {
+  formula_delete(id: $id)
+}
+
+mutation UpdateFormulaSection($id: UUID!, $code: String, $title: String, $position: Int) @auth(level: NO_ACCESS) {
+  formulaSection_update(id: $id, data: {
+    code: $code
+    title: $title
     position: $position
   })
 }

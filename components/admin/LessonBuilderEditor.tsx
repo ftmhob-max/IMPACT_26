@@ -19,10 +19,12 @@ import TableRow from "@tiptap/extension-table-row";
 import * as Icons from "@/components/ui/Icons";
 import { cn } from "@/lib/utils";
 import {
+  blockCategoryForType,
   createDefaultLessonBlock,
-  getLessonReadinessIssues,
+  getLessonReadinessReport,
   parseStructuredLessonContent,
   stringifyStructuredLessonContent,
+  type LessonReadinessIssue,
   type LessonBlock,
   type LessonBlockType,
   type LessonFormulaSnapshot,
@@ -61,21 +63,27 @@ export interface LessonBuilderEditorHandle {
   flushSave: () => Promise<void>;
 }
 
-const BLOCK_LIBRARY: Array<{ type: LessonBlockType; label: string; description: string; icon: React.ComponentType<any> }> = [
-  { type: "richText", label: "Text", description: "Instruction, explanation, and worked notes.", icon: Icons.FileText },
-  { type: "video", label: "Video", description: "Mux or embedded video with transcript support.", icon: Icons.Video },
-  { type: "audio", label: "Audio", description: "Narrated explanation with transcript.", icon: Icons.FileText },
-  { type: "transcript", label: "Transcript", description: "Standalone transcript or reading support.", icon: Icons.FileCode },
-  { type: "image", label: "Image", description: "Illustrations, charts, and annotated visuals.", icon: Icons.BookOpen },
-  { type: "document", label: "Document", description: "PDFs, slides, or worksheets.", icon: Icons.FileText },
-  { type: "sourceReference", label: "Source", description: "Source library citation or excerpt.", icon: Icons.Database },
-  { type: "formula", label: "Formula", description: "Formula Compass explainer block.", icon: Icons.Calculator },
-  { type: "glossaryTermSet", label: "Glossary", description: "Key vocabulary with definitions.", icon: Icons.BookOpen },
-  { type: "quizCheckpoint", label: "Checkpoint", description: "Embedded knowledge check.", icon: Icons.ClipboardList },
-  { type: "reflectionPrompt", label: "Reflection", description: "Prompt students to self-check their understanding.", icon: Icons.Quote },
-  { type: "download", label: "Download", description: "Assignment or supporting file.", icon: Icons.Upload },
-  { type: "externalResource", label: "External link", description: "Curated off-platform reference.", icon: Icons.Link2 },
-  { type: "callout", label: "Callout", description: "Teacher note, warning, or exam tip.", icon: Icons.Info },
+const BLOCK_LIBRARY: Array<{
+  type: LessonBlockType;
+  label: string;
+  description: string;
+  icon: React.ComponentType<any>;
+  category: "core" | "practice" | "support";
+}> = [
+  { type: "richText", label: "Text", description: "Instruction, explanation, and worked notes.", icon: Icons.FileText, category: "core" },
+  { type: "video", label: "Video", description: "Mux or embedded video with transcript support.", icon: Icons.Video, category: "core" },
+  { type: "audio", label: "Audio", description: "Narrated explanation with transcript.", icon: Icons.FileText, category: "core" },
+  { type: "transcript", label: "Transcript", description: "Standalone transcript or reading support.", icon: Icons.FileCode, category: "core" },
+  { type: "formula", label: "Formula", description: "Formula Compass explainer block.", icon: Icons.Calculator, category: "core" },
+  { type: "callout", label: "Callout", description: "Teacher note, warning, or exam tip.", icon: Icons.Info, category: "core" },
+  { type: "quizCheckpoint", label: "Checkpoint", description: "Embedded knowledge check.", icon: Icons.ClipboardList, category: "practice" },
+  { type: "reflectionPrompt", label: "Reflection", description: "Prompt students to self-check their understanding.", icon: Icons.Quote, category: "practice" },
+  { type: "image", label: "Image", description: "Illustrations, charts, and annotated visuals.", icon: Icons.BookOpen, category: "support" },
+  { type: "document", label: "Document", description: "PDFs, slides, or worksheets.", icon: Icons.FileText, category: "support" },
+  { type: "sourceReference", label: "Source", description: "Source library citation or excerpt.", icon: Icons.Database, category: "support" },
+  { type: "glossaryTermSet", label: "Glossary", description: "Key vocabulary with definitions.", icon: Icons.BookOpen, category: "support" },
+  { type: "download", label: "Download", description: "Assignment or supporting file.", icon: Icons.Upload, category: "support" },
+  { type: "externalResource", label: "External link", description: "Curated off-platform reference.", icon: Icons.Link2, category: "support" },
 ];
 
 export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(function LessonBuilderEditor(
@@ -91,6 +99,8 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
   const [materials, setMaterials] = useState<MaterialLibraryItem[]>([]);
   const [quizzes, setQuizzes] = useState<QuizLibraryItem[]>([]);
   const [librariesLoaded, setLibrariesLoaded] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+  const [collapsedBlockIds, setCollapsedBlockIds] = useState<Set<string>>(new Set());
   const latestSerialized = useRef(stringifyStructuredLessonContent(parseStructuredLessonContent(initialContent)));
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -99,6 +109,8 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
     setDocumentState(next);
     latestSerialized.current = stringifyStructuredLessonContent(next);
     setSaveStatus("saved");
+    setLastSavedAt(null);
+    setCollapsedBlockIds(new Set());
   }, [initialContent, lessonId]);
 
   useEffect(() => {
@@ -148,7 +160,12 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
             contentJson: serializedDocument,
           }),
         });
-        setSaveStatus(res.ok ? "saved" : "error");
+        if (res.ok) {
+          setSaveStatus("saved");
+          setLastSavedAt(new Date());
+        } else {
+          setSaveStatus("error");
+        }
       } catch {
         setSaveStatus("error");
       }
@@ -198,13 +215,36 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
     [queueSave]
   );
 
-  const readinessIssues = useMemo(() => getLessonReadinessIssues(documentState), [documentState]);
+  const readinessIssues = useMemo(() => getLessonReadinessReport(documentState), [documentState]);
+  const blockCounts = useMemo(
+    () => ({
+      visible: documentState.blocks.filter((block) => block.isStudentVisible).length,
+      required: documentState.blocks.filter((block) => block.required && block.isStudentVisible).length,
+    }),
+    [documentState.blocks]
+  );
+  const groupedLibrary = useMemo(
+    () => ({
+      core: BLOCK_LIBRARY.filter((entry) => entry.category === "core"),
+      practice: BLOCK_LIBRARY.filter((entry) => entry.category === "practice"),
+      support: BLOCK_LIBRARY.filter((entry) => entry.category === "support"),
+    }),
+    []
+  );
 
   function addBlock(type: LessonBlockType) {
     updateDocument((current) => ({
       ...current,
       blocks: [...current.blocks, createDefaultLessonBlock(type)],
     }));
+  }
+
+  function insertBlockAt(index: number, type: LessonBlockType) {
+    updateDocument((current) => {
+      const next = [...current.blocks];
+      next.splice(index, 0, createDefaultLessonBlock(type));
+      return { ...current, blocks: next };
+    });
   }
 
   function updateBlock(blockId: string, updater: (block: LessonBlock) => LessonBlock) {
@@ -249,26 +289,60 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
     void flushSave();
   }
 
+  function focusIssue(issue: LessonReadinessIssue) {
+    if (issue.field === "block" && issue.blockId) {
+      setCollapsedBlockIds((current) => {
+        const next = new Set(current);
+        next.delete(issue.blockId!);
+        return next;
+      });
+    }
+    const targetId =
+      issue.field === "block" && issue.blockId
+        ? `lesson-block-editor-${issue.blockId}`
+        : issue.field === "summary"
+        ? "lesson-summary-field"
+        : issue.field === "objectives"
+        ? "lesson-objectives-section"
+        : issue.field === "estimatedDurationMinutes"
+        ? "lesson-duration-field"
+        : "lesson-completion-mode-field";
+    window.requestAnimationFrame(() => {
+      document.getElementById(targetId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+
   return (
     <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
       <div className="space-y-5">
         <div className="rounded-2xl border border-black/10 bg-white shadow-sm">
           <div className="border-b border-slate-100 px-5 py-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-[#E6F1FB] px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.08em] text-[#185FA5]">
-                Lesson header
-              </span>
-              <SaveIndicator status={saveStatus} />
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-[#E6F1FB] px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.08em] text-[#185FA5]">
+                  Lesson setup
+                </span>
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-600">
+                  {blockCounts.visible} visible blocks
+                </span>
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-600">
+                  {blockCounts.required} required
+                </span>
+              </div>
+              <AuthorConfidencePanel status={saveStatus} lastSavedAt={lastSavedAt} />
             </div>
             <h3 className="mt-3 text-lg font-extrabold text-slate-950">Build the student experience from structured blocks</h3>
             <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">
-              Add objectives, arrange learning blocks, and preview the exact lesson flow students will experience.
+              Set up the lesson promise first, then build the flow students will move through from orientation to practice.
             </p>
           </div>
 
           <div className="grid gap-4 px-5 py-5 lg:grid-cols-[minmax(0,1fr)_220px]">
-            <div className="space-y-4">
+            <div className="space-y-4" id="lesson-summary-field">
               <FieldLabel>Lesson summary</FieldLabel>
+              <p className="text-xs leading-5 text-slate-500">
+                Answer three things up front: what students will learn, why it matters, and how they should use this lesson.
+              </p>
               <textarea
                 value={documentState.summary}
                 onChange={(event) =>
@@ -281,8 +355,9 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
             </div>
 
             <div className="space-y-4">
-              <div>
+              <div id="lesson-duration-field">
                 <FieldLabel>Estimated time (minutes)</FieldLabel>
+                <p className="mt-1 text-xs leading-5 text-slate-500">Keep this human-friendly so learners can budget their study time.</p>
                 <input
                   type="number"
                   min={0}
@@ -297,8 +372,9 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
                   placeholder="e.g. 18"
                 />
               </div>
-              <div>
+              <div id="lesson-completion-mode-field">
                 <FieldLabel>Completion mode</FieldLabel>
+                <p className="mt-1 text-xs leading-5 text-slate-500">Choose whether learners can mark complete manually or only after reviewing every block.</p>
                 <select
                   value={documentState.completionMode}
                   onChange={(event) =>
@@ -316,8 +392,11 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
             </div>
           </div>
 
-          <div className="border-t border-slate-100 px-5 py-5">
+          <div className="border-t border-slate-100 px-5 py-5" id="lesson-objectives-section">
             <FieldLabel>Learning objectives</FieldLabel>
+            <p className="mt-1 text-xs leading-5 text-slate-500">
+              Use action-oriented objectives so the preview can clearly show what success looks like.
+            </p>
             <div className="mt-3 space-y-2">
               {documentState.objectives.map((objective, index) => (
                 <div key={`${index}-${objective}`} className="flex gap-2">
@@ -369,22 +448,38 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
 
         <div className="space-y-4">
           {documentState.blocks.map((block, index) => (
-            <BlockEditorCard
-              key={block.id}
-              block={block}
-              index={index}
-              totalBlocks={documentState.blocks.length}
-              formulas={formulas}
-              glossaryTerms={glossaryTerms}
-              materials={materials}
-              quizzes={quizzes}
-              onChange={(nextBlock) => updateBlock(block.id, () => nextBlock)}
-              onMoveUp={() => moveBlock(block.id, -1)}
-              onMoveDown={() => moveBlock(block.id, 1)}
-              onDuplicate={() => duplicateBlock(block.id)}
-              onRemove={() => removeBlock(block.id)}
-            />
+            <div key={block.id} className="space-y-3">
+              <InlineInsertRail
+                label={index === 0 ? "Start the lesson with..." : "Add a block before this one"}
+                onInsert={(type) => insertBlockAt(index, type)}
+              />
+              <BlockEditorCard
+                block={block}
+                index={index}
+                totalBlocks={documentState.blocks.length}
+                formulas={formulas}
+                glossaryTerms={glossaryTerms}
+                materials={materials}
+                quizzes={quizzes}
+                collapsed={collapsedBlockIds.has(block.id)}
+                onToggleCollapsed={() =>
+                  setCollapsedBlockIds((current) => {
+                    const next = new Set(current);
+                    if (next.has(block.id)) next.delete(block.id);
+                    else next.add(block.id);
+                    return next;
+                  })
+                }
+                onChange={(nextBlock) => updateBlock(block.id, () => nextBlock)}
+                onMoveUp={() => moveBlock(block.id, -1)}
+                onMoveDown={() => moveBlock(block.id, 1)}
+                onDuplicate={() => duplicateBlock(block.id)}
+                onRemove={() => removeBlock(block.id)}
+                onInsertAfter={(type) => insertBlockAt(index + 1, type)}
+              />
+            </div>
           ))}
+          <InlineInsertRail label="Finish the flow with..." onInsert={(type) => addBlock(type)} />
         </div>
       </div>
 
@@ -393,29 +488,13 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
           <div className="border-b border-slate-100 px-5 py-4">
             <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#185FA5]">Block library</p>
             <p className="mt-1 text-sm leading-6 text-slate-600">
-              Add instructional blocks in the order students should experience them.
+              Add blocks by teaching intent instead of one long flat list.
             </p>
           </div>
-          <div className="space-y-2 px-4 py-4">
-            {BLOCK_LIBRARY.map((block) => {
-              const Icon = block.icon;
-              return (
-                <button
-                  key={block.type}
-                  type="button"
-                  onClick={() => addBlock(block.type)}
-                  className="flex w-full items-start gap-3 rounded-xl border border-slate-200 px-3 py-3 text-left transition hover:border-[#185FA5] hover:bg-[#f8fbff]"
-                >
-                  <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-[#E6F1FB] text-[#185FA5]">
-                    <Icon size={16} />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-bold text-slate-900">{block.label}</p>
-                    <p className="text-xs leading-5 text-slate-500">{block.description}</p>
-                  </div>
-                </button>
-              );
-            })}
+          <div className="space-y-4 px-4 py-4">
+            <BlockLibraryGroup title="Core learning" description="Teach, explain, and model." items={groupedLibrary.core} onAdd={addBlock} />
+            <BlockLibraryGroup title="Practice" description="Check understanding and create reflection moments." items={groupedLibrary.practice} onAdd={addBlock} />
+            <BlockLibraryGroup title="Support" description="Add references, downloads, and learning aids." items={groupedLibrary.support} onAdd={addBlock} />
           </div>
         </div>
 
@@ -433,9 +512,25 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
               </div>
             ) : (
               readinessIssues.map((issue) => (
-                <div key={issue} className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                  {issue}
-                </div>
+                <button
+                  key={issue.id}
+                  type="button"
+                  onClick={() => focusIssue(issue)}
+                  className={cn(
+                    "block w-full rounded-xl border px-4 py-3 text-left text-sm transition hover:shadow-sm",
+                    issue.severity === "required" && "border-amber-200 bg-amber-50 text-amber-900",
+                    issue.severity === "recommended" && "border-sky-200 bg-sky-50 text-sky-900",
+                    issue.severity === "polish" && "border-slate-200 bg-slate-50 text-slate-700"
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    <SeverityBadge severity={issue.severity} />
+                    <span className="font-semibold">{issue.message}</span>
+                  </div>
+                  <p className="mt-2 text-xs opacity-80">
+                    {issue.blockId ? "Jump to this block" : "Jump to this lesson setup field"}
+                  </p>
+                </button>
               ))
             )}
             <button
@@ -462,11 +557,14 @@ function BlockEditorCard({
   glossaryTerms,
   materials,
   quizzes,
+  collapsed,
+  onToggleCollapsed,
   onChange,
   onMoveUp,
   onMoveDown,
   onDuplicate,
   onRemove,
+  onInsertAfter,
 }: {
   block: LessonBlock;
   index: number;
@@ -475,19 +573,38 @@ function BlockEditorCard({
   glossaryTerms: GlossaryLibraryItem[];
   materials: MaterialLibraryItem[];
   quizzes: QuizLibraryItem[];
+  collapsed: boolean;
+  onToggleCollapsed: () => void;
   onChange: (block: LessonBlock) => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
   onDuplicate: () => void;
   onRemove: () => void;
+  onInsertAfter: (type: LessonBlockType) => void;
 }) {
   return (
-    <div className="rounded-2xl border border-black/10 bg-white shadow-sm">
+    <div id={`lesson-block-editor-${block.id}`} className="rounded-2xl border border-black/10 bg-white shadow-sm scroll-mt-24">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
         <div className="min-w-0">
-          <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#185FA5]">
-            Block {index + 1} of {totalBlocks}
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#185FA5]">
+              Block {index + 1} of {totalBlocks}
+            </p>
+            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">
+              {blockCategoryForType(block.type)}
+            </span>
+            <span className={cn(
+              "rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em]",
+              block.isStudentVisible ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"
+            )}>
+              {block.isStudentVisible ? "Visible to students" : "Hidden from students"}
+            </span>
+            {block.required && (
+              <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-amber-700">
+                Required
+              </span>
+            )}
+          </div>
           <input
             value={block.title ?? ""}
             onChange={(event) => onChange({ ...block, title: event.target.value })}
@@ -496,6 +613,9 @@ function BlockEditorCard({
           />
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <button type="button" onClick={onToggleCollapsed} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-[#185FA5] hover:text-[#185FA5]">
+            {collapsed ? "Expand" : "Collapse"}
+          </button>
           <button type="button" onClick={onMoveUp} disabled={index === 0} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-[#185FA5] hover:text-[#185FA5] disabled:opacity-40">
             <Icons.ChevronUp size={14} />
           </button>
@@ -507,35 +627,141 @@ function BlockEditorCard({
         </div>
       </div>
 
-      <div className="space-y-4 px-5 py-5">
-        <div className="grid gap-3 md:grid-cols-3">
-          <ToggleRow
-            label="Student visible"
-            checked={block.isStudentVisible}
-            onToggle={() => onChange({ ...block, isStudentVisible: !block.isStudentVisible })}
-          />
-          <ToggleRow
-            label="Required block"
-            checked={block.required}
-            onToggle={() => onChange({ ...block, required: !block.required })}
-          />
-          <div>
-            <FieldLabel>Block type</FieldLabel>
-            <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-600">
-              {block.type}
+      {!collapsed && (
+        <div className="space-y-4 px-5 py-5">
+          <div className="grid gap-3 md:grid-cols-3">
+            <ToggleRow
+              label="Student visible"
+              checked={block.isStudentVisible}
+              onToggle={() => onChange({ ...block, isStudentVisible: !block.isStudentVisible })}
+            />
+            <ToggleRow
+              label="Required block"
+              checked={block.required}
+              onToggle={() => onChange({ ...block, required: !block.required })}
+            />
+            <div>
+              <FieldLabel>Block type</FieldLabel>
+              <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-600">
+                {block.type}
+              </div>
             </div>
           </div>
-        </div>
 
-        <BlockSpecificFields
-          block={block}
-          formulas={formulas}
-          glossaryTerms={glossaryTerms}
-          materials={materials}
-          quizzes={quizzes}
-          onChange={onChange}
-        />
+          <BlockSpecificFields
+            block={block}
+            formulas={formulas}
+            glossaryTerms={glossaryTerms}
+            materials={materials}
+            quizzes={quizzes}
+            onChange={onChange}
+          />
+
+          <InlineInsertRail label="Add a block after this one" onInsert={onInsertAfter} compact />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BlockLibraryGroup({
+  title,
+  description,
+  items,
+  onAdd,
+}: {
+  title: string;
+  description: string;
+  items: typeof BLOCK_LIBRARY;
+  onAdd: (type: LessonBlockType) => void;
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
+      <div className="px-1 pb-2">
+        <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-slate-600">{title}</p>
+        <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>
       </div>
+      <div className="space-y-2">
+        {items.map((block) => {
+          const Icon = block.icon;
+          return (
+            <button
+              key={block.type}
+              type="button"
+              onClick={() => onAdd(block.type)}
+              className="flex w-full items-start gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3 text-left transition hover:border-[#185FA5] hover:bg-[#f8fbff]"
+            >
+              <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-[#E6F1FB] text-[#185FA5]">
+                <Icon size={16} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-slate-900">{block.label}</p>
+                <p className="text-xs leading-5 text-slate-500">{block.description}</p>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function InlineInsertRail({
+  label,
+  onInsert,
+  compact = false,
+}: {
+  label: string;
+  onInsert: (type: LessonBlockType) => void;
+  compact?: boolean;
+}) {
+  const quickActions = BLOCK_LIBRARY.slice(0, compact ? 4 : 6);
+
+  return (
+    <div className={cn("rounded-2xl border border-dashed border-slate-300 bg-slate-50/80", compact ? "p-3" : "px-4 py-3")}>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-500">{label}</span>
+        <div className="flex flex-wrap gap-2">
+          {quickActions.map((item) => (
+            <button
+              key={item.type}
+              type="button"
+              onClick={() => onInsert(item.type)}
+              className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-[#185FA5] hover:text-[#185FA5]"
+            >
+              + {item.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SeverityBadge({ severity }: { severity: LessonReadinessIssue["severity"] }) {
+  const copy =
+    severity === "required"
+      ? { label: "Required", className: "bg-amber-100 text-amber-800" }
+      : severity === "recommended"
+      ? { label: "Recommended", className: "bg-sky-100 text-sky-800" }
+      : { label: "Polish", className: "bg-slate-200 text-slate-700" };
+
+  return <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-[0.08em]", copy.className)}>{copy.label}</span>;
+}
+
+function AuthorConfidencePanel({
+  status,
+  lastSavedAt,
+}: {
+  status: SaveStatus;
+  lastSavedAt: Date | null;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <SaveIndicator status={status} />
+      <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold text-slate-500">
+        {lastSavedAt ? `Saved ${lastSavedAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}` : "Preview reflects draft updates"}
+      </span>
     </div>
   );
 }

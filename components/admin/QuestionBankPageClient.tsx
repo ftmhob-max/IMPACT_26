@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { adminFetch } from "@/lib/admin/client-fetch";
 import { QuestionBuilderClient } from "@/components/admin/QuestionBuilderClient";
 import { QuestionBankClient } from "@/components/admin/QuestionBankClient";
+import { DocxImportClient } from "@/components/admin/DocxImportClient";
+import * as Icons from "@/components/ui/Icons";
 
 interface Question {
   id: string;
@@ -44,6 +46,8 @@ export function QuestionBankPageClient({
 }) {
   const [questions, setQuestions] = useState<Question[]>(initialQuestions);
   const [quizzes, setQuizzes] = useState<QuizOption[]>(initialQuizzes);
+  const [importOpen, setImportOpen] = useState(false);
+  const [manualOpen, setManualOpen] = useState(false);
 
   useEffect(() => {
     if (questions.length > 0 && quizzes.length > 0) return;
@@ -77,25 +81,39 @@ export function QuestionBankPageClient({
 
       <div className="grid gap-6 xl:grid-cols-2">
         <div className="rounded-xl border border-black/10 bg-white shadow-sm">
-          <div className="flex items-center gap-2 border-b border-slate-100 px-4 py-3">
-            <span className="text-[#185FA5]">📋</span>
-            <h2 className="text-sm font-bold text-slate-900">CSV Import</h2>
-            <span className="ml-auto text-xs text-slate-400">Bulk upload with validation</span>
-          </div>
-          <div className="p-4">
-            <QuestionBuilderClient mode="csv" quizzes={quizzes} />
-          </div>
+          <button
+            type="button"
+            onClick={() => setImportOpen((open) => !open)}
+            className="flex w-full items-center gap-2 border-b border-slate-100 px-4 py-3 text-left"
+          >
+            <span className="text-[#185FA5]">📄</span>
+            <h2 className="text-sm font-bold text-slate-900">Question Import</h2>
+            <span className="ml-auto text-xs text-slate-400">DOCX or CSV</span>
+            {importOpen ? <Icons.ChevronUp size={16} className="text-slate-400" /> : <Icons.ChevronDown size={16} className="text-slate-400" />}
+          </button>
+          {importOpen && (
+            <div className="p-4">
+              <DocxImportClient />
+            </div>
+          )}
         </div>
 
         <div className="rounded-xl border border-black/10 bg-white shadow-sm">
-          <div className="flex items-center gap-2 border-b border-slate-100 px-4 py-3">
+          <button
+            type="button"
+            onClick={() => setManualOpen((open) => !open)}
+            className="flex w-full items-center gap-2 border-b border-slate-100 px-4 py-3 text-left"
+          >
             <span className="text-[#185FA5]">✏️</span>
             <h2 className="text-sm font-bold text-slate-900">Manual Builder</h2>
             <span className="ml-auto text-xs text-slate-400">Multiple choice, multiselect, scenario</span>
-          </div>
-          <div className="p-4">
-            <QuestionBuilderClient mode="manual" quizzes={quizzes} />
-          </div>
+            {manualOpen ? <Icons.ChevronUp size={16} className="text-slate-400" /> : <Icons.ChevronDown size={16} className="text-slate-400" />}
+          </button>
+          {manualOpen && (
+            <div className="p-4">
+              <QuestionBuilderClient mode="manual" quizzes={quizzes} />
+            </div>
+          )}
         </div>
       </div>
 

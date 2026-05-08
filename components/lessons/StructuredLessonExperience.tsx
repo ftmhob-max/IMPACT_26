@@ -22,12 +22,14 @@ export function StructuredLessonExperience({
   contentJson,
   fallbackDurationSeconds,
   previewMode = false,
+  nextLesson,
 }: {
   lessonId: string;
   lessonTitle: string;
   contentJson: string | null;
   fallbackDurationSeconds?: number | null;
   previewMode?: boolean;
+  nextLesson?: { title: string; href: string } | null;
 }) {
   const document = useMemo(() => parseStructuredLessonContent(contentJson), [contentJson]);
   const visibleBlocks = useMemo(
@@ -37,6 +39,7 @@ export function StructuredLessonExperience({
   const [activeBlockId, setActiveBlockId] = useState<string | null>(visibleBlocks[0]?.id ?? null);
   const [visitedBlockIds, setVisitedBlockIds] = useState<Set<string>>(new Set(visibleBlocks[0] ? [visibleBlocks[0].id] : []));
   const [bookmarkedBlockIds, setBookmarkedBlockIds] = useState<Set<string>>(new Set());
+  const [notes, setNotes] = useState("");
   const blockRefs = useRef<Record<string, HTMLElement | null>>({});
 
   useEffect(() => {
@@ -53,6 +56,17 @@ export function StructuredLessonExperience({
     if (previewMode || typeof window === "undefined") return;
     window.localStorage.setItem(`lesson-bookmarks:${lessonId}`, JSON.stringify([...bookmarkedBlockIds]));
   }, [bookmarkedBlockIds, lessonId, previewMode]);
+
+  useEffect(() => {
+    if (previewMode || typeof window === "undefined") return;
+    const saved = window.localStorage.getItem(`lesson-notes:${lessonId}`);
+    if (saved) setNotes(saved);
+  }, [lessonId, previewMode]);
+
+  useEffect(() => {
+    if (previewMode || typeof window === "undefined") return;
+    window.localStorage.setItem(`lesson-notes:${lessonId}`, notes);
+  }, [lessonId, notes, previewMode]);
 
   useEffect(() => {
     if (typeof IntersectionObserver === "undefined" || visibleBlocks.length === 0) return;
@@ -88,6 +102,13 @@ export function StructuredLessonExperience({
 
   const estimatedMinutes = document.estimatedDurationMinutes ?? (fallbackDurationSeconds ? Math.max(1, Math.round(fallbackDurationSeconds / 60)) : null);
   const completedPercent = visibleBlocks.length === 0 ? 0 : Math.round((visitedBlockIds.size / visibleBlocks.length) * 100);
+  const activeIndex = Math.max(0, visibleBlocks.findIndex((block) => block.id === activeBlockId));
+  const activeBlock = visibleBlocks[activeIndex] ?? null;
+  const nextBlock = visibleBlocks[activeIndex + 1] ?? null;
+  const completedCount = visitedBlockIds.size;
+  const remainingCount = Math.max(visibleBlocks.length - completedCount, 0);
+  const requiredCount = visibleBlocks.filter((block) => block.required).length;
+  const firstActionLabel = nextBlock ? `Continue with ${titleForBlock(nextBlock)}` : "Wrap up this lesson";
 
   return (
     <div className="space-y-5">
@@ -106,6 +127,12 @@ export function StructuredLessonExperience({
               {previewMode ? "Add a lesson summary to orient students before they begin." : "No lesson summary provided."}
             </p>
           )}
+          <div className="mt-5 grid gap-3 md:grid-cols-4">
+            <JourneyStat label="Current step" value={visibleBlocks.length ? `${activeIndex + 1} of ${visibleBlocks.length}` : "No steps"} />
+            <JourneyStat label="Completed" value={`${completedCount} explored`} />
+            <JourneyStat label="Remaining" value={`${remainingCount} left`} />
+            <JourneyStat label="Do first" value={visibleBlocks[0] ? titleForBlock(visibleBlocks[0]) : "Add blocks"} />
+          </div>
           {document.objectives.some((objective) => objective.trim()) && (
             <div className="mt-4 rounded-xl border border-[#d8e6f4] bg-[#f7fbff] p-4">
               <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#185FA5]">
@@ -125,52 +152,107 @@ export function StructuredLessonExperience({
           )}
         </div>
 
-        <div className="grid gap-6 px-5 py-5 lg:grid-cols-[240px_minmax(0,1fr)] lg:px-6">
+        <div className="grid gap-6 px-5 py-5 xl:grid-cols-[280px_minmax(0,1fr)] lg:px-6">
           <aside className="space-y-4">
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 lg:sticky lg:top-5">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-500">Lesson map</p>
-                  <p className="mt-1 text-xs text-slate-500">{visibleBlocks.length} learning blocks</p>
-                </div>
-                {!previewMode && bookmarkedBlockIds.size > 0 && (
-                  <span className="rounded-full bg-white px-2 py-1 text-[10px] font-bold text-slate-500 shadow-sm">
-                    {bookmarkedBlockIds.size} saved
-                  </span>
-                )}
+            <div className="space-y-4 xl:sticky xl:top-5">
+              <div className="rounded-xl border border-[#d8e6f4] bg-[linear-gradient(180deg,#f8fbff_0%,#eef6ff_100%)] p-4">
+                <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#185FA5]">Next action</p>
+                <p className="mt-2 text-sm font-bold text-slate-900">
+                  {activeBlock ? `You’re in ${titleForBlock(activeBlock)}.` : "Start with the first learning block."}
+                </p>
+                <p className="mt-1 text-xs leading-5 text-slate-600">
+                  {nextBlock ? `After this, ${firstActionLabel.toLowerCase()}.` : "After this section, use the recap and completion action below."}
+                </p>
+                {nextBlock ? (
+                  <button
+                    type="button"
+                    onClick={() => blockRefs.current[nextBlock.id]?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                    className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#185FA5] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#0d3d6e]"
+                  >
+                    {firstActionLabel}
+                    <Icons.ArrowRight size={15} />
+                  </button>
+                ) : nextLesson ? (
+                  <a
+                    href={nextLesson.href}
+                    className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#185FA5] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#0d3d6e]"
+                  >
+                    Next lesson
+                    <Icons.ArrowRight size={15} />
+                  </a>
+                ) : null}
               </div>
 
-              <div className="mt-4 space-y-2">
-                {visibleBlocks.map((block, index) => {
-                  const active = activeBlockId === block.id;
-                  const bookmarked = bookmarkedBlockIds.has(block.id);
-                  return (
-                    <button
-                      key={block.id}
-                      type="button"
-                      onClick={() => blockRefs.current[block.id]?.scrollIntoView({ behavior: "smooth", block: "start" })}
-                      className={cn(
-                        "flex w-full items-start gap-3 rounded-xl border px-3 py-3 text-left transition-colors",
-                        active ? "border-[#185FA5] bg-[#E6F1FB]" : "border-transparent bg-white hover:border-slate-200 hover:bg-slate-50"
-                      )}
-                    >
-                      <span className={cn("mt-0.5 text-[10px] font-extrabold uppercase tracking-[0.08em]", active ? "text-[#185FA5]" : "text-slate-400")}>
-                        {String(index + 1).padStart(2, "0")}
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-xs font-bold text-slate-800">{block.title || titleForBlock(block)}</span>
-                        <span className="mt-1 block text-[11px] text-slate-500">{labelForBlock(block)}</span>
-                      </span>
-                      {bookmarked && <Icons.BookOpen size={13} className="text-[#185FA5]" />}
-                    </button>
-                  );
-                })}
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-500">Lesson map</p>
+                    <p className="mt-1 text-xs text-slate-500">{visibleBlocks.length} learning blocks · {requiredCount} required</p>
+                  </div>
+                  {!previewMode && bookmarkedBlockIds.size > 0 && (
+                    <span className="rounded-full bg-white px-2 py-1 text-[10px] font-bold text-slate-500 shadow-sm">
+                      {bookmarkedBlockIds.size} review later
+                    </span>
+                  )}
+                </div>
+
+                <div className="mt-4 space-y-2">
+                  {visibleBlocks.map((block, index) => {
+                    const active = activeBlockId === block.id;
+                    const bookmarked = bookmarkedBlockIds.has(block.id);
+                    const visited = visitedBlockIds.has(block.id);
+                    const Icon = iconForBlock(block);
+                    return (
+                      <button
+                        key={block.id}
+                        type="button"
+                        onClick={() => blockRefs.current[block.id]?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                        className={cn(
+                          "flex w-full items-start gap-3 rounded-xl border px-3 py-3 text-left transition-colors",
+                          active ? "border-[#185FA5] bg-[#E6F1FB]" : "border-transparent bg-white hover:border-slate-200 hover:bg-slate-50"
+                        )}
+                      >
+                        <div className="flex flex-col items-center gap-1">
+                          <span className={cn("mt-0.5 text-[10px] font-extrabold uppercase tracking-[0.08em]", active ? "text-[#185FA5]" : "text-slate-400")}>
+                            {String(index + 1).padStart(2, "0")}
+                          </span>
+                          <span className={cn(
+                            "flex h-6 w-6 items-center justify-center rounded-full border",
+                            active ? "border-[#185FA5] bg-white text-[#185FA5]" : visited ? "border-emerald-200 bg-emerald-50 text-emerald-600" : "border-slate-200 bg-slate-50 text-slate-400"
+                          )}>
+                            {visited ? <Icons.Check size={12} /> : <Icon size={12} />}
+                          </span>
+                        </div>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-xs font-bold text-slate-800">{block.title || titleForBlock(block)}</span>
+                          <span className="mt-1 block text-[11px] text-slate-500">
+                            {labelForBlock(block)} {block.required ? "· Required" : "· Optional"}
+                          </span>
+                        </span>
+                        {bookmarked && <Icons.BookOpen size={13} className="text-[#185FA5]" />}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
+
+              {!previewMode && (
+                <div className="rounded-xl border border-slate-200 bg-white p-4">
+                  <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-500">Lesson notes</p>
+                  <textarea
+                    value={notes}
+                    onChange={(event) => setNotes(event.target.value)}
+                    rows={5}
+                    placeholder="Capture takeaways, questions, or formulas to review later."
+                    className="mt-3 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700 outline-none focus:border-[#185FA5] focus:bg-white"
+                  />
+                </div>
+              )}
             </div>
           </aside>
 
           <div className="space-y-4">
-            {visibleBlocks.map((block) => (
+            {visibleBlocks.map((block, index) => (
               <section
                 key={block.id}
                 id={`lesson-block-${block.id}`}
@@ -185,6 +267,13 @@ export function StructuredLessonExperience({
                   lessonId={lessonId}
                   previewMode={previewMode}
                   bookmarked={bookmarkedBlockIds.has(block.id)}
+                  stepLabel={`${index + 1} of ${visibleBlocks.length}`}
+                  nextLabel={visibleBlocks[index + 1] ? titleForBlock(visibleBlocks[index + 1]) : null}
+                  onContinue={
+                    visibleBlocks[index + 1]
+                      ? () => blockRefs.current[visibleBlocks[index + 1].id]?.scrollIntoView({ behavior: "smooth", block: "start" })
+                      : null
+                  }
                   onToggleBookmark={() =>
                     setBookmarkedBlockIds((prev) => {
                       const next = new Set(prev);
@@ -196,6 +285,13 @@ export function StructuredLessonExperience({
                 />
               </section>
             ))}
+
+            <LessonRecapCard
+              objectives={document.objectives.filter((objective) => objective.trim())}
+              completedPercent={completedPercent}
+              nextLesson={nextLesson}
+              previewMode={previewMode}
+            />
 
             {!previewMode && <LessonMarkComplete lessonId={lessonId} />}
           </div>
@@ -210,12 +306,18 @@ function LessonBlockCard({
   lessonId,
   previewMode,
   bookmarked,
+  stepLabel,
+  nextLabel,
+  onContinue,
   onToggleBookmark,
 }: {
   block: LessonBlock;
   lessonId: string;
   previewMode: boolean;
   bookmarked: boolean;
+  stepLabel: string;
+  nextLabel: string | null;
+  onContinue: (() => void) | null;
   onToggleBookmark: () => void;
 }) {
   const [copied, setCopied] = useState(false);
@@ -234,7 +336,16 @@ function LessonBlockCard({
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4">
         <div className="min-w-0">
-          <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#185FA5]">{labelForBlock(block)}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#185FA5]">{labelForBlock(block)}</p>
+            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">{stepLabel}</span>
+            <span className={cn(
+              "rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em]",
+              block.required ? "bg-amber-50 text-amber-700" : "bg-slate-100 text-slate-500"
+            )}>
+              {block.required ? "Required" : "Optional"}
+            </span>
+          </div>
           <h3 className="mt-1 text-lg font-extrabold text-slate-950">{block.title || titleForBlock(block)}</h3>
         </div>
         <div className="flex items-center gap-2">
@@ -247,7 +358,7 @@ function LessonBlockCard({
                 bookmarked ? "border-[#185FA5] bg-[#E6F1FB] text-[#185FA5]" : "border-slate-200 text-slate-500 hover:border-[#185FA5] hover:text-[#185FA5]"
               )}
             >
-              {bookmarked ? "Saved" : "Save"}
+              {bookmarked ? "Saved for review" : "Review later"}
             </button>
           )}
           <button
@@ -262,6 +373,18 @@ function LessonBlockCard({
 
       <div className="px-5 py-5 sm:px-6">
         <LessonBlockRenderer block={block} lessonId={lessonId} previewMode={previewMode} />
+        {onContinue && (
+          <div className="mt-5 flex justify-end border-t border-slate-100 pt-4">
+            <button
+              type="button"
+              onClick={onContinue}
+              className="inline-flex items-center gap-2 rounded-lg border border-[#185FA5] bg-white px-4 py-2 text-sm font-bold text-[#185FA5] transition hover:bg-[#E6F1FB]"
+            >
+              Continue to {nextLabel}
+              <Icons.ArrowRight size={15} />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -380,6 +503,10 @@ function LessonBlockRenderer({
     case "quizCheckpoint":
       return (
         <div className="space-y-4 rounded-xl border border-[#d8e6f4] bg-[#f7fbff] p-4">
+          <div>
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#185FA5]">Checkpoint</p>
+            <p className="mt-1 text-sm font-bold text-slate-900">Check your understanding before moving on.</p>
+          </div>
           {block.description && <p className="text-sm text-slate-600">{block.description}</p>}
           <div className="grid gap-3 sm:grid-cols-3">
             <MiniStat label="Time limit" value={block.timeLimitSeconds ? `${Math.round(block.timeLimitSeconds / 60)} min` : "Untimed"} />
@@ -468,6 +595,62 @@ function LinkCard({
           </a>
         </div>
       </div>
+    </div>
+  );
+}
+
+function JourneyStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+      <p className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-slate-400">{label}</p>
+      <p className="mt-1 text-sm font-semibold text-slate-800">{value}</p>
+    </div>
+  );
+}
+
+function LessonRecapCard({
+  objectives,
+  completedPercent,
+  nextLesson,
+  previewMode,
+}: {
+  objectives: string[];
+  completedPercent: number;
+  nextLesson?: { title: string; href: string } | null;
+  previewMode: boolean;
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)] p-5 shadow-sm">
+      <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#185FA5]">Lesson recap</p>
+      <h3 className="mt-2 text-lg font-extrabold text-slate-950">Pause and lock in the main ideas.</h3>
+      <p className="mt-2 text-sm leading-6 text-slate-600">
+        You’ve explored {completedPercent}% of this lesson. Before you mark it complete, revisit the objectives below and check that you can explain each one in your own words.
+      </p>
+      {objectives.length > 0 && (
+        <ul className="mt-4 space-y-2">
+          {objectives.map((objective) => (
+            <li key={objective} className="flex items-start gap-2 text-sm text-slate-700">
+              <Icons.Check size={14} className="mt-0.5 text-[#185FA5]" />
+              <span>{objective}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {!previewMode && nextLesson && (
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3">
+          <div>
+            <p className="text-xs font-extrabold uppercase tracking-[0.1em] text-slate-400">Recommended next</p>
+            <p className="mt-1 text-sm font-semibold text-slate-900">{nextLesson.title}</p>
+          </div>
+          <a
+            href={nextLesson.href}
+            className="inline-flex items-center gap-2 rounded-lg bg-[#185FA5] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#0d3d6e]"
+          >
+            Start next lesson
+            <Icons.ArrowRight size={15} />
+          </a>
+        </div>
+      )}
     </div>
   );
 }
@@ -617,6 +800,39 @@ function MiniStat({ label, value }: { label: string; value: string }) {
       <p className="mt-1 text-sm font-semibold text-slate-800">{value}</p>
     </div>
   );
+}
+
+function iconForBlock(block: LessonBlock) {
+  switch (block.type) {
+    case "richText":
+      return Icons.FileText;
+    case "audio":
+      return Icons.FileText;
+    case "video":
+      return Icons.Video;
+    case "transcript":
+      return Icons.FileCode;
+    case "image":
+      return Icons.BookOpen;
+    case "document":
+      return Icons.FileText;
+    case "sourceReference":
+      return Icons.Database;
+    case "formula":
+      return Icons.Calculator;
+    case "glossaryTermSet":
+      return Icons.BookOpen;
+    case "quizCheckpoint":
+      return Icons.ClipboardList;
+    case "reflectionPrompt":
+      return Icons.Quote;
+    case "download":
+      return Icons.Upload;
+    case "externalResource":
+      return Icons.Link2;
+    case "callout":
+      return Icons.Info;
+  }
 }
 
 function EmptyBlockMessage({ message }: { message: string }) {

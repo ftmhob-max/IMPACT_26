@@ -249,4 +249,5 @@ type Formula @table(name: "formulas", singular: "formula", plural: "formulas") {
   expression: String! @col(dataType: "text")
   notes: String @col(dataType: "text")
   position: Int!
+  calcMetaJson: String @col(dataType: "text")
 }

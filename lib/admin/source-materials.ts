@@ -1,7 +1,8 @@
-export type SourceMaterialKind = "document" | "audio" | "video";
+export type SourceMaterialKind = "document" | "audio" | "video" | "image";
 
 const VIDEO_EXTENSIONS = new Set(["mp4", "mov", "m4v", "webm", "avi", "mkv"]);
 const AUDIO_EXTENSIONS = new Set(["mp3", "wav", "m4a", "aac", "ogg", "webm"]);
+const IMAGE_EXTENSIONS = new Set(["jpg", "jpeg", "png", "gif", "webp", "svg"]);
 
 export function getFileExtension(fileName: string) {
   return fileName.split(".").pop()?.toLowerCase() ?? "";
@@ -19,6 +20,10 @@ export function getSourceMaterialKind(fileName: string, fileType?: string | null
     return "audio";
   }
 
+  if (lowerType.startsWith("image/")) {
+    return "image";
+  }
+
   if (VIDEO_EXTENSIONS.has(ext)) {
     return "video";
   }
@@ -27,11 +32,15 @@ export function getSourceMaterialKind(fileName: string, fileType?: string | null
     return "audio";
   }
 
+  if (IMAGE_EXTENSIONS.has(ext)) {
+    return "image";
+  }
+
   return "document";
 }
 
 export function isPreviewableMediaKind(kind: SourceMaterialKind) {
-  return kind === "audio" || kind === "video";
+  return kind === "audio" || kind === "video" || kind === "image";
 }
 
 export function parseGsPath(storagePath?: string | null) {

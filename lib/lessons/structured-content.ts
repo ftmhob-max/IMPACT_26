@@ -159,6 +159,16 @@ export interface StructuredLessonDocument {
   blocks: LessonBlock[];
 }
 
+export type LessonReadinessSeverity = "required" | "recommended" | "polish";
+
+export interface LessonReadinessIssue {
+  id: string;
+  message: string;
+  severity: LessonReadinessSeverity;
+  field: "summary" | "objectives" | "estimatedDurationMinutes" | "completionMode" | "block";
+  blockId?: string;
+}
+
 export function createStructuredLessonDocument(): StructuredLessonDocument {
   return {
     version: 2,
@@ -244,64 +254,109 @@ export function stringifyStructuredLessonContent(document: StructuredLessonDocum
 }
 
 export function getLessonReadinessIssues(document: StructuredLessonDocument): string[] {
+  return getLessonReadinessReport(document).map((issue) => issue.message);
+}
+
+export function getLessonReadinessReport(document: StructuredLessonDocument): LessonReadinessIssue[] {
   const issues: string[] = [];
+  const detailed: LessonReadinessIssue[] = [];
   const visibleBlocks = document.blocks.filter((block) => block.isStudentVisible);
 
-  if (!document.summary.trim()) issues.push("Add a lesson summary so students know what this lesson covers.");
+  if (!document.summary.trim()) {
+    issues.push("Add a lesson summary so students know what this lesson covers.");
+    detailed.push({
+      id: "summary-required",
+      message: "Add a lesson summary so students know what this lesson covers.",
+      severity: "required",
+      field: "summary",
+    });
+  }
   if (document.objectives.filter((objective) => objective.trim().length > 0).length === 0) {
     issues.push("Add at least one learning objective.");
+    detailed.push({
+      id: "objectives-required",
+      message: "Add at least one learning objective.",
+      severity: "required",
+      field: "objectives",
+    });
   }
-  if (visibleBlocks.length === 0) issues.push("Add at least one student-visible lesson block.");
+  if (visibleBlocks.length === 0) {
+    issues.push("Add at least one student-visible lesson block.");
+    detailed.push({
+      id: "visible-block-required",
+      message: "Add at least one student-visible lesson block.",
+      severity: "required",
+      field: "block",
+    });
+  }
+  if (document.estimatedDurationMinutes == null) {
+    detailed.push({
+      id: "duration-recommended",
+      message: "Add an estimated duration so students can plan their study session.",
+      severity: "recommended",
+      field: "estimatedDurationMinutes",
+    });
+  }
 
   for (const block of visibleBlocks) {
     const label = block.title?.trim() || defaultTitleForBlock(block.type);
+    const pushBlockIssue = (suffix: string, message: string, severity: LessonReadinessSeverity = "required") => {
+      issues.push(message);
+      detailed.push({
+        id: `${block.id}-${suffix}`,
+        message,
+        severity,
+        field: "block",
+        blockId: block.id,
+      });
+    };
     switch (block.type) {
       case "richText":
-        if (!hasMeaningfulRichText(block.content)) issues.push(`${label}: add lesson text or remove the empty block.`);
+        if (!hasMeaningfulRichText(block.content)) pushBlockIssue("content", `${label}: add lesson text or remove the empty block.`);
         break;
       case "audio":
-        if (!block.audioUrl.trim()) issues.push(`${label}: add an audio URL.`);
-        if (!block.transcript.trim()) issues.push(`${label}: add a transcript for accessibility.`);
+        if (!block.audioUrl.trim()) pushBlockIssue("audio-url", `${label}: add an audio URL.`);
+        if (!block.transcript.trim()) pushBlockIssue("audio-transcript", `${label}: add a transcript for accessibility.`);
         break;
       case "video":
-        if (!block.playbackId?.trim() && !block.videoUrl?.trim()) issues.push(`${label}: add a video playback ID or URL.`);
-        if (!block.transcript.trim()) issues.push(`${label}: add a transcript for accessibility.`);
+        if (!block.playbackId?.trim() && !block.videoUrl?.trim()) pushBlockIssue("video-source", `${label}: add a video playback ID or URL.`);
+        if (!block.transcript.trim()) pushBlockIssue("video-transcript", `${label}: add a transcript for accessibility.`);
         break;
       case "transcript":
-        if (!block.transcript.trim()) issues.push(`${label}: transcript text is empty.`);
+        if (!block.transcript.trim()) pushBlockIssue("transcript", `${label}: transcript text is empty.`);
         break;
       case "image":
-        if (!block.imageUrl.trim()) issues.push(`${label}: add an image URL.`);
-        if (!block.altText.trim()) issues.push(`${label}: alt text is required.`);
+        if (!block.imageUrl.trim()) pushBlockIssue("image-url", `${label}: add an image URL.`);
+        if (!block.altText.trim()) pushBlockIssue("image-alt", `${label}: alt text is required.`);
         break;
       case "document":
       case "download":
       case "externalResource":
-        if (!block.url.trim()) issues.push(`${label}: add a destination URL.`);
+        if (!block.url.trim()) pushBlockIssue("url", `${label}: add a destination URL.`);
         break;
       case "sourceReference":
-        if (!block.referenceLabel?.trim() && !block.title?.trim()) issues.push(`${label}: add a citation label or title.`);
+        if (!block.referenceLabel?.trim() && !block.title?.trim()) pushBlockIssue("citation", `${label}: add a citation label or title.`);
         break;
       case "formula":
-        if (!block.formula.expression.trim()) issues.push(`${label}: add the formula expression.`);
-        if (!block.formula.name.trim()) issues.push(`${label}: add the formula name.`);
+        if (!block.formula.expression.trim()) pushBlockIssue("formula-expression", `${label}: add the formula expression.`);
+        if (!block.formula.name.trim()) pushBlockIssue("formula-name", `${label}: add the formula name.`);
         break;
       case "glossaryTermSet":
-        if (block.terms.length === 0) issues.push(`${label}: add at least one glossary term.`);
+        if (block.terms.length === 0) pushBlockIssue("glossary-terms", `${label}: add at least one glossary term.`);
         break;
       case "quizCheckpoint":
-        if (!block.quizId?.trim()) issues.push(`${label}: link a quiz for this checkpoint.`);
+        if (!block.quizId?.trim()) pushBlockIssue("quiz-link", `${label}: link a quiz for this checkpoint.`);
         break;
       case "reflectionPrompt":
-        if (!block.prompt.trim()) issues.push(`${label}: add a reflection prompt.`);
+        if (!block.prompt.trim()) pushBlockIssue("reflection-prompt", `${label}: add a reflection prompt.`);
         break;
       case "callout":
-        if (!block.body.trim()) issues.push(`${label}: add callout text.`);
+        if (!block.body.trim()) pushBlockIssue("callout-body", `${label}: add callout text.`);
         break;
     }
   }
 
-  return issues;
+  return detailed;
 }
 
 export function defaultTitleForBlock(type: LessonBlockType): string {
@@ -334,6 +389,28 @@ export function defaultTitleForBlock(type: LessonBlockType): string {
       return "External resource";
     case "callout":
       return "Teaching callout";
+  }
+}
+
+export function blockCategoryForType(type: LessonBlockType): "core" | "practice" | "support" {
+  switch (type) {
+    case "richText":
+    case "video":
+    case "audio":
+    case "transcript":
+    case "formula":
+    case "callout":
+      return "core";
+    case "quizCheckpoint":
+    case "reflectionPrompt":
+      return "practice";
+    case "image":
+    case "document":
+    case "sourceReference":
+    case "glossaryTermSet":
+    case "download":
+    case "externalResource":
+      return "support";
   }
 }
 

@@ -22,6 +22,7 @@ async function getFormulaSectionsData() {
           name: string;
           expression: string;
           notes?: string | null;
+          calcMetaJson?: string | null;
         }>;
       }>;
     };

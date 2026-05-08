@@ -11,23 +11,9 @@ import {
   type User,
   type UserCredential,
 } from "firebase/auth";
+import { AuthFlowError, buildGoogleSignInError } from "./auth-errors";
 import { auth } from "./client";
-
-type AuthFlowErrorKind = "provider" | "session";
-
-export class AuthFlowError extends Error {
-  kind: AuthFlowErrorKind;
-  code?: string;
-  cause?: unknown;
-
-  constructor(kind: AuthFlowErrorKind, message: string, options?: { code?: string; cause?: unknown }) {
-    super(message);
-    this.name = "AuthFlowError";
-    this.kind = kind;
-    this.code = options?.code;
-    this.cause = options?.cause;
-  }
-}
+export { AuthFlowError } from "./auth-errors";
 
 async function syncSession(idToken: string, fullName?: string | null): Promise<void> {
   let response: Response;
@@ -85,13 +71,12 @@ export async function signInWithGoogle(): Promise<User> {
   let credential: UserCredential;
   try {
     credential = await signInWithPopup(auth, provider);
-  } catch (err: any) {
-    console.error("[Firebase Auth] Google popup sign-in failed:", err?.code, err?.message);
-    throw new AuthFlowError(
-      "provider",
-      err instanceof Error ? err.message : "Google sign-in failed",
-      { code: err?.code, cause: err },
-    );
+  } catch (err) {
+    const authError = buildGoogleSignInError(err);
+    if (authError.code !== "auth/unauthorized-domain") {
+      console.error("[Firebase Auth] Google popup sign-in failed:", authError.code, authError.message);
+    }
+    throw authError;
   }
   return completeAppSignIn(credential.user);
 }

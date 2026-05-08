@@ -83,7 +83,7 @@ export default async function AdminPreviewLessonPage({
       ? "Video lesson"
       : lesson.lessonType === "quiz"
       ? "Practice lesson"
-      : "Reading";
+      : "Guided lesson";
 
   const lessonIcon =
     lesson.lessonType === "video"

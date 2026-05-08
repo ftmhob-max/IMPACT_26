@@ -1332,6 +1332,14 @@ input Formula_Data {
   """
   section: FormulaSection_Key @fdc_forbiddenInVariables
   """
+  ✨ Generated from Field `Formula`.`calcMetaJson` of type `String`
+  """
+  calcMetaJson: String
+  """
+  ✨ `_expr` server value variant of `calcMetaJson` (✨ Generated from Field `Formula`.`calcMetaJson` of type `String`)
+  """
+  calcMetaJson_expr: String_Expr @fdc_forbiddenInVariables
+  """
   ✨ Generated from Field `Formula`.`code` of type `String!`
   """
   code: String
@@ -1405,6 +1413,10 @@ input Formula_Filter {
   """
   section: FormulaSection_Filter
   """
+  ✨ Generated from Field `Formula`.`calcMetaJson` of type `String`
+  """
+  calcMetaJson: String_Filter
+  """
   ✨ Generated from Field `Formula`.`code` of type `String!`
   """
   code: String_Filter
@@ -1462,6 +1474,10 @@ input Formula_Having {
   ✨ Generated from Field `Formula`.`_count` of type `Int!`
   """
   _count: Int_Filter
+  """
+  ✨ Generated from Field `Formula`.`calcMetaJson_count` of type `Int!`
+  """
+  calcMetaJson_count: Int_Filter
   """
   ✨ Generated from Field `Formula`.`code_count` of type `Int!`
   """
@@ -1550,6 +1566,10 @@ input Formula_Order {
   """
   section: FormulaSection_Order
   """
+  ✨ Generated from Field `Formula`.`calcMetaJson` of type `String`
+  """
+  calcMetaJson: OrderDirection
+  """
   ✨ Generated from Field `Formula`.`code` of type `String!`
   """
   code: OrderDirection
@@ -1573,6 +1593,10 @@ input Formula_Order {
   ✨ Generated from Field `Formula`.`_count` of type `Int!`
   """
   _count: OrderDirection
+  """
+  ✨ Generated from Field `Formula`.`calcMetaJson_count` of type `Int!`
+  """
+  calcMetaJson_count: OrderDirection
   """
   ✨ Generated from Field `Formula`.`code_count` of type `Int!`
   """

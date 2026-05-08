@@ -225,6 +225,7 @@ query GetFormulaSections @auth(level: NO_ACCESS) {
       name
       expression
       notes
+      calcMetaJson
     }
   }
 }
@@ -506,6 +507,7 @@ query AdminListSourceMaterials @auth(level: NO_ACCESS) {
     fileType
     storagePath
     downloadUrl
+    extractedText
     metadataJson
     status
     createdAt
@@ -519,6 +521,22 @@ query AdminListSourceMaterials @auth(level: NO_ACCESS) {
       errorMessage
       createdAt
       completedAt
+    }
+    contentSourceLinks_on_sourceMaterial(orderBy: { createdAt: DESC }) {
+      id
+      referenceLabel
+      createdAt
+      course { id title }
+      lesson {
+        id
+        title
+        module {
+          id
+          title
+          course { id title }
+        }
+      }
+      question { id questionText domain difficulty }
     }
   }
 }

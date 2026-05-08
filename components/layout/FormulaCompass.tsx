@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import * as Icons from "@/components/ui/Icons";
 import { cn } from "@/lib/utils";
 import { IconTile, StatusBadge } from "@/components/ui/LearnerPrimitives";
+import { FormulaCalculatorPanel } from "@/components/layout/FormulaCalculatorPanel";
 
 interface Formula {
   id: string;
@@ -11,6 +12,7 @@ interface Formula {
   name: string;
   expression: string;
   notes?: string | null;
+  calcMetaJson?: string | null;
 }
 
 interface FormulaSection {
@@ -43,6 +45,10 @@ export function FormulaCompass({
     new Set(initialFavoriteFormulaIds)
   );
   const [busyFavoriteId, setBusyFavoriteId] = useState<string | null>(null);
+  const [activeCalc, setActiveCalc] = useState<{
+    formula: Formula;
+    section: { code: string; title: string };
+  } | null>(null);
 
   function toggleSection(id: string) {
     setOpenSections((prev) => {
@@ -297,6 +303,14 @@ export function FormulaCompass({
                         {formula.expression}
                       </p>
                       {formula.notes && <p className="mt-2 text-xs leading-5 text-slate-500">{formula.notes}</p>}
+                      <button
+                        type="button"
+                        onClick={() => setActiveCalc({ formula, section: { code: section.code, title: section.title } })}
+                        className="mt-3 inline-flex items-center gap-1.5 rounded text-xs font-semibold text-[#185FA5] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2"
+                      >
+                        <Icons.Calculator size={12} />
+                        Open calculator
+                      </button>
                     </article>
                   ))}
                 </div>
@@ -304,6 +318,14 @@ export function FormulaCompass({
             </section>
           );
         })
+      )}
+
+      {activeCalc && (
+        <FormulaCalculatorPanel
+          formula={activeCalc.formula}
+          section={activeCalc.section}
+          onClose={() => setActiveCalc(null)}
+        />
       )}
     </div>
   );

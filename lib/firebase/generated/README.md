@@ -81,6 +81,9 @@ This README will guide you through the process of using the generated JavaScript
   - [*MarkAnsweredAt*](#markansweredat)
   - [*CreateFormulaSection*](#createformulasection)
   - [*CreateFormula*](#createformula)
+  - [*UpdateFormula*](#updateformula)
+  - [*DeleteFormula*](#deleteformula)
+  - [*UpdateFormulaSection*](#updateformulasection)
   - [*DeleteFormulasForSection*](#deleteformulasforsection)
   - [*DeleteFormulaSection*](#deleteformulasection)
   - [*CreateContentSourceLink*](#createcontentsourcelink)
@@ -1414,6 +1417,7 @@ export interface GetFormulaSectionsData {
       name: string;
       expression: string;
       notes?: string | null;
+      calcMetaJson?: string | null;
     } & Formula_Key)[];
   } & FormulaSection_Key)[];
 }
@@ -3296,6 +3300,7 @@ export interface AdminListSourceMaterialsData {
     fileType: string;
     storagePath: string;
     downloadUrl?: string | null;
+    extractedText?: string | null;
     metadataJson?: string | null;
     status: string;
     createdAt: DateString;
@@ -3314,6 +3319,33 @@ export interface AdminListSourceMaterialsData {
         createdAt: DateString;
         completedAt?: DateString | null;
       } & IngestionJob_Key)[];
+        contentSourceLinks_on_sourceMaterial: ({
+          id: UUIDString;
+          referenceLabel?: string | null;
+          createdAt: DateString;
+          course?: {
+            id: UUIDString;
+            title: string;
+          } & Course_Key;
+            lesson?: {
+              id: UUIDString;
+              title: string;
+              module: {
+                id: UUIDString;
+                title: string;
+                course: {
+                  id: UUIDString;
+                  title: string;
+                } & Course_Key;
+              } & Module_Key;
+            } & Lesson_Key;
+              question?: {
+                id: UUIDString;
+                questionText: string;
+                domain: string;
+                difficulty: string;
+              } & Question_Key;
+        } & ContentSourceLink_Key)[];
   } & SourceMaterial_Key)[];
 }
 ```
@@ -8581,6 +8613,7 @@ export interface CreateFormulaVariables {
   expression: string;
   notes?: string | null;
   position: number;
+  calcMetaJson?: string | null;
 }
 ```
 ### Return Type
@@ -8606,13 +8639,14 @@ const createFormulaVars: CreateFormulaVariables = {
   expression: ..., 
   notes: ..., // optional
   position: ..., 
+  calcMetaJson: ..., // optional
 };
 
 // Call the `createFormula()` function to execute the mutation.
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await createFormula(createFormulaVars);
 // Variables can be defined inline as well.
-const { data } = await createFormula({ sectionId: ..., code: ..., name: ..., expression: ..., notes: ..., position: ..., });
+const { data } = await createFormula({ sectionId: ..., code: ..., name: ..., expression: ..., notes: ..., position: ..., calcMetaJson: ..., });
 
 // You can also pass in a `DataConnect` instance to the action shortcut function.
 const dataConnect = getDataConnect(connectorConfig);
@@ -8641,12 +8675,13 @@ const createFormulaVars: CreateFormulaVariables = {
   expression: ..., 
   notes: ..., // optional
   position: ..., 
+  calcMetaJson: ..., // optional
 };
 
 // Call the `createFormulaRef()` function to get a reference to the mutation.
 const ref = createFormulaRef(createFormulaVars);
 // Variables can be defined inline as well.
-const ref = createFormulaRef({ sectionId: ..., code: ..., name: ..., expression: ..., notes: ..., position: ..., });
+const ref = createFormulaRef({ sectionId: ..., code: ..., name: ..., expression: ..., notes: ..., position: ..., calcMetaJson: ..., });
 
 // You can also pass in a `DataConnect` instance to the `MutationRef` function.
 const dataConnect = getDataConnect(connectorConfig);
@@ -8662,6 +8697,360 @@ console.log(data.formula_insert);
 executeMutation(ref).then((response) => {
   const data = response.data;
   console.log(data.formula_insert);
+});
+```
+
+## UpdateFormula
+You can execute the `UpdateFormula` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+updateFormula(vars: UpdateFormulaVariables): MutationPromise<UpdateFormulaData, UpdateFormulaVariables>;
+
+interface UpdateFormulaRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateFormulaVariables): MutationRef<UpdateFormulaData, UpdateFormulaVariables>;
+}
+export const updateFormulaRef: UpdateFormulaRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+updateFormula(dc: DataConnect, vars: UpdateFormulaVariables): MutationPromise<UpdateFormulaData, UpdateFormulaVariables>;
+
+interface UpdateFormulaRef {
+  ...
+  (dc: DataConnect, vars: UpdateFormulaVariables): MutationRef<UpdateFormulaData, UpdateFormulaVariables>;
+}
+export const updateFormulaRef: UpdateFormulaRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the updateFormulaRef:
+```typescript
+const name = updateFormulaRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `UpdateFormula` mutation requires an argument of type `UpdateFormulaVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface UpdateFormulaVariables {
+  id: UUIDString;
+  code?: string | null;
+  name?: string | null;
+  expression?: string | null;
+  notes?: string | null;
+  calcMetaJson?: string | null;
+  position?: number | null;
+}
+```
+### Return Type
+Recall that executing the `UpdateFormula` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `UpdateFormulaData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface UpdateFormulaData {
+  formula_update?: Formula_Key | null;
+}
+```
+### Using `UpdateFormula`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, updateFormula, UpdateFormulaVariables } from '@impact26/dataconnect-sdk';
+
+// The `UpdateFormula` mutation requires an argument of type `UpdateFormulaVariables`:
+const updateFormulaVars: UpdateFormulaVariables = {
+  id: ..., 
+  code: ..., // optional
+  name: ..., // optional
+  expression: ..., // optional
+  notes: ..., // optional
+  calcMetaJson: ..., // optional
+  position: ..., // optional
+};
+
+// Call the `updateFormula()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await updateFormula(updateFormulaVars);
+// Variables can be defined inline as well.
+const { data } = await updateFormula({ id: ..., code: ..., name: ..., expression: ..., notes: ..., calcMetaJson: ..., position: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await updateFormula(dataConnect, updateFormulaVars);
+
+console.log(data.formula_update);
+
+// Or, you can use the `Promise` API.
+updateFormula(updateFormulaVars).then((response) => {
+  const data = response.data;
+  console.log(data.formula_update);
+});
+```
+
+### Using `UpdateFormula`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, updateFormulaRef, UpdateFormulaVariables } from '@impact26/dataconnect-sdk';
+
+// The `UpdateFormula` mutation requires an argument of type `UpdateFormulaVariables`:
+const updateFormulaVars: UpdateFormulaVariables = {
+  id: ..., 
+  code: ..., // optional
+  name: ..., // optional
+  expression: ..., // optional
+  notes: ..., // optional
+  calcMetaJson: ..., // optional
+  position: ..., // optional
+};
+
+// Call the `updateFormulaRef()` function to get a reference to the mutation.
+const ref = updateFormulaRef(updateFormulaVars);
+// Variables can be defined inline as well.
+const ref = updateFormulaRef({ id: ..., code: ..., name: ..., expression: ..., notes: ..., calcMetaJson: ..., position: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = updateFormulaRef(dataConnect, updateFormulaVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.formula_update);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.formula_update);
+});
+```
+
+## DeleteFormula
+You can execute the `DeleteFormula` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+deleteFormula(vars: DeleteFormulaVariables): MutationPromise<DeleteFormulaData, DeleteFormulaVariables>;
+
+interface DeleteFormulaRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteFormulaVariables): MutationRef<DeleteFormulaData, DeleteFormulaVariables>;
+}
+export const deleteFormulaRef: DeleteFormulaRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+deleteFormula(dc: DataConnect, vars: DeleteFormulaVariables): MutationPromise<DeleteFormulaData, DeleteFormulaVariables>;
+
+interface DeleteFormulaRef {
+  ...
+  (dc: DataConnect, vars: DeleteFormulaVariables): MutationRef<DeleteFormulaData, DeleteFormulaVariables>;
+}
+export const deleteFormulaRef: DeleteFormulaRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the deleteFormulaRef:
+```typescript
+const name = deleteFormulaRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `DeleteFormula` mutation requires an argument of type `DeleteFormulaVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface DeleteFormulaVariables {
+  id: UUIDString;
+}
+```
+### Return Type
+Recall that executing the `DeleteFormula` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `DeleteFormulaData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface DeleteFormulaData {
+  formula_delete?: Formula_Key | null;
+}
+```
+### Using `DeleteFormula`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, deleteFormula, DeleteFormulaVariables } from '@impact26/dataconnect-sdk';
+
+// The `DeleteFormula` mutation requires an argument of type `DeleteFormulaVariables`:
+const deleteFormulaVars: DeleteFormulaVariables = {
+  id: ..., 
+};
+
+// Call the `deleteFormula()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await deleteFormula(deleteFormulaVars);
+// Variables can be defined inline as well.
+const { data } = await deleteFormula({ id: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await deleteFormula(dataConnect, deleteFormulaVars);
+
+console.log(data.formula_delete);
+
+// Or, you can use the `Promise` API.
+deleteFormula(deleteFormulaVars).then((response) => {
+  const data = response.data;
+  console.log(data.formula_delete);
+});
+```
+
+### Using `DeleteFormula`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, deleteFormulaRef, DeleteFormulaVariables } from '@impact26/dataconnect-sdk';
+
+// The `DeleteFormula` mutation requires an argument of type `DeleteFormulaVariables`:
+const deleteFormulaVars: DeleteFormulaVariables = {
+  id: ..., 
+};
+
+// Call the `deleteFormulaRef()` function to get a reference to the mutation.
+const ref = deleteFormulaRef(deleteFormulaVars);
+// Variables can be defined inline as well.
+const ref = deleteFormulaRef({ id: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = deleteFormulaRef(dataConnect, deleteFormulaVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.formula_delete);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.formula_delete);
+});
+```
+
+## UpdateFormulaSection
+You can execute the `UpdateFormulaSection` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+updateFormulaSection(vars: UpdateFormulaSectionVariables): MutationPromise<UpdateFormulaSectionData, UpdateFormulaSectionVariables>;
+
+interface UpdateFormulaSectionRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateFormulaSectionVariables): MutationRef<UpdateFormulaSectionData, UpdateFormulaSectionVariables>;
+}
+export const updateFormulaSectionRef: UpdateFormulaSectionRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+updateFormulaSection(dc: DataConnect, vars: UpdateFormulaSectionVariables): MutationPromise<UpdateFormulaSectionData, UpdateFormulaSectionVariables>;
+
+interface UpdateFormulaSectionRef {
+  ...
+  (dc: DataConnect, vars: UpdateFormulaSectionVariables): MutationRef<UpdateFormulaSectionData, UpdateFormulaSectionVariables>;
+}
+export const updateFormulaSectionRef: UpdateFormulaSectionRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the updateFormulaSectionRef:
+```typescript
+const name = updateFormulaSectionRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `UpdateFormulaSection` mutation requires an argument of type `UpdateFormulaSectionVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface UpdateFormulaSectionVariables {
+  id: UUIDString;
+  code?: string | null;
+  title?: string | null;
+  position?: number | null;
+}
+```
+### Return Type
+Recall that executing the `UpdateFormulaSection` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `UpdateFormulaSectionData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface UpdateFormulaSectionData {
+  formulaSection_update?: FormulaSection_Key | null;
+}
+```
+### Using `UpdateFormulaSection`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, updateFormulaSection, UpdateFormulaSectionVariables } from '@impact26/dataconnect-sdk';
+
+// The `UpdateFormulaSection` mutation requires an argument of type `UpdateFormulaSectionVariables`:
+const updateFormulaSectionVars: UpdateFormulaSectionVariables = {
+  id: ..., 
+  code: ..., // optional
+  title: ..., // optional
+  position: ..., // optional
+};
+
+// Call the `updateFormulaSection()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await updateFormulaSection(updateFormulaSectionVars);
+// Variables can be defined inline as well.
+const { data } = await updateFormulaSection({ id: ..., code: ..., title: ..., position: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await updateFormulaSection(dataConnect, updateFormulaSectionVars);
+
+console.log(data.formulaSection_update);
+
+// Or, you can use the `Promise` API.
+updateFormulaSection(updateFormulaSectionVars).then((response) => {
+  const data = response.data;
+  console.log(data.formulaSection_update);
+});
+```
+
+### Using `UpdateFormulaSection`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, updateFormulaSectionRef, UpdateFormulaSectionVariables } from '@impact26/dataconnect-sdk';
+
+// The `UpdateFormulaSection` mutation requires an argument of type `UpdateFormulaSectionVariables`:
+const updateFormulaSectionVars: UpdateFormulaSectionVariables = {
+  id: ..., 
+  code: ..., // optional
+  title: ..., // optional
+  position: ..., // optional
+};
+
+// Call the `updateFormulaSectionRef()` function to get a reference to the mutation.
+const ref = updateFormulaSectionRef(updateFormulaSectionVars);
+// Variables can be defined inline as well.
+const ref = updateFormulaSectionRef({ id: ..., code: ..., title: ..., position: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = updateFormulaSectionRef(dataConnect, updateFormulaSectionVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.formulaSection_update);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.formulaSection_update);
 });
 ```
 

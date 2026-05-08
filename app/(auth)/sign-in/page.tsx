@@ -26,8 +26,9 @@ function SignInForm() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState<unknown>(null);
   const [loading, setLoading] = useState(false);
+  const unauthorizedDomainError = getUnauthorizedDomainError(error);
 
   function getErrorMessage(err: unknown): string {
     if (err instanceof AuthFlowError) {
@@ -42,7 +43,7 @@ function SignInForm() {
 
   async function handleEmailSignIn(e: React.FormEvent) {
     e.preventDefault();
-    setError("");
+    setError(null);
     setLoading(true);
     try {
       const user = await signIn(email, password);
@@ -56,7 +57,7 @@ function SignInForm() {
   }
 
   async function handleGoogle() {
-    setError("");
+    setError(null);
     setLoading(true);
     try {
       await signInWithGoogle();
@@ -103,11 +104,13 @@ function SignInForm() {
         <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
       </div>
 
-      {error && (
+      {unauthorizedDomainError ? (
+        <UnauthorizedDomainNotice host={unauthorizedDomainError.host} />
+      ) : error ? (
         <p className="mt-5 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">
-          {error}
+          {getErrorMessage(error)}
         </p>
-      )}
+      ) : null}
 
       <form onSubmit={handleEmailSignIn} className="mt-6 space-y-4">
         <Field label="Email">
@@ -226,6 +229,51 @@ function AuthShell({ children }: { children?: React.ReactNode }) {
       </section>
     </div>
   );
+}
+
+function UnauthorizedDomainNotice({ host }: { host?: string }) {
+  const localHostUrl = getLocalhostSignInUrl();
+  const hostLabel = host ?? "this host";
+  const showLocalhostLink = host === "127.0.0.1" && localHostUrl;
+
+  return (
+    <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+      <p className="font-extrabold">Google sign-in is not authorized for {hostLabel}.</p>
+      <p className="mt-2 leading-6">
+        Add <code className="rounded bg-white/70 px-1 py-0.5 text-[0.9em]">{hostLabel}</code> in Firebase Console under
+        {" "}
+        <span className="font-semibold">Authentication -&gt; Settings -&gt; Authorized domains</span>.
+      </p>
+      <p className="mt-2 leading-6">
+        Firebase treats <code className="rounded bg-white/70 px-1 py-0.5 text-[0.9em]">localhost</code> and
+        {" "}
+        <code className="rounded bg-white/70 px-1 py-0.5 text-[0.9em]">127.0.0.1</code> as different domains.
+      </p>
+      {showLocalhostLink ? (
+        <p className="mt-2 leading-6">
+          For a quick local workaround, open
+          {" "}
+          <a href={localHostUrl} className="font-extrabold text-[#185FA5] underline underline-offset-2">
+            the localhost sign-in page
+          </a>
+          {" "}
+          printed by the dev server.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function getUnauthorizedDomainError(err: unknown): AuthFlowError | null {
+  return err instanceof AuthFlowError && err.code === "auth/unauthorized-domain" ? err : null;
+}
+
+function getLocalhostSignInUrl(): string | null {
+  if (typeof window === "undefined") return null;
+
+  const url = new URL(window.location.href);
+  url.hostname = "localhost";
+  return url.toString();
 }
 
 function ModeButton({

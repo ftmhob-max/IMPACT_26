@@ -10,7 +10,7 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireAdminRequest(request, "instructor");
+  const auth = await requireAdminRequest(request, "viewer");
   if (!auth.ok) return auth.response;
 
   const { id } = await params;

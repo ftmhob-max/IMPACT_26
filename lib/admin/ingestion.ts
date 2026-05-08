@@ -117,15 +117,35 @@ export async function uploadSourceBuffer({
   storagePath: string;
   contentType: string;
 }) {
-  const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
-  const bucket = bucketName ? getStorage(adminApp).bucket(bucketName) : getStorage(adminApp).bucket();
-  const file = bucket.file(storagePath);
-  await file.save(buffer, {
-    contentType,
-    resumable: false,
-    metadata: { cacheControl: "private, max-age=0, no-transform" },
-  });
-  return `gs://${bucket.name}/${storagePath}`;
+  const configuredBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? process.env.GCLOUD_PROJECT;
+  const bucketCandidates = [
+    configuredBucket,
+    configuredBucket?.endsWith(".firebasestorage.app") && projectId ? `${projectId}.appspot.com` : null,
+    projectId ? `${projectId}.appspot.com` : null,
+  ].filter((value, index, all): value is string => Boolean(value) && all.indexOf(value) === index);
+
+  let lastError: unknown = null;
+  for (const bucketName of bucketCandidates.length > 0 ? bucketCandidates : [undefined]) {
+    try {
+      const bucket = bucketName ? getStorage(adminApp).bucket(bucketName) : getStorage(adminApp).bucket();
+      const file = bucket.file(storagePath);
+      await file.save(buffer, {
+        contentType,
+        resumable: false,
+        metadata: { cacheControl: "private, max-age=0, no-transform" },
+      });
+      return `gs://${bucket.name}/${storagePath}`;
+    } catch (error) {
+      lastError = error;
+      const message = (error instanceof Error ? error.message : String(error)).toLowerCase();
+      if (!message.includes("bucket does not exist") && !message.includes("no default bucket") && !message.includes("bucket name not specified")) {
+        throw error;
+      }
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error("Unable to upload source material");
 }
 
 export async function ingestBuffer(
@@ -156,8 +176,25 @@ export async function ingestBuffer(
       };
     } else if (fileType.includes("pdf") || lowerName.endsWith(".pdf")) {
       const mod = await import("pdf-parse");
-      const pdfParse = (mod as any).default ?? (mod as any);
-      const parsed = await pdfParse(buffer);
+      const PDFParse = (mod as any).PDFParse ?? (mod as any).default ?? (mod as any);
+      
+      let parsed;
+      if (typeof PDFParse === "function" && PDFParse.prototype && PDFParse.prototype.getText) {
+        // Handle pdf-parse v2+
+        const parser = new PDFParse({ data: buffer });
+        const info = await parser.getInfo();
+        const textResult = await parser.getText();
+        await parser.destroy();
+        parsed = {
+          text: textResult.text ?? "",
+          numpages: info.total,
+          info: info.info
+        };
+      } else {
+        // Fallback for pdf-parse v1
+        parsed = await PDFParse(buffer);
+      }
+
       result = {
         parser: "pdf-parse",
         status: "parsed",

@@ -27,6 +27,7 @@ export async function GET() {
         expression: f.expression,
         notes: f.notes ?? null,
           position: formula.position ?? 0,
+          calcMetaJson: (f as typeof f & { calcMetaJson?: string | null }).calcMetaJson ?? null,
         };
       }),
     })));

@@ -51,6 +51,24 @@ async function fetchLesson(id: string) {
   }
 }
 
+async function fetchCourseOutline(slug: string | null | undefined) {
+  if (!slug) return null;
+  try {
+    const data = await adminDcQuery<{
+      courses: Array<{
+        slug: string;
+        modules_on_course: Array<{
+          position: number;
+          lessons_on_module: Array<{ id: string; title: string; position: number }>;
+        }>;
+      }>;
+    }>("GetCourseBySlug", { slug });
+    return data.courses[0] ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export default async function LessonPage({
   params,
 }: {
@@ -58,6 +76,7 @@ export default async function LessonPage({
 }) {
   const { id } = await params;
   const lesson = await fetchLesson(id);
+  const outline = await fetchCourseOutline((lesson as any)?.module?.course?.slug);
 
   const backHref = (lesson as any)?.module?.course
     ? `/courses/${(lesson as any).module.course.slug}`
@@ -84,12 +103,22 @@ export default async function LessonPage({
 
   const structuredDocument = parseStructuredLessonContent(lesson.contentJson ?? null);
   const hasStructuredBlocks = structuredDocument.blocks.some((block) => block.isStudentVisible);
+  const nextLesson = (() => {
+    if (!outline) return null;
+    const orderedLessons = outline.modules_on_course
+      .slice()
+      .sort((a, b) => a.position - b.position)
+      .flatMap((module) => module.lessons_on_module.slice().sort((a, b) => a.position - b.position));
+    const index = orderedLessons.findIndex((entry) => entry.id === lesson.id);
+    const next = index >= 0 ? orderedLessons[index + 1] : null;
+    return next ? { title: next.title, href: `/lessons/${next.id}` } : null;
+  })();
 
   if (lesson.contentJson && hasStructuredBlocks) {
     return (
       <LearnerPage width="wide">
         <PageHeader
-          eyebrow={lesson.lessonType === "video" ? "Video lesson" : lesson.lessonType === "quiz" ? "Practice lesson" : "Structured lesson"}
+          eyebrow={lesson.lessonType === "video" ? "Video lesson" : lesson.lessonType === "quiz" ? "Practice lesson" : "Guided lesson"}
           title={lesson.title}
           description={structuredDocument.summary || "Move through the lesson map, review each block, and track your progress as you study."}
           backHref={backHref}
@@ -101,6 +130,7 @@ export default async function LessonPage({
           lessonTitle={lesson.title}
           contentJson={lesson.contentJson ?? null}
           fallbackDurationSeconds={lesson.durationSeconds ?? null}
+          nextLesson={nextLesson}
         />
       </LearnerPage>
     );
@@ -203,7 +233,7 @@ export default async function LessonPage({
     return (
       <LearnerPage width="narrow">
         <PageHeader
-          eyebrow="Reading"
+          eyebrow="Guided lesson"
           title={lesson.title}
           backHref={backHref}
           backLabel={backLabel}
@@ -215,6 +245,7 @@ export default async function LessonPage({
             lessonTitle={lesson.title}
             contentJson={lesson.contentJson}
             fallbackDurationSeconds={lesson.durationSeconds ?? null}
+            nextLesson={nextLesson}
           />
         </SectionPanel>
         <LessonMarkComplete lessonId={lesson.id} />

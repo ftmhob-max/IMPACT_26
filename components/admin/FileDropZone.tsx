@@ -77,28 +77,54 @@ function isAccepted(file: File) {
 }
 
 interface FileDropZoneProps {
-  onFile: (file: File) => void;
+  onFile?: (file: File) => void;
+  onFiles?: (files: File[]) => void;
   file?: File | null;
+  files?: File[];
+  multiple?: boolean;
   disabled?: boolean;
   className?: string;
 }
 
-export function FileDropZone({ onFile, file, disabled, className }: FileDropZoneProps) {
+export function FileDropZone({
+  onFile,
+  onFiles,
+  file,
+  files,
+  multiple = false,
+  disabled,
+  className,
+}: FileDropZoneProps) {
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const selectedFiles = multiple ? (files ?? []) : (file ? [file] : []);
 
   const handleFile = useCallback(
-    (incoming: File | undefined) => {
-      if (!incoming) return;
-      if (!isAccepted(incoming)) {
+    (incomingFiles: File[]) => {
+      if (!incomingFiles.length) return;
+      const accepted = incomingFiles.filter(isAccepted);
+      const rejectedCount = incomingFiles.length - accepted.length;
+
+      if (!accepted.length) {
         setError("Unsupported file type. Use PDF, DOCX, CSV, TXT, Markdown, audio, or video.");
         return;
       }
-      setError(null);
-      onFile(incoming);
+
+      setError(
+        rejectedCount > 0
+          ? `${rejectedCount} file${rejectedCount === 1 ? "" : "s"} skipped. Use PDF, DOCX, CSV, TXT, Markdown, audio, or video.`
+          : null
+      );
+
+      if (multiple) {
+        onFiles?.(accepted);
+        return;
+      }
+
+      onFile?.(accepted[0]);
     },
-    [onFile]
+    [multiple, onFile, onFiles]
   );
 
   function onDragOver(e: React.DragEvent) {
@@ -115,15 +141,16 @@ export function FileDropZone({ onFile, file, disabled, className }: FileDropZone
     e.preventDefault();
     setDragging(false);
     if (disabled) return;
-    handleFile(e.dataTransfer.files[0]);
+    handleFile(Array.from(e.dataTransfer.files));
   }
 
   function onInputChange(e: React.ChangeEvent<HTMLInputElement>) {
-    handleFile(e.target.files?.[0]);
+    handleFile(Array.from(e.target.files ?? []));
     e.target.value = "";
   }
 
-  const ext = file ? getExtension(file.name) : null;
+  const leadFile = selectedFiles[0] ?? null;
+  const ext = leadFile ? getExtension(leadFile.name) : null;
   const FileIcon: IconComp = (ext != null && FILE_TYPE_ICONS[ext]) || Icons.FileText;
 
   return (
@@ -151,27 +178,44 @@ export function FileDropZone({ onFile, file, disabled, className }: FileDropZone
           ref={inputRef}
           type="file"
           accept={ACCEPTED_EXTENSIONS.join(",")}
+          multiple={multiple}
           className="sr-only"
           onChange={onInputChange}
           disabled={disabled}
           tabIndex={-1}
         />
 
-        {file ? (
+        {leadFile ? (
           <>
             <FileIcon size={28} className="text-emerald-600" />
             <div>
-              <p className="text-sm font-semibold text-emerald-700">{file.name}</p>
-              <p className="text-xs text-emerald-600">{formatBytes(file.size)}</p>
+              {multiple ? (
+                <>
+                  <p className="text-sm font-semibold text-emerald-700">
+                    {selectedFiles.length.toLocaleString()} files ready to ingest
+                  </p>
+                  <p className="text-xs text-emerald-600">
+                    {selectedFiles.slice(0, 3).map((entry) => entry.name).join(", ")}
+                    {selectedFiles.length > 3 ? ` + ${selectedFiles.length - 3} more` : ""}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm font-semibold text-emerald-700">{leadFile.name}</p>
+                  <p className="text-xs text-emerald-600">{formatBytes(leadFile.size)}</p>
+                </>
+              )}
             </div>
-            <p className="text-xs text-slate-500">Click to change file</p>
+            <p className="text-xs text-slate-500">
+              {multiple ? "Click or drop more files to add to this batch" : "Click to change file"}
+            </p>
           </>
         ) : (
           <>
             <Icons.Upload size={28} className={dragging ? "text-[#185FA5]" : "text-slate-400"} />
             <div>
               <p className="text-sm font-semibold text-slate-700">
-                {dragging ? "Drop file here" : "Drag & drop or click to browse"}
+                {dragging ? `Drop ${multiple ? "files" : "file"} here` : `Drag & drop or click to browse${multiple ? " files" : ""}`}
               </p>
               <p className="text-xs text-slate-500">PDF, DOCX, CSV, TXT, Markdown, audio, video</p>
             </div>

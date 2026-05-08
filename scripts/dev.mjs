@@ -71,16 +71,53 @@ function isPortListening(port, host = "127.0.0.1") {
   });
 }
 
+function canListenOnPort(port, host) {
+  return new Promise((resolve) => {
+    const server = net.createServer();
+
+    const finish = (result) => {
+      server.removeAllListeners();
+      if (server.listening) {
+        server.close(() => resolve(result));
+        return;
+      }
+      resolve(result);
+    };
+
+    server.once("error", () => finish(false));
+    server.once("listening", () => finish(true));
+    if (host) {
+      server.listen(port, host);
+      return;
+    }
+
+    server.listen(port);
+  });
+}
+
+async function findAvailablePort(startPort, host) {
+  let port = startPort;
+
+  while (!(await canListenOnPort(port, host))) {
+    port += 1;
+  }
+
+  return port;
+}
+
 async function main() {
   const env = resolveEnv();
   const useEmulator = shouldUseEmulator(env);
   const emulatorPort = getEmulatorPort(env);
   const emulatorRunning = useEmulator && (await isPortListening(emulatorPort));
+  const appPort = await findAvailablePort(
+    Number.parseInt(env.PORT ?? env.NEXT_PORT ?? "3000", 10) || 3000
+  );
 
   const labels = ["next"];
   const colors = ["cyan"];
-  const commands = ["next dev"];
-  const waitTargets = ["http://127.0.0.1:3000"];
+  const commands = [`next dev --webpack --port ${appPort}`];
+  const waitTargets = [`http://localhost:${appPort}`];
 
   if (useEmulator) {
     waitTargets.push(`tcp:127.0.0.1:${emulatorPort}`);
@@ -94,7 +131,7 @@ async function main() {
 
   labels.push("browser");
   colors.push("green");
-  commands.push(`wait-on ${waitTargets.join(" ")} && open-cli http://127.0.0.1:3000`);
+  commands.push(`wait-on ${waitTargets.join(" ")} && open-cli http://localhost:${appPort}`);
 
   const args = [
     "concurrently",
@@ -104,6 +141,10 @@ async function main() {
     colors.join(","),
     ...commands,
   ];
+
+  if (appPort !== 3000) {
+    console.log(`[dev] Port 3000 is busy, using ${appPort} instead.`);
+  }
 
   if (emulatorRunning) {
     console.log(`[dev] Reusing existing Data Connect emulator on port ${emulatorPort}.`);

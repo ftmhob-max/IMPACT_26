@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { adminFetch } from "@/lib/admin/client-fetch";
 import { DOMAINS, DIFFICULTIES } from "@/lib/utils";
 import * as Icons from "@/components/ui/Icons";
+import { FormulasPanel } from "@/components/admin/FormulasPanel";
 
 type Overview = {
   questions: any[];
@@ -153,6 +154,7 @@ export function AdminPortal({ initialOverview = emptyOverview }: { initialOvervi
                   }
                   icon={stats.ingestionQueue > 0 ? Icons.AlertCircle : Icons.Check}
                   tone={stats.ingestionQueue > 0 ? "amber" : "green"}
+                  href={stats.ingestionQueue > 0 ? "/admin/materials" : "#materials-workspace"}
                 />
                 <HeroCallout
                   eyebrow="Coverage"
@@ -160,18 +162,19 @@ export function AdminPortal({ initialOverview = emptyOverview }: { initialOvervi
                   description="Use quick actions below to publish new content or add lessons to active programs."
                   icon={Icons.GraduationCap}
                   tone="blue"
+                  href="/admin/courses"
                 />
               </div>
             </div>
           </div>
 
           <div className="grid gap-3 border-t border-slate-100 px-5 py-4 sm:grid-cols-2 xl:grid-cols-6">
-            <Metric label="Questions" value={overview.questions.length} detail="Banked assessment items" icon={Icons.FileText} />
-            <Metric label="Published courses" value={stats.publishedCourses} detail={`${overview.courses.length} total courses`} icon={Icons.GraduationCap} />
-            <Metric label="Pass rate" value={`${stats.passRate}%`} detail={`${stats.completed} completed attempts`} icon={Icons.Target} />
-            <Metric label="Avg score" value={`${stats.avgScore}%`} detail="Across completed attempts" icon={Icons.BarChart3} />
-            <Metric label="Materials queued" value={stats.ingestionQueue} detail={`${stats.parsedMaterials} parsed ready`} icon={Icons.Database} />
-            <Metric label="Admins" value={stats.adminUsers} detail={`${overview.users.length} active users`} icon={Icons.Users} />
+            <Metric label="Questions" value={overview.questions.length} detail="Banked assessment items" icon={Icons.FileText} href="/admin/questions" />
+            <Metric label="Published courses" value={stats.publishedCourses} detail={`${overview.courses.length} total courses`} icon={Icons.GraduationCap} href="/admin/courses" />
+            <Metric label="Pass rate" value={`${stats.passRate}%`} detail={`${stats.completed} completed attempts`} icon={Icons.Target} href="/admin/cohorts" />
+            <Metric label="Avg score" value={`${stats.avgScore}%`} detail="Across completed attempts" icon={Icons.BarChart3} href="/admin/cohorts" />
+            <Metric label="Materials queued" value={stats.ingestionQueue} detail={`${stats.parsedMaterials} parsed ready`} icon={Icons.Database} href="/admin/materials" />
+            <Metric label="Admins" value={stats.adminUsers} detail={`${overview.users.length} active users`} icon={Icons.Users} href="/admin/users" />
           </div>
         </section>
 
@@ -236,6 +239,7 @@ export function AdminPortal({ initialOverview = emptyOverview }: { initialOvervi
                 value={stats.completed}
                 detail={stats.completed ? `${stats.passRate}% pass rate` : "No completions yet"}
                 tone="blue"
+                href="/admin/cohorts"
               />
               <SnapshotCard
                 label="Materials"
@@ -246,12 +250,14 @@ export function AdminPortal({ initialOverview = emptyOverview }: { initialOvervi
                     : "All recent uploads parsed"
                 }
                 tone={stats.ingestionQueue > 0 ? "amber" : "green"}
+                href="/admin/materials"
               />
               <SnapshotCard
                 label="Users"
                 value={overview.users.length}
                 detail={`${stats.adminUsers} admin roles assigned`}
                 tone="slate"
+                href="/admin/users"
               />
             </div>
             <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
@@ -322,6 +328,11 @@ export function AdminPortal({ initialOverview = emptyOverview }: { initialOvervi
                 href="#analytics-workspace"
                 title="Analytics workspace"
                 description="Inspect attempt-level data and export downstream reports."
+              />
+              <WorkspaceJump
+                href="#formulas-workspace"
+                title="Formula Compass editor"
+                description="Add, edit, or import formula sections and calculator configs."
               />
             </div>
           </Panel>
@@ -403,6 +414,24 @@ export function AdminPortal({ initialOverview = emptyOverview }: { initialOvervi
             </Panel>
           </div>
 
+          <div id="formulas-workspace" className="space-y-0">
+            <Panel
+              title="Formula Compass Editor"
+              icon={Icons.Calculator}
+              action={<span className="text-xs text-slate-500">Sections, formulas, and calculator configs</span>}
+            >
+              <FormulasPanel
+                onSaved={() =>
+                  withNotice(
+                    async () => {},
+                    "Formula library updated",
+                    "Formula changes are live on the Formula Compass page."
+                  )
+                }
+              />
+            </Panel>
+          </div>
+
           <div id="analytics-workspace" className="grid gap-5 xl:grid-cols-[1fr_0.95fr]">
             <Panel title="Analytics" icon={Icons.BarChart3} action={<ExportLinks />}>
               <AnalyticsTable attempts={overview.attempts} loading={loading} />
@@ -427,22 +456,31 @@ function Metric({
   value,
   detail,
   icon: Icon,
+  href,
 }: {
   label: string;
   value: string | number;
   detail: string;
   icon?: React.ComponentType<{ className?: string; size?: number }>;
+  href?: string;
 }) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
+  const classes =
+    "block rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#b8d7f0] hover:shadow";
+
+  const content = (
+    <>
       <div className="flex items-center justify-between">
         <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate-500">{label}</p>
         {Icon && <Icon size={18} className="text-slate-300" />}
       </div>
       <p className="mt-2 text-2xl font-extrabold tabular-nums text-slate-950">{value}</p>
       <p className="text-xs text-slate-500">{detail}</p>
-    </div>
+    </>
   );
+
+  if (!href) return <div className={classes}>{content}</div>;
+
+  return <a href={href} className={classes}>{content}</a>;
 }
 
 function Panel({
@@ -476,12 +514,14 @@ function HeroCallout({
   description,
   icon: Icon,
   tone,
+  href,
 }: {
   eyebrow: string;
   title: string;
   description: string;
   icon: React.ComponentType<{ className?: string; size?: number }>;
   tone: "blue" | "green" | "amber";
+  href?: string;
 }) {
   const toneClasses = {
     blue: "border-[#b8d7f0] bg-[#f8fbff] text-[#185FA5]",
@@ -489,8 +529,9 @@ function HeroCallout({
     amber: "border-amber-200 bg-amber-50 text-amber-800",
   }[tone];
 
-  return (
-    <div className={`rounded-2xl border p-4 ${toneClasses}`}>
+  const classes = `rounded-2xl border p-4 transition-all hover:-translate-y-0.5 hover:shadow-sm ${toneClasses}`;
+  const content = (
+    <>
       <div className="flex items-start gap-3">
         <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/80">
           <Icon size={18} />
@@ -501,8 +542,12 @@ function HeroCallout({
           <p className="mt-1 text-sm leading-6 text-slate-600">{description}</p>
         </div>
       </div>
-    </div>
+    </>
   );
+
+  if (!href) return <div className={classes}>{content}</div>;
+
+  return <a href={href} className={classes}>{content}</a>;
 }
 
 function QuickActionCard({
@@ -538,11 +583,13 @@ function SnapshotCard({
   value,
   detail,
   tone,
+  href,
 }: {
   label: string;
   value: string | number;
   detail: string;
   tone: "blue" | "green" | "amber" | "slate";
+  href?: string;
 }) {
   const toneClasses = {
     blue: "bg-[#E6F1FB] text-[#185FA5]",
@@ -551,15 +598,21 @@ function SnapshotCard({
     slate: "bg-slate-100 text-slate-700",
   }[tone];
 
-  return (
-    <div className="rounded-2xl border border-slate-200 px-4 py-3">
+  const classes =
+    "block rounded-2xl border border-slate-200 px-4 py-3 transition-all hover:-translate-y-0.5 hover:border-[#b8d7f0] hover:bg-[#f8fbff]";
+  const content = (
+    <>
       <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] ${toneClasses}`}>
         {label}
       </span>
       <p className="mt-3 text-2xl font-extrabold text-slate-950">{value}</p>
       <p className="text-xs text-slate-500">{detail}</p>
-    </div>
+    </>
   );
+
+  if (!href) return <div className={classes}>{content}</div>;
+
+  return <a href={href} className={classes}>{content}</a>;
 }
 
 function RecentMaterialsList({ materials }: { materials: any[] }) {
