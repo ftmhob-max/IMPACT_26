@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import * as Icons from "@/components/ui/Icons";
 
 type DiffFilter = "all" | "easy" | "proficient" | "expert" | "random";
 
@@ -77,9 +78,22 @@ export function FilterPanel({ diffFilter, domainFilters, onDiffChange, onDomainT
           })}
         </div>
       </div>
-      <p className="mt-1 text-xs leading-5 text-[#888880] lg:pl-[92px]">
-        Filters combine. Select multiple domains, or choose All to reset domain selection.
-      </p>
+      <div className="flex items-center justify-end mt-1 lg:pl-[92px]">
+        <span className="relative group inline-flex items-center">
+          <button
+            type="button"
+            className="flex items-center gap-1 text-[10px] text-[#888880] hover:text-[#185FA5] transition-colors focus-visible:outline-none"
+            aria-label="Filter instructions"
+          >
+            <Icons.Info size={12} />
+            <span className="font-semibold">How filters work</span>
+          </button>
+          {/* Tooltip */}
+          <span className="pointer-events-none absolute bottom-full right-0 mb-1.5 w-56 rounded-md border border-slate-200 bg-white px-3 py-2 text-[11px] leading-relaxed text-[#4a4a46] shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">
+            Filters combine. Select multiple domains, or choose All to reset domain selection.
+          </span>
+        </span>
+      </div>
     </div>
   );
 }

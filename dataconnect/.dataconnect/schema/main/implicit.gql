@@ -130,9 +130,65 @@ extend type QuizResponse {
 }
 extend type SourceMaterial {
   """
+  ✨ Implicit foreign key field based on `SourceMaterial`.`duplicateOf`. It must match the value of `SourceMaterial`.`id`. See `@ref` for how to customize it.
+  """
+  duplicateOfId: UUID @fdc_generated(from: "SourceMaterial.duplicateOf", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `SourceMaterial`.`folder`. It must match the value of `SourceMaterialFolder`.`id`. See `@ref` for how to customize it.
+  """
+  folderId: UUID @fdc_generated(from: "SourceMaterial.folder", purpose: IMPLICIT_REF_FIELD)
+  """
   ✨ Implicit foreign key field based on `SourceMaterial`.`uploadedBy`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
   """
   uploadedById: String @fdc_generated(from: "SourceMaterial.uploadedBy", purpose: IMPLICIT_REF_FIELD)
+}
+extend type SourceMaterialActivity {
+  """
+  ✨ Implicit foreign key field based on `SourceMaterialActivity`.`actor`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  actorId: String @fdc_generated(from: "SourceMaterialActivity.actor", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `SourceMaterialActivity`.`folder`. It must match the value of `SourceMaterialFolder`.`id`. See `@ref` for how to customize it.
+  """
+  folderId: UUID @fdc_generated(from: "SourceMaterialActivity.folder", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `SourceMaterialActivity`.`sourceMaterial`. It must match the value of `SourceMaterial`.`id`. See `@ref` for how to customize it.
+  """
+  sourceMaterialId: UUID @fdc_generated(from: "SourceMaterialActivity.sourceMaterial", purpose: IMPLICIT_REF_FIELD)
+}
+extend type SourceMaterialFolder {
+  """
+  ✨ Implicit foreign key field based on `SourceMaterialFolder`.`course`. It must match the value of `Course`.`id`. See `@ref` for how to customize it.
+  """
+  courseId: UUID @fdc_generated(from: "SourceMaterialFolder.course", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `SourceMaterialFolder`.`createdBy`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  createdById: String @fdc_generated(from: "SourceMaterialFolder.createdBy", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `SourceMaterialFolder`.`lesson`. It must match the value of `Lesson`.`id`. See `@ref` for how to customize it.
+  """
+  lessonId: UUID @fdc_generated(from: "SourceMaterialFolder.lesson", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `SourceMaterialFolder`.`parentFolder`. It must match the value of `SourceMaterialFolder`.`id`. See `@ref` for how to customize it.
+  """
+  parentFolderId: UUID @fdc_generated(from: "SourceMaterialFolder.parentFolder", purpose: IMPLICIT_REF_FIELD)
+}
+extend type SourceMaterialTag {
+  """
+  ✨ Implicit foreign key field based on `SourceMaterialTag`.`createdBy`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  createdById: String @fdc_generated(from: "SourceMaterialTag.createdBy", purpose: IMPLICIT_REF_FIELD)
+}
+extend type SourceMaterialTagAssignment {
+  """
+  ✨ Implicit foreign key field based on `SourceMaterialTagAssignment`.`sourceMaterial`. It must match the value of `SourceMaterial`.`id`. See `@ref` for how to customize it.
+  """
+  sourceMaterialId: UUID! @fdc_generated(from: "SourceMaterialTagAssignment.sourceMaterial", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `SourceMaterialTagAssignment`.`tag`. It must match the value of `SourceMaterialTag`.`id`. See `@ref` for how to customize it.
+  """
+  tagId: UUID! @fdc_generated(from: "SourceMaterialTagAssignment.tag", purpose: IMPLICIT_REF_FIELD)
 }
 extend type UserCourseProgress {
   """

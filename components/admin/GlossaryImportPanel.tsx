@@ -439,7 +439,7 @@ function FormatGuide() {
             <code className="block rounded bg-slate-100 px-3 py-2 font-mono text-[11px]">
               term, definition
             </code>
-            <p className="mt-1.5">Optional: <code className="bg-slate-100 px-1 rounded">domain</code>, <code className="bg-slate-100 px-1 rounded">category</code>, <code className="bg-slate-100 px-1 rounded">example</code>, <code className="bg-slate-100 px-1 rounded">related_terms</code> (pipe-separated), <code className="bg-slate-100 px-1 rounded">is_published</code></p>
+            <p className="mt-1.5">Optional: <code className="bg-slate-100 px-1 rounded">full_definition</code>, <code className="bg-slate-100 px-1 rounded">domain</code>, <code className="bg-slate-100 px-1 rounded">category</code>, <code className="bg-slate-100 px-1 rounded">example</code>, <code className="bg-slate-100 px-1 rounded">related_terms</code> (pipe-separated), <code className="bg-slate-100 px-1 rounded">is_published</code>, <code className="bg-slate-100 px-1 rounded">source_document</code></p>
           </div>
           <div>
             <p className="font-bold text-slate-800 mb-1.5">Word (.docx) — two layouts accepted</p>

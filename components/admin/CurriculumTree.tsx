@@ -6,6 +6,7 @@ import { adminFetch } from "@/lib/admin/client-fetch";
 import { cn } from "@/lib/utils";
 import { VideoUpload } from "@/components/admin/VideoUpload";
 import { VideoLinkInput } from "@/components/admin/VideoLinkInput";
+import { CourseImportPanel } from "@/components/admin/CourseImportPanel";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -76,6 +77,7 @@ export function CurriculumTree({
   const [selectedLessonIds, setSelectedLessonIds] = useState<Set<string>>(new Set());
   const [notice, setNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [showCreateCourse, setShowCreateCourse] = useState(false);
+  const [showImportCourse, setShowImportCourse] = useState(false);
   const [quizzes, setQuizzes] = useState<Array<{ id: string; title: string }>>(initialQuizzes);
   const [materials, setMaterials] = useState<Array<{ id: string; title: string }>>(initialMaterials);
 
@@ -321,17 +323,34 @@ export function CurriculumTree({
           </div>
         )}
 
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <h2 className="text-base font-bold text-slate-800">Course hierarchy</h2>
-          <button
-            type="button"
-            onClick={() => setShowCreateCourse((v) => !v)}
-            className="admin-action secondary flex items-center gap-1.5 text-xs"
-          >
-            <Icons.Plus size={13} />
-            New course
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => { setShowImportCourse((v) => !v); setShowCreateCourse(false); }}
+              className="admin-action secondary flex items-center gap-1.5 text-xs"
+            >
+              <Icons.Upload size={13} />
+              Import
+            </button>
+            <button
+              type="button"
+              onClick={() => { setShowCreateCourse((v) => !v); setShowImportCourse(false); }}
+              className="admin-action secondary flex items-center gap-1.5 text-xs"
+            >
+              <Icons.Plus size={13} />
+              New course
+            </button>
+          </div>
         </div>
+
+        {showImportCourse && (
+          <CourseImportPanel
+            onImported={() => { setShowImportCourse(false); void load(); }}
+            onCancel={() => setShowImportCourse(false)}
+          />
+        )}
 
         {showCreateCourse && (
           <CreateCourseForm
@@ -340,10 +359,10 @@ export function CurriculumTree({
           />
         )}
 
-        {courses.length === 0 && !showCreateCourse ? (
+        {courses.length === 0 && !showCreateCourse && !showImportCourse ? (
           <div className="rounded-xl border border-dashed border-slate-200 bg-white p-12 text-center">
             <Icons.GraduationCap size={40} className="mx-auto text-slate-200 mb-3" />
-            <p className="text-sm text-slate-400">No courses yet. Create the first one.</p>
+            <p className="text-sm text-slate-400">No courses yet. Create the first one or import from a file.</p>
           </div>
         ) : (
           courses.map((course) => (

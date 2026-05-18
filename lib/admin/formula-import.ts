@@ -83,15 +83,16 @@ export function parseFormulaCsv(text: string): ParsedFormulaRow[] {
   const rows: ParsedFormulaRow[] = [];
   for (let i = 0; i < records.length; i++) {
     const rec = records[i];
+    const csvRow = i + 2; // row 1 = header; data rows start at 2
     const missing = REQUIRED_CSV_COLS.filter((col) => !rec[col]?.trim());
     if (missing.length > 0) {
       rows.push({
-        sectionCode: rec.section_code ?? `row-${i + 2}`,
+        sectionCode: rec.section_code ?? `row-${csvRow}`,
         sectionTitle: rec.section_title ?? "",
         sectionPosition: 0,
         code: rec.formula_code ?? "",
         name: rec.formula_name ?? "",
-        expression: `[ERROR: missing columns: ${missing.join(", ")}]`,
+        expression: `[ERROR row ${csvRow}: missing columns: ${missing.join(", ")}]`,
         notes: undefined,
       });
       continue;
@@ -163,13 +164,15 @@ export function formulaRowsToImportBatch(rows: ParsedFormulaRow[]): ImportBatch 
   const errors: string[] = [];
   const sectionMap = new Map<string, { code: string; title: string; position: number; formulas: FormulaImportItem[] }>();
 
-  for (const row of rows) {
-    if (row.expression.startsWith("[ERROR:")) {
-      errors.push(`Row for formula "${row.code}": ${row.expression}`);
+  for (let rowIdx = 0; rowIdx < rows.length; rowIdx++) {
+    const row = rows[rowIdx];
+    const rowLabel = `Row ${rowIdx + 2} (${row.sectionCode}/${row.code || "?"})`;
+    if (row.expression.startsWith("[ERROR")) {
+      errors.push(`${rowLabel}: ${row.expression}`);
       continue;
     }
     if (!row.code || !row.name || !row.expression) {
-      errors.push(`Row missing required fields: code="${row.code}", name="${row.name}"`);
+      errors.push(`${rowLabel}: missing required fields — code="${row.code}", name="${row.name}"`);
       continue;
     }
 

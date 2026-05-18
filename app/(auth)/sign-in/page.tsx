@@ -88,7 +88,7 @@ function SignInForm() {
       <div className="mt-6">
         <div className="flex rounded-lg bg-slate-100 p-1">
           <ModeButton active={mode === "student"} onClick={() => setMode("student")} icon={GraduationCap}>
-            Student
+            Learner
           </ModeButton>
           <ModeButton active={mode === "teacher"} onClick={() => setMode("teacher")} icon={ShieldCheck}>
             Teacher

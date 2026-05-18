@@ -149,6 +149,20 @@ export const ChevronUp = (props: IconProps) => (
   </IconWrapper>
 );
 
+export const ArrowUp = (props: IconProps) => (
+  <IconWrapper {...props}>
+    <line x1="12" y1="19" x2="12" y2="5" />
+    <polyline points="5 12 12 5 19 12" />
+  </IconWrapper>
+);
+
+export const ArrowDown = (props: IconProps) => (
+  <IconWrapper {...props}>
+    <line x1="12" y1="5" x2="12" y2="19" />
+    <polyline points="19 12 12 19 5 12" />
+  </IconWrapper>
+);
+
 export const Search = (props: IconProps) => (
   <IconWrapper {...props}>
     <circle cx="11" cy="11" r="8" />
@@ -358,6 +372,14 @@ export const Pencil = (props: IconProps) => (
   </IconWrapper>
 );
 
+export const FolderPlus = (props: IconProps) => (
+  <IconWrapper {...props}>
+    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+    <line x1="12" y1="11" x2="12" y2="17" />
+    <line x1="9" y1="14" x2="15" y2="14" />
+  </IconWrapper>
+);
+
 export const Trash2 = (props: IconProps) => (
   <IconWrapper {...props}>
     <polyline points="3 6 5 6 21 6" />
@@ -543,5 +565,35 @@ export const ArrowLeftRight = (props: IconProps) => (
     <path d="M4 7h16" />
     <path d="m16 21 4-4-4-4" />
     <path d="M20 17H4" />
+  </IconWrapper>
+);
+
+
+export const PanelLeft = (props: IconProps) => (
+  <IconWrapper {...props}>
+    <rect width="18" height="18" x="3" y="3" rx="2" />
+    <path d="M9 3v18" />
+  </IconWrapper>
+);
+
+export const PanelRight = (props: IconProps) => (
+  <IconWrapper {...props}>
+    <rect width="18" height="18" x="3" y="3" rx="2" />
+    <path d="M15 3v18" />
+  </IconWrapper>
+);
+
+export const AlignJustify = (props: IconProps) => (
+  <IconWrapper {...props}>
+    <line x1="3" y1="6" x2="21" y2="6" />
+    <line x1="3" y1="12" x2="21" y2="12" />
+    <line x1="3" y1="18" x2="21" y2="18" />
+  </IconWrapper>
+);
+
+export const Rows = (props: IconProps) => (
+  <IconWrapper {...props}>
+    <rect width="18" height="7" x="3" y="3" rx="1" />
+    <rect width="18" height="7" x="3" y="14" rx="1" />
   </IconWrapper>
 );

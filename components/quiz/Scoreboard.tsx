@@ -3,15 +3,22 @@ interface ScoreboardProps {
   correctCount: number;
   scorePct: number | null;
   visibleCount: number;
+  total?: number;
 }
 
-export function Scoreboard({ answeredCount, correctCount, scorePct, visibleCount }: ScoreboardProps) {
+export function Scoreboard({ answeredCount, correctCount, scorePct, visibleCount, total }: ScoreboardProps) {
+  const isFiltered = total !== undefined && visibleCount < total;
   return (
     <div className="quiz-scoreboard m-4 mb-0 grid grid-cols-2 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm sm:grid-cols-4">
       <ScoreCard value={answeredCount} label="Answered" valueColor="#185FA5" />
       <ScoreCard value={correctCount} label="Correct" valueColor="#3B6D11" />
       <ScoreCard value={scorePct !== null ? `${scorePct}%` : "-"} label="Score" />
-      <ScoreCard value={visibleCount} label="Visible" valueColor="#854F0B" />
+      <ScoreCard
+        value={visibleCount}
+        label="Showing"
+        valueColor="#854F0B"
+        subLabel={isFiltered ? `of ${total}` : undefined}
+      />
     </div>
   );
 }
@@ -20,10 +27,12 @@ function ScoreCard({
   value,
   label,
   valueColor,
+  subLabel,
 }: {
   value: string | number;
   label: string;
   valueColor?: string;
+  subLabel?: string;
 }) {
   return (
     <div className="border-r border-b border-slate-100 px-4 py-3 text-center last:border-r-0 sm:border-b-0">
@@ -36,6 +45,9 @@ function ScoreCard({
       <div className="text-[9.5px] font-bold uppercase tracking-[0.06em] text-[#888880]">
         {label}
       </div>
+      {subLabel && (
+        <div className="mt-0.5 text-[9px] text-[#888880]">{subLabel}</div>
+      )}
     </div>
   );
 }

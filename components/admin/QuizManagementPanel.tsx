@@ -6,6 +6,7 @@ import { adminFetch } from "@/lib/admin/client-fetch";
 import { cn } from "@/lib/utils";
 import { QuestionBankPicker } from "@/components/admin/QuestionBankPicker";
 import { CalculatorAccessSettings } from "@/components/admin/CalculatorAccessSettings";
+import { QuizQuickImportPanel } from "@/components/admin/QuizQuickImportPanel";
 import {
   getQuizReadiness,
   type QuizDashboardSummary,
@@ -136,6 +137,7 @@ export function QuizManagementPanel({
   const [notice, setNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [selectedQuizId, setSelectedQuizId] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [showQuickImport, setShowQuickImport] = useState(false);
   const [summaryFilter, setSummaryFilter] = useState<
     "all" | "published" | "review" | "draft" | "ready" | "attention"
   >("all");
@@ -273,11 +275,29 @@ export function QuizManagementPanel({
                 Clear filter
               </button>
             )}
-            <button type="button" onClick={() => setShowCreate((v) => !v)} className="admin-action secondary flex items-center gap-1.5 text-xs">
+            <button
+              type="button"
+              onClick={() => { setShowQuickImport((v) => !v); setShowCreate(false); }}
+              className="admin-action secondary flex items-center gap-1.5 text-xs"
+            >
+              <Icons.Upload size={13} />
+              Quick import
+            </button>
+            <button type="button" onClick={() => { setShowCreate((v) => !v); setShowQuickImport(false); }} className="admin-action secondary flex items-center gap-1.5 text-xs">
               <Icons.Plus size={13} />
               New quiz
             </button>
           </div>
+
+          {/* Quick import panel */}
+          {showQuickImport && (
+            <div className="border-b border-slate-100 p-4">
+              <QuizQuickImportPanel
+                onImported={(msg) => { showNotice("success", msg); setShowQuickImport(false); void load(); }}
+                onCancel={() => setShowQuickImport(false)}
+              />
+            </div>
+          )}
 
           {/* Create form */}
           {showCreate && (

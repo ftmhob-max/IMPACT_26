@@ -1,0 +1,58 @@
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e6]:
+      - img "IMPACT_26 logo" [ref=e7]
+      - generic [ref=e8]:
+        - paragraph [ref=e9]: IMPACT_26
+        - paragraph [ref=e10]: Property Assessment
+    - generic [ref=e11]:
+      - paragraph [ref=e12]: Learn the method. Explain the reasoning. Defend the decision.
+      - paragraph [ref=e13]: Training built around formulas, rationale, equity, and public trust.
+    - generic [ref=e14]:
+      - generic [ref=e15]:
+        - img [ref=e17]
+        - text: Step-by-step rationale
+      - generic [ref=e20]:
+        - img [ref=e22]
+        - text: Formula-based practice
+      - generic [ref=e25]:
+        - img [ref=e27]
+        - text: Progress tracking
+  - generic [ref=e30]:
+    - link "Back to home" [ref=e31] [cursor=pointer]:
+      - /url: /
+      - img [ref=e32]
+      - text: Back to home
+    - generic [ref=e35]:
+      - button "Student" [ref=e36]:
+        - img [ref=e37]
+        - text: Student
+      - button "Teacher" [ref=e40]:
+        - img [ref=e41]
+        - text: Teacher
+    - generic [ref=e44]:
+      - img "IMPACT_26 logo" [ref=e46]
+      - heading "Welcome back" [level=1] [ref=e47]
+      - paragraph [ref=e48]: Continue your assessment training, formulas, and practice progress.
+    - generic [ref=e49]:
+      - generic [ref=e50]:
+        - generic [ref=e51]: Email
+        - textbox "Email" [ref=e52]:
+          - /placeholder: you@example.com
+      - generic [ref=e53]:
+        - generic [ref=e54]: Password
+        - textbox "Password" [ref=e55]:
+          - /placeholder: Enter your password
+      - button "Sign in" [ref=e56]:
+        - text: Sign in
+        - img [ref=e57]
+    - generic [ref=e61]: or
+    - button "Continue with Google" [ref=e63]
+    - generic [ref=e64]:
+      - paragraph [ref=e65]:
+        - text: No account?
+        - link "Create one" [ref=e66] [cursor=pointer]:
+          - /url: /sign-up
+      - paragraph [ref=e67]:
+        - link "Forgot password?" [ref=e68] [cursor=pointer]:
+          - /url: /reset-password

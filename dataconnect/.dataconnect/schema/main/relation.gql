@@ -256,6 +256,40 @@ extend type Course {
     having: Module_Having
   ): [Module!]! @fdc_generated(from: "Module.course", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
   """
+  ✨ List `SourceMaterialFolder` objects in a one-to-many relationship (where `SourceMaterialFolder`.`course` is this object).
+  """
+  sourceMaterialFolders_on_course(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: SourceMaterialFolder_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [SourceMaterialFolder_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: SourceMaterialFolder_Having
+  ): [SourceMaterialFolder!]! @fdc_generated(from: "SourceMaterialFolder.course", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
   ✨ List `UserCourseProgress` objects in a one-to-many relationship (where `UserCourseProgress`.`course` is this object).
   """
   userCourseProgresses_on_course(
@@ -922,6 +956,40 @@ extend type Lesson {
     """
     having: LessonVersion_Having
   ): [LessonVersion!]! @fdc_generated(from: "LessonVersion.lesson", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `SourceMaterialFolder` objects in a one-to-many relationship (where `SourceMaterialFolder`.`lesson` is this object).
+  """
+  sourceMaterialFolders_on_lesson(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: SourceMaterialFolder_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [SourceMaterialFolder_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: SourceMaterialFolder_Having
+  ): [SourceMaterialFolder!]! @fdc_generated(from: "SourceMaterialFolder.lesson", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
   """
   ✨ List `UserLessonProgress` objects in a one-to-many relationship (where `UserLessonProgress`.`lesson` is this object).
   """
@@ -2951,6 +3019,108 @@ extend type SourceMaterial {
     having: Lesson_Having
   ): [Lesson!]! @fdc_generated(from: "Lesson.sourceMaterial", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
   """
+  ✨ List `SourceMaterial` objects in a one-to-many relationship (where `SourceMaterial`.`duplicateOf` is this object).
+  """
+  sourceMaterials_on_duplicateOf(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: SourceMaterial_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [SourceMaterial_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: SourceMaterial_Having
+  ): [SourceMaterial!]! @fdc_generated(from: "SourceMaterial.duplicateOf", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `SourceMaterialActivity` objects in a one-to-many relationship (where `SourceMaterialActivity`.`sourceMaterial` is this object).
+  """
+  sourceMaterialActivities_on_sourceMaterial(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: SourceMaterialActivity_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [SourceMaterialActivity_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: SourceMaterialActivity_Having
+  ): [SourceMaterialActivity!]! @fdc_generated(from: "SourceMaterialActivity.sourceMaterial", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `SourceMaterialTagAssignment` objects in a one-to-many relationship (where `SourceMaterialTagAssignment`.`sourceMaterial` is this object).
+  """
+  sourceMaterialTagAssignments_on_sourceMaterial(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: SourceMaterialTagAssignment_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [SourceMaterialTagAssignment_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: SourceMaterialTagAssignment_Having
+  ): [SourceMaterialTagAssignment!]! @fdc_generated(from: "SourceMaterialTagAssignment.sourceMaterial", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
   Implicit metadata field that cannot be written. It provides extra information about query results.
   """
   _metadata: _Metadata @fdc_generated(from: "SourceMaterial", purpose: METADATA_FIELD)
@@ -2958,6 +3128,15 @@ extend type SourceMaterial {
   ✨ Count the number of rows in the `SourceMaterial` table.
   """
   _count: Int! @fdc_generated(from: "SourceMaterial.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `SourceMaterial` table where the `archivedAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  archivedAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterial.archivedAt", purpose: QUERY_COUNT)
   """
   ✨ Count the number of rows in the `SourceMaterial` table where the `createdAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
   """
@@ -2976,6 +3155,15 @@ extend type SourceMaterial {
     """
     distinct: Boolean = false
   ): Int! @fdc_generated(from: "SourceMaterial.downloadUrl", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `SourceMaterial` table where the `duplicateOfId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  duplicateOfId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterial.duplicateOfId", purpose: QUERY_COUNT)
   """
   ✨ Count the number of rows in the `SourceMaterial` table where the `extractedText` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
   """
@@ -3004,6 +3192,15 @@ extend type SourceMaterial {
     distinct: Boolean = false
   ): Int! @fdc_generated(from: "SourceMaterial.fileType", purpose: QUERY_COUNT)
   """
+  ✨ Count the number of rows in the `SourceMaterial` table where the `folderId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  folderId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterial.folderId", purpose: QUERY_COUNT)
+  """
   ✨ Count the number of rows in the `SourceMaterial` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
   """
   id_count(
@@ -3013,6 +3210,15 @@ extend type SourceMaterial {
     distinct: Boolean = false
   ): Int! @fdc_generated(from: "SourceMaterial.id", purpose: QUERY_COUNT)
   """
+  ✨ Count the number of rows in the `SourceMaterial` table where the `lastActivityAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  lastActivityAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterial.lastActivityAt", purpose: QUERY_COUNT)
+  """
   ✨ Count the number of rows in the `SourceMaterial` table where the `metadataJson` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
   """
   metadataJson_count(
@@ -3021,6 +3227,24 @@ extend type SourceMaterial {
     """
     distinct: Boolean = false
   ): Int! @fdc_generated(from: "SourceMaterial.metadataJson", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `SourceMaterial` table where the `reviewStatus` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  reviewStatus_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterial.reviewStatus", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `SourceMaterial` table where the `starred` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  starred_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterial.starred", purpose: QUERY_COUNT)
   """
   ✨ Count the number of rows in the `SourceMaterial` table where the `status` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
   """
@@ -3049,6 +3273,15 @@ extend type SourceMaterial {
     distinct: Boolean = false
   ): Int! @fdc_generated(from: "SourceMaterial.title", purpose: QUERY_COUNT)
   """
+  ✨ Count the number of rows in the `SourceMaterial` table where the `trashedAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  trashedAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterial.trashedAt", purpose: QUERY_COUNT)
+  """
   ✨ Count the number of rows in the `SourceMaterial` table where the `updatedAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
   """
   updatedAt_count(
@@ -3067,17 +3300,50 @@ extend type SourceMaterial {
     distinct: Boolean = false
   ): Int! @fdc_generated(from: "SourceMaterial.uploadedById", purpose: QUERY_COUNT)
   """
+  ✨ Count the number of rows in the `SourceMaterial` table where the `visibility` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  visibility_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterial.visibility", purpose: QUERY_COUNT)
+  """
+  ✨ Minimum of the `archivedAt` field in the `SourceMaterial` table.
+  """
+  archivedAt_min: Date @fdc_generated(from: "SourceMaterial.archivedAt", purpose: QUERY_MIN)
+  """
   ✨ Minimum of the `createdAt` field in the `SourceMaterial` table.
   """
   createdAt_min: Date @fdc_generated(from: "SourceMaterial.createdAt", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `lastActivityAt` field in the `SourceMaterial` table.
+  """
+  lastActivityAt_min: Date @fdc_generated(from: "SourceMaterial.lastActivityAt", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `trashedAt` field in the `SourceMaterial` table.
+  """
+  trashedAt_min: Date @fdc_generated(from: "SourceMaterial.trashedAt", purpose: QUERY_MIN)
   """
   ✨ Minimum of the `updatedAt` field in the `SourceMaterial` table.
   """
   updatedAt_min: Date @fdc_generated(from: "SourceMaterial.updatedAt", purpose: QUERY_MIN)
   """
+  ✨ Maximum of the `archivedAt` field in the `SourceMaterial` table.
+  """
+  archivedAt_max: Date @fdc_generated(from: "SourceMaterial.archivedAt", purpose: QUERY_MAX)
+  """
   ✨ Maximum of the `createdAt` field in the `SourceMaterial` table.
   """
   createdAt_max: Date @fdc_generated(from: "SourceMaterial.createdAt", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `lastActivityAt` field in the `SourceMaterial` table.
+  """
+  lastActivityAt_max: Date @fdc_generated(from: "SourceMaterial.lastActivityAt", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `trashedAt` field in the `SourceMaterial` table.
+  """
+  trashedAt_max: Date @fdc_generated(from: "SourceMaterial.trashedAt", purpose: QUERY_MAX)
   """
   ✨ Maximum of the `updatedAt` field in the `SourceMaterial` table.
   """
@@ -3086,6 +3352,523 @@ extend type SourceMaterial {
   A generated field that is used for caching results in SDKs.
   """
   _id: ID! @fdc_generated(from: "SourceMaterial.id", purpose: ENTITY_ID)
+}
+extend type SourceMaterialActivity {
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "SourceMaterialActivity", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `SourceMaterialActivity` table.
+  """
+  _count: Int! @fdc_generated(from: "SourceMaterialActivity.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `SourceMaterialActivity` table where the `activityType` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  activityType_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterialActivity.activityType", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `SourceMaterialActivity` table where the `actorId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  actorId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterialActivity.actorId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `SourceMaterialActivity` table where the `createdAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterialActivity.createdAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `SourceMaterialActivity` table where the `folderId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  folderId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterialActivity.folderId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `SourceMaterialActivity` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterialActivity.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `SourceMaterialActivity` table where the `message` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  message_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterialActivity.message", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `SourceMaterialActivity` table where the `metadataJson` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  metadataJson_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterialActivity.metadataJson", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `SourceMaterialActivity` table where the `sourceMaterialId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  sourceMaterialId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterialActivity.sourceMaterialId", purpose: QUERY_COUNT)
+  """
+  ✨ Minimum of the `createdAt` field in the `SourceMaterialActivity` table.
+  """
+  createdAt_min: Date @fdc_generated(from: "SourceMaterialActivity.createdAt", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `createdAt` field in the `SourceMaterialActivity` table.
+  """
+  createdAt_max: Date @fdc_generated(from: "SourceMaterialActivity.createdAt", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "SourceMaterialActivity.id", purpose: ENTITY_ID)
+}
+extend type SourceMaterialFolder {
+  """
+  ✨ List `SourceMaterial` objects in a one-to-many relationship (where `SourceMaterial`.`folder` is this object).
+  """
+  sourceMaterials_on_folder(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: SourceMaterial_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [SourceMaterial_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: SourceMaterial_Having
+  ): [SourceMaterial!]! @fdc_generated(from: "SourceMaterial.folder", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `SourceMaterialActivity` objects in a one-to-many relationship (where `SourceMaterialActivity`.`folder` is this object).
+  """
+  sourceMaterialActivities_on_folder(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: SourceMaterialActivity_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [SourceMaterialActivity_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: SourceMaterialActivity_Having
+  ): [SourceMaterialActivity!]! @fdc_generated(from: "SourceMaterialActivity.folder", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `SourceMaterialFolder` objects in a one-to-many relationship (where `SourceMaterialFolder`.`parentFolder` is this object).
+  """
+  sourceMaterialFolders_on_parentFolder(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: SourceMaterialFolder_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [SourceMaterialFolder_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: SourceMaterialFolder_Having
+  ): [SourceMaterialFolder!]! @fdc_generated(from: "SourceMaterialFolder.parentFolder", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "SourceMaterialFolder", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `SourceMaterialFolder` table.
+  """
+  _count: Int! @fdc_generated(from: "SourceMaterialFolder.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `SourceMaterialFolder` table where the `archivedAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  archivedAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterialFolder.archivedAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `SourceMaterialFolder` table where the `courseId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  courseId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterialFolder.courseId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `SourceMaterialFolder` table where the `createdAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterialFolder.createdAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `SourceMaterialFolder` table where the `createdById` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdById_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterialFolder.createdById", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `SourceMaterialFolder` table where the `folderType` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  folderType_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterialFolder.folderType", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `SourceMaterialFolder` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterialFolder.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `SourceMaterialFolder` table where the `lessonId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  lessonId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterialFolder.lessonId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `SourceMaterialFolder` table where the `name` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  name_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterialFolder.name", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `SourceMaterialFolder` table where the `parentFolderId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  parentFolderId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterialFolder.parentFolderId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `SourceMaterialFolder` table where the `trashedAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  trashedAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterialFolder.trashedAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `SourceMaterialFolder` table where the `updatedAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  updatedAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterialFolder.updatedAt", purpose: QUERY_COUNT)
+  """
+  ✨ Minimum of the `archivedAt` field in the `SourceMaterialFolder` table.
+  """
+  archivedAt_min: Date @fdc_generated(from: "SourceMaterialFolder.archivedAt", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `createdAt` field in the `SourceMaterialFolder` table.
+  """
+  createdAt_min: Date @fdc_generated(from: "SourceMaterialFolder.createdAt", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `trashedAt` field in the `SourceMaterialFolder` table.
+  """
+  trashedAt_min: Date @fdc_generated(from: "SourceMaterialFolder.trashedAt", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `updatedAt` field in the `SourceMaterialFolder` table.
+  """
+  updatedAt_min: Date @fdc_generated(from: "SourceMaterialFolder.updatedAt", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `archivedAt` field in the `SourceMaterialFolder` table.
+  """
+  archivedAt_max: Date @fdc_generated(from: "SourceMaterialFolder.archivedAt", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `createdAt` field in the `SourceMaterialFolder` table.
+  """
+  createdAt_max: Date @fdc_generated(from: "SourceMaterialFolder.createdAt", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `trashedAt` field in the `SourceMaterialFolder` table.
+  """
+  trashedAt_max: Date @fdc_generated(from: "SourceMaterialFolder.trashedAt", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `updatedAt` field in the `SourceMaterialFolder` table.
+  """
+  updatedAt_max: Date @fdc_generated(from: "SourceMaterialFolder.updatedAt", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "SourceMaterialFolder.id", purpose: ENTITY_ID)
+}
+extend type SourceMaterialTag {
+  """
+  ✨ List `SourceMaterialTagAssignment` objects in a one-to-many relationship (where `SourceMaterialTagAssignment`.`tag` is this object).
+  """
+  sourceMaterialTagAssignments_on_tag(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: SourceMaterialTagAssignment_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [SourceMaterialTagAssignment_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: SourceMaterialTagAssignment_Having
+  ): [SourceMaterialTagAssignment!]! @fdc_generated(from: "SourceMaterialTagAssignment.tag", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "SourceMaterialTag", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `SourceMaterialTag` table.
+  """
+  _count: Int! @fdc_generated(from: "SourceMaterialTag.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `SourceMaterialTag` table where the `color` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  color_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterialTag.color", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `SourceMaterialTag` table where the `createdAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterialTag.createdAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `SourceMaterialTag` table where the `createdById` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdById_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterialTag.createdById", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `SourceMaterialTag` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterialTag.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `SourceMaterialTag` table where the `name` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  name_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterialTag.name", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `SourceMaterialTag` table where the `updatedAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  updatedAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterialTag.updatedAt", purpose: QUERY_COUNT)
+  """
+  ✨ Minimum of the `createdAt` field in the `SourceMaterialTag` table.
+  """
+  createdAt_min: Date @fdc_generated(from: "SourceMaterialTag.createdAt", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `updatedAt` field in the `SourceMaterialTag` table.
+  """
+  updatedAt_min: Date @fdc_generated(from: "SourceMaterialTag.updatedAt", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `createdAt` field in the `SourceMaterialTag` table.
+  """
+  createdAt_max: Date @fdc_generated(from: "SourceMaterialTag.createdAt", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `updatedAt` field in the `SourceMaterialTag` table.
+  """
+  updatedAt_max: Date @fdc_generated(from: "SourceMaterialTag.updatedAt", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "SourceMaterialTag.id", purpose: ENTITY_ID)
+}
+extend type SourceMaterialTagAssignment {
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "SourceMaterialTagAssignment", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `SourceMaterialTagAssignment` table.
+  """
+  _count: Int! @fdc_generated(from: "SourceMaterialTagAssignment.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `SourceMaterialTagAssignment` table where the `createdAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterialTagAssignment.createdAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `SourceMaterialTagAssignment` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterialTagAssignment.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `SourceMaterialTagAssignment` table where the `sourceMaterialId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  sourceMaterialId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterialTagAssignment.sourceMaterialId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `SourceMaterialTagAssignment` table where the `tagId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  tagId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterialTagAssignment.tagId", purpose: QUERY_COUNT)
+  """
+  ✨ Minimum of the `createdAt` field in the `SourceMaterialTagAssignment` table.
+  """
+  createdAt_min: Date @fdc_generated(from: "SourceMaterialTagAssignment.createdAt", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `createdAt` field in the `SourceMaterialTagAssignment` table.
+  """
+  createdAt_max: Date @fdc_generated(from: "SourceMaterialTagAssignment.createdAt", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "SourceMaterialTagAssignment.id", purpose: ENTITY_ID)
 }
 extend type User {
   """
@@ -3428,6 +4211,108 @@ extend type User {
     """
     having: SourceMaterial_Having
   ): [SourceMaterial!]! @fdc_generated(from: "SourceMaterial.uploadedBy", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `SourceMaterialActivity` objects in a one-to-many relationship (where `SourceMaterialActivity`.`actor` is this object).
+  """
+  sourceMaterialActivities_on_actor(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: SourceMaterialActivity_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [SourceMaterialActivity_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: SourceMaterialActivity_Having
+  ): [SourceMaterialActivity!]! @fdc_generated(from: "SourceMaterialActivity.actor", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `SourceMaterialFolder` objects in a one-to-many relationship (where `SourceMaterialFolder`.`createdBy` is this object).
+  """
+  sourceMaterialFolders_on_createdBy(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: SourceMaterialFolder_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [SourceMaterialFolder_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: SourceMaterialFolder_Having
+  ): [SourceMaterialFolder!]! @fdc_generated(from: "SourceMaterialFolder.createdBy", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `SourceMaterialTag` objects in a one-to-many relationship (where `SourceMaterialTag`.`createdBy` is this object).
+  """
+  sourceMaterialTags_on_createdBy(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: SourceMaterialTag_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [SourceMaterialTag_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: SourceMaterialTag_Having
+  ): [SourceMaterialTag!]! @fdc_generated(from: "SourceMaterialTag.createdBy", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
   """
   ✨ List `UserCourseProgress` objects in a one-to-many relationship (where `UserCourseProgress`.`user` is this object).
   """

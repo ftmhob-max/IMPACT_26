@@ -299,6 +299,7 @@ function QuizEngineInner({ session, onComplete, onBack }: QuizEngineProps) {
           correctCount={correctCount}
           scorePct={scorePct}
           visibleCount={visibleQuestions.length}
+          total={session.questions.length}
         />
         <FilterPanel
           diffFilter={diffFilter}

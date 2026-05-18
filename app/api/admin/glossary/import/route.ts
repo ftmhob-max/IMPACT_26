@@ -7,11 +7,13 @@ import { z } from "zod";
 const rowSchema = z.object({
   term: z.string().trim().min(1),
   definition: z.string().trim().min(1),
+  fullDefinition: z.string().optional().nullable(),
   domain: z.string().optional().nullable(),
   category: z.string().optional().nullable(),
   example: z.string().optional().nullable(),
   relatedTerms: z.array(z.string()).default([]),
   isPublished: z.boolean().default(false),
+  sourceDocument: z.string().optional().nullable(),
 });
 
 const importSchema = z.object({
@@ -65,11 +67,13 @@ export async function POST(request: NextRequest) {
     const data = {
       term: row.term,
       definition: row.definition,
+      fullDefinition: row.fullDefinition ?? null,
       domain: row.domain ?? null,
       category: row.category ?? null,
       example: row.example ?? null,
       relatedTerms: row.relatedTerms,
       isPublished: row.isPublished,
+      sourceDocument: row.sourceDocument ?? null,
     };
 
     if (resolution === "overwrite" && existingId) {

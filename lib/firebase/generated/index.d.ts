@@ -173,6 +173,53 @@ export interface AdminListQuizQuestionUsageData {
     } & Lesson_Key)[];
 }
 
+export interface AdminListSourceMaterialFoldersData {
+  sourceMaterialFolders: ({
+    id: UUIDString;
+    name: string;
+    folderType: string;
+    archivedAt?: DateString | null;
+    trashedAt?: DateString | null;
+    createdAt: DateString;
+    updatedAt: DateString;
+    parentFolder?: {
+      id: UUIDString;
+      name: string;
+    } & SourceMaterialFolder_Key;
+      course?: {
+        id: UUIDString;
+        title: string;
+      } & Course_Key;
+        lesson?: {
+          id: UUIDString;
+          title: string;
+          module: {
+            id: UUIDString;
+            title: string;
+            course: {
+              id: UUIDString;
+              title: string;
+            } & Course_Key;
+          } & Module_Key;
+        } & Lesson_Key;
+          createdBy?: {
+            id: string;
+            email: string;
+            fullName?: string | null;
+          } & User_Key;
+  } & SourceMaterialFolder_Key)[];
+}
+
+export interface AdminListSourceMaterialTagsData {
+  sourceMaterialTags: ({
+    id: UUIDString;
+    name: string;
+    color?: string | null;
+    createdAt: DateString;
+    updatedAt: DateString;
+  } & SourceMaterialTag_Key)[];
+}
+
 export interface AdminListSourceMaterialsData {
   sourceMaterials: ({
     id: UUIDString;
@@ -227,6 +274,114 @@ export interface AdminListSourceMaterialsData {
                 difficulty: string;
               } & Question_Key;
         } & ContentSourceLink_Key)[];
+  } & SourceMaterial_Key)[];
+}
+
+export interface AdminListSourceMaterialsRichData {
+  sourceMaterials: ({
+    id: UUIDString;
+    title: string;
+    fileName: string;
+    fileType: string;
+    folder?: {
+      id: UUIDString;
+      name: string;
+      folderType: string;
+      parentFolder?: {
+        id: UUIDString;
+        name: string;
+      } & SourceMaterialFolder_Key;
+        course?: {
+          id: UUIDString;
+          title: string;
+        } & Course_Key;
+          lesson?: {
+            id: UUIDString;
+            title: string;
+          } & Lesson_Key;
+            archivedAt?: DateString | null;
+            trashedAt?: DateString | null;
+            createdAt: DateString;
+            updatedAt: DateString;
+    } & SourceMaterialFolder_Key;
+      storagePath: string;
+      downloadUrl?: string | null;
+      extractedText?: string | null;
+      metadataJson?: string | null;
+      status: string;
+      starred: boolean;
+      archivedAt?: DateString | null;
+      trashedAt?: DateString | null;
+      reviewStatus: string;
+      visibility: string;
+      duplicateOf?: {
+        id: UUIDString;
+        title: string;
+      } & SourceMaterial_Key;
+        lastActivityAt?: DateString | null;
+        createdAt: DateString;
+        updatedAt: DateString;
+        uploadedBy?: {
+          id: string;
+          email: string;
+          fullName?: string | null;
+        } & User_Key;
+          sourceMaterialTagAssignments_on_sourceMaterial: ({
+            id: UUIDString;
+            tag: {
+              id: UUIDString;
+              name: string;
+              color?: string | null;
+            } & SourceMaterialTag_Key;
+          } & SourceMaterialTagAssignment_Key)[];
+            sourceMaterialActivities_on_sourceMaterial: ({
+              id: UUIDString;
+              activityType: string;
+              message?: string | null;
+              metadataJson?: string | null;
+              createdAt: DateString;
+              actor?: {
+                id: string;
+                email: string;
+                fullName?: string | null;
+              } & User_Key;
+            } & SourceMaterialActivity_Key)[];
+              ingestionJobs_on_sourceMaterial: ({
+                id: UUIDString;
+                status: string;
+                parser: string;
+                extractedCharacters: number;
+                errorMessage?: string | null;
+                createdAt: DateString;
+                completedAt?: DateString | null;
+              } & IngestionJob_Key)[];
+                contentSourceLinks_on_sourceMaterial: ({
+                  id: UUIDString;
+                  referenceLabel?: string | null;
+                  createdAt: DateString;
+                  course?: {
+                    id: UUIDString;
+                    title: string;
+                  } & Course_Key;
+                    lesson?: {
+                      id: UUIDString;
+                      title: string;
+                      module: {
+                        id: UUIDString;
+                        title: string;
+                        course: {
+                          id: UUIDString;
+                          title: string;
+                        } & Course_Key;
+                      } & Module_Key;
+                    } & Lesson_Key;
+                      question?: {
+                        id: UUIDString;
+                        questionText: string;
+                        domain: string;
+                        difficulty: string;
+                      } & Question_Key;
+                } & ContentSourceLink_Key)[];
   } & SourceMaterial_Key)[];
 }
 
@@ -427,8 +582,57 @@ export interface CreateQuizVariables {
   createdById?: string | null;
 }
 
+export interface CreateSourceMaterialActivityData {
+  sourceMaterialActivity_insert: SourceMaterialActivity_Key;
+}
+
+export interface CreateSourceMaterialActivityVariables {
+  id: UUIDString;
+  sourceMaterialId?: UUIDString | null;
+  folderId?: UUIDString | null;
+  actorId?: string | null;
+  activityType: string;
+  message?: string | null;
+  metadataJson?: string | null;
+}
+
 export interface CreateSourceMaterialData {
   sourceMaterial_insert: SourceMaterial_Key;
+}
+
+export interface CreateSourceMaterialFolderData {
+  sourceMaterialFolder_insert: SourceMaterialFolder_Key;
+}
+
+export interface CreateSourceMaterialFolderVariables {
+  id: UUIDString;
+  name: string;
+  parentFolderId?: UUIDString | null;
+  folderType: string;
+  courseId?: UUIDString | null;
+  lessonId?: UUIDString | null;
+  createdById?: string | null;
+}
+
+export interface CreateSourceMaterialTagAssignmentData {
+  sourceMaterialTagAssignment_insert: SourceMaterialTagAssignment_Key;
+}
+
+export interface CreateSourceMaterialTagAssignmentVariables {
+  id: UUIDString;
+  sourceMaterialId: UUIDString;
+  tagId: UUIDString;
+}
+
+export interface CreateSourceMaterialTagData {
+  sourceMaterialTag_insert: SourceMaterialTag_Key;
+}
+
+export interface CreateSourceMaterialTagVariables {
+  id: UUIDString;
+  name: string;
+  color?: string | null;
+  createdById?: string | null;
 }
 
 export interface CreateSourceMaterialVariables {
@@ -436,6 +640,7 @@ export interface CreateSourceMaterialVariables {
   title: string;
   fileName: string;
   fileType: string;
+  folderId?: UUIDString | null;
   storagePath: string;
   downloadUrl?: string | null;
   extractedText?: string | null;
@@ -594,8 +799,24 @@ export interface DeleteSourceMaterialData {
   sourceMaterial_delete?: SourceMaterial_Key | null;
 }
 
+export interface DeleteSourceMaterialFolderData {
+  sourceMaterialFolder_delete?: SourceMaterialFolder_Key | null;
+}
+
+export interface DeleteSourceMaterialFolderVariables {
+  id: UUIDString;
+}
+
 export interface DeleteSourceMaterialVariables {
   id: UUIDString;
+}
+
+export interface DeleteTagAssignmentsForMaterialData {
+  sourceMaterialTagAssignment_deleteMany: number;
+}
+
+export interface DeleteTagAssignmentsForMaterialVariables {
+  sourceMaterialId: UUIDString;
 }
 
 export interface DeleteUserLessonProgressForLessonData {
@@ -1143,6 +1364,26 @@ export interface Quiz_Key {
   __typename?: 'Quiz_Key';
 }
 
+export interface SourceMaterialActivity_Key {
+  id: UUIDString;
+  __typename?: 'SourceMaterialActivity_Key';
+}
+
+export interface SourceMaterialFolder_Key {
+  id: UUIDString;
+  __typename?: 'SourceMaterialFolder_Key';
+}
+
+export interface SourceMaterialTagAssignment_Key {
+  id: UUIDString;
+  __typename?: 'SourceMaterialTagAssignment_Key';
+}
+
+export interface SourceMaterialTag_Key {
+  id: UUIDString;
+  __typename?: 'SourceMaterialTag_Key';
+}
+
 export interface SourceMaterial_Key {
   id: UUIDString;
   __typename?: 'SourceMaterial_Key';
@@ -1278,6 +1519,37 @@ export interface UpdateQuizStatusVariables {
 
 export interface UpdateSourceMaterialData {
   sourceMaterial_update?: SourceMaterial_Key | null;
+}
+
+export interface UpdateSourceMaterialFolderData {
+  sourceMaterialFolder_update?: SourceMaterialFolder_Key | null;
+}
+
+export interface UpdateSourceMaterialFolderVariables {
+  id: UUIDString;
+  name?: string | null;
+  parentFolderId?: UUIDString | null;
+  archivedAt?: DateString | null;
+  trashedAt?: DateString | null;
+}
+
+export interface UpdateSourceMaterialLibraryStateData {
+  sourceMaterial_update?: SourceMaterial_Key | null;
+}
+
+export interface UpdateSourceMaterialLibraryStateVariables {
+  id: UUIDString;
+  title?: string | null;
+  folderId?: UUIDString | null;
+  starred?: boolean | null;
+  archivedAt?: DateString | null;
+  trashedAt?: DateString | null;
+  reviewStatus?: string | null;
+  visibility?: string | null;
+  duplicateOfId?: UUIDString | null;
+  lastActivityAt?: DateString | null;
+  metadataJson?: string | null;
+  status?: string | null;
 }
 
 export interface UpdateSourceMaterialVariables {
@@ -1566,6 +1838,18 @@ export const updateSourceMaterialRef: UpdateSourceMaterialRef;
 export function updateSourceMaterial(vars: UpdateSourceMaterialVariables): MutationPromise<UpdateSourceMaterialData, UpdateSourceMaterialVariables>;
 export function updateSourceMaterial(dc: DataConnect, vars: UpdateSourceMaterialVariables): MutationPromise<UpdateSourceMaterialData, UpdateSourceMaterialVariables>;
 
+interface UpdateSourceMaterialLibraryStateRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateSourceMaterialLibraryStateVariables): MutationRef<UpdateSourceMaterialLibraryStateData, UpdateSourceMaterialLibraryStateVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: UpdateSourceMaterialLibraryStateVariables): MutationRef<UpdateSourceMaterialLibraryStateData, UpdateSourceMaterialLibraryStateVariables>;
+  operationName: string;
+}
+export const updateSourceMaterialLibraryStateRef: UpdateSourceMaterialLibraryStateRef;
+
+export function updateSourceMaterialLibraryState(vars: UpdateSourceMaterialLibraryStateVariables): MutationPromise<UpdateSourceMaterialLibraryStateData, UpdateSourceMaterialLibraryStateVariables>;
+export function updateSourceMaterialLibraryState(dc: DataConnect, vars: UpdateSourceMaterialLibraryStateVariables): MutationPromise<UpdateSourceMaterialLibraryStateData, UpdateSourceMaterialLibraryStateVariables>;
+
 interface CreateSourceMaterialRef {
   /* Allow users to create refs without passing in DataConnect */
   (vars: CreateSourceMaterialVariables): MutationRef<CreateSourceMaterialData, CreateSourceMaterialVariables>;
@@ -1589,6 +1873,90 @@ export const createIngestionJobRef: CreateIngestionJobRef;
 
 export function createIngestionJob(vars: CreateIngestionJobVariables): MutationPromise<CreateIngestionJobData, CreateIngestionJobVariables>;
 export function createIngestionJob(dc: DataConnect, vars: CreateIngestionJobVariables): MutationPromise<CreateIngestionJobData, CreateIngestionJobVariables>;
+
+interface CreateSourceMaterialFolderRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateSourceMaterialFolderVariables): MutationRef<CreateSourceMaterialFolderData, CreateSourceMaterialFolderVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: CreateSourceMaterialFolderVariables): MutationRef<CreateSourceMaterialFolderData, CreateSourceMaterialFolderVariables>;
+  operationName: string;
+}
+export const createSourceMaterialFolderRef: CreateSourceMaterialFolderRef;
+
+export function createSourceMaterialFolder(vars: CreateSourceMaterialFolderVariables): MutationPromise<CreateSourceMaterialFolderData, CreateSourceMaterialFolderVariables>;
+export function createSourceMaterialFolder(dc: DataConnect, vars: CreateSourceMaterialFolderVariables): MutationPromise<CreateSourceMaterialFolderData, CreateSourceMaterialFolderVariables>;
+
+interface UpdateSourceMaterialFolderRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateSourceMaterialFolderVariables): MutationRef<UpdateSourceMaterialFolderData, UpdateSourceMaterialFolderVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: UpdateSourceMaterialFolderVariables): MutationRef<UpdateSourceMaterialFolderData, UpdateSourceMaterialFolderVariables>;
+  operationName: string;
+}
+export const updateSourceMaterialFolderRef: UpdateSourceMaterialFolderRef;
+
+export function updateSourceMaterialFolder(vars: UpdateSourceMaterialFolderVariables): MutationPromise<UpdateSourceMaterialFolderData, UpdateSourceMaterialFolderVariables>;
+export function updateSourceMaterialFolder(dc: DataConnect, vars: UpdateSourceMaterialFolderVariables): MutationPromise<UpdateSourceMaterialFolderData, UpdateSourceMaterialFolderVariables>;
+
+interface DeleteSourceMaterialFolderRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteSourceMaterialFolderVariables): MutationRef<DeleteSourceMaterialFolderData, DeleteSourceMaterialFolderVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteSourceMaterialFolderVariables): MutationRef<DeleteSourceMaterialFolderData, DeleteSourceMaterialFolderVariables>;
+  operationName: string;
+}
+export const deleteSourceMaterialFolderRef: DeleteSourceMaterialFolderRef;
+
+export function deleteSourceMaterialFolder(vars: DeleteSourceMaterialFolderVariables): MutationPromise<DeleteSourceMaterialFolderData, DeleteSourceMaterialFolderVariables>;
+export function deleteSourceMaterialFolder(dc: DataConnect, vars: DeleteSourceMaterialFolderVariables): MutationPromise<DeleteSourceMaterialFolderData, DeleteSourceMaterialFolderVariables>;
+
+interface CreateSourceMaterialTagRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateSourceMaterialTagVariables): MutationRef<CreateSourceMaterialTagData, CreateSourceMaterialTagVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: CreateSourceMaterialTagVariables): MutationRef<CreateSourceMaterialTagData, CreateSourceMaterialTagVariables>;
+  operationName: string;
+}
+export const createSourceMaterialTagRef: CreateSourceMaterialTagRef;
+
+export function createSourceMaterialTag(vars: CreateSourceMaterialTagVariables): MutationPromise<CreateSourceMaterialTagData, CreateSourceMaterialTagVariables>;
+export function createSourceMaterialTag(dc: DataConnect, vars: CreateSourceMaterialTagVariables): MutationPromise<CreateSourceMaterialTagData, CreateSourceMaterialTagVariables>;
+
+interface CreateSourceMaterialTagAssignmentRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateSourceMaterialTagAssignmentVariables): MutationRef<CreateSourceMaterialTagAssignmentData, CreateSourceMaterialTagAssignmentVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: CreateSourceMaterialTagAssignmentVariables): MutationRef<CreateSourceMaterialTagAssignmentData, CreateSourceMaterialTagAssignmentVariables>;
+  operationName: string;
+}
+export const createSourceMaterialTagAssignmentRef: CreateSourceMaterialTagAssignmentRef;
+
+export function createSourceMaterialTagAssignment(vars: CreateSourceMaterialTagAssignmentVariables): MutationPromise<CreateSourceMaterialTagAssignmentData, CreateSourceMaterialTagAssignmentVariables>;
+export function createSourceMaterialTagAssignment(dc: DataConnect, vars: CreateSourceMaterialTagAssignmentVariables): MutationPromise<CreateSourceMaterialTagAssignmentData, CreateSourceMaterialTagAssignmentVariables>;
+
+interface DeleteTagAssignmentsForMaterialRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteTagAssignmentsForMaterialVariables): MutationRef<DeleteTagAssignmentsForMaterialData, DeleteTagAssignmentsForMaterialVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteTagAssignmentsForMaterialVariables): MutationRef<DeleteTagAssignmentsForMaterialData, DeleteTagAssignmentsForMaterialVariables>;
+  operationName: string;
+}
+export const deleteTagAssignmentsForMaterialRef: DeleteTagAssignmentsForMaterialRef;
+
+export function deleteTagAssignmentsForMaterial(vars: DeleteTagAssignmentsForMaterialVariables): MutationPromise<DeleteTagAssignmentsForMaterialData, DeleteTagAssignmentsForMaterialVariables>;
+export function deleteTagAssignmentsForMaterial(dc: DataConnect, vars: DeleteTagAssignmentsForMaterialVariables): MutationPromise<DeleteTagAssignmentsForMaterialData, DeleteTagAssignmentsForMaterialVariables>;
+
+interface CreateSourceMaterialActivityRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateSourceMaterialActivityVariables): MutationRef<CreateSourceMaterialActivityData, CreateSourceMaterialActivityVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: CreateSourceMaterialActivityVariables): MutationRef<CreateSourceMaterialActivityData, CreateSourceMaterialActivityVariables>;
+  operationName: string;
+}
+export const createSourceMaterialActivityRef: CreateSourceMaterialActivityRef;
+
+export function createSourceMaterialActivity(vars: CreateSourceMaterialActivityVariables): MutationPromise<CreateSourceMaterialActivityData, CreateSourceMaterialActivityVariables>;
+export function createSourceMaterialActivity(dc: DataConnect, vars: CreateSourceMaterialActivityVariables): MutationPromise<CreateSourceMaterialActivityData, CreateSourceMaterialActivityVariables>;
 
 interface CreateQuestionRef {
   /* Allow users to create refs without passing in DataConnect */
@@ -2274,6 +2642,18 @@ export const getLessonVersionsRef: GetLessonVersionsRef;
 export function getLessonVersions(vars: GetLessonVersionsVariables, options?: ExecuteQueryOptions): QueryPromise<GetLessonVersionsData, GetLessonVersionsVariables>;
 export function getLessonVersions(dc: DataConnect, vars: GetLessonVersionsVariables, options?: ExecuteQueryOptions): QueryPromise<GetLessonVersionsData, GetLessonVersionsVariables>;
 
+interface AdminListSourceMaterialsRichRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (): QueryRef<AdminListSourceMaterialsRichData, undefined>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect): QueryRef<AdminListSourceMaterialsRichData, undefined>;
+  operationName: string;
+}
+export const adminListSourceMaterialsRichRef: AdminListSourceMaterialsRichRef;
+
+export function adminListSourceMaterialsRich(options?: ExecuteQueryOptions): QueryPromise<AdminListSourceMaterialsRichData, undefined>;
+export function adminListSourceMaterialsRich(dc: DataConnect, options?: ExecuteQueryOptions): QueryPromise<AdminListSourceMaterialsRichData, undefined>;
+
 interface AdminListSourceMaterialsRef {
   /* Allow users to create refs without passing in DataConnect */
   (): QueryRef<AdminListSourceMaterialsData, undefined>;
@@ -2285,6 +2665,30 @@ export const adminListSourceMaterialsRef: AdminListSourceMaterialsRef;
 
 export function adminListSourceMaterials(options?: ExecuteQueryOptions): QueryPromise<AdminListSourceMaterialsData, undefined>;
 export function adminListSourceMaterials(dc: DataConnect, options?: ExecuteQueryOptions): QueryPromise<AdminListSourceMaterialsData, undefined>;
+
+interface AdminListSourceMaterialFoldersRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (): QueryRef<AdminListSourceMaterialFoldersData, undefined>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect): QueryRef<AdminListSourceMaterialFoldersData, undefined>;
+  operationName: string;
+}
+export const adminListSourceMaterialFoldersRef: AdminListSourceMaterialFoldersRef;
+
+export function adminListSourceMaterialFolders(options?: ExecuteQueryOptions): QueryPromise<AdminListSourceMaterialFoldersData, undefined>;
+export function adminListSourceMaterialFolders(dc: DataConnect, options?: ExecuteQueryOptions): QueryPromise<AdminListSourceMaterialFoldersData, undefined>;
+
+interface AdminListSourceMaterialTagsRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (): QueryRef<AdminListSourceMaterialTagsData, undefined>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect): QueryRef<AdminListSourceMaterialTagsData, undefined>;
+  operationName: string;
+}
+export const adminListSourceMaterialTagsRef: AdminListSourceMaterialTagsRef;
+
+export function adminListSourceMaterialTags(options?: ExecuteQueryOptions): QueryPromise<AdminListSourceMaterialTagsData, undefined>;
+export function adminListSourceMaterialTags(dc: DataConnect, options?: ExecuteQueryOptions): QueryPromise<AdminListSourceMaterialTagsData, undefined>;
 
 interface AdminListUsersRef {
   /* Allow users to create refs without passing in DataConnect */

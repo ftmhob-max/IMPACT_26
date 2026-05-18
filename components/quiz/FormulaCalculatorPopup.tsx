@@ -13,6 +13,36 @@ import type { CalculationHistoryEntry } from "@/components/layout/FormulaCalcula
 
 type CalcMode = "formula" | "basic" | "scientific";
 
+// ── Sizing constants ───────────────────────────────────────────────────────────
+
+const WIDTH_MIN = 280;
+const WIDTH_MAX = 700;
+const HEIGHT_MIN = 260;
+const HEIGHT_MAX_VH = 0.88; // 88% of viewport
+
+function clamp(v: number, lo: number, hi: number) {
+  return Math.max(lo, Math.min(hi, v));
+}
+
+function loadSavedSize(): { width: number; height: number } {
+  if (typeof window === "undefined") return { width: 384, height: 520 };
+  try {
+    const raw = localStorage.getItem("impact_calc_popup_size");
+    if (raw) {
+      const { w, h } = JSON.parse(raw);
+      return {
+        width: clamp(Number(w) || 384, WIDTH_MIN, WIDTH_MAX),
+        height: clamp(Number(h) || 520, HEIGHT_MIN, Math.floor(window.innerHeight * HEIGHT_MAX_VH)),
+      };
+    }
+  } catch { /* ignore */ }
+  return { width: 384, height: 520 };
+}
+
+function saveSavedSize(w: number, h: number) {
+  try { localStorage.setItem("impact_calc_popup_size", JSON.stringify({ w, h })); } catch { /* ignore */ }
+}
+
 // ── Draggable popup (desktop) / bottom-sheet (mobile) ─────────────────────────
 
 interface PopupPosition { x: number; y: number }
@@ -21,7 +51,7 @@ const DEFAULT_POS: PopupPosition = { x: 24, y: 24 }; // distance from bottom-rig
 
 /**
  * Floating quiz calculator popup.
- * - Desktop: draggable floating card (bottom-right origin)
+ * - Desktop: draggable + resizable floating card (bottom-right origin)
  * - Mobile: slide-up bottom sheet
  * - Persists formula + values across quiz question navigation via context
  */
@@ -51,6 +81,16 @@ export function FormulaCalculatorPopup({
   // ── Calculator mode ────────────────────────────────────────────────────────
   const [calcMode, setCalcMode] = useState<CalcMode>("formula");
 
+  // ── Popup size ─────────────────────────────────────────────────────────────
+  const [popupWidth, setPopupWidth] = useState(384);
+  const [popupHeight, setPopupHeight] = useState(520);
+  // Initialise from localStorage on mount (avoid SSR mismatch)
+  useEffect(() => {
+    const saved = loadSavedSize();
+    setPopupWidth(saved.width);
+    setPopupHeight(saved.height);
+  }, []);
+
   // ── Dragging state ─────────────────────────────────────────────────────────
   const [pos, setPos] = useState<PopupPosition>(DEFAULT_POS);
   const dragOrigin = useRef<{ mx: number; my: number; px: number; py: number } | null>(null);
@@ -58,8 +98,7 @@ export function FormulaCalculatorPopup({
   const [isDragging, setIsDragging] = useState(false);
 
   const onMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    // Only drag on the header, not its buttons
-    if ((e.target as HTMLElement).closest("button")) return;
+    if ((e.target as HTMLElement).closest("button,input,select,textarea")) return;
     dragOrigin.current = { mx: e.clientX, my: e.clientY, px: pos.x, py: pos.y };
     setIsDragging(true);
     e.preventDefault();
@@ -71,42 +110,88 @@ export function FormulaCalculatorPopup({
       if (!dragOrigin.current) return;
       const dx = e.clientX - dragOrigin.current.mx;
       const dy = e.clientY - dragOrigin.current.my;
-      // Cap y so the popup top never slides behind the sticky quiz header (~80px)
       const maxY = window.innerHeight - 120;
       setPos({
         x: Math.max(0, dragOrigin.current.px - dx),
-        y: Math.min(maxY, Math.max(0, dragOrigin.current.py - dy)),
+        y: clamp(dragOrigin.current.py - dy, 0, maxY),
       });
     }
+    function onUp() { dragOrigin.current = null; setIsDragging(false); }
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    return () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
+  }, [isDragging]);
+
+  // ── Resize state ───────────────────────────────────────────────────────────
+  // Popup is anchored bottom-right, so resize handle is at the top-left corner.
+  // Dragging left  → wider;  dragging right → narrower
+  // Dragging up    → taller; dragging down  → shorter
+  type ResizeEdge = "nw" | "w" | "n";
+  const resizeOrigin = useRef<{
+    mx: number; my: number;
+    startW: number; startH: number;
+    edge: ResizeEdge;
+  } | null>(null);
+  const [isResizing, setIsResizing] = useState(false);
+
+  function startResize(e: React.MouseEvent, edge: ResizeEdge) {
+    e.preventDefault();
+    e.stopPropagation();
+    resizeOrigin.current = {
+      mx: e.clientX, my: e.clientY,
+      startW: popupWidth, startH: popupHeight,
+      edge,
+    };
+    setIsResizing(true);
+  }
+
+  useEffect(() => {
+    if (!isResizing) return;
+    function onMove(e: MouseEvent) {
+      const o = resizeOrigin.current;
+      if (!o) return;
+      const dx = e.clientX - o.mx; // positive = moved right
+      const dy = e.clientY - o.my; // positive = moved down
+      const maxH = Math.floor(window.innerHeight * HEIGHT_MAX_VH);
+      let newW = o.startW;
+      let newH = o.startH;
+      if (o.edge === "nw" || o.edge === "w") newW = clamp(o.startW - dx, WIDTH_MIN, WIDTH_MAX);
+      if (o.edge === "nw" || o.edge === "n") newH = clamp(o.startH - dy, HEIGHT_MIN, maxH);
+      setPopupWidth(newW);
+      setPopupHeight(newH);
+    }
     function onUp() {
-      dragOrigin.current = null;
-      setIsDragging(false);
+      const o = resizeOrigin.current;
+      if (o) saveSavedSize(popupWidth, popupHeight);
+      resizeOrigin.current = null;
+      setIsResizing(false);
     }
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
-    return () => {
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onUp);
-    };
-  }, [isDragging]);
+    return () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isResizing]);
+
+  // Persist size after resize ends
+  useEffect(() => {
+    if (!isResizing) saveSavedSize(popupWidth, popupHeight);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isResizing]);
 
   // ── Calculation engine ────────────────────────────────────────────────────
   const initialValues = activeFormulaCode ? getValues(activeFormulaCode) : {};
   const engine = useFormulaCalculationEngine(activeConfig, initialValues);
 
-  // Sync values → provider
   useEffect(() => {
     if (!activeFormulaCode) return;
     setValues(activeFormulaCode, engine.values);
   }, [engine.values, activeFormulaCode, setValues]);
 
-  // Sync result → provider
   useEffect(() => {
     if (!activeFormulaCode) return;
     setResult(activeFormulaCode, engine.result?.value ?? null);
   }, [engine.result, activeFormulaCode, setResult]);
 
-  // Add to history on successful calculation
   useEffect(() => {
     if (!engine.result || !activeFormula || !activeConfig) return;
     const entry: CalculationHistoryEntry = {
@@ -124,12 +209,9 @@ export function FormulaCalculatorPopup({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engine.result]);
 
-  // Escape to close
   useEffect(() => {
     if (!isOpen) return;
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") close();
-    }
+    function onKey(e: KeyboardEvent) { if (e.key === "Escape") close(); }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [isOpen, close]);
@@ -147,7 +229,6 @@ export function FormulaCalculatorPopup({
   if (isMobile) {
     return (
       <>
-        {/* Mobile overlay backdrop */}
         {!isMinimized && (
           <div
             className="fixed inset-0 z-[205] bg-black/30 sm:hidden"
@@ -155,7 +236,6 @@ export function FormulaCalculatorPopup({
             onClick={minimize}
           />
         )}
-
         <div
           role="dialog"
           aria-modal="true"
@@ -164,7 +244,7 @@ export function FormulaCalculatorPopup({
             "fixed inset-x-0 bottom-0 z-[210] flex flex-col rounded-t-2xl bg-white shadow-2xl ring-1 ring-black/10 transition-transform duration-300 sm:hidden",
             isMinimized ? "translate-y-[calc(100%-3.25rem)]" : "translate-y-0"
           )}
-          style={{ maxHeight: "75vh" }}
+          style={{ maxHeight: "78vh" }}
         >
           <PopupHeader
             activeFormula={activeFormula}
@@ -194,7 +274,9 @@ export function FormulaCalculatorPopup({
     );
   }
 
-  // ── Desktop: draggable floating card ──────────────────────────────────────
+  // ── Desktop: draggable + resizable floating card ──────────────────────────
+  const cursor = isDragging ? "cursor-grabbing" : isResizing ? "cursor-nwse-resize" : "";
+
   return (
     <div
       ref={popupRef}
@@ -204,16 +286,48 @@ export function FormulaCalculatorPopup({
       className={cn(
         "fixed z-[210] flex flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10",
         "hidden sm:flex",
-        isDragging ? "select-none cursor-grabbing" : "",
-        isMinimized ? "w-72" : "w-96"
+        cursor,
+        (isDragging || isResizing) ? "select-none" : ""
       )}
       style={{
         bottom: pos.y,
         right: pos.x,
-        maxHeight: isMinimized ? "auto" : "80vh",
-        transition: isDragging ? "none" : "width 200ms ease, max-height 200ms ease",
+        width: isMinimized ? 288 : popupWidth,
+        height: isMinimized ? "auto" : popupHeight,
+        transition: (isDragging || isResizing) ? "none" : "width 120ms ease, height 120ms ease",
       }}
     >
+      {/* ── Resize handles (top-left corner + edges) — only when expanded ── */}
+      {!isMinimized && (
+        <>
+          {/* NW corner — resizes both width and height */}
+          <div
+            className="absolute left-0 top-0 z-20 h-4 w-4 cursor-nwse-resize"
+            onMouseDown={(e) => startResize(e, "nw")}
+          >
+            {/* Visual grip dots */}
+            <svg width="12" height="12" viewBox="0 0 12 12" className="absolute left-1 top-1 text-slate-300">
+              <circle cx="2" cy="2" r="1.2" fill="currentColor" />
+              <circle cx="6" cy="2" r="1.2" fill="currentColor" />
+              <circle cx="2" cy="6" r="1.2" fill="currentColor" />
+              <circle cx="6" cy="6" r="1.2" fill="currentColor" />
+              <circle cx="2" cy="10" r="1.2" fill="currentColor" />
+              <circle cx="10" cy="2" r="1.2" fill="currentColor" />
+            </svg>
+          </div>
+          {/* W edge — width only */}
+          <div
+            className="absolute bottom-8 left-0 top-4 z-20 w-1 cursor-ew-resize hover:bg-[#185FA5]/20"
+            onMouseDown={(e) => startResize(e, "w")}
+          />
+          {/* N edge — height only */}
+          <div
+            className="absolute left-4 right-0 top-0 z-20 h-1 cursor-ns-resize hover:bg-[#185FA5]/20"
+            onMouseDown={(e) => startResize(e, "n")}
+          />
+        </>
+      )}
+
       <PopupHeader
         activeFormula={activeFormula}
         isMinimized={isMinimized}
@@ -222,6 +336,7 @@ export function FormulaCalculatorPopup({
         onSetCalcMode={setCalcMode}
         isMobile={false}
         isDraggable
+        popupWidth={isMinimized ? 288 : popupWidth}
         onMouseDown={onMouseDown}
         onMinimize={isMinimized ? restore : minimize}
         onClose={close}
@@ -253,6 +368,7 @@ function PopupHeader({
   onSetCalcMode,
   isMobile,
   isDraggable,
+  popupWidth,
   onMouseDown,
   onMinimize,
   onClose,
@@ -265,14 +381,17 @@ function PopupHeader({
   onSetCalcMode: (m: CalcMode) => void;
   isMobile: boolean;
   isDraggable?: boolean;
+  popupWidth?: number;
   onMouseDown?: (e: React.MouseEvent<HTMLDivElement>) => void;
   onMinimize: () => void;
   onClose: () => void;
   onToggleSelector: () => void;
 }) {
+  // When the popup is narrow, collapse mode tabs to icons only
+  const compact = (popupWidth ?? 400) < 340;
+
   return (
     <div className={cn("shrink-0", isMobile && "rounded-t-2xl")}>
-      {/* Drag bar */}
       <div
         className={cn(
           "flex items-center gap-2 px-3.5 py-2.5",
@@ -288,14 +407,16 @@ function PopupHeader({
           <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#E6F1FB]">
             <Icons.Calculator size={14} className="text-[#185FA5]" />
           </div>
-          <div className="min-w-0">
-            <p className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-[#185FA5]">
-              Calculator
-            </p>
-            {calcMode === "formula" && activeFormula && !isMinimized && (
-              <p className="truncate text-[11px] font-semibold text-slate-600">{activeFormula.name}</p>
-            )}
-          </div>
+          {!compact && (
+            <div className="min-w-0">
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-[#185FA5]">
+                Calculator
+              </p>
+              {calcMode === "formula" && activeFormula && !isMinimized && (
+                <p className="truncate text-[11px] font-semibold text-slate-600">{activeFormula.name}</p>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="flex shrink-0 items-center gap-1">
@@ -343,14 +464,18 @@ function PopupHeader({
               key={mode}
               type="button"
               onClick={() => onSetCalcMode(mode)}
+              title={compact ? (mode === "formula" ? "Formula" : mode === "basic" ? "Basic" : "Scientific") : undefined}
               className={cn(
-                "flex-1 py-1.5 text-[10px] font-bold capitalize transition border-b-2",
+                "flex-1 py-1.5 transition border-b-2",
+                compact ? "text-[9px] font-bold uppercase tracking-wider px-1" : "text-[10px] font-bold capitalize",
                 calcMode === mode
                   ? "border-[#185FA5] text-[#185FA5]"
                   : "border-transparent text-slate-400 hover:text-slate-600"
               )}
             >
-              {mode === "formula" ? "Formula" : mode === "basic" ? "Basic" : "Scientific"}
+              {compact
+                ? (mode === "formula" ? "F" : mode === "basic" ? "B" : "S")
+                : (mode === "formula" ? "Formula" : mode === "basic" ? "Basic" : "Scientific")}
             </button>
           ))}
         </div>
@@ -378,7 +503,6 @@ function PopupBody({
   onAttachToAnswer?: (formatted: string) => void;
   onToggleSelector: () => void;
 }) {
-  // Basic / Scientific mode
   if (calcMode !== "formula") {
     return (
       <div className="flex-1 overflow-y-auto p-3">
@@ -388,15 +512,13 @@ function PopupBody({
   }
 
   return (
-    <div className="flex min-h-0 flex-1">
-      {/* Selector pane */}
+    <div className="flex min-h-0 flex-1 overflow-hidden">
       {showSelectorPane && (
         <div className="w-52 shrink-0 overflow-y-auto border-r border-slate-100 p-3">
           <FormulaSelector />
         </div>
       )}
 
-      {/* Main area */}
       <div className="min-w-0 flex-1 overflow-y-auto p-4 space-y-4">
         {!activeFormula ? (
           <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
@@ -412,7 +534,6 @@ function PopupBody({
           </div>
         ) : (
           <>
-            {/* Formula expression */}
             <div>
               <p className="font-calc rounded-lg border border-[#b8d7f0] bg-[#f8fbff] px-2.5 py-2 text-[12px] text-slate-700">
                 {activeFormula.expression}
@@ -425,7 +546,6 @@ function PopupBody({
               </p>
             ) : (
               <>
-                {/* Inputs */}
                 <div className="space-y-3">
                   {activeConfig.variables.map((variable) => (
                     <FormulaVariableHelper
@@ -440,7 +560,6 @@ function PopupBody({
                   ))}
                 </div>
 
-                {/* Buttons */}
                 <div className="flex gap-2">
                   <button
                     type="button"
@@ -458,7 +577,6 @@ function PopupBody({
                   </button>
                 </div>
 
-                {/* Calc error */}
                 {engine.hasCalculated && engine.calcError && (
                   <div className="flex items-start gap-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">
                     <Icons.AlertCircle size={13} className="mt-0.5 shrink-0" />
@@ -466,7 +584,6 @@ function PopupBody({
                   </div>
                 )}
 
-                {/* Result */}
                 {engine.hasCalculated && engine.result && (
                   <FormulaResultPanel
                     config={activeConfig}

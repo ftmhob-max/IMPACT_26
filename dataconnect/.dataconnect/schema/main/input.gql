@@ -89,6 +89,30 @@ It has the same format as `SourceMaterial_Key`, but is only used as mutation ret
 """
 scalar SourceMaterial_KeyOutput
 """
+✨ `SourceMaterialActivity_KeyOutput` returns the primary key fields of table type `SourceMaterialActivity`.
+
+It has the same format as `SourceMaterialActivity_Key`, but is only used as mutation return value.
+"""
+scalar SourceMaterialActivity_KeyOutput
+"""
+✨ `SourceMaterialFolder_KeyOutput` returns the primary key fields of table type `SourceMaterialFolder`.
+
+It has the same format as `SourceMaterialFolder_Key`, but is only used as mutation return value.
+"""
+scalar SourceMaterialFolder_KeyOutput
+"""
+✨ `SourceMaterialTag_KeyOutput` returns the primary key fields of table type `SourceMaterialTag`.
+
+It has the same format as `SourceMaterialTag_Key`, but is only used as mutation return value.
+"""
+scalar SourceMaterialTag_KeyOutput
+"""
+✨ `SourceMaterialTagAssignment_KeyOutput` returns the primary key fields of table type `SourceMaterialTagAssignment`.
+
+It has the same format as `SourceMaterialTagAssignment_Key`, but is only used as mutation return value.
+"""
+scalar SourceMaterialTagAssignment_KeyOutput
+"""
 ✨ `User_KeyOutput` returns the primary key fields of table type `User`.
 
 It has the same format as `User_Key`, but is only used as mutation return value.
@@ -981,6 +1005,10 @@ input Course_Filter {
   ✨ Generated from Field `Course`.`modules_on_course` of type `[Module!]!`
   """
   modules_on_course: Module_ListFilter
+  """
+  ✨ Generated from Field `Course`.`sourceMaterialFolders_on_course` of type `[SourceMaterialFolder!]!`
+  """
+  sourceMaterialFolders_on_course: SourceMaterialFolder_ListFilter
   """
   ✨ Generated from Field `Course`.`userCourseProgresses_on_course` of type `[UserCourseProgress!]!`
   """
@@ -2569,6 +2597,10 @@ input Lesson_Filter {
   ✨ Generated from Field `Lesson`.`lessonVersions_on_lesson` of type `[LessonVersion!]!`
   """
   lessonVersions_on_lesson: LessonVersion_ListFilter
+  """
+  ✨ Generated from Field `Lesson`.`sourceMaterialFolders_on_lesson` of type `[SourceMaterialFolder!]!`
+  """
+  sourceMaterialFolders_on_lesson: SourceMaterialFolder_ListFilter
   """
   ✨ Generated from Field `Lesson`.`userLessonProgresses_on_lesson` of type `[UserLessonProgress!]!`
   """
@@ -6293,6 +6325,22 @@ input SourceMaterial_Data {
   """
   id_expr: UUID_Expr @fdc_forbiddenInVariables
   """
+  ✨ Generated from Field `SourceMaterial`.`duplicateOfId` of type `UUID`
+  """
+  duplicateOfId: UUID
+  """
+  ✨ `_expr` server value variant of `duplicateOfId` (✨ Generated from Field `SourceMaterial`.`duplicateOfId` of type `UUID`)
+  """
+  duplicateOfId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterial`.`folderId` of type `UUID`
+  """
+  folderId: UUID
+  """
+  ✨ `_expr` server value variant of `folderId` (✨ Generated from Field `SourceMaterial`.`folderId` of type `UUID`)
+  """
+  folderId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
   ✨ Generated from Field `SourceMaterial`.`uploadedById` of type `String`
   """
   uploadedById: String
@@ -6301,9 +6349,33 @@ input SourceMaterial_Data {
   """
   uploadedById_expr: String_Expr @fdc_forbiddenInVariables
   """
+  ✨ Generated from Field `SourceMaterial`.`duplicateOf` of type `SourceMaterial`
+  """
+  duplicateOf: SourceMaterial_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterial`.`folder` of type `SourceMaterialFolder`
+  """
+  folder: SourceMaterialFolder_Key @fdc_forbiddenInVariables
+  """
   ✨ Generated from Field `SourceMaterial`.`uploadedBy` of type `User`
   """
   uploadedBy: User_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterial`.`archivedAt` of type `Date`
+  """
+  archivedAt: Date
+  """
+  ✨ `_date` server value variant of `archivedAt` (✨ Generated from Field `SourceMaterial`.`archivedAt` of type `Date`)
+  """
+  archivedAt_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `archivedAt` (✨ Generated from Field `SourceMaterial`.`archivedAt` of type `Date`)
+  """
+  archivedAt_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `archivedAt` (✨ Generated from Field `SourceMaterial`.`archivedAt` of type `Date`)
+  """
+  archivedAt_update: [Date_Update!] @fdc_forbiddenInVariables
   """
   ✨ Generated from Field `SourceMaterial`.`createdAt` of type `Date!`
   """
@@ -6353,6 +6425,22 @@ input SourceMaterial_Data {
   """
   fileType_expr: String_Expr @fdc_forbiddenInVariables
   """
+  ✨ Generated from Field `SourceMaterial`.`lastActivityAt` of type `Date`
+  """
+  lastActivityAt: Date
+  """
+  ✨ `_date` server value variant of `lastActivityAt` (✨ Generated from Field `SourceMaterial`.`lastActivityAt` of type `Date`)
+  """
+  lastActivityAt_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `lastActivityAt` (✨ Generated from Field `SourceMaterial`.`lastActivityAt` of type `Date`)
+  """
+  lastActivityAt_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `lastActivityAt` (✨ Generated from Field `SourceMaterial`.`lastActivityAt` of type `Date`)
+  """
+  lastActivityAt_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
   ✨ Generated from Field `SourceMaterial`.`metadataJson` of type `String`
   """
   metadataJson: String
@@ -6360,6 +6448,22 @@ input SourceMaterial_Data {
   ✨ `_expr` server value variant of `metadataJson` (✨ Generated from Field `SourceMaterial`.`metadataJson` of type `String`)
   """
   metadataJson_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterial`.`reviewStatus` of type `String!`
+  """
+  reviewStatus: String
+  """
+  ✨ `_expr` server value variant of `reviewStatus` (✨ Generated from Field `SourceMaterial`.`reviewStatus` of type `String!`)
+  """
+  reviewStatus_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterial`.`starred` of type `Boolean!`
+  """
+  starred: Boolean
+  """
+  ✨ `_expr` server value variant of `starred` (✨ Generated from Field `SourceMaterial`.`starred` of type `Boolean!`)
+  """
+  starred_expr: Boolean_Expr @fdc_forbiddenInVariables
   """
   ✨ Generated from Field `SourceMaterial`.`status` of type `String!`
   """
@@ -6385,6 +6489,22 @@ input SourceMaterial_Data {
   """
   title_expr: String_Expr @fdc_forbiddenInVariables
   """
+  ✨ Generated from Field `SourceMaterial`.`trashedAt` of type `Date`
+  """
+  trashedAt: Date
+  """
+  ✨ `_date` server value variant of `trashedAt` (✨ Generated from Field `SourceMaterial`.`trashedAt` of type `Date`)
+  """
+  trashedAt_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `trashedAt` (✨ Generated from Field `SourceMaterial`.`trashedAt` of type `Date`)
+  """
+  trashedAt_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `trashedAt` (✨ Generated from Field `SourceMaterial`.`trashedAt` of type `Date`)
+  """
+  trashedAt_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
   ✨ Generated from Field `SourceMaterial`.`updatedAt` of type `Date!`
   """
   updatedAt: Date
@@ -6400,6 +6520,14 @@ input SourceMaterial_Data {
   ✨ `_update` server value variant of `updatedAt` (✨ Generated from Field `SourceMaterial`.`updatedAt` of type `Date!`)
   """
   updatedAt_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterial`.`visibility` of type `String!`
+  """
+  visibility: String
+  """
+  ✨ `_expr` server value variant of `visibility` (✨ Generated from Field `SourceMaterial`.`visibility` of type `String!`)
+  """
+  visibility_expr: String_Expr @fdc_forbiddenInVariables
 }
 """
 ✨ Generated filter input type for table 'SourceMaterial'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
@@ -6422,13 +6550,33 @@ input SourceMaterial_Filter {
   """
   id: UUID_Filter
   """
+  ✨ Generated from Field `SourceMaterial`.`duplicateOfId` of type `UUID`
+  """
+  duplicateOfId: UUID_Filter
+  """
+  ✨ Generated from Field `SourceMaterial`.`folderId` of type `UUID`
+  """
+  folderId: UUID_Filter
+  """
   ✨ Generated from Field `SourceMaterial`.`uploadedById` of type `String`
   """
   uploadedById: String_Filter
   """
+  ✨ Generated from Field `SourceMaterial`.`duplicateOf` of type `SourceMaterial`
+  """
+  duplicateOf: SourceMaterial_Filter
+  """
+  ✨ Generated from Field `SourceMaterial`.`folder` of type `SourceMaterialFolder`
+  """
+  folder: SourceMaterialFolder_Filter
+  """
   ✨ Generated from Field `SourceMaterial`.`uploadedBy` of type `User`
   """
   uploadedBy: User_Filter
+  """
+  ✨ Generated from Field `SourceMaterial`.`archivedAt` of type `Date`
+  """
+  archivedAt: Date_Filter
   """
   ✨ Generated from Field `SourceMaterial`.`createdAt` of type `Date!`
   """
@@ -6450,9 +6598,21 @@ input SourceMaterial_Filter {
   """
   fileType: String_Filter
   """
+  ✨ Generated from Field `SourceMaterial`.`lastActivityAt` of type `Date`
+  """
+  lastActivityAt: Date_Filter
+  """
   ✨ Generated from Field `SourceMaterial`.`metadataJson` of type `String`
   """
   metadataJson: String_Filter
+  """
+  ✨ Generated from Field `SourceMaterial`.`reviewStatus` of type `String!`
+  """
+  reviewStatus: String_Filter
+  """
+  ✨ Generated from Field `SourceMaterial`.`starred` of type `Boolean!`
+  """
+  starred: Boolean_Filter
   """
   ✨ Generated from Field `SourceMaterial`.`status` of type `String!`
   """
@@ -6466,9 +6626,17 @@ input SourceMaterial_Filter {
   """
   title: String_Filter
   """
+  ✨ Generated from Field `SourceMaterial`.`trashedAt` of type `Date`
+  """
+  trashedAt: Date_Filter
+  """
   ✨ Generated from Field `SourceMaterial`.`updatedAt` of type `Date!`
   """
   updatedAt: Date_Filter
+  """
+  ✨ Generated from Field `SourceMaterial`.`visibility` of type `String!`
+  """
+  visibility: String_Filter
   """
   ✨ Generated from Field `SourceMaterial`.`contentSourceLinks_on_sourceMaterial` of type `[ContentSourceLink!]!`
   """
@@ -6481,6 +6649,18 @@ input SourceMaterial_Filter {
   ✨ Generated from Field `SourceMaterial`.`lessons_on_sourceMaterial` of type `[Lesson!]!`
   """
   lessons_on_sourceMaterial: Lesson_ListFilter
+  """
+  ✨ Generated from Field `SourceMaterial`.`sourceMaterials_on_duplicateOf` of type `[SourceMaterial!]!`
+  """
+  sourceMaterials_on_duplicateOf: SourceMaterial_ListFilter
+  """
+  ✨ Generated from Field `SourceMaterial`.`sourceMaterialActivities_on_sourceMaterial` of type `[SourceMaterialActivity!]!`
+  """
+  sourceMaterialActivities_on_sourceMaterial: SourceMaterialActivity_ListFilter
+  """
+  ✨ Generated from Field `SourceMaterial`.`sourceMaterialTagAssignments_on_sourceMaterial` of type `[SourceMaterialTagAssignment!]!`
+  """
+  sourceMaterialTagAssignments_on_sourceMaterial: SourceMaterialTagAssignment_ListFilter
 }
 """
 ✨ Generated first-row input type for table 'SourceMaterial'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
@@ -6520,6 +6700,10 @@ input SourceMaterial_Having {
   """
   _count: Int_Filter
   """
+  ✨ Generated from Field `SourceMaterial`.`archivedAt_count` of type `Int!`
+  """
+  archivedAt_count: Int_Filter
+  """
   ✨ Generated from Field `SourceMaterial`.`createdAt_count` of type `Int!`
   """
   createdAt_count: Int_Filter
@@ -6527,6 +6711,10 @@ input SourceMaterial_Having {
   ✨ Generated from Field `SourceMaterial`.`downloadUrl_count` of type `Int!`
   """
   downloadUrl_count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterial`.`duplicateOfId_count` of type `Int!`
+  """
+  duplicateOfId_count: Int_Filter
   """
   ✨ Generated from Field `SourceMaterial`.`extractedText_count` of type `Int!`
   """
@@ -6540,13 +6728,29 @@ input SourceMaterial_Having {
   """
   fileType_count: Int_Filter
   """
+  ✨ Generated from Field `SourceMaterial`.`folderId_count` of type `Int!`
+  """
+  folderId_count: Int_Filter
+  """
   ✨ Generated from Field `SourceMaterial`.`id_count` of type `Int!`
   """
   id_count: Int_Filter
   """
+  ✨ Generated from Field `SourceMaterial`.`lastActivityAt_count` of type `Int!`
+  """
+  lastActivityAt_count: Int_Filter
+  """
   ✨ Generated from Field `SourceMaterial`.`metadataJson_count` of type `Int!`
   """
   metadataJson_count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterial`.`reviewStatus_count` of type `Int!`
+  """
+  reviewStatus_count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterial`.`starred_count` of type `Int!`
+  """
+  starred_count: Int_Filter
   """
   ✨ Generated from Field `SourceMaterial`.`status_count` of type `Int!`
   """
@@ -6560,6 +6764,10 @@ input SourceMaterial_Having {
   """
   title_count: Int_Filter
   """
+  ✨ Generated from Field `SourceMaterial`.`trashedAt_count` of type `Int!`
+  """
+  trashedAt_count: Int_Filter
+  """
   ✨ Generated from Field `SourceMaterial`.`updatedAt_count` of type `Int!`
   """
   updatedAt_count: Int_Filter
@@ -6568,17 +6776,45 @@ input SourceMaterial_Having {
   """
   uploadedById_count: Int_Filter
   """
+  ✨ Generated from Field `SourceMaterial`.`visibility_count` of type `Int!`
+  """
+  visibility_count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterial`.`archivedAt_min` of type `Date`
+  """
+  archivedAt_min: Date_Filter
+  """
   ✨ Generated from Field `SourceMaterial`.`createdAt_min` of type `Date`
   """
   createdAt_min: Date_Filter
+  """
+  ✨ Generated from Field `SourceMaterial`.`lastActivityAt_min` of type `Date`
+  """
+  lastActivityAt_min: Date_Filter
+  """
+  ✨ Generated from Field `SourceMaterial`.`trashedAt_min` of type `Date`
+  """
+  trashedAt_min: Date_Filter
   """
   ✨ Generated from Field `SourceMaterial`.`updatedAt_min` of type `Date`
   """
   updatedAt_min: Date_Filter
   """
+  ✨ Generated from Field `SourceMaterial`.`archivedAt_max` of type `Date`
+  """
+  archivedAt_max: Date_Filter
+  """
   ✨ Generated from Field `SourceMaterial`.`createdAt_max` of type `Date`
   """
   createdAt_max: Date_Filter
+  """
+  ✨ Generated from Field `SourceMaterial`.`lastActivityAt_max` of type `Date`
+  """
+  lastActivityAt_max: Date_Filter
+  """
+  ✨ Generated from Field `SourceMaterial`.`trashedAt_max` of type `Date`
+  """
+  trashedAt_max: Date_Filter
   """
   ✨ Generated from Field `SourceMaterial`.`updatedAt_max` of type `Date`
   """
@@ -6619,13 +6855,33 @@ input SourceMaterial_Order {
   """
   id: OrderDirection
   """
+  ✨ Generated from Field `SourceMaterial`.`duplicateOfId` of type `UUID`
+  """
+  duplicateOfId: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterial`.`folderId` of type `UUID`
+  """
+  folderId: OrderDirection
+  """
   ✨ Generated from Field `SourceMaterial`.`uploadedById` of type `String`
   """
   uploadedById: OrderDirection
   """
+  ✨ Generated from Field `SourceMaterial`.`duplicateOf` of type `SourceMaterial`
+  """
+  duplicateOf: SourceMaterial_Order
+  """
+  ✨ Generated from Field `SourceMaterial`.`folder` of type `SourceMaterialFolder`
+  """
+  folder: SourceMaterialFolder_Order
+  """
   ✨ Generated from Field `SourceMaterial`.`uploadedBy` of type `User`
   """
   uploadedBy: User_Order
+  """
+  ✨ Generated from Field `SourceMaterial`.`archivedAt` of type `Date`
+  """
+  archivedAt: OrderDirection
   """
   ✨ Generated from Field `SourceMaterial`.`createdAt` of type `Date!`
   """
@@ -6647,9 +6903,21 @@ input SourceMaterial_Order {
   """
   fileType: OrderDirection
   """
+  ✨ Generated from Field `SourceMaterial`.`lastActivityAt` of type `Date`
+  """
+  lastActivityAt: OrderDirection
+  """
   ✨ Generated from Field `SourceMaterial`.`metadataJson` of type `String`
   """
   metadataJson: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterial`.`reviewStatus` of type `String!`
+  """
+  reviewStatus: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterial`.`starred` of type `Boolean!`
+  """
+  starred: OrderDirection
   """
   ✨ Generated from Field `SourceMaterial`.`status` of type `String!`
   """
@@ -6663,13 +6931,25 @@ input SourceMaterial_Order {
   """
   title: OrderDirection
   """
+  ✨ Generated from Field `SourceMaterial`.`trashedAt` of type `Date`
+  """
+  trashedAt: OrderDirection
+  """
   ✨ Generated from Field `SourceMaterial`.`updatedAt` of type `Date!`
   """
   updatedAt: OrderDirection
   """
+  ✨ Generated from Field `SourceMaterial`.`visibility` of type `String!`
+  """
+  visibility: OrderDirection
+  """
   ✨ Generated from Field `SourceMaterial`.`_count` of type `Int!`
   """
   _count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterial`.`archivedAt_count` of type `Int!`
+  """
+  archivedAt_count: OrderDirection
   """
   ✨ Generated from Field `SourceMaterial`.`createdAt_count` of type `Int!`
   """
@@ -6678,6 +6958,10 @@ input SourceMaterial_Order {
   ✨ Generated from Field `SourceMaterial`.`downloadUrl_count` of type `Int!`
   """
   downloadUrl_count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterial`.`duplicateOfId_count` of type `Int!`
+  """
+  duplicateOfId_count: OrderDirection
   """
   ✨ Generated from Field `SourceMaterial`.`extractedText_count` of type `Int!`
   """
@@ -6691,13 +6975,29 @@ input SourceMaterial_Order {
   """
   fileType_count: OrderDirection
   """
+  ✨ Generated from Field `SourceMaterial`.`folderId_count` of type `Int!`
+  """
+  folderId_count: OrderDirection
+  """
   ✨ Generated from Field `SourceMaterial`.`id_count` of type `Int!`
   """
   id_count: OrderDirection
   """
+  ✨ Generated from Field `SourceMaterial`.`lastActivityAt_count` of type `Int!`
+  """
+  lastActivityAt_count: OrderDirection
+  """
   ✨ Generated from Field `SourceMaterial`.`metadataJson_count` of type `Int!`
   """
   metadataJson_count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterial`.`reviewStatus_count` of type `Int!`
+  """
+  reviewStatus_count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterial`.`starred_count` of type `Int!`
+  """
+  starred_count: OrderDirection
   """
   ✨ Generated from Field `SourceMaterial`.`status_count` of type `Int!`
   """
@@ -6711,6 +7011,10 @@ input SourceMaterial_Order {
   """
   title_count: OrderDirection
   """
+  ✨ Generated from Field `SourceMaterial`.`trashedAt_count` of type `Int!`
+  """
+  trashedAt_count: OrderDirection
+  """
   ✨ Generated from Field `SourceMaterial`.`updatedAt_count` of type `Int!`
   """
   updatedAt_count: OrderDirection
@@ -6719,21 +7023,1453 @@ input SourceMaterial_Order {
   """
   uploadedById_count: OrderDirection
   """
+  ✨ Generated from Field `SourceMaterial`.`visibility_count` of type `Int!`
+  """
+  visibility_count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterial`.`archivedAt_min` of type `Date`
+  """
+  archivedAt_min: OrderDirection
+  """
   ✨ Generated from Field `SourceMaterial`.`createdAt_min` of type `Date`
   """
   createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterial`.`lastActivityAt_min` of type `Date`
+  """
+  lastActivityAt_min: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterial`.`trashedAt_min` of type `Date`
+  """
+  trashedAt_min: OrderDirection
   """
   ✨ Generated from Field `SourceMaterial`.`updatedAt_min` of type `Date`
   """
   updatedAt_min: OrderDirection
   """
+  ✨ Generated from Field `SourceMaterial`.`archivedAt_max` of type `Date`
+  """
+  archivedAt_max: OrderDirection
+  """
   ✨ Generated from Field `SourceMaterial`.`createdAt_max` of type `Date`
   """
   createdAt_max: OrderDirection
   """
+  ✨ Generated from Field `SourceMaterial`.`lastActivityAt_max` of type `Date`
+  """
+  lastActivityAt_max: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterial`.`trashedAt_max` of type `Date`
+  """
+  trashedAt_max: OrderDirection
+  """
   ✨ Generated from Field `SourceMaterial`.`updatedAt_max` of type `Date`
   """
   updatedAt_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'SourceMaterialActivity'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input SourceMaterialActivity_Data {
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `SourceMaterialActivity`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`actorId` of type `String`
+  """
+  actorId: String
+  """
+  ✨ `_expr` server value variant of `actorId` (✨ Generated from Field `SourceMaterialActivity`.`actorId` of type `String`)
+  """
+  actorId_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`folderId` of type `UUID`
+  """
+  folderId: UUID
+  """
+  ✨ `_expr` server value variant of `folderId` (✨ Generated from Field `SourceMaterialActivity`.`folderId` of type `UUID`)
+  """
+  folderId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`sourceMaterialId` of type `UUID`
+  """
+  sourceMaterialId: UUID
+  """
+  ✨ `_expr` server value variant of `sourceMaterialId` (✨ Generated from Field `SourceMaterialActivity`.`sourceMaterialId` of type `UUID`)
+  """
+  sourceMaterialId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`actor` of type `User`
+  """
+  actor: User_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`folder` of type `SourceMaterialFolder`
+  """
+  folder: SourceMaterialFolder_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`sourceMaterial` of type `SourceMaterial`
+  """
+  sourceMaterial: SourceMaterial_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`activityType` of type `String!`
+  """
+  activityType: String
+  """
+  ✨ `_expr` server value variant of `activityType` (✨ Generated from Field `SourceMaterialActivity`.`activityType` of type `String!`)
+  """
+  activityType_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`createdAt` of type `Date!`
+  """
+  createdAt: Date
+  """
+  ✨ `_date` server value variant of `createdAt` (✨ Generated from Field `SourceMaterialActivity`.`createdAt` of type `Date!`)
+  """
+  createdAt_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `SourceMaterialActivity`.`createdAt` of type `Date!`)
+  """
+  createdAt_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `SourceMaterialActivity`.`createdAt` of type `Date!`)
+  """
+  createdAt_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`message` of type `String`
+  """
+  message: String
+  """
+  ✨ `_expr` server value variant of `message` (✨ Generated from Field `SourceMaterialActivity`.`message` of type `String`)
+  """
+  message_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`metadataJson` of type `String`
+  """
+  metadataJson: String
+  """
+  ✨ `_expr` server value variant of `metadataJson` (✨ Generated from Field `SourceMaterialActivity`.`metadataJson` of type `String`)
+  """
+  metadataJson_expr: String_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'SourceMaterialActivity'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input SourceMaterialActivity_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [SourceMaterialActivity_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: SourceMaterialActivity_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [SourceMaterialActivity_Filter!]
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`actorId` of type `String`
+  """
+  actorId: String_Filter
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`folderId` of type `UUID`
+  """
+  folderId: UUID_Filter
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`sourceMaterialId` of type `UUID`
+  """
+  sourceMaterialId: UUID_Filter
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`actor` of type `User`
+  """
+  actor: User_Filter
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`folder` of type `SourceMaterialFolder`
+  """
+  folder: SourceMaterialFolder_Filter
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`sourceMaterial` of type `SourceMaterial`
+  """
+  sourceMaterial: SourceMaterial_Filter
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`activityType` of type `String!`
+  """
+  activityType: String_Filter
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`createdAt` of type `Date!`
+  """
+  createdAt: Date_Filter
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`message` of type `String`
+  """
+  message: String_Filter
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`metadataJson` of type `String`
+  """
+  metadataJson: String_Filter
+}
+"""
+✨ Generated first-row input type for table 'SourceMaterialActivity'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input SourceMaterialActivity_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [SourceMaterialActivity_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: SourceMaterialActivity_Filter
+}
+"""
+✨ Generated having input type for table 'SourceMaterialActivity'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input SourceMaterialActivity_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [SourceMaterialActivity_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: SourceMaterialActivity_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [SourceMaterialActivity_Having!]
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`activityType_count` of type `Int!`
+  """
+  activityType_count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`actorId_count` of type `Int!`
+  """
+  actorId_count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`folderId_count` of type `Int!`
+  """
+  folderId_count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`message_count` of type `Int!`
+  """
+  message_count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`metadataJson_count` of type `Int!`
+  """
+  metadataJson_count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`sourceMaterialId_count` of type `Int!`
+  """
+  sourceMaterialId_count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`createdAt_min` of type `Date`
+  """
+  createdAt_min: Date_Filter
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`createdAt_max` of type `Date`
+  """
+  createdAt_max: Date_Filter
+}
+"""
+✨ Generated key input type for table 'SourceMaterialActivity'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input SourceMaterialActivity_Key {
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `SourceMaterialActivity`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'SourceMaterialActivity'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input SourceMaterialActivity_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: SourceMaterialActivity_Filter
+}
+"""
+✨ Generated order input type for table 'SourceMaterialActivity'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input SourceMaterialActivity_Order {
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`actorId` of type `String`
+  """
+  actorId: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`folderId` of type `UUID`
+  """
+  folderId: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`sourceMaterialId` of type `UUID`
+  """
+  sourceMaterialId: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`actor` of type `User`
+  """
+  actor: User_Order
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`folder` of type `SourceMaterialFolder`
+  """
+  folder: SourceMaterialFolder_Order
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`sourceMaterial` of type `SourceMaterial`
+  """
+  sourceMaterial: SourceMaterial_Order
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`activityType` of type `String!`
+  """
+  activityType: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`createdAt` of type `Date!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`message` of type `String`
+  """
+  message: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`metadataJson` of type `String`
+  """
+  metadataJson: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`activityType_count` of type `Int!`
+  """
+  activityType_count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`actorId_count` of type `Int!`
+  """
+  actorId_count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`folderId_count` of type `Int!`
+  """
+  folderId_count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`message_count` of type `Int!`
+  """
+  message_count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`metadataJson_count` of type `Int!`
+  """
+  metadataJson_count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`sourceMaterialId_count` of type `Int!`
+  """
+  sourceMaterialId_count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`createdAt_min` of type `Date`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialActivity`.`createdAt_max` of type `Date`
+  """
+  createdAt_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'SourceMaterialFolder'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input SourceMaterialFolder_Data {
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `SourceMaterialFolder`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`courseId` of type `UUID`
+  """
+  courseId: UUID
+  """
+  ✨ `_expr` server value variant of `courseId` (✨ Generated from Field `SourceMaterialFolder`.`courseId` of type `UUID`)
+  """
+  courseId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`createdById` of type `String`
+  """
+  createdById: String
+  """
+  ✨ `_expr` server value variant of `createdById` (✨ Generated from Field `SourceMaterialFolder`.`createdById` of type `String`)
+  """
+  createdById_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`lessonId` of type `UUID`
+  """
+  lessonId: UUID
+  """
+  ✨ `_expr` server value variant of `lessonId` (✨ Generated from Field `SourceMaterialFolder`.`lessonId` of type `UUID`)
+  """
+  lessonId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`parentFolderId` of type `UUID`
+  """
+  parentFolderId: UUID
+  """
+  ✨ `_expr` server value variant of `parentFolderId` (✨ Generated from Field `SourceMaterialFolder`.`parentFolderId` of type `UUID`)
+  """
+  parentFolderId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`course` of type `Course`
+  """
+  course: Course_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`createdBy` of type `User`
+  """
+  createdBy: User_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`lesson` of type `Lesson`
+  """
+  lesson: Lesson_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`parentFolder` of type `SourceMaterialFolder`
+  """
+  parentFolder: SourceMaterialFolder_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`archivedAt` of type `Date`
+  """
+  archivedAt: Date
+  """
+  ✨ `_date` server value variant of `archivedAt` (✨ Generated from Field `SourceMaterialFolder`.`archivedAt` of type `Date`)
+  """
+  archivedAt_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `archivedAt` (✨ Generated from Field `SourceMaterialFolder`.`archivedAt` of type `Date`)
+  """
+  archivedAt_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `archivedAt` (✨ Generated from Field `SourceMaterialFolder`.`archivedAt` of type `Date`)
+  """
+  archivedAt_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`createdAt` of type `Date!`
+  """
+  createdAt: Date
+  """
+  ✨ `_date` server value variant of `createdAt` (✨ Generated from Field `SourceMaterialFolder`.`createdAt` of type `Date!`)
+  """
+  createdAt_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `SourceMaterialFolder`.`createdAt` of type `Date!`)
+  """
+  createdAt_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `SourceMaterialFolder`.`createdAt` of type `Date!`)
+  """
+  createdAt_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`folderType` of type `String!`
+  """
+  folderType: String
+  """
+  ✨ `_expr` server value variant of `folderType` (✨ Generated from Field `SourceMaterialFolder`.`folderType` of type `String!`)
+  """
+  folderType_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`name` of type `String!`
+  """
+  name: String
+  """
+  ✨ `_expr` server value variant of `name` (✨ Generated from Field `SourceMaterialFolder`.`name` of type `String!`)
+  """
+  name_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`trashedAt` of type `Date`
+  """
+  trashedAt: Date
+  """
+  ✨ `_date` server value variant of `trashedAt` (✨ Generated from Field `SourceMaterialFolder`.`trashedAt` of type `Date`)
+  """
+  trashedAt_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `trashedAt` (✨ Generated from Field `SourceMaterialFolder`.`trashedAt` of type `Date`)
+  """
+  trashedAt_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `trashedAt` (✨ Generated from Field `SourceMaterialFolder`.`trashedAt` of type `Date`)
+  """
+  trashedAt_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`updatedAt` of type `Date!`
+  """
+  updatedAt: Date
+  """
+  ✨ `_date` server value variant of `updatedAt` (✨ Generated from Field `SourceMaterialFolder`.`updatedAt` of type `Date!`)
+  """
+  updatedAt_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `updatedAt` (✨ Generated from Field `SourceMaterialFolder`.`updatedAt` of type `Date!`)
+  """
+  updatedAt_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `updatedAt` (✨ Generated from Field `SourceMaterialFolder`.`updatedAt` of type `Date!`)
+  """
+  updatedAt_update: [Date_Update!] @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'SourceMaterialFolder'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input SourceMaterialFolder_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [SourceMaterialFolder_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: SourceMaterialFolder_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [SourceMaterialFolder_Filter!]
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`courseId` of type `UUID`
+  """
+  courseId: UUID_Filter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`createdById` of type `String`
+  """
+  createdById: String_Filter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`lessonId` of type `UUID`
+  """
+  lessonId: UUID_Filter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`parentFolderId` of type `UUID`
+  """
+  parentFolderId: UUID_Filter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`course` of type `Course`
+  """
+  course: Course_Filter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`createdBy` of type `User`
+  """
+  createdBy: User_Filter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`lesson` of type `Lesson`
+  """
+  lesson: Lesson_Filter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`parentFolder` of type `SourceMaterialFolder`
+  """
+  parentFolder: SourceMaterialFolder_Filter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`archivedAt` of type `Date`
+  """
+  archivedAt: Date_Filter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`createdAt` of type `Date!`
+  """
+  createdAt: Date_Filter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`folderType` of type `String!`
+  """
+  folderType: String_Filter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`name` of type `String!`
+  """
+  name: String_Filter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`trashedAt` of type `Date`
+  """
+  trashedAt: Date_Filter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`updatedAt` of type `Date!`
+  """
+  updatedAt: Date_Filter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`sourceMaterials_on_folder` of type `[SourceMaterial!]!`
+  """
+  sourceMaterials_on_folder: SourceMaterial_ListFilter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`sourceMaterialActivities_on_folder` of type `[SourceMaterialActivity!]!`
+  """
+  sourceMaterialActivities_on_folder: SourceMaterialActivity_ListFilter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`sourceMaterialFolders_on_parentFolder` of type `[SourceMaterialFolder!]!`
+  """
+  sourceMaterialFolders_on_parentFolder: SourceMaterialFolder_ListFilter
+}
+"""
+✨ Generated first-row input type for table 'SourceMaterialFolder'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input SourceMaterialFolder_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [SourceMaterialFolder_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: SourceMaterialFolder_Filter
+}
+"""
+✨ Generated having input type for table 'SourceMaterialFolder'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input SourceMaterialFolder_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [SourceMaterialFolder_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: SourceMaterialFolder_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [SourceMaterialFolder_Having!]
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`archivedAt_count` of type `Int!`
+  """
+  archivedAt_count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`courseId_count` of type `Int!`
+  """
+  courseId_count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`createdById_count` of type `Int!`
+  """
+  createdById_count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`folderType_count` of type `Int!`
+  """
+  folderType_count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`lessonId_count` of type `Int!`
+  """
+  lessonId_count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`name_count` of type `Int!`
+  """
+  name_count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`parentFolderId_count` of type `Int!`
+  """
+  parentFolderId_count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`trashedAt_count` of type `Int!`
+  """
+  trashedAt_count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`updatedAt_count` of type `Int!`
+  """
+  updatedAt_count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`archivedAt_min` of type `Date`
+  """
+  archivedAt_min: Date_Filter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`createdAt_min` of type `Date`
+  """
+  createdAt_min: Date_Filter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`trashedAt_min` of type `Date`
+  """
+  trashedAt_min: Date_Filter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`updatedAt_min` of type `Date`
+  """
+  updatedAt_min: Date_Filter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`archivedAt_max` of type `Date`
+  """
+  archivedAt_max: Date_Filter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`createdAt_max` of type `Date`
+  """
+  createdAt_max: Date_Filter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`trashedAt_max` of type `Date`
+  """
+  trashedAt_max: Date_Filter
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`updatedAt_max` of type `Date`
+  """
+  updatedAt_max: Date_Filter
+}
+"""
+✨ Generated key input type for table 'SourceMaterialFolder'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input SourceMaterialFolder_Key {
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `SourceMaterialFolder`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'SourceMaterialFolder'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input SourceMaterialFolder_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: SourceMaterialFolder_Filter
+}
+"""
+✨ Generated order input type for table 'SourceMaterialFolder'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input SourceMaterialFolder_Order {
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`courseId` of type `UUID`
+  """
+  courseId: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`createdById` of type `String`
+  """
+  createdById: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`lessonId` of type `UUID`
+  """
+  lessonId: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`parentFolderId` of type `UUID`
+  """
+  parentFolderId: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`course` of type `Course`
+  """
+  course: Course_Order
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`createdBy` of type `User`
+  """
+  createdBy: User_Order
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`lesson` of type `Lesson`
+  """
+  lesson: Lesson_Order
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`parentFolder` of type `SourceMaterialFolder`
+  """
+  parentFolder: SourceMaterialFolder_Order
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`archivedAt` of type `Date`
+  """
+  archivedAt: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`createdAt` of type `Date!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`folderType` of type `String!`
+  """
+  folderType: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`name` of type `String!`
+  """
+  name: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`trashedAt` of type `Date`
+  """
+  trashedAt: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`updatedAt` of type `Date!`
+  """
+  updatedAt: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`archivedAt_count` of type `Int!`
+  """
+  archivedAt_count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`courseId_count` of type `Int!`
+  """
+  courseId_count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`createdById_count` of type `Int!`
+  """
+  createdById_count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`folderType_count` of type `Int!`
+  """
+  folderType_count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`lessonId_count` of type `Int!`
+  """
+  lessonId_count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`name_count` of type `Int!`
+  """
+  name_count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`parentFolderId_count` of type `Int!`
+  """
+  parentFolderId_count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`trashedAt_count` of type `Int!`
+  """
+  trashedAt_count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`updatedAt_count` of type `Int!`
+  """
+  updatedAt_count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`archivedAt_min` of type `Date`
+  """
+  archivedAt_min: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`createdAt_min` of type `Date`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`trashedAt_min` of type `Date`
+  """
+  trashedAt_min: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`updatedAt_min` of type `Date`
+  """
+  updatedAt_min: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`archivedAt_max` of type `Date`
+  """
+  archivedAt_max: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`createdAt_max` of type `Date`
+  """
+  createdAt_max: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`trashedAt_max` of type `Date`
+  """
+  trashedAt_max: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`updatedAt_max` of type `Date`
+  """
+  updatedAt_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'SourceMaterialTag'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input SourceMaterialTag_Data {
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `SourceMaterialTag`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`createdById` of type `String`
+  """
+  createdById: String
+  """
+  ✨ `_expr` server value variant of `createdById` (✨ Generated from Field `SourceMaterialTag`.`createdById` of type `String`)
+  """
+  createdById_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`createdBy` of type `User`
+  """
+  createdBy: User_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`color` of type `String`
+  """
+  color: String
+  """
+  ✨ `_expr` server value variant of `color` (✨ Generated from Field `SourceMaterialTag`.`color` of type `String`)
+  """
+  color_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`createdAt` of type `Date!`
+  """
+  createdAt: Date
+  """
+  ✨ `_date` server value variant of `createdAt` (✨ Generated from Field `SourceMaterialTag`.`createdAt` of type `Date!`)
+  """
+  createdAt_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `SourceMaterialTag`.`createdAt` of type `Date!`)
+  """
+  createdAt_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `SourceMaterialTag`.`createdAt` of type `Date!`)
+  """
+  createdAt_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`name` of type `String!`
+  """
+  name: String
+  """
+  ✨ `_expr` server value variant of `name` (✨ Generated from Field `SourceMaterialTag`.`name` of type `String!`)
+  """
+  name_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`updatedAt` of type `Date!`
+  """
+  updatedAt: Date
+  """
+  ✨ `_date` server value variant of `updatedAt` (✨ Generated from Field `SourceMaterialTag`.`updatedAt` of type `Date!`)
+  """
+  updatedAt_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `updatedAt` (✨ Generated from Field `SourceMaterialTag`.`updatedAt` of type `Date!`)
+  """
+  updatedAt_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `updatedAt` (✨ Generated from Field `SourceMaterialTag`.`updatedAt` of type `Date!`)
+  """
+  updatedAt_update: [Date_Update!] @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'SourceMaterialTag'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input SourceMaterialTag_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [SourceMaterialTag_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: SourceMaterialTag_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [SourceMaterialTag_Filter!]
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`createdById` of type `String`
+  """
+  createdById: String_Filter
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`createdBy` of type `User`
+  """
+  createdBy: User_Filter
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`color` of type `String`
+  """
+  color: String_Filter
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`createdAt` of type `Date!`
+  """
+  createdAt: Date_Filter
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`name` of type `String!`
+  """
+  name: String_Filter
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`updatedAt` of type `Date!`
+  """
+  updatedAt: Date_Filter
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`sourceMaterialTagAssignments_on_tag` of type `[SourceMaterialTagAssignment!]!`
+  """
+  sourceMaterialTagAssignments_on_tag: SourceMaterialTagAssignment_ListFilter
+}
+"""
+✨ Generated first-row input type for table 'SourceMaterialTag'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input SourceMaterialTag_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [SourceMaterialTag_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: SourceMaterialTag_Filter
+}
+"""
+✨ Generated having input type for table 'SourceMaterialTag'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input SourceMaterialTag_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [SourceMaterialTag_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: SourceMaterialTag_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [SourceMaterialTag_Having!]
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`color_count` of type `Int!`
+  """
+  color_count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`createdById_count` of type `Int!`
+  """
+  createdById_count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`name_count` of type `Int!`
+  """
+  name_count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`updatedAt_count` of type `Int!`
+  """
+  updatedAt_count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`createdAt_min` of type `Date`
+  """
+  createdAt_min: Date_Filter
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`updatedAt_min` of type `Date`
+  """
+  updatedAt_min: Date_Filter
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`createdAt_max` of type `Date`
+  """
+  createdAt_max: Date_Filter
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`updatedAt_max` of type `Date`
+  """
+  updatedAt_max: Date_Filter
+}
+"""
+✨ Generated key input type for table 'SourceMaterialTag'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input SourceMaterialTag_Key {
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `SourceMaterialTag`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'SourceMaterialTag'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input SourceMaterialTag_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: SourceMaterialTag_Filter
+}
+"""
+✨ Generated order input type for table 'SourceMaterialTag'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input SourceMaterialTag_Order {
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`createdById` of type `String`
+  """
+  createdById: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`createdBy` of type `User`
+  """
+  createdBy: User_Order
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`color` of type `String`
+  """
+  color: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`createdAt` of type `Date!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`name` of type `String!`
+  """
+  name: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`updatedAt` of type `Date!`
+  """
+  updatedAt: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`color_count` of type `Int!`
+  """
+  color_count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`createdById_count` of type `Int!`
+  """
+  createdById_count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`name_count` of type `Int!`
+  """
+  name_count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`updatedAt_count` of type `Int!`
+  """
+  updatedAt_count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`createdAt_min` of type `Date`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`updatedAt_min` of type `Date`
+  """
+  updatedAt_min: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`createdAt_max` of type `Date`
+  """
+  createdAt_max: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`updatedAt_max` of type `Date`
+  """
+  updatedAt_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'SourceMaterialTagAssignment'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input SourceMaterialTagAssignment_Data {
+  """
+  ✨ Generated from Field `SourceMaterialTagAssignment`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `SourceMaterialTagAssignment`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialTagAssignment`.`sourceMaterialId` of type `UUID!`
+  """
+  sourceMaterialId: UUID
+  """
+  ✨ `_expr` server value variant of `sourceMaterialId` (✨ Generated from Field `SourceMaterialTagAssignment`.`sourceMaterialId` of type `UUID!`)
+  """
+  sourceMaterialId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialTagAssignment`.`tagId` of type `UUID!`
+  """
+  tagId: UUID
+  """
+  ✨ `_expr` server value variant of `tagId` (✨ Generated from Field `SourceMaterialTagAssignment`.`tagId` of type `UUID!`)
+  """
+  tagId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialTagAssignment`.`sourceMaterial` of type `SourceMaterial!`
+  """
+  sourceMaterial: SourceMaterial_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialTagAssignment`.`tag` of type `SourceMaterialTag!`
+  """
+  tag: SourceMaterialTag_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialTagAssignment`.`createdAt` of type `Date!`
+  """
+  createdAt: Date
+  """
+  ✨ `_date` server value variant of `createdAt` (✨ Generated from Field `SourceMaterialTagAssignment`.`createdAt` of type `Date!`)
+  """
+  createdAt_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `SourceMaterialTagAssignment`.`createdAt` of type `Date!`)
+  """
+  createdAt_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `SourceMaterialTagAssignment`.`createdAt` of type `Date!`)
+  """
+  createdAt_update: [Date_Update!] @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'SourceMaterialTagAssignment'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input SourceMaterialTagAssignment_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [SourceMaterialTagAssignment_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: SourceMaterialTagAssignment_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [SourceMaterialTagAssignment_Filter!]
+  """
+  ✨ Generated from Field `SourceMaterialTagAssignment`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `SourceMaterialTagAssignment`.`sourceMaterialId` of type `UUID!`
+  """
+  sourceMaterialId: UUID_Filter
+  """
+  ✨ Generated from Field `SourceMaterialTagAssignment`.`tagId` of type `UUID!`
+  """
+  tagId: UUID_Filter
+  """
+  ✨ Generated from Field `SourceMaterialTagAssignment`.`sourceMaterial` of type `SourceMaterial!`
+  """
+  sourceMaterial: SourceMaterial_Filter
+  """
+  ✨ Generated from Field `SourceMaterialTagAssignment`.`tag` of type `SourceMaterialTag!`
+  """
+  tag: SourceMaterialTag_Filter
+  """
+  ✨ Generated from Field `SourceMaterialTagAssignment`.`createdAt` of type `Date!`
+  """
+  createdAt: Date_Filter
+}
+"""
+✨ Generated first-row input type for table 'SourceMaterialTagAssignment'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input SourceMaterialTagAssignment_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [SourceMaterialTagAssignment_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: SourceMaterialTagAssignment_Filter
+}
+"""
+✨ Generated having input type for table 'SourceMaterialTagAssignment'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input SourceMaterialTagAssignment_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [SourceMaterialTagAssignment_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: SourceMaterialTagAssignment_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [SourceMaterialTagAssignment_Having!]
+  """
+  ✨ Generated from Field `SourceMaterialTagAssignment`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterialTagAssignment`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterialTagAssignment`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterialTagAssignment`.`sourceMaterialId_count` of type `Int!`
+  """
+  sourceMaterialId_count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterialTagAssignment`.`tagId_count` of type `Int!`
+  """
+  tagId_count: Int_Filter
+  """
+  ✨ Generated from Field `SourceMaterialTagAssignment`.`createdAt_min` of type `Date`
+  """
+  createdAt_min: Date_Filter
+  """
+  ✨ Generated from Field `SourceMaterialTagAssignment`.`createdAt_max` of type `Date`
+  """
+  createdAt_max: Date_Filter
+}
+"""
+✨ Generated key input type for table 'SourceMaterialTagAssignment'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input SourceMaterialTagAssignment_Key {
+  """
+  ✨ Generated from Field `SourceMaterialTagAssignment`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `SourceMaterialTagAssignment`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'SourceMaterialTagAssignment'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input SourceMaterialTagAssignment_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: SourceMaterialTagAssignment_Filter
+}
+"""
+✨ Generated order input type for table 'SourceMaterialTagAssignment'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input SourceMaterialTagAssignment_Order {
+  """
+  ✨ Generated from Field `SourceMaterialTagAssignment`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialTagAssignment`.`sourceMaterialId` of type `UUID!`
+  """
+  sourceMaterialId: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialTagAssignment`.`tagId` of type `UUID!`
+  """
+  tagId: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialTagAssignment`.`sourceMaterial` of type `SourceMaterial!`
+  """
+  sourceMaterial: SourceMaterial_Order
+  """
+  ✨ Generated from Field `SourceMaterialTagAssignment`.`tag` of type `SourceMaterialTag!`
+  """
+  tag: SourceMaterialTag_Order
+  """
+  ✨ Generated from Field `SourceMaterialTagAssignment`.`createdAt` of type `Date!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialTagAssignment`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialTagAssignment`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialTagAssignment`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialTagAssignment`.`sourceMaterialId_count` of type `Int!`
+  """
+  sourceMaterialId_count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialTagAssignment`.`tagId_count` of type `Int!`
+  """
+  tagId_count: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialTagAssignment`.`createdAt_min` of type `Date`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `SourceMaterialTagAssignment`.`createdAt_max` of type `Date`
+  """
+  createdAt_max: OrderDirection
 }
 """
 ✨ Generated data input type for table 'User'. It includes all necessary fields for creating or upserting rows into table.
@@ -6864,6 +8600,18 @@ input User_Filter {
   ✨ Generated from Field `User`.`sourceMaterials_on_uploadedBy` of type `[SourceMaterial!]!`
   """
   sourceMaterials_on_uploadedBy: SourceMaterial_ListFilter
+  """
+  ✨ Generated from Field `User`.`sourceMaterialActivities_on_actor` of type `[SourceMaterialActivity!]!`
+  """
+  sourceMaterialActivities_on_actor: SourceMaterialActivity_ListFilter
+  """
+  ✨ Generated from Field `User`.`sourceMaterialFolders_on_createdBy` of type `[SourceMaterialFolder!]!`
+  """
+  sourceMaterialFolders_on_createdBy: SourceMaterialFolder_ListFilter
+  """
+  ✨ Generated from Field `User`.`sourceMaterialTags_on_createdBy` of type `[SourceMaterialTag!]!`
+  """
+  sourceMaterialTags_on_createdBy: SourceMaterialTag_ListFilter
   """
   ✨ Generated from Field `User`.`userCourseProgresses_on_user` of type `[UserCourseProgress!]!`
   """

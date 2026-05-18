@@ -47,7 +47,13 @@ export function ChoiceButton({ letter, text, state, disabled, onClick }: ChoiceB
       >
         {letter}
       </span>
-      <span className="text-sm leading-relaxed">{text}</span>
+      <span className="text-sm leading-relaxed flex-1">{text}</span>
+      {/* "Missed" label — correct answer the student skipped */}
+      {state === "missed" && (
+        <span className="shrink-0 self-center ml-2 rounded-full bg-green-100 border border-green-300 px-2 py-0.5 text-[10px] font-bold text-green-700 whitespace-nowrap">
+          ✓ Correct answer
+        </span>
+      )}
     </button>
   );
 }

@@ -13,10 +13,12 @@ interface GlossaryTerm {
   id: string;
   term: string;
   definition: string;
+  fullDefinition?: string | null;
   domain?: string | null;
   category?: string | null;
   example?: string | null;
   relatedTerms: string[];
+  sourceDocument?: string | null;
 }
 
 interface Note {
@@ -453,9 +455,19 @@ function TermCard({
         <div className="border-t border-slate-100 px-5 pb-5 pt-4 space-y-4">
           {/* Definition */}
           <div>
-            <p className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-slate-400 mb-1.5">Definition</p>
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-slate-400 mb-1.5">
+              {term.fullDefinition ? "Summary" : "Definition"}
+            </p>
             <p className="text-[15px] leading-7 text-slate-800">{term.definition}</p>
           </div>
+
+          {/* Full definition */}
+          {term.fullDefinition && (
+            <div>
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-slate-400 mb-1.5">Definition</p>
+              <p className="text-[15px] leading-7 text-slate-800">{term.fullDefinition}</p>
+            </div>
+          )}
 
           {/* Example */}
           {term.example && (
@@ -475,6 +487,13 @@ function TermCard({
                 ))}
               </div>
             </div>
+          )}
+
+          {/* Source document */}
+          {term.sourceDocument && (
+            <p className="text-[11px] text-slate-400 italic">
+              Source: {term.sourceDocument}
+            </p>
           )}
 
           {/* Student note section */}

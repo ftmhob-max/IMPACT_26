@@ -13,7 +13,11 @@ import {
 export const maxDuration = 60;
 
 type ExistingSectionsData = {
-  formulaSections: Array<{ id: string; code: string }>;
+  formulaSections: Array<{
+    id: string;
+    code: string;
+    formulas_on_section: Array<{ code: string }>;
+  }>;
 };
 
 export async function POST(req: NextRequest) {
@@ -52,17 +56,34 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ preview: true, batch });
   }
 
-  // Fetch existing section codes to avoid duplicates
-  const existingData = await adminDcQuery<ExistingSectionsData>("GetFormulaSections").catch(() => ({ formulaSections: [] as Array<{ id: string; code: string }> }));
+  // Fetch existing sections + their formula codes to detect duplicates via
+  // a composite (sectionCode:formulaCode) key — prevents cross-section collisions.
+  const existingData = await adminDcQuery<ExistingSectionsData>("GetFormulaSections").catch(
+    () => ({ formulaSections: [] as ExistingSectionsData["formulaSections"] })
+  );
   const existingBySectionCode = new Map(existingData.formulaSections.map((s) => [s.code, s.id]));
+  const existingFormulaKeys = new Set(
+    existingData.formulaSections.flatMap((s) =>
+      (s.formulas_on_section ?? []).map((f) => `${s.code}:${f.code}`)
+    )
+  );
 
   let imported = 0;
+  let skipped = 0;
   const errors: string[] = [...batch.errors];
   const importedSections: string[] = [];
 
+  // Track created IDs for best-effort rollback if a section-level error occurs.
+  const createdSectionIds: string[] = [];
+  const createdFormulaIds: string[] = [];
+
+  let fatalError: string | null = null;
+
   for (const section of batch.sections) {
+    let sectionId = existingBySectionCode.get(section.code);
+    let sectionCreated = false;
+
     try {
-      let sectionId = existingBySectionCode.get(section.code);
       if (!sectionId) {
         sectionId = randomUUID();
         await adminDcMutate("CreateFormulaSection", {
@@ -72,10 +93,18 @@ export async function POST(req: NextRequest) {
           position: section.position,
         });
         existingBySectionCode.set(section.code, sectionId);
+        createdSectionIds.push(sectionId);
+        sectionCreated = true;
       }
 
       for (const formula of section.formulas) {
+        const dupeKey = `${section.code}:${formula.code}`;
+        if (existingFormulaKeys.has(dupeKey)) {
+          skipped++;
+          continue;
+        }
         try {
+          const formulaId = randomUUID();
           await adminDcMutate("CreateFormula", {
             sectionId,
             code: formula.code,
@@ -85,16 +114,37 @@ export async function POST(req: NextRequest) {
             position: formula.position,
             calcMetaJson: formula.calcMetaJson ?? null,
           });
+          existingFormulaKeys.add(dupeKey);
+          createdFormulaIds.push(formulaId);
           imported++;
         } catch (fErr) {
-          errors.push(`Formula "${formula.code}": ${fErr}`);
+          errors.push(`Formula "${section.code}/${formula.code}": ${fErr}`);
         }
       }
       importedSections.push(section.code);
     } catch (sErr) {
-      errors.push(`Section "${section.code}": ${sErr}`);
+      // Section-level failure: attempt rollback for everything created so far.
+      fatalError = `Section "${section.code}" failed: ${sErr}`;
+      errors.push(fatalError);
+
+      // Best-effort rollback: delete everything we just created.
+      for (const fid of createdFormulaIds) {
+        await adminDcMutate("DeleteFormula", { id: fid }).catch(() => null);
+      }
+      for (const sid of createdSectionIds) {
+        await adminDcMutate("DeleteFormulasForSection", { sectionId: sid }).catch(() => null);
+        await adminDcMutate("DeleteFormulaSection", { id: sid }).catch(() => null);
+      }
+      // Return early so the partial batch is not left in an inconsistent state.
+      return NextResponse.json({
+        imported: 0,
+        skipped,
+        errors,
+        sections: [],
+        rolledBack: true,
+      }, { status: 422 });
     }
   }
 
-  return NextResponse.json({ imported, errors, sections: importedSections });
+  return NextResponse.json({ imported, skipped, errors, sections: importedSections, rolledBack: false });
 }

@@ -49,6 +49,10 @@ interface GlossaryLibraryItem extends LessonGlossaryTermSnapshot {
 interface MaterialLibraryItem {
   id: string;
   title: string;
+  kind?: "document" | "audio" | "video" | "image";
+  status?: string;
+  pages?: number | null;
+  previewSnippet?: string;
 }
 
 interface QuizLibraryItem {
@@ -101,6 +105,7 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
   const [librariesLoaded, setLibrariesLoaded] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [collapsedBlockIds, setCollapsedBlockIds] = useState<Set<string>>(new Set());
+  const [sidebarTab, setSidebarTab] = useState<"blocks" | "materials">("blocks");
   const latestSerialized = useRef(stringifyStructuredLessonContent(parseStructuredLessonContent(initialContent)));
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -133,6 +138,10 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
           (materialsData.materials ?? []).map((material: any) => ({
             id: material.id,
             title: material.title,
+            kind: material.kind,
+            status: material.status,
+            pages: material.pages ?? null,
+            previewSnippet: material.previewSnippet ?? "",
           }))
         );
         setQuizzes((overviewData.quizzes ?? []) as QuizLibraryItem[]);
@@ -313,7 +322,7 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
   }
 
   return (
-    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
       <div className="space-y-5">
         <div className="rounded-2xl border border-black/10 bg-white shadow-sm">
           <div className="border-b border-slate-100 px-5 py-4">
@@ -337,7 +346,7 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
             </p>
           </div>
 
-          <div className="grid gap-4 px-5 py-5 lg:grid-cols-[minmax(0,1fr)_220px]">
+          <div className="grid gap-4 px-5 py-5 lg:grid-cols-[minmax(0,1fr)_260px]">
             <div className="space-y-4" id="lesson-summary-field">
               <FieldLabel>Lesson summary</FieldLabel>
               <p className="text-xs leading-5 text-slate-500">
@@ -485,17 +494,58 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
 
       <aside className="space-y-5">
         <div className="rounded-2xl border border-black/10 bg-white shadow-sm xl:sticky xl:top-5">
-          <div className="border-b border-slate-100 px-5 py-4">
-            <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#185FA5]">Block library</p>
-            <p className="mt-1 text-sm leading-6 text-slate-600">
-              Add blocks by teaching intent instead of one long flat list.
-            </p>
+          {/* Sidebar tab switcher */}
+          <div className="flex border-b border-slate-100">
+            <button
+              type="button"
+              onClick={() => setSidebarTab("blocks")}
+              className={cn(
+                "flex-1 py-3 text-[11px] font-extrabold uppercase tracking-[0.1em] transition-colors",
+                sidebarTab === "blocks" ? "border-b-2 border-[#185FA5] text-[#185FA5]" : "text-slate-400 hover:text-slate-700"
+              )}
+            >
+              Blocks
+            </button>
+            <button
+              type="button"
+              onClick={() => setSidebarTab("materials")}
+              className={cn(
+                "flex-1 py-3 text-[11px] font-extrabold uppercase tracking-[0.1em] transition-colors",
+                sidebarTab === "materials" ? "border-b-2 border-[#185FA5] text-[#185FA5]" : "text-slate-400 hover:text-slate-700"
+              )}
+            >
+              Materials
+            </button>
           </div>
-          <div className="space-y-4 px-4 py-4">
-            <BlockLibraryGroup title="Core learning" description="Teach, explain, and model." items={groupedLibrary.core} onAdd={addBlock} />
-            <BlockLibraryGroup title="Practice" description="Check understanding and create reflection moments." items={groupedLibrary.practice} onAdd={addBlock} />
-            <BlockLibraryGroup title="Support" description="Add references, downloads, and learning aids." items={groupedLibrary.support} onAdd={addBlock} />
-          </div>
+
+          {sidebarTab === "blocks" && (
+            <>
+              <div className="border-b border-slate-100 px-5 py-4">
+                <p className="text-sm leading-6 text-slate-600">
+                  Add blocks by teaching intent instead of one long flat list.
+                </p>
+              </div>
+              <div className="space-y-4 px-4 py-4">
+                <BlockLibraryGroup title="Core learning" description="Teach, explain, and model." items={groupedLibrary.core} onAdd={addBlock} />
+                <BlockLibraryGroup title="Practice" description="Check understanding and create reflection moments." items={groupedLibrary.practice} onAdd={addBlock} />
+                <BlockLibraryGroup title="Support" description="Add references, downloads, and learning aids." items={groupedLibrary.support} onAdd={addBlock} />
+              </div>
+            </>
+          )}
+
+          {sidebarTab === "materials" && (
+            <MaterialsBrowserPanel
+              materials={materials}
+              loaded={librariesLoaded}
+              onInsert={(material) => {
+                updateDocument((current) => {
+                  const base = createDefaultLessonBlock("sourceReference");
+                  const block = { ...base, materialId: material.id, title: material.title } as typeof base;
+                  return { ...current, blocks: [...current.blocks, block] };
+                });
+              }}
+            />
+          )}
         </div>
 
         <div className="rounded-2xl border border-black/10 bg-white shadow-sm">
@@ -706,6 +756,200 @@ function BlockLibraryGroup({
   );
 }
 
+function MaterialPickerField({
+  materials,
+  value,
+  onChange,
+}: {
+  materials: MaterialLibraryItem[];
+  value: string;
+  onChange: (id: string, title: string) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const selected = materials.find((m) => m.id === value);
+  const filtered = query.trim()
+    ? materials.filter((m) => m.title.toLowerCase().includes(query.toLowerCase()))
+    : materials;
+
+  function kindLabel(kind?: string) {
+    if (!kind) return "Doc";
+    return kind.charAt(0).toUpperCase() + kind.slice(1);
+  }
+
+  return (
+    <div className="space-y-2">
+      {selected ? (
+        <div className="flex items-center gap-3 rounded-xl border border-[#b8d7f0] bg-[#E6F1FB]/60 px-3 py-2.5">
+          <Icons.Database size={15} className="text-[#185FA5] shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-[#185FA5] truncate">{selected.title}</p>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="rounded-full bg-[#E6F1FB] px-1.5 py-0.5 text-[9px] font-bold uppercase text-[#185FA5]">
+                {kindLabel(selected.kind)}
+              </span>
+              {selected.pages ? <span className="text-[10px] text-slate-400">{selected.pages}p</span> : null}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => onChange("", "")}
+            className="text-xs text-slate-400 hover:text-red-500 font-semibold shrink-0"
+          >
+            Change
+          </button>
+        </div>
+      ) : (
+        <p className="text-xs text-slate-400 italic">No material linked yet.</p>
+      )}
+      <input
+        type="search"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Search materials to link…"
+        className="admin-input"
+      />
+      {(query || !selected) && (
+        <div className="max-h-48 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 divide-y divide-slate-100">
+          {filtered.length === 0 ? (
+            <p className="px-3 py-4 text-center text-xs text-slate-400">No materials match.</p>
+          ) : (
+            filtered.map((material) => (
+              <button
+                key={material.id}
+                type="button"
+                onClick={() => {
+                  onChange(material.id, material.title);
+                  setQuery("");
+                }}
+                className={cn(
+                  "flex w-full items-start gap-2.5 px-3 py-2.5 text-left text-xs transition hover:bg-white",
+                  material.id === value && "bg-[#E6F1FB]/50"
+                )}
+              >
+                <Icons.FileText size={13} className="text-slate-400 shrink-0 mt-0.5" />
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-slate-800 truncate">{material.title}</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-[9px] font-bold uppercase text-slate-400">{kindLabel(material.kind)}</span>
+                    {material.pages ? <span className="text-[10px] text-slate-400">{material.pages}p</span> : null}
+                  </div>
+                </div>
+                {material.id === value && <Icons.Check size={12} className="text-[#185FA5] shrink-0 mt-0.5" />}
+              </button>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MaterialsBrowserPanel({
+  materials,
+  loaded,
+  onInsert,
+}: {
+  materials: MaterialLibraryItem[];
+  loaded: boolean;
+  onInsert: (material: MaterialLibraryItem) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const filtered = query.trim()
+    ? materials.filter((m) => m.title.toLowerCase().includes(query.toLowerCase()))
+    : materials;
+
+  function kindIcon(kind?: string) {
+    if (kind === "video") return Icons.Video;
+    if (kind === "audio") return Icons.FileText;
+    if (kind === "image") return Icons.BookOpen;
+    return Icons.FileText;
+  }
+
+  function kindLabel(kind?: string) {
+    if (!kind) return "Doc";
+    return kind.charAt(0).toUpperCase() + kind.slice(1);
+  }
+
+  return (
+    <>
+      <div className="border-b border-slate-100 px-4 py-3">
+        <p className="text-sm leading-6 text-slate-600">
+          Browse source materials and add them directly as blocks.
+        </p>
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search materials…"
+          className="admin-input mt-2"
+        />
+      </div>
+      <div className="max-h-96 overflow-y-auto px-3 py-3">
+        {!loaded ? (
+          <div className="flex items-center justify-center py-8 text-xs text-slate-400">
+            <Icons.Loader size={14} className="animate-spin mr-2" />
+            Loading…
+          </div>
+        ) : filtered.length === 0 ? (
+          <p className="py-6 text-center text-xs text-slate-400">
+            {query ? "No materials match your search." : "No materials in your library yet."}
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {filtered.map((material) => {
+              const Icon = kindIcon(material.kind);
+              return (
+                <div
+                  key={material.id}
+                  className="rounded-xl border border-slate-200 bg-white p-3 transition hover:border-[#185FA5] hover:bg-[#f8fbff]"
+                >
+                  <div className="flex items-start gap-2.5">
+                    <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#E6F1FB] text-[#185FA5]">
+                      <Icon size={13} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold leading-5 text-slate-800 truncate">{material.title}</p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold uppercase text-slate-500">
+                          {kindLabel(material.kind)}
+                        </span>
+                        {material.pages ? (
+                          <span className="text-[10px] text-slate-400">{material.pages}p</span>
+                        ) : null}
+                      </div>
+                      {material.previewSnippet && (
+                        <p className="mt-1 text-[10px] leading-4 text-slate-400 line-clamp-2">
+                          {material.previewSnippet}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onInsert(material)}
+                    className="mt-2.5 w-full rounded-lg border border-[#185FA5]/30 bg-[#E6F1FB]/60 py-1.5 text-[11px] font-semibold text-[#185FA5] transition hover:bg-[#E6F1FB]"
+                  >
+                    + Add to lesson
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+      <div className="border-t border-slate-100 px-4 py-3">
+        <a
+          href="/admin/materials"
+          className="flex items-center gap-1.5 text-[11px] font-semibold text-[#185FA5] hover:underline"
+        >
+          <Icons.Database size={11} />
+          Manage source library
+        </a>
+      </div>
+    </>
+  );
+}
+
 function InlineInsertRail({
   label,
   onInsert,
@@ -825,24 +1069,22 @@ function BlockSpecificFields({
         <div className="space-y-3">
           <div>
             <FieldLabel>Source library material</FieldLabel>
-            <select
-              className="admin-input mt-2"
-              value={block.materialId ?? ""}
-              onChange={(event) => {
-                const material = materials.find((entry) => entry.id === event.target.value);
-                onChange({
-                  ...block,
-                  materialId: event.target.value,
-                  title: material?.title ?? block.title,
-                });
-              }}
-            >
-              <option value="">Select a source material…</option>
-              {materials.map((material) => (
-                <option key={material.id} value={material.id}>{material.title}</option>
-              ))}
-            </select>
+            <div className="mt-2">
+              <MaterialPickerField
+                materials={materials}
+                value={block.materialId ?? ""}
+                onChange={(id, title) => onChange({ ...block, materialId: id, title: title || block.title })}
+              />
+            </div>
           </div>
+          {block.materialId && materials.find((m) => m.id === block.materialId)?.previewSnippet && (
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-1">Material preview</p>
+              <p className="text-xs leading-5 text-slate-600 line-clamp-3">
+                {materials.find((m) => m.id === block.materialId)?.previewSnippet}
+              </p>
+            </div>
+          )}
           <TextField label="Citation label" value={block.referenceLabel ?? ""} onChange={(value) => onChange({ ...block, referenceLabel: value })} placeholder="e.g. Source excerpt, Section 3.1" />
           <TextAreaField label="Excerpt" value={block.excerpt ?? ""} onChange={(value) => onChange({ ...block, excerpt: value })} placeholder="Quote or summarize the supporting source." rows={4} />
           <TextField label="Source URL" value={block.sourceUrl ?? ""} onChange={(value) => onChange({ ...block, sourceUrl: value })} placeholder="Optional link to the source." />

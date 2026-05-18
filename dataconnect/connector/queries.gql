@@ -510,6 +510,79 @@ query GetLessonVersions($lessonId: UUID!) @auth(level: NO_ACCESS) {
   }
 }
 
+query AdminListSourceMaterialsRich @auth(level: NO_ACCESS) {
+  sourceMaterials(orderBy: { createdAt: DESC }) {
+    id
+    title
+    fileName
+    fileType
+    folder {
+      id
+      name
+      folderType
+      parentFolder { id name }
+      course { id title }
+      lesson { id title }
+      archivedAt
+      trashedAt
+      createdAt
+      updatedAt
+    }
+    storagePath
+    downloadUrl
+    extractedText
+    metadataJson
+    status
+    starred
+    archivedAt
+    trashedAt
+    reviewStatus
+    visibility
+    duplicateOf { id title }
+    lastActivityAt
+    createdAt
+    updatedAt
+    uploadedBy { id email fullName }
+    sourceMaterialTagAssignments_on_sourceMaterial(orderBy: { createdAt: DESC }) {
+      id
+      tag { id name color }
+    }
+    sourceMaterialActivities_on_sourceMaterial(orderBy: { createdAt: DESC }, limit: 20) {
+      id
+      activityType
+      message
+      metadataJson
+      createdAt
+      actor { id email fullName }
+    }
+    ingestionJobs_on_sourceMaterial(orderBy: { createdAt: DESC }) {
+      id
+      status
+      parser
+      extractedCharacters
+      errorMessage
+      createdAt
+      completedAt
+    }
+    contentSourceLinks_on_sourceMaterial(orderBy: { createdAt: DESC }) {
+      id
+      referenceLabel
+      createdAt
+      course { id title }
+      lesson {
+        id
+        title
+        module {
+          id
+          title
+          course { id title }
+        }
+      }
+      question { id questionText domain difficulty }
+    }
+  }
+}
+
 query AdminListSourceMaterials @auth(level: NO_ACCESS) {
   sourceMaterials(orderBy: { createdAt: DESC }) {
     id
@@ -549,6 +622,40 @@ query AdminListSourceMaterials @auth(level: NO_ACCESS) {
       }
       question { id questionText domain difficulty }
     }
+  }
+}
+
+query AdminListSourceMaterialFolders @auth(level: NO_ACCESS) {
+  sourceMaterialFolders(orderBy: { name: ASC }) {
+    id
+    name
+    folderType
+    archivedAt
+    trashedAt
+    createdAt
+    updatedAt
+    parentFolder { id name }
+    course { id title }
+    lesson {
+      id
+      title
+      module {
+        id
+        title
+        course { id title }
+      }
+    }
+    createdBy { id email fullName }
+  }
+}
+
+query AdminListSourceMaterialTags @auth(level: NO_ACCESS) {
+  sourceMaterialTags(orderBy: { name: ASC }) {
+    id
+    name
+    color
+    createdAt
+    updatedAt
   }
 }
 

@@ -64,7 +64,10 @@ interface ParsedFormulaRow {
 interface ImportBatch {
   sections: Array<{
     code: string; title: string; position: number;
-    formulas: Array<{ code: string; name: string; expression: string; notes?: string; calcMetaJson?: string; position: number }>;
+    formulas: Array<{
+      code: string; name: string; expression: string;
+      notes?: string; calcMetaJson?: string; position: number;
+    }>;
   }>;
   errors: string[];
 }
@@ -78,10 +81,13 @@ function parseMeta(json: string | null | undefined): CalcMeta | null {
   try { return JSON.parse(json) as CalcMeta; } catch { return null; }
 }
 
-function SmallField({ label, children }: { label: string; children: React.ReactNode }) {
+function SmallField({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) {
   return (
     <div>
-      <label className="mb-1 block text-xs font-semibold text-slate-600">{label}</label>
+      <label className="mb-1 block text-xs font-semibold text-slate-600">
+        {label}
+        {hint && <span className="ml-1 font-normal text-slate-400">{hint}</span>}
+      </label>
       {children}
     </div>
   );
@@ -89,32 +95,33 @@ function SmallField({ label, children }: { label: string; children: React.ReactN
 
 function inputClass(error?: boolean) {
   return cn(
-    "w-full rounded-lg border px-3 py-2 text-sm text-slate-800 outline-none transition",
-    error ? "border-red-400 focus:ring-2 focus:ring-red-100" : "border-slate-200 focus:border-[#185FA5] focus:ring-2 focus:ring-[#E6F1FB]"
+    "w-full rounded-lg border px-3 py-2 text-sm outline-none transition",
+    "focus:border-[#185FA5] focus:ring-2 focus:ring-[#E6F1FB]",
+    error ? "border-red-300 bg-red-50" : "border-slate-200 bg-white text-slate-800"
   );
 }
 
 function ActionBtn({ onClick, children, tone = "primary", disabled, small }: {
-  onClick?: () => void; children: React.ReactNode;
-  tone?: "primary" | "danger" | "ghost"; disabled?: boolean; small?: boolean;
+  onClick: () => void; children: React.ReactNode;
+  tone?: "primary" | "ghost" | "danger"; disabled?: boolean; small?: boolean;
 }) {
   const base = "inline-flex items-center gap-1.5 rounded-lg font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
   const sizes = small ? "px-2.5 py-1.5 text-xs" : "px-3 py-2 text-sm";
   const tones = {
     primary: "bg-[#185FA5] text-white hover:bg-[#134d88] focus-visible:ring-[#185FA5]",
+    ghost: "border border-slate-200 bg-white text-slate-600 hover:border-[#185FA5] hover:text-[#185FA5] focus-visible:ring-[#185FA5]",
     danger: "bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500",
-    ghost: "border border-slate-200 text-slate-600 hover:border-[#185FA5] hover:text-[#185FA5] focus-visible:ring-[#185FA5]",
-  }[tone];
+  };
   return (
-    <button type="button" onClick={onClick} disabled={disabled} className={cn(base, sizes, tones)}>
+    <button type="button" className={cn(base, sizes, tones[tone])} onClick={onClick} disabled={disabled}>
       {children}
     </button>
   );
 }
 
-// ─── Sub-tabs enum ────────────────────────────────────────────────────────────
+// ─── Panel tabs ───────────────────────────────────────────────────────────────
 
-type EditorTab = "fields" | "calc" | "verify";
+type EditorTab = "fields" | "calc" | "verify" | "preview";
 type PanelTab = "manage" | "import" | "templates";
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -134,16 +141,18 @@ export function FormulasPanel({ onSaved }: { onSaved?: () => void }) {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [confirmDeleteSectionId, setConfirmDeleteSectionId] = useState<string | null>(null);
   const [addSectionOpen, setAddSectionOpen] = useState(false);
-
-  // ── Load ──────────────────────────────────────────────────────────────────
+  // #15 Unsaved-changes guard
+  const [isDirty, setIsDirty] = useState(false);
 
   const loadSections = useCallback(async () => {
     setLoading(true);
     const res = await adminFetch("/api/admin/formulas");
     if (res.ok) {
       const data: AdminSection[] = await res.json();
-      setSections(data);
-      setOpenSectionIds(new Set(data.map((s) => s.id)));
+      setSections(data.sort((a, b) => a.position - b.position).map((s) => ({
+        ...s,
+        formulas: s.formulas.slice().sort((a, b) => a.position - b.position),
+      })));
     }
     setLoading(false);
   }, []);
@@ -152,52 +161,71 @@ export function FormulasPanel({ onSaved }: { onSaved?: () => void }) {
 
   const showNotice = (msg: string, ok = true) => {
     setNotice({ msg, ok });
-    setTimeout(() => setNotice(null), 4000);
+    setTimeout(() => setNotice(null), 3500);
   };
-
-  // ── Search filter ─────────────────────────────────────────────────────────
 
   const filteredSections = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return sections;
     return sections.map((s) => ({
       ...s,
-      formulas: s.formulas.filter(
-        (f) => f.name.toLowerCase().includes(q) || f.code.toLowerCase().includes(q) || f.expression.toLowerCase().includes(q)
+      formulas: s.formulas.filter((f) =>
+        f.name.toLowerCase().includes(q) || f.code.toLowerCase().includes(q) || f.expression.toLowerCase().includes(q)
       ),
-    })).filter((s) => s.formulas.length > 0);
+    })).filter((s) => s.formulas.length > 0 || s.code.toLowerCase().includes(q) || s.title.toLowerCase().includes(q));
   }, [sections, search]);
 
-  // ── Formula select ────────────────────────────────────────────────────────
-
   function selectFormula(formula: AdminFormula, sectionId: string) {
-    setSelectedFormula({ ...formula });
+    // #15 unsaved guard
+    if (isDirty && !window.confirm("You have unsaved changes. Discard them?")) return;
+    setSelectedFormula(formula);
     setSelectedSectionId(sectionId);
-    setIsCreating(false);
     setEditorTab("fields");
+    setIsCreating(false);
     setConfirmDeleteId(null);
+    setIsDirty(false);
   }
 
   function startCreate(sectionId: string) {
+    if (isDirty && !window.confirm("You have unsaved changes. Discard them?")) return;
     const section = sections.find((s) => s.id === sectionId);
+    const nextPos = (section?.formulas.length ?? 0);
     setSelectedFormula({
-      id: "",
-      code: "",
-      name: "",
-      expression: "",
-      notes: "",
-      calcMetaJson: null,
-      position: section ? section.formulas.length : 0,
+      id: "__new__", code: "", name: "", expression: "", notes: "", calcMetaJson: null, position: nextPos,
     });
     setSelectedSectionId(sectionId);
-    setIsCreating(true);
     setEditorTab("fields");
+    setIsCreating(true);
+    setConfirmDeleteId(null);
+    setIsDirty(false);
   }
 
-  // ── Save formula ──────────────────────────────────────────────────────────
+  // #12 Duplicate formula
+  function duplicateFormula(formula: AdminFormula, sectionId: string) {
+    if (isDirty && !window.confirm("You have unsaved changes. Discard them?")) return;
+    const section = sections.find((s) => s.id === sectionId);
+    const nextPos = (section?.formulas.length ?? 0);
+    setSelectedFormula({
+      id: "__new__",
+      code: `${formula.code}_copy`,
+      name: `${formula.name} (copy)`,
+      expression: formula.expression,
+      notes: formula.notes ?? "",
+      calcMetaJson: formula.calcMetaJson ?? null,
+      position: nextPos,
+    });
+    setSelectedSectionId(sectionId);
+    setEditorTab("fields");
+    setIsCreating(true);
+    setIsDirty(false);
+    showNotice("Formula duplicated — edit fields and save to create the copy.", true);
+  }
 
-  async function saveFormula() {
-    if (!selectedFormula) return;
+  // #1 Race-condition fix: accept the full updated formula as a parameter
+  // rather than reading from state (which may not have flushed yet).
+  async function saveFormula(formulaOverride?: AdminFormula) {
+    const formula = formulaOverride ?? selectedFormula;
+    if (!formula) return;
     setSavingBusy(true);
     try {
       if (isCreating) {
@@ -206,130 +234,173 @@ export function FormulasPanel({ onSaved }: { onSaved?: () => void }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             sectionId: selectedSectionId,
-            code: selectedFormula.code,
-            name: selectedFormula.name,
-            expression: selectedFormula.expression,
-            notes: selectedFormula.notes,
-            position: selectedFormula.position,
-            calcMetaJson: selectedFormula.calcMetaJson,
+            code: formula.code,
+            name: formula.name,
+            expression: formula.expression,
+            notes: formula.notes || null,
+            position: formula.position,
+            calcMetaJson: formula.calcMetaJson ?? null,
           }),
         });
-        if (!res.ok) throw new Error(await res.text());
-        setIsCreating(false);
+        if (res.ok) {
+          setIsCreating(false);
+          setIsDirty(false);
+          showNotice("Formula created.");
+          await loadSections();
+          onSaved?.();
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showNotice(err.error ?? "Failed to create formula.", false);
+        }
       } else {
-        const res = await adminFetch(`/api/admin/formulas/${selectedFormula.id}`, {
+        const res = await adminFetch(`/api/admin/formulas/${formula.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            code: selectedFormula.code,
-            name: selectedFormula.name,
-            expression: selectedFormula.expression,
-            notes: selectedFormula.notes,
-            calcMetaJson: selectedFormula.calcMetaJson,
-            position: selectedFormula.position,
+            code: formula.code,
+            name: formula.name,
+            expression: formula.expression,
+            notes: formula.notes || null,
+            calcMetaJson: formula.calcMetaJson,
+            position: formula.position,
+            // #5 Section move support
+            sectionId: selectedSectionId ?? undefined,
           }),
         });
-        if (!res.ok) throw new Error(await res.text());
+        if (res.ok) {
+          setIsDirty(false);
+          showNotice("Saved.");
+          await loadSections();
+          onSaved?.();
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showNotice(err.error ?? "Failed to save.", false);
+        }
       }
-      await loadSections();
-      showNotice("Formula saved.");
-      onSaved?.();
-    } catch (e) {
-      showNotice(`Error: ${e}`, false);
+    } finally {
+      setSavingBusy(false);
     }
-    setSavingBusy(false);
   }
-
-  // ── Delete formula ────────────────────────────────────────────────────────
 
   async function deleteFormula(id: string) {
-    setSavingBusy(true);
-    try {
-      const res = await adminFetch(`/api/admin/formulas/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error(await res.text());
+    const res = await adminFetch(`/api/admin/formulas/${id}`, { method: "DELETE" });
+    if (res.ok) {
       setSelectedFormula(null);
+      setSelectedSectionId(null);
       setConfirmDeleteId(null);
-      await loadSections();
+      setIsDirty(false);
       showNotice("Formula deleted.");
-      onSaved?.();
-    } catch (e) {
-      showNotice(`Error: ${e}`, false);
+      await loadSections();
+    } else {
+      showNotice("Failed to delete formula.", false);
     }
-    setSavingBusy(false);
   }
-
-  // ── Delete section ────────────────────────────────────────────────────────
 
   async function deleteSection(id: string) {
-    setSavingBusy(true);
-    try {
-      const res = await adminFetch(`/api/admin/formulas/sections/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error(await res.text());
+    const res = await adminFetch(`/api/admin/formulas/sections/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      if (selectedSectionId === id) { setSelectedFormula(null); setSelectedSectionId(null); setIsDirty(false); }
       setConfirmDeleteSectionId(null);
-      if (selectedSectionId === id) { setSelectedFormula(null); setSelectedSectionId(null); }
+      showNotice("Section deleted.");
       await loadSections();
-      showNotice("Section and all its formulas deleted.");
-      onSaved?.();
-    } catch (e) {
-      showNotice(`Error: ${e}`, false);
+    } else {
+      showNotice("Failed to delete section.", false);
     }
-    setSavingBusy(false);
   }
 
-  // ── Add section ───────────────────────────────────────────────────────────
+  // #6 Reorder formula within its section (up/down arrows)
+  async function reorderFormula(sectionId: string, formulaId: string, direction: "up" | "down") {
+    const section = sections.find((s) => s.id === sectionId);
+    if (!section) return;
+    const idx = section.formulas.findIndex((f) => f.id === formulaId);
+    const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= section.formulas.length) return;
+    const a = section.formulas[idx];
+    const b = section.formulas[swapIdx];
+    // Swap positions
+    await Promise.all([
+      adminFetch(`/api/admin/formulas/${a.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ position: b.position }) }),
+      adminFetch(`/api/admin/formulas/${b.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ position: a.position }) }),
+    ]);
+    await loadSections();
+  }
 
-  const [newSection, setNewSection] = useState({ code: "", title: "", position: 0 });
+  // #6 Reorder section (up/down arrows)
+  async function reorderSection(sectionId: string, direction: "up" | "down") {
+    const sorted = sections.slice().sort((a, b) => a.position - b.position);
+    const idx = sorted.findIndex((s) => s.id === sectionId);
+    const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= sorted.length) return;
+    const a = sorted[idx];
+    const b = sorted[swapIdx];
+    await Promise.all([
+      adminFetch(`/api/admin/formulas/sections/${a.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ position: b.position }) }),
+      adminFetch(`/api/admin/formulas/sections/${b.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ position: a.position }) }),
+    ]);
+    await loadSections();
+  }
+
+  const [newSection, setNewSection] = useState({ code: "", title: "" });
 
   async function addSection() {
-    if (!newSection.code || !newSection.title) return;
-    setSavingBusy(true);
-    try {
-      const res = await adminFetch("/api/admin/formulas/sections", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: newSection.code, title: newSection.title, position: newSection.position }),
-      });
-      if (!res.ok) throw new Error(await res.text());
+    if (!newSection.code.trim() || !newSection.title.trim()) return;
+    const res = await adminFetch("/api/admin/formulas/sections", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: newSection.code.trim(), title: newSection.title.trim() }),
+      // #19 position is auto-assigned server-side
+    });
+    if (res.ok) {
+      setNewSection({ code: "", title: "" });
       setAddSectionOpen(false);
-      setNewSection({ code: "", title: "", position: 0 });
+      showNotice("Section added.");
       await loadSections();
-      showNotice("Section created.");
-    } catch (e) {
-      showNotice(`Error: ${e}`, false);
+    } else {
+      showNotice("Failed to add section.", false);
     }
-    setSavingBusy(false);
   }
 
-  // ─── Render ───────────────────────────────────────────────────────────────
+  // #9 Cmd/Ctrl+S keyboard save
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+        e.preventDefault();
+        if (selectedFormula && !savingBusy) saveFormula();
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedFormula, savingBusy, isCreating, selectedSectionId]);
 
   return (
     <div className="space-y-4">
-      {notice && (
-        <div className={cn(
-          "flex items-start gap-2 rounded-lg border px-3 py-2 text-sm",
-          notice.ok ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-red-200 bg-red-50 text-red-800"
-        )}>
-          {notice.ok ? <Icons.Check size={16} className="mt-0.5 shrink-0" /> : <Icons.AlertCircle size={16} className="mt-0.5 shrink-0" />}
-          <p>{notice.msg}</p>
-        </div>
-      )}
-
       {/* Panel tabs */}
       <div className="flex gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1">
-        {(["manage", "import", "templates"] as PanelTab[]).map((tab) => (
+        {([["manage", "Manage"], ["import", "Import"], ["templates", "Templates"]] as [PanelTab, string][]).map(([tab, label]) => (
           <button
             key={tab}
             type="button"
             onClick={() => setPanelTab(tab)}
             className={cn(
-              "flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold capitalize transition",
+              "flex-1 rounded-lg py-2 text-sm font-semibold transition",
               panelTab === tab ? "bg-white text-[#185FA5] shadow-sm" : "text-slate-500 hover:text-slate-700"
             )}
           >
-            {tab === "manage" ? "Manage Formulas" : tab === "import" ? "Bulk Import" : "Templates"}
+            {label}
           </button>
         ))}
       </div>
+
+      {notice && (
+        <div className={cn(
+          "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium",
+          notice.ok ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"
+        )}>
+          {notice.ok ? <Icons.Check size={14} /> : <Icons.AlertCircle size={14} />}
+          {notice.msg}
+        </div>
+      )}
 
       {panelTab === "manage" && (
         <ManageTab
@@ -342,8 +413,8 @@ export function FormulasPanel({ onSaved }: { onSaved?: () => void }) {
           setOpenSectionIds={setOpenSectionIds}
           selectedFormula={selectedFormula}
           selectedSectionId={selectedSectionId}
-          setSelectedFormula={setSelectedFormula}
           isCreating={isCreating}
+          isDirty={isDirty}
           editorTab={editorTab}
           setEditorTab={setEditorTab}
           savingBusy={savingBusy}
@@ -357,15 +428,23 @@ export function FormulasPanel({ onSaved }: { onSaved?: () => void }) {
           setNewSection={setNewSection}
           selectFormula={selectFormula}
           startCreate={startCreate}
+          duplicateFormula={duplicateFormula}
           saveFormula={saveFormula}
           deleteFormula={deleteFormula}
           deleteSection={deleteSection}
           addSection={addSection}
+          reorderFormula={reorderFormula}
+          reorderSection={reorderSection}
+          onFormulaChange={(patch) => {
+            setSelectedFormula((prev) => prev ? { ...prev, ...patch } : prev);
+            setIsDirty(true);
+          }}
+          onSectionChange={setSelectedSectionId}
         />
       )}
 
       {panelTab === "import" && (
-        <ImportTab onDone={async () => { await loadSections(); showNotice("Import complete."); onSaved?.(); }} />
+        <ImportTab onDone={() => { setPanelTab("manage"); loadSections(); }} />
       )}
 
       {panelTab === "templates" && <TemplatesTab />}
@@ -378,12 +457,13 @@ export function FormulasPanel({ onSaved }: { onSaved?: () => void }) {
 function ManageTab({
   sections, filteredSections, loading, search, setSearch,
   openSectionIds, setOpenSectionIds,
-  selectedFormula, selectedSectionId, setSelectedFormula,
-  isCreating, editorTab, setEditorTab,
+  selectedFormula, selectedSectionId, isCreating, isDirty, editorTab, setEditorTab,
   savingBusy, confirmDeleteId, setConfirmDeleteId,
   confirmDeleteSectionId, setConfirmDeleteSectionId,
   addSectionOpen, setAddSectionOpen, newSection, setNewSection,
-  selectFormula, startCreate, saveFormula, deleteFormula, deleteSection, addSection,
+  selectFormula, startCreate, duplicateFormula, saveFormula, deleteFormula,
+  deleteSection, addSection, reorderFormula, reorderSection,
+  onFormulaChange, onSectionChange,
 }: {
   sections: AdminSection[];
   filteredSections: AdminSection[];
@@ -394,8 +474,8 @@ function ManageTab({
   setOpenSectionIds: React.Dispatch<React.SetStateAction<Set<string>>>;
   selectedFormula: AdminFormula | null;
   selectedSectionId: string | null;
-  setSelectedFormula: React.Dispatch<React.SetStateAction<AdminFormula | null>>;
   isCreating: boolean;
+  isDirty: boolean;
   editorTab: EditorTab;
   setEditorTab: (v: EditorTab) => void;
   savingBusy: boolean;
@@ -405,14 +485,19 @@ function ManageTab({
   setConfirmDeleteSectionId: (v: string | null) => void;
   addSectionOpen: boolean;
   setAddSectionOpen: (v: boolean) => void;
-  newSection: { code: string; title: string; position: number };
-  setNewSection: React.Dispatch<React.SetStateAction<{ code: string; title: string; position: number }>>;
+  newSection: { code: string; title: string };
+  setNewSection: React.Dispatch<React.SetStateAction<{ code: string; title: string }>>;
   selectFormula: (f: AdminFormula, sectionId: string) => void;
   startCreate: (sectionId: string) => void;
-  saveFormula: () => void;
+  duplicateFormula: (f: AdminFormula, sectionId: string) => void;
+  saveFormula: (override?: AdminFormula) => void;
   deleteFormula: (id: string) => void;
   deleteSection: (id: string) => void;
   addSection: () => void;
+  reorderFormula: (sectionId: string, formulaId: string, direction: "up" | "down") => void;
+  reorderSection: (sectionId: string, direction: "up" | "down") => void;
+  onFormulaChange: (patch: Partial<AdminFormula>) => void;
+  onSectionChange: (sectionId: string) => void;
 }) {
   function toggleSection(id: string) {
     setOpenSectionIds((prev) => {
@@ -421,6 +506,8 @@ function ManageTab({
       return next;
     });
   }
+
+  const sortedSections = filteredSections.slice().sort((a, b) => a.position - b.position);
 
   return (
     <div className="grid gap-4 xl:grid-cols-[2fr_3fr]">
@@ -436,15 +523,38 @@ function ManageTab({
 
         {loading ? (
           <p className="py-6 text-center text-sm text-slate-400">Loading…</p>
-        ) : filteredSections.length === 0 ? (
+        ) : sortedSections.length === 0 ? (
           <p className="py-6 text-center text-sm text-slate-400">No formulas found.</p>
         ) : (
           <div className="space-y-2">
-            {filteredSections.map((section) => {
+            {sortedSections.map((section, sIdx) => {
               const isOpen = openSectionIds.has(section.id);
               return (
                 <div key={section.id} className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-                  <div className="flex items-center justify-between gap-2 px-3 py-2.5">
+                  {/* Section header */}
+                  <div className="flex items-center gap-1 px-2 py-2">
+                    {/* #6 Section reorder arrows */}
+                    <div className="flex flex-col gap-0.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => reorderSection(section.id, "up")}
+                        disabled={sIdx === 0}
+                        title="Move section up"
+                        className="flex h-4 w-4 items-center justify-center rounded text-slate-300 hover:text-[#185FA5] disabled:opacity-0"
+                      >
+                        <Icons.ChevronUp size={11} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => reorderSection(section.id, "down")}
+                        disabled={sIdx === sortedSections.length - 1}
+                        title="Move section down"
+                        className="flex h-4 w-4 items-center justify-center rounded text-slate-300 hover:text-[#185FA5] disabled:opacity-0"
+                      >
+                        <Icons.ChevronDown size={11} />
+                      </button>
+                    </div>
+
                     <button
                       type="button"
                       onClick={() => toggleSection(section.id)}
@@ -455,48 +565,96 @@ function ManageTab({
                       <span className="shrink-0 text-[10px] text-slate-400">({section.formulas.length})</span>
                       {isOpen ? <Icons.ChevronUp size={14} className="shrink-0 text-slate-400" /> : <Icons.ChevronDown size={14} className="shrink-0 text-slate-400" />}
                     </button>
+
+                    {/* #18 Improved confirm-delete for sections */}
                     {confirmDeleteSectionId === section.id ? (
-                      <span className="flex items-center gap-1">
-                        <button onClick={() => deleteSection(section.id)} className="text-[10px] font-bold text-red-600 hover:underline">Confirm</button>
-                        <button onClick={() => setConfirmDeleteSectionId(null)} className="text-[10px] text-slate-400 hover:underline">Cancel</button>
+                      <span className="flex items-center gap-1 shrink-0">
+                        <button
+                          onClick={() => deleteSection(section.id)}
+                          className="rounded bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-600 hover:bg-red-200"
+                        >
+                          Delete section + {section.formulas.length} formulas
+                        </button>
+                        <button onClick={() => setConfirmDeleteSectionId(null)} className="text-[10px] text-slate-400 hover:text-slate-600">Cancel</button>
                       </span>
                     ) : (
                       <button
                         type="button"
                         onClick={() => setConfirmDeleteSectionId(section.id)}
-                        className="shrink-0 text-slate-300 hover:text-red-500"
+                        className="shrink-0 text-slate-200 hover:text-red-500 transition-colors"
                         title="Delete section"
                       >
-                        <Icons.X size={13} />
+                        <Icons.Trash2 size={13} />
                       </button>
                     )}
                   </div>
 
                   {isOpen && (
                     <div className="border-t border-slate-100">
-                      {section.formulas.map((formula) => {
+                      {section.formulas.map((formula, fIdx) => {
                         const isSelected = selectedFormula?.id === formula.id && !isCreating;
                         const hasCalc = !!formula.calcMetaJson || !!getFormulaCalculator(formula.code);
                         return (
-                          <button
+                          <div
                             key={formula.id}
-                            type="button"
-                            onClick={() => selectFormula(formula, section.id)}
                             className={cn(
-                              "flex w-full items-start justify-between gap-2 px-3 py-2.5 text-left transition",
+                              "flex items-center gap-1 group transition",
                               isSelected ? "bg-[#E6F1FB]" : "hover:bg-slate-50"
                             )}
                           >
-                            <div className="min-w-0">
-                              <p className="font-mono text-[10px] font-semibold text-[#185FA5]">{formula.code}</p>
-                              <p className="truncate text-xs font-medium text-slate-700">{formula.name}</p>
+                            {/* #6 Formula reorder arrows */}
+                            <div className="flex flex-col gap-0 pl-2 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                type="button"
+                                onClick={() => reorderFormula(section.id, formula.id, "up")}
+                                disabled={fIdx === 0}
+                                title="Move up"
+                                className="flex h-4 w-4 items-center justify-center text-slate-300 hover:text-[#185FA5] disabled:opacity-30"
+                              >
+                                <Icons.ChevronUp size={10} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => reorderFormula(section.id, formula.id, "down")}
+                                disabled={fIdx === section.formulas.length - 1}
+                                title="Move down"
+                                className="flex h-4 w-4 items-center justify-center text-slate-300 hover:text-[#185FA5] disabled:opacity-30"
+                              >
+                                <Icons.ChevronDown size={10} />
+                              </button>
                             </div>
-                            {hasCalc && (
-                              <span title="Calculator configured">
-                                <Icons.Calculator size={12} className="mt-0.5 shrink-0 text-emerald-500" />
-                              </span>
-                            )}
-                          </button>
+
+                            <button
+                              type="button"
+                              onClick={() => selectFormula(formula, section.id)}
+                              className="flex flex-1 min-w-0 items-start justify-between gap-2 px-2 py-2.5 text-left"
+                            >
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <p className="font-mono text-[10px] font-semibold text-[#185FA5]">{formula.code}</p>
+                                  {isDirty && isSelected && (
+                                    <span className="h-1.5 w-1.5 rounded-full bg-amber-400" title="Unsaved changes" />
+                                  )}
+                                </div>
+                                <p className="truncate text-xs font-medium text-slate-700">{formula.name}</p>
+                              </div>
+                              {hasCalc && (
+                                <span title="Calculator configured">
+                                  <Icons.Calculator size={12} className="mt-0.5 shrink-0 text-emerald-500" />
+                                </span>
+                              )}
+                            </button>
+
+                            {/* #12 Duplicate button (appears on hover) */}
+                            <button
+                              type="button"
+                              title="Duplicate formula"
+                              onClick={() => duplicateFormula(formula, section.id)}
+                              className="mr-2 shrink-0 p-1 text-slate-200 hover:text-[#185FA5] opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <Icons.Copy size={12} />
+                            </button>
+                          </div>
                         );
                       })}
                       <div className="border-t border-slate-100 px-3 py-2">
@@ -517,11 +675,12 @@ function ManageTab({
           {addSectionOpen ? (
             <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
               <p className="text-xs font-semibold text-slate-600">New Section</p>
-              <input placeholder="Code (e.g. S5)" value={newSection.code} onChange={(e) => setNewSection((p) => ({ ...p, code: e.target.value }))} className={inputClass()} />
-              <input placeholder="Title" value={newSection.title} onChange={(e) => setNewSection((p) => ({ ...p, title: e.target.value }))} className={inputClass()} />
-              <input type="number" placeholder="Position" value={newSection.position} onChange={(e) => setNewSection((p) => ({ ...p, position: parseInt(e.target.value) || 0 }))} className={inputClass()} />
+              <input placeholder="Code (e.g. S7)" value={newSection.code} onChange={(e) => setNewSection((p) => ({ ...p, code: e.target.value }))} className={inputClass()} />
+              <input placeholder="Title (e.g. Market Analysis)" value={newSection.title} onChange={(e) => setNewSection((p) => ({ ...p, title: e.target.value }))} className={inputClass()} />
+              {/* #19 No manual position — auto-assigned server-side */}
+              <p className="text-[10px] text-slate-400">Position is auto-assigned as the last section.</p>
               <div className="flex gap-2">
-                <ActionBtn onClick={addSection} disabled={savingBusy || !newSection.code || !newSection.title} small>Create</ActionBtn>
+                <ActionBtn onClick={addSection} disabled={!newSection.code.trim() || !newSection.title.trim()} small>Create</ActionBtn>
                 <ActionBtn tone="ghost" onClick={() => setAddSectionOpen(false)} small>Cancel</ActionBtn>
               </div>
             </div>
@@ -539,13 +698,26 @@ function ManageTab({
           <div className="flex h-full min-h-[200px] flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center">
             <Icons.Calculator size={28} className="mb-2 text-slate-300" />
             <p className="text-sm font-semibold text-slate-500">Select a formula to edit</p>
-            <p className="mt-1 text-xs text-slate-400">Or click "+ Add formula" under a section.</p>
+            <p className="mt-1 text-xs text-slate-400">Or click "+ Add formula" under a section. <kbd className="rounded bg-slate-100 px-1 py-0.5 font-mono text-[10px]">⌘S</kbd> to save.</p>
           </div>
         ) : (
           <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
+            {/* Unsaved indicator */}
+            {isDirty && (
+              <div className="flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                Unsaved changes — press <kbd className="rounded bg-amber-100 px-1 font-mono">⌘S</kbd> or click Save
+              </div>
+            )}
+
             {/* Editor sub-tabs */}
             <div className="flex gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1">
-              {([["fields", "Formula"], ["calc", "Calculator Setup"], ["verify", "Verify"]] as [EditorTab, string][]).map(([tab, label]) => (
+              {([
+                ["fields", "Formula"],
+                ["calc", "Calculator"],
+                ["verify", "Verify"],
+                ["preview", "Preview"],
+              ] as [EditorTab, string][]).map(([tab, label]) => (
                 <button
                   key={tab}
                   type="button"
@@ -560,8 +732,10 @@ function ManageTab({
               ))}
             </div>
 
+            {/* #2 Bug fix: key on formula id so hooks reinitialise when switching formulas */}
             {editorTab === "fields" && (
               <FieldsEditor
+                key={selectedFormula.id}
                 formula={selectedFormula}
                 sections={sections}
                 selectedSectionId={selectedSectionId}
@@ -569,23 +743,34 @@ function ManageTab({
                 savingBusy={savingBusy}
                 confirmDeleteId={confirmDeleteId}
                 setConfirmDeleteId={setConfirmDeleteId}
-                onChange={(patch) => setSelectedFormula((prev) => prev ? { ...prev, ...patch } : prev)}
-                onSave={saveFormula}
+                onChange={onFormulaChange}
+                onSectionChange={onSectionChange}
+                onSave={() => saveFormula()}
                 onDelete={deleteFormula}
               />
             )}
 
             {editorTab === "calc" && (
               <CalcSetupEditor
+                key={selectedFormula.id}
                 formula={selectedFormula}
                 savingBusy={savingBusy}
-                onChange={(patch) => setSelectedFormula((prev) => prev ? { ...prev, ...patch } : prev)}
-                onSave={saveFormula}
+                onSaveWithMeta={(meta) => {
+                  // #1 Bug fix: pass the updated formula directly to saveFormula
+                  // so state doesn't need to flush before the save fires.
+                  const updated: AdminFormula = { ...selectedFormula, calcMetaJson: meta };
+                  saveFormula(updated);
+                }}
               />
             )}
 
             {editorTab === "verify" && (
-              <VerifyPanel formula={selectedFormula} />
+              <VerifyPanel key={selectedFormula.id} formula={selectedFormula} />
+            )}
+
+            {/* #7 Live student-portal preview */}
+            {editorTab === "preview" && (
+              <FormulaPreviewCard formula={selectedFormula} />
             )}
           </div>
         )}
@@ -598,12 +783,13 @@ function ManageTab({
 
 function FieldsEditor({
   formula, sections, selectedSectionId, isCreating, savingBusy,
-  confirmDeleteId, setConfirmDeleteId, onChange, onSave, onDelete,
+  confirmDeleteId, setConfirmDeleteId, onChange, onSectionChange, onSave, onDelete,
 }: {
   formula: AdminFormula; sections: AdminSection[]; selectedSectionId: string | null;
   isCreating: boolean; savingBusy: boolean;
   confirmDeleteId: string | null; setConfirmDeleteId: (v: string | null) => void;
   onChange: (patch: Partial<AdminFormula>) => void;
+  onSectionChange: (sectionId: string) => void;
   onSave: () => void;
   onDelete: (id: string) => void;
 }) {
@@ -611,17 +797,33 @@ function FieldsEditor({
     <div className="space-y-3">
       <div className="grid gap-3 sm:grid-cols-2">
         <SmallField label="Formula Code">
-          <input value={formula.code} onChange={(e) => onChange({ code: e.target.value })} placeholder="e.g. S1.F9" className={inputClass()} />
+          <input
+            value={formula.code}
+            onChange={(e) => onChange({ code: e.target.value })}
+            placeholder="e.g. S1.F9"
+            className={inputClass(!formula.code.trim())}
+          />
         </SmallField>
+        {/* #5 Section is now editable to support moving formulas */}
         <SmallField label="Section">
-          <select value={selectedSectionId ?? ""} onChange={() => {}} disabled className={cn(inputClass(), "bg-slate-50 text-slate-400")}>
+          <select
+            value={selectedSectionId ?? ""}
+            onChange={(e) => onSectionChange(e.target.value)}
+            className={inputClass()}
+          >
+            <option value="" disabled>Select section…</option>
             {sections.map((s) => <option key={s.id} value={s.id}>{s.code} — {s.title}</option>)}
           </select>
         </SmallField>
       </div>
 
       <SmallField label="Formula Name">
-        <input value={formula.name} onChange={(e) => onChange({ name: e.target.value })} placeholder="e.g. Trending Forward" className={inputClass()} />
+        <input
+          value={formula.name}
+          onChange={(e) => onChange({ name: e.target.value })}
+          placeholder="e.g. Trending Forward"
+          className={inputClass(!formula.name.trim())}
+        />
       </SmallField>
 
       <SmallField label="Display Expression">
@@ -630,33 +832,40 @@ function FieldsEditor({
           onChange={(e) => onChange({ expression: e.target.value })}
           placeholder="e.g. Adjusted = Sale × (1+r)^n"
           rows={2}
-          className={cn(inputClass(), "resize-none font-mono text-xs")}
+          className={cn(inputClass(!formula.expression.trim()), "resize-none font-mono text-xs")}
         />
       </SmallField>
 
-      <SmallField label="Notes (optional)">
+      <SmallField label="Notes" hint="(optional — shown below the formula card)">
         <textarea
           value={formula.notes ?? ""}
           onChange={(e) => onChange({ notes: e.target.value })}
-          placeholder="Short explanation shown below the formula card"
+          placeholder="Short explanation…"
           rows={2}
           className={cn(inputClass(), "resize-none text-xs")}
         />
       </SmallField>
 
       <div className="flex flex-wrap items-center gap-2 pt-1">
-        <ActionBtn onClick={onSave} disabled={savingBusy || !formula.code || !formula.name || !formula.expression}>
+        <ActionBtn onClick={onSave} disabled={savingBusy || !formula.code.trim() || !formula.name.trim() || !formula.expression.trim()}>
           {savingBusy ? "Saving…" : isCreating ? "Create Formula" : "Save Changes"}
         </ActionBtn>
-        {!isCreating && formula.id && (
+
+        {/* #18 Better delete confirm */}
+        {!isCreating && formula.id && formula.id !== "__new__" && (
           confirmDeleteId === formula.id ? (
-            <>
-              <ActionBtn tone="danger" onClick={() => onDelete(formula.id)} disabled={savingBusy} small>Confirm Delete</ActionBtn>
-              <ActionBtn tone="ghost" onClick={() => setConfirmDeleteId(null)} small>Cancel</ActionBtn>
-            </>
+            <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5">
+              <span className="text-xs font-semibold text-red-700">Delete "{formula.name}"?</span>
+              <button onClick={() => onDelete(formula.id)} className="text-xs font-bold text-red-600 underline hover:text-red-800">
+                Confirm
+              </button>
+              <button onClick={() => setConfirmDeleteId(null)} className="text-xs text-slate-400 hover:text-slate-600">
+                Cancel
+              </button>
+            </div>
           ) : (
-            <ActionBtn tone="ghost" onClick={() => setConfirmDeleteId(formula.id)} small>
-              <Icons.X size={12} /> Delete
+            <ActionBtn tone="ghost" small onClick={() => setConfirmDeleteId(formula.id)}>
+              <Icons.Trash2 size={12} /> Delete
             </ActionBtn>
           )
         )}
@@ -668,11 +877,12 @@ function FieldsEditor({
 // ─── Calculator Setup Editor ───────────────────────────────────────────────────
 
 function CalcSetupEditor({
-  formula, savingBusy, onChange, onSave,
+  formula, savingBusy, onSaveWithMeta,
 }: {
-  formula: AdminFormula; savingBusy: boolean;
-  onChange: (patch: Partial<AdminFormula>) => void;
-  onSave: () => void;
+  formula: AdminFormula;
+  savingBusy: boolean;
+  // #1 Bug fix: accepts the built meta JSON directly so caller can pass it to saveFormula
+  onSaveWithMeta: (metaJson: string | null) => void;
 }) {
   const staticConfig = getFormulaCalculator(formula.code);
   const existingMeta = parseMeta(formula.calcMetaJson);
@@ -691,39 +901,42 @@ function CalcSetupEditor({
   const validation = calcExpr.trim() ? validateExpression(calcExpr, varKeys) : null;
 
   function addVariable() {
-    setVariables((prev) => [
-      ...prev,
-      { key: "", label: "", type: "number", required: true, placeholder: "", helperText: "" },
-    ]);
+    setVariables((prev) => [...prev, { key: "", label: "", type: "number", required: true, placeholder: "", helperText: "" }]);
   }
-
   function updateVariable(i: number, patch: Partial<CalcVariable>) {
     setVariables((prev) => prev.map((v, idx) => idx === i ? { ...v, ...patch } : v));
   }
-
   function removeVariable(i: number) {
     setVariables((prev) => prev.filter((_, idx) => idx !== i));
   }
+  function moveVariable(i: number, direction: "up" | "down") {
+    setVariables((prev) => {
+      const next = [...prev];
+      const j = direction === "up" ? i - 1 : i + 1;
+      if (j < 0 || j >= next.length) return prev;
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
+  }
 
   function buildAndSave() {
-    if (!calcExpr.trim() || variables.length === 0) {
-      onChange({ calcMetaJson: null });
-    } else {
+    let metaJson: string | null = null;
+    if (calcExpr.trim() && variables.length > 0) {
       const meta: CalcMeta = {
         variables,
         expression: calcExpr.trim(),
         output: { key: "result", label: outputLabel, type: outputType },
         explanation: explanation.trim() || undefined,
       };
-      onChange({ calcMetaJson: JSON.stringify(meta) });
+      metaJson = JSON.stringify(meta);
     }
-    setTimeout(onSave, 0);
+    // #1 Bug fix: pass built JSON directly — no state update needed before save
+    onSaveWithMeta(metaJson);
   }
 
   function clearConfig() {
-    onChange({ calcMetaJson: null });
     setVariables([]); setCalcExpr(""); setOutputLabel("Result"); setOutputType("number"); setExplanation("");
-    setTimeout(onSave, 0);
+    onSaveWithMeta(null);
   }
 
   return (
@@ -737,36 +950,80 @@ function CalcSetupEditor({
 
       {hasStatic && !hasDb && (
         <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-700">
-          This formula has a built-in calculator. Define a DB config below only to override or customize it.
+          This formula has a built-in calculator. Define a DB config below only to override it.
         </p>
       )}
 
-      {/* Variables */}
+      {/* #8 Improved variable builder */}
       <div>
         <div className="mb-2 flex items-center justify-between">
           <label className="text-xs font-semibold text-slate-600">Input Variables</label>
-          <ActionBtn small tone="ghost" onClick={addVariable}><Icons.Plus size={11} /> Add</ActionBtn>
+          <ActionBtn small tone="ghost" onClick={addVariable}><Icons.Plus size={11} /> Add variable</ActionBtn>
         </div>
         {variables.length === 0 ? (
-          <p className="text-xs text-slate-400">No variables defined. Click "+ Add" to start.</p>
+          <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50 py-4 text-center text-xs text-slate-400">
+            No variables yet — click "Add variable" to start.
+          </p>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-3">
             {variables.map((v, i) => (
-              <div key={i} className="grid gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2.5 sm:grid-cols-[1fr_2fr_1fr_auto]">
-                <input value={v.key} onChange={(e) => updateVariable(i, { key: e.target.value.replace(/\W/g, "").toLowerCase() })} placeholder="key" className={cn(inputClass(), "font-mono text-xs")} title="Variable key (no spaces)" />
-                <input value={v.label} onChange={(e) => updateVariable(i, { label: e.target.value })} placeholder="Label" className={inputClass()} />
-                <select value={v.type} onChange={(e) => updateVariable(i, { type: e.target.value as InputType })} className={inputClass()}>
-                  {INPUT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-                </select>
-                <div className="flex items-center gap-2">
-                  <label className="flex items-center gap-1 text-[10px] text-slate-500 cursor-pointer">
-                    <input type="checkbox" checked={v.required} onChange={(e) => updateVariable(i, { required: e.target.checked })} className="h-3 w-3" />
-                    Req.
-                  </label>
-                  <button type="button" onClick={() => removeVariable(i)} className="text-slate-300 hover:text-red-500"><Icons.X size={13} /></button>
+              <div key={i} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                {/* Row 1: key + label + type + required + actions */}
+                <div className="grid gap-2 sm:grid-cols-[120px_1fr_120px_auto_auto]">
+                  <div>
+                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-400">Key</label>
+                    <input
+                      value={v.key}
+                      onChange={(e) => updateVariable(i, { key: e.target.value.replace(/\W/g, "").toLowerCase() })}
+                      placeholder="e.g. sale"
+                      className={cn(inputClass(), "font-mono text-xs")}
+                      title="Variable key — only lowercase letters and numbers, no spaces"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-400">Label</label>
+                    <input
+                      value={v.label}
+                      onChange={(e) => updateVariable(i, { label: e.target.value })}
+                      placeholder="e.g. Sale Price"
+                      className={inputClass()}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-400">Type</label>
+                    <select value={v.type} onChange={(e) => updateVariable(i, { type: e.target.value as InputType })} className={inputClass()}>
+                      {INPUT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </div>
+                  <div className="flex flex-col items-center justify-end gap-1 pb-0.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Req.</label>
+                    <input type="checkbox" checked={v.required} onChange={(e) => updateVariable(i, { required: e.target.checked })} className="h-4 w-4 cursor-pointer" />
+                  </div>
+                  <div className="flex flex-col items-center justify-end gap-1 pb-0.5">
+                    <div className="flex gap-0.5">
+                      <button type="button" onClick={() => moveVariable(i, "up")} disabled={i === 0} title="Move up" className="p-0.5 text-slate-300 hover:text-[#185FA5] disabled:opacity-20">
+                        <Icons.ChevronUp size={13} />
+                      </button>
+                      <button type="button" onClick={() => moveVariable(i, "down")} disabled={i === variables.length - 1} title="Move down" className="p-0.5 text-slate-300 hover:text-[#185FA5] disabled:opacity-20">
+                        <Icons.ChevronDown size={13} />
+                      </button>
+                    </div>
+                    <button type="button" onClick={() => removeVariable(i)} title="Remove variable" className="p-0.5 text-slate-300 hover:text-red-500">
+                      <Icons.Trash2 size={13} />
+                    </button>
+                  </div>
                 </div>
-                <input value={v.placeholder ?? ""} onChange={(e) => updateVariable(i, { placeholder: e.target.value })} placeholder="Placeholder" className={cn(inputClass(), "col-span-full sm:col-span-2 text-xs")} />
-                <input value={v.helperText ?? ""} onChange={(e) => updateVariable(i, { helperText: e.target.value })} placeholder="Helper text" className={cn(inputClass(), "col-span-full sm:col-span-2 text-xs")} />
+                {/* Row 2: placeholder + helperText with explicit labels */}
+                <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-400">Placeholder</label>
+                    <input value={v.placeholder ?? ""} onChange={(e) => updateVariable(i, { placeholder: e.target.value })} placeholder="e.g. 250000" className={cn(inputClass(), "text-xs")} />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-400">Helper text</label>
+                    <input value={v.helperText ?? ""} onChange={(e) => updateVariable(i, { helperText: e.target.value })} placeholder="e.g. Enter as a decimal e.g. 0.05" className={cn(inputClass(), "text-xs")} />
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -774,11 +1031,7 @@ function CalcSetupEditor({
       </div>
 
       {/* Calc expression */}
-      <div>
-        <label className="mb-1 block text-xs font-semibold text-slate-600">
-          Calculation Expression
-          <span className="ml-1 font-normal text-slate-400">(use variable keys, +,-,*,/,^, sqrt(), etc.)</span>
-        </label>
+      <SmallField label="Calculation Expression" hint="(use variable keys, +,-,*,/,^, sqrt(), etc.)">
         <div className="relative">
           <input
             value={calcExpr}
@@ -794,7 +1047,7 @@ function CalcSetupEditor({
         </div>
         {validation?.ok === false && <p className="mt-1 text-xs text-red-500">{validation.error}</p>}
         {validation?.ok === true && <p className="mt-1 text-xs text-emerald-600">Expression is valid.</p>}
-      </div>
+      </SmallField>
 
       {/* Output */}
       <div className="grid gap-3 sm:grid-cols-2">
@@ -808,19 +1061,17 @@ function CalcSetupEditor({
         </SmallField>
       </div>
 
-      {/* Explanation */}
-      <SmallField label="Explanation (shown in calculator)">
-        <textarea value={explanation} onChange={(e) => setExplanation(e.target.value)} placeholder="Brief explanation shown in italic below the formula…" rows={2} className={cn(inputClass(), "resize-none text-xs")} />
+      <SmallField label="Explanation" hint="(shown in italic inside the calculator panel)">
+        <textarea value={explanation} onChange={(e) => setExplanation(e.target.value)} placeholder="Brief explanation…" rows={2} className={cn(inputClass(), "resize-none text-xs")} />
       </SmallField>
 
-      {/* Actions */}
       <div className="flex flex-wrap gap-2 pt-1">
         <ActionBtn onClick={buildAndSave} disabled={savingBusy || (calcExpr.trim() !== "" && validation?.ok === false)}>
           {savingBusy ? "Saving…" : "Save Calculator Config"}
         </ActionBtn>
-        {(hasDb) && (
+        {hasDb && (
           <ActionBtn tone="ghost" small onClick={clearConfig} disabled={savingBusy}>
-            <Icons.X size={12} /> Clear DB Config
+            <Icons.Trash2 size={12} /> Clear config
           </ActionBtn>
         )}
       </div>
@@ -842,6 +1093,7 @@ function VerifyPanel({ formula }: { formula: AdminFormula }) {
 
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [result, setResult] = useState<number | null>(null);
+  const [steps, setSteps] = useState<Array<{ label: string; expression: string; value: string }>>([]);
   const [error, setError] = useState<string | null>(null);
   const [ran, setRan] = useState(false);
 
@@ -851,37 +1103,60 @@ function VerifyPanel({ formula }: { formula: AdminFormula }) {
     for (const v of meta.variables) {
       const raw = inputs[v.key] ?? "";
       const n = parseFloat(raw);
-      if (raw.trim() === "" && v.required) { setError(`Missing: ${v.label}`); setRan(true); return; }
+      if (raw.trim() === "" && v.required) { setError(`Missing required field: ${v.label}`); setRan(true); return; }
       numVars[v.key] = isNaN(n) ? (v.required ? NaN : 0) : n;
     }
 
     try {
       let computed: number | null = null;
+      let newSteps: typeof steps = [];
+
       if (dbMeta) {
         computed = evalExpression(dbMeta.expression, numVars);
+        // #16 Show variable substitution steps
+        newSteps = meta.variables.map((v) => ({
+          label: v.label,
+          expression: v.key,
+          value: formatValue(numVars[v.key] ?? 0, v.type),
+        }));
+        if (computed !== null && isFinite(computed)) {
+          newSteps.push({
+            label: meta.output.label,
+            expression: dbMeta.expression,
+            value: formatValue(computed, meta.output.type),
+          });
+        }
       } else if (staticConfig) {
         computed = staticConfig.compute(numVars);
+        // #16 Show steps from static config if available
+        if (staticConfig.showWork) {
+          const workSteps = staticConfig.showWork(numVars, computed ?? 0);
+          newSteps = workSteps.map((s) => ({
+            label: s.label,
+            expression: s.expression ?? "",
+            value: String(s.value ?? ""),
+          }));
+        }
       }
+
       if (computed === null || !isFinite(computed)) {
         setError("Result is not a finite number — check for division by zero or invalid inputs.");
-        setResult(null);
+        setResult(null); setSteps([]);
       } else {
-        setResult(computed);
-        setError(null);
+        setResult(computed); setError(null); setSteps(newSteps);
       }
     } catch (e) {
-      setError(String(e));
-      setResult(null);
+      setError(String(e)); setResult(null); setSteps([]);
     }
     setRan(true);
   }
 
-  function reset() { setInputs({}); setResult(null); setError(null); setRan(false); }
+  function reset() { setInputs({}); setResult(null); setSteps([]); setError(null); setRan(false); }
 
   if (!meta) {
     return (
       <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-400">
-        No calculator config. Define variables and an expression in the <strong>Calculator Setup</strong> tab first.
+        No calculator config. Define variables and an expression in the <strong>Calculator</strong> tab first.
       </div>
     );
   }
@@ -889,7 +1164,8 @@ function VerifyPanel({ formula }: { formula: AdminFormula }) {
   const checks = [
     { label: "Expression defined", pass: dbMeta ? Boolean(dbMeta.expression.trim()) : Boolean(staticConfig) },
     { label: "Variables defined", pass: meta.variables.length > 0 },
-    { label: "Result is valid number", pass: ran && result !== null },
+    { label: "All required inputs provided", pass: ran && !error?.startsWith("Missing") },
+    { label: "Result is a valid finite number", pass: ran && result !== null },
   ];
 
   return (
@@ -899,7 +1175,7 @@ function VerifyPanel({ formula }: { formula: AdminFormula }) {
       </div>
 
       {dbMeta && (
-        <p className="text-[11px] font-mono text-slate-400">Calc expr: {dbMeta.expression}</p>
+        <p className="font-mono text-[11px] text-slate-400">Calc expr: <span className="text-slate-600">{dbMeta.expression}</span></p>
       )}
 
       {/* Input fields */}
@@ -923,17 +1199,44 @@ function VerifyPanel({ formula }: { formula: AdminFormula }) {
         ))}
       </div>
 
+      <div className="flex gap-2">
+        <ActionBtn onClick={runVerify}>Run verification</ActionBtn>
+        <ActionBtn tone="ghost" small onClick={reset}>Reset</ActionBtn>
+      </div>
+
       {/* Checks */}
       <ul className="space-y-1">
         {checks.map((c) => (
           <li key={c.label} className="flex items-center gap-2 text-xs">
-            <span className={c.pass ? "text-emerald-500" : "text-slate-300"}>{c.pass ? <Icons.Check size={13} /> : <Icons.AlertCircle size={13} />}</span>
+            <span className={c.pass ? "text-emerald-500" : "text-slate-300"}>
+              {c.pass ? <Icons.Check size={13} /> : <Icons.AlertCircle size={13} />}
+            </span>
             <span className={c.pass ? "text-slate-600" : "text-slate-400"}>{c.label}</span>
           </li>
         ))}
       </ul>
 
-      {ran && error && <p className="text-xs text-red-500">{error}</p>}
+      {ran && error && <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">{error}</p>}
+
+      {/* #16 Step breakdown */}
+      {ran && steps.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold text-slate-600">Step breakdown</p>
+          <div className="space-y-1.5 rounded-xl border border-slate-100 bg-slate-50 p-3">
+            {steps.map((step, i) => (
+              <div key={i} className="grid grid-cols-[1fr_auto] gap-3 items-center text-xs">
+                <div>
+                  <span className="font-semibold text-slate-600">{step.label}</span>
+                  {step.expression && step.expression !== step.label && (
+                    <span className="ml-1.5 font-mono text-[10px] text-slate-400">= {step.expression}</span>
+                  )}
+                </div>
+                <span className="font-mono font-bold text-slate-800">{step.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {ran && result !== null && (
         <div className="rounded-lg border border-slate-200 bg-[#f8fbff] px-4 py-3">
@@ -943,10 +1246,74 @@ function VerifyPanel({ formula }: { formula: AdminFormula }) {
           </p>
         </div>
       )}
+    </div>
+  );
+}
 
-      <div className="flex gap-2">
-        <ActionBtn onClick={runVerify}>Run Verification</ActionBtn>
-        <ActionBtn tone="ghost" small onClick={reset}>Reset</ActionBtn>
+// ─── #7 Live student-portal preview ──────────────────────────────────────────
+
+function FormulaPreviewCard({ formula }: { formula: AdminFormula }) {
+  const hasCalc = Boolean(formula.calcMetaJson || getFormulaCalculator(formula.code));
+
+  return (
+    <div className="space-y-4">
+      <p className="text-xs font-semibold text-slate-500">
+        Preview — this is how the formula card appears to students in the Formula Compass:
+      </p>
+
+      {/* Replica of the student-facing card from FormulaCompass */}
+      <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-100 px-5 py-4">
+          <div className="mb-2 flex items-start justify-between gap-3">
+            <div>
+              <p className="font-mono text-xs font-semibold text-[#185FA5]">
+                {formula.code || <span className="italic text-slate-300">code</span>}
+              </p>
+              <h3 className="mt-1 text-sm font-semibold leading-snug text-slate-800">
+                {formula.name || <span className="italic text-slate-300">Formula name</span>}
+              </h3>
+            </div>
+            {/* Bookmark placeholder */}
+            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-300">
+              <Icons.BookMarked size={15} />
+            </div>
+          </div>
+          <p className="font-calc rounded-md border border-[#b8d7f0] bg-[#f8fbff] px-3 py-2 text-[12px] text-slate-800">
+            {formula.expression || <span className="italic text-slate-300">expression will appear here</span>}
+          </p>
+          {formula.notes && (
+            <p className="mt-2 text-xs leading-5 text-slate-500">{formula.notes}</p>
+          )}
+          {hasCalc && (
+            <div className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-[#185FA5]">
+              <Icons.Calculator size={12} />
+              Open calculator
+              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">configured</span>
+            </div>
+          )}
+        </div>
+      </article>
+
+      {/* Drill mode flash card preview */}
+      <div>
+        <p className="mb-2 text-xs font-semibold text-slate-500">Drill mode flash card:</p>
+        <div className="overflow-hidden rounded-xl border border-[#185FA5]/30 bg-white shadow">
+          <div className="h-1.5 w-full bg-[#185FA5]" />
+          <div className="px-5 py-4">
+            <p className="font-mono text-xs font-bold text-[#185FA5]">
+              {formula.code || <span className="text-slate-300 italic">code</span>}
+            </p>
+            <h2 className="mt-1.5 text-lg font-extrabold text-slate-900">
+              {formula.name || <span className="italic text-slate-300">Formula name</span>}
+            </h2>
+            <div className="mt-4 flex flex-col items-center gap-3 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 py-6">
+              <p className="text-xs text-slate-400">Can you recall this formula?</p>
+              <div className="rounded-lg bg-[#185FA5] px-4 py-2 text-sm font-bold text-white opacity-60">
+                Reveal expression
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -959,12 +1326,11 @@ function ImportTab({ onDone }: { onDone: () => void }) {
   const [dragOver, setDragOver] = useState(false);
   const [preview, setPreview] = useState<ImportBatch | null>(null);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ imported: number; errors: string[]; sections: string[] } | null>(null);
+  const [result, setResult] = useState<{ imported: number; skipped?: number; errors: string[]; sections: string[]; rolledBack?: boolean } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   function onDrop(e: React.DragEvent) {
-    e.preventDefault();
-    setDragOver(false);
+    e.preventDefault(); setDragOver(false);
     const f = e.dataTransfer.files[0];
     if (f) { setFile(f); setPreview(null); setResult(null); }
   }
@@ -989,12 +1355,10 @@ function ImportTab({ onDone }: { onDone: () => void }) {
     const fd = new FormData();
     fd.append("file", file);
     const res = await adminFetch("/api/admin/formulas/import", { method: "POST", body: fd });
-    if (res.ok) {
-      const data = await res.json();
-      setResult(data);
-      setPreview(null);
-      if (data.imported > 0) onDone();
-    }
+    const data = await res.json().catch(() => ({}));
+    setResult(data);
+    setPreview(null);
+    if (res.ok && data.imported > 0) onDone();
     setLoading(false);
   }
 
@@ -1016,7 +1380,7 @@ function ImportTab({ onDone }: { onDone: () => void }) {
         <input
           ref={fileRef}
           type="file"
-          accept=".csv,.docx,.txt"
+          accept=".csv,.txt"
           className="hidden"
           onChange={(e) => { const f = e.target.files?.[0]; if (f) { setFile(f); setPreview(null); setResult(null); } }}
         />
@@ -1025,7 +1389,7 @@ function ImportTab({ onDone }: { onDone: () => void }) {
           <p className="text-sm font-semibold text-[#185FA5]">{file.name}</p>
         ) : (
           <>
-            <p className="text-sm font-semibold text-slate-600">Drop a .csv, .docx, or .txt file</p>
+            <p className="text-sm font-semibold text-slate-600">Drop a .csv or .txt file</p>
             <p className="mt-1 text-xs text-slate-400">or click to browse</p>
           </>
         )}
@@ -1052,11 +1416,12 @@ function ImportTab({ onDone }: { onDone: () => void }) {
             </p>
           </div>
 
-          <div className="max-h-48 overflow-y-auto rounded-lg border border-slate-100">
+          <div className="max-h-56 overflow-y-auto rounded-lg border border-slate-100">
+            {/* #20 Import preview now shows Expression column */}
             <table className="w-full text-xs">
               <thead className="sticky top-0 bg-slate-50">
                 <tr>
-                  {["Section", "Code", "Name", "Calc?"].map((h) => (
+                  {["Section", "Code", "Name", "Expression", "Calc?"].map((h) => (
                     <th key={h} className="px-2 py-1.5 text-left font-semibold text-slate-500">{h}</th>
                   ))}
                 </tr>
@@ -1067,7 +1432,8 @@ function ImportTab({ onDone }: { onDone: () => void }) {
                     <tr key={`${sec.code}-${f.code}`} className="border-t border-slate-100">
                       <td className="px-2 py-1.5 font-mono text-[10px] text-[#185FA5]">{sec.code}</td>
                       <td className="px-2 py-1.5 font-mono text-[10px]">{f.code}</td>
-                      <td className="px-2 py-1.5">{f.name}</td>
+                      <td className="px-2 py-1.5 max-w-[140px] truncate">{f.name}</td>
+                      <td className="px-2 py-1.5 font-mono text-[10px] max-w-[200px] truncate text-slate-500">{f.expression}</td>
                       <td className="px-2 py-1.5">{f.calcMetaJson ? "✓" : "—"}</td>
                     </tr>
                   ))
@@ -1077,11 +1443,12 @@ function ImportTab({ onDone }: { onDone: () => void }) {
           </div>
 
           {preview.errors.length > 0 && (
-            <ul className="space-y-1">
-              {preview.errors.map((e, i) => (
-                <li key={i} className="text-xs text-red-500">• {e}</li>
-              ))}
-            </ul>
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+              <p className="mb-1 text-xs font-semibold text-amber-700">Errors ({preview.errors.length})</p>
+              <ul className="space-y-0.5">
+                {preview.errors.map((e, i) => <li key={i} className="font-mono text-[10px] text-amber-700">• {e}</li>)}
+              </ul>
+            </div>
           )}
 
           <div className="flex gap-2">
@@ -1096,23 +1463,29 @@ function ImportTab({ onDone }: { onDone: () => void }) {
       {/* Result */}
       {result && (
         <div className={cn(
-          "rounded-xl border p-4 text-sm",
+          "rounded-xl border p-4 text-sm space-y-2",
+          result.rolledBack ? "border-red-200 bg-red-50 text-red-800" :
           result.imported > 0 ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-800"
         )}>
-          <p className="font-semibold">
-            {result.imported > 0
-              ? `${result.imported} formula${result.imported !== 1 ? "s" : ""} imported across ${result.sections.length} section${result.sections.length !== 1 ? "s" : ""}.`
-              : "No formulas were imported."}
-          </p>
+          {result.rolledBack ? (
+            <p className="font-semibold">Import failed — all changes were rolled back.</p>
+          ) : (
+            <p className="font-semibold">
+              {result.imported > 0
+                ? `${result.imported} formula${result.imported !== 1 ? "s" : ""} imported across ${result.sections.length} section${result.sections.length !== 1 ? "s" : ""}.`
+                : "No formulas were imported."}
+              {result.skipped ? ` ${result.skipped} skipped (already exist).` : ""}
+            </p>
+          )}
           {result.errors.length > 0 && (
-            <ul className="mt-2 space-y-1">
-              {result.errors.map((e, i) => <li key={i} className="text-xs">• {e}</li>)}
+            <ul className="space-y-0.5">
+              {result.errors.map((e, i) => <li key={i} className="font-mono text-xs">• {e}</li>)}
             </ul>
           )}
           <button
             type="button"
             onClick={() => { setResult(null); setFile(null); if (fileRef.current) fileRef.current.value = ""; }}
-            className="mt-3 text-xs underline opacity-70 hover:opacity-100"
+            className="text-xs underline opacity-70 hover:opacity-100"
           >
             Import another file
           </button>
@@ -1197,15 +1570,15 @@ sale:Sale Price:currency:true:250000:The sale price
         </div>
       </div>
 
-      {/* DOCX / TXT */}
+      {/* Text / DOCX */}
       <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
         <div className="flex items-start gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#f0ede3] text-slate-600">
             <Icons.FileText size={18} />
           </div>
           <div>
-            <p className="text-sm font-bold text-slate-800">DOCX / Text Template</p>
-            <p className="text-xs text-slate-500">One block per formula, separated by <code>---</code>. Upload as .docx or .txt</p>
+            <p className="text-sm font-bold text-slate-800">Text Template (.txt)</p>
+            <p className="text-xs text-slate-500">One block per formula, separated by <code>---</code>. Upload as .txt</p>
           </div>
         </div>
 
@@ -1237,10 +1610,6 @@ CALC EXPLANATION: Brings a comparable sale forward in time.
 ---`}
           </pre>
         </div>
-
-        <p className="text-[10px] text-slate-400">
-          Supported field names are shown above in uppercase. The <code>---</code> line (three dashes) separates each formula block. Fields in DOCX files are extracted as plain text by mammoth.
-        </p>
       </div>
     </div>
   );

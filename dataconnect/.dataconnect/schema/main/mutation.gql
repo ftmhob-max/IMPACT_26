@@ -135,6 +135,42 @@ extend type Mutation {
     data: SourceMaterial_Data!
   ): SourceMaterial_KeyOutput! @fdc_generated(from: "SourceMaterial", purpose: INSERT_SINGLE)
   """
+  ✨ Insert a single `SourceMaterialActivity` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  sourceMaterialActivity_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: SourceMaterialActivity_Data!
+  ): SourceMaterialActivity_KeyOutput! @fdc_generated(from: "SourceMaterialActivity", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `SourceMaterialFolder` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  sourceMaterialFolder_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: SourceMaterialFolder_Data!
+  ): SourceMaterialFolder_KeyOutput! @fdc_generated(from: "SourceMaterialFolder", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `SourceMaterialTag` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  sourceMaterialTag_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: SourceMaterialTag_Data!
+  ): SourceMaterialTag_KeyOutput! @fdc_generated(from: "SourceMaterialTag", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `SourceMaterialTagAssignment` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  sourceMaterialTagAssignment_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: SourceMaterialTagAssignment_Data!
+  ): SourceMaterialTagAssignment_KeyOutput! @fdc_generated(from: "SourceMaterialTagAssignment", purpose: INSERT_SINGLE)
+  """
   ✨ Insert a single `User` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
   user_insert(
@@ -296,6 +332,42 @@ extend type Mutation {
     """
     data: [SourceMaterial_Data!]!
   ): [SourceMaterial_KeyOutput!]! @fdc_generated(from: "SourceMaterial", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `SourceMaterialActivity` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  sourceMaterialActivity_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [SourceMaterialActivity_Data!]!
+  ): [SourceMaterialActivity_KeyOutput!]! @fdc_generated(from: "SourceMaterialActivity", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `SourceMaterialFolder` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  sourceMaterialFolder_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [SourceMaterialFolder_Data!]!
+  ): [SourceMaterialFolder_KeyOutput!]! @fdc_generated(from: "SourceMaterialFolder", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `SourceMaterialTag` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  sourceMaterialTag_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [SourceMaterialTag_Data!]!
+  ): [SourceMaterialTag_KeyOutput!]! @fdc_generated(from: "SourceMaterialTag", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `SourceMaterialTagAssignment` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  sourceMaterialTagAssignment_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [SourceMaterialTagAssignment_Data!]!
+  ): [SourceMaterialTagAssignment_KeyOutput!]! @fdc_generated(from: "SourceMaterialTagAssignment", purpose: INSERT_MULTIPLE)
   """
   ✨ Insert `User` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
@@ -459,6 +531,42 @@ extend type Mutation {
     data: SourceMaterial_Data!
   ): SourceMaterial_KeyOutput! @fdc_generated(from: "SourceMaterial", purpose: UPSERT_SINGLE)
   """
+  ✨ Insert or update a single `SourceMaterialActivity` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `SourceMaterialActivity`.
+  """
+  sourceMaterialActivity_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: SourceMaterialActivity_Data!
+  ): SourceMaterialActivity_KeyOutput! @fdc_generated(from: "SourceMaterialActivity", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `SourceMaterialFolder` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `SourceMaterialFolder`.
+  """
+  sourceMaterialFolder_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: SourceMaterialFolder_Data!
+  ): SourceMaterialFolder_KeyOutput! @fdc_generated(from: "SourceMaterialFolder", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `SourceMaterialTag` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `SourceMaterialTag`.
+  """
+  sourceMaterialTag_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: SourceMaterialTag_Data!
+  ): SourceMaterialTag_KeyOutput! @fdc_generated(from: "SourceMaterialTag", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `SourceMaterialTagAssignment` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `SourceMaterialTagAssignment`.
+  """
+  sourceMaterialTagAssignment_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: SourceMaterialTagAssignment_Data!
+  ): SourceMaterialTagAssignment_KeyOutput! @fdc_generated(from: "SourceMaterialTagAssignment", purpose: UPSERT_SINGLE)
+  """
   ✨ Insert or update a single `User` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `User`.
   """
   user_upsert(
@@ -620,6 +728,42 @@ extend type Mutation {
     """
     data: [SourceMaterial_Data!]!
   ): [SourceMaterial_KeyOutput!]! @fdc_generated(from: "SourceMaterial", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `SourceMaterialActivity` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `SourceMaterialActivity`.
+  """
+  sourceMaterialActivity_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [SourceMaterialActivity_Data!]!
+  ): [SourceMaterialActivity_KeyOutput!]! @fdc_generated(from: "SourceMaterialActivity", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `SourceMaterialFolder` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `SourceMaterialFolder`.
+  """
+  sourceMaterialFolder_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [SourceMaterialFolder_Data!]!
+  ): [SourceMaterialFolder_KeyOutput!]! @fdc_generated(from: "SourceMaterialFolder", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `SourceMaterialTag` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `SourceMaterialTag`.
+  """
+  sourceMaterialTag_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [SourceMaterialTag_Data!]!
+  ): [SourceMaterialTag_KeyOutput!]! @fdc_generated(from: "SourceMaterialTag", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `SourceMaterialTagAssignment` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `SourceMaterialTagAssignment`.
+  """
+  sourceMaterialTagAssignment_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [SourceMaterialTagAssignment_Data!]!
+  ): [SourceMaterialTagAssignment_KeyOutput!]! @fdc_generated(from: "SourceMaterialTagAssignment", purpose: UPSERT_MULTIPLE)
   """
   ✨ Insert or update `User` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `User`.
   """
@@ -998,6 +1142,102 @@ extend type Mutation {
     data: SourceMaterial_Data!
   ): SourceMaterial_KeyOutput @fdc_generated(from: "SourceMaterial", purpose: UPDATE_SINGLE)
   """
+  ✨ Update a single `SourceMaterialActivity` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `SourceMaterialActivity` or `null` if not found.
+  """
+  sourceMaterialActivity_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: SourceMaterialActivity_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: SourceMaterialActivity_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: SourceMaterialActivity_Data!
+  ): SourceMaterialActivity_KeyOutput @fdc_generated(from: "SourceMaterialActivity", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `SourceMaterialFolder` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `SourceMaterialFolder` or `null` if not found.
+  """
+  sourceMaterialFolder_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: SourceMaterialFolder_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: SourceMaterialFolder_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: SourceMaterialFolder_Data!
+  ): SourceMaterialFolder_KeyOutput @fdc_generated(from: "SourceMaterialFolder", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `SourceMaterialTag` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `SourceMaterialTag` or `null` if not found.
+  """
+  sourceMaterialTag_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: SourceMaterialTag_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: SourceMaterialTag_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: SourceMaterialTag_Data!
+  ): SourceMaterialTag_KeyOutput @fdc_generated(from: "SourceMaterialTag", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `SourceMaterialTagAssignment` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `SourceMaterialTagAssignment` or `null` if not found.
+  """
+  sourceMaterialTagAssignment_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: SourceMaterialTagAssignment_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: SourceMaterialTagAssignment_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: SourceMaterialTagAssignment_Data!
+  ): SourceMaterialTagAssignment_KeyOutput @fdc_generated(from: "SourceMaterialTagAssignment", purpose: UPDATE_SINGLE)
+  """
   ✨ Update a single `User` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `User` or `null` if not found.
   """
   user_update(
@@ -1350,6 +1590,82 @@ extend type Mutation {
     data: SourceMaterial_Data!
   ): Int! @fdc_generated(from: "SourceMaterial", purpose: UPDATE_MULTIPLE)
   """
+  ✨ Update `SourceMaterialActivity` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  sourceMaterialActivity_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: SourceMaterialActivity_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: SourceMaterialActivity_Data!
+  ): Int! @fdc_generated(from: "SourceMaterialActivity", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `SourceMaterialFolder` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  sourceMaterialFolder_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: SourceMaterialFolder_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: SourceMaterialFolder_Data!
+  ): Int! @fdc_generated(from: "SourceMaterialFolder", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `SourceMaterialTag` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  sourceMaterialTag_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: SourceMaterialTag_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: SourceMaterialTag_Data!
+  ): Int! @fdc_generated(from: "SourceMaterialTag", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `SourceMaterialTagAssignment` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  sourceMaterialTagAssignment_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: SourceMaterialTagAssignment_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: SourceMaterialTagAssignment_Data!
+  ): Int! @fdc_generated(from: "SourceMaterialTagAssignment", purpose: UPDATE_MULTIPLE)
+  """
   ✨ Update `User` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
   """
   user_updateMany(
@@ -1682,6 +1998,82 @@ extend type Mutation {
     first: SourceMaterial_FirstRow
   ): SourceMaterial_KeyOutput @fdc_generated(from: "SourceMaterial", purpose: DELETE_SINGLE)
   """
+  ✨ Delete a single `SourceMaterialActivity` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  sourceMaterialActivity_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: SourceMaterialActivity_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: SourceMaterialActivity_FirstRow
+  ): SourceMaterialActivity_KeyOutput @fdc_generated(from: "SourceMaterialActivity", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `SourceMaterialFolder` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  sourceMaterialFolder_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: SourceMaterialFolder_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: SourceMaterialFolder_FirstRow
+  ): SourceMaterialFolder_KeyOutput @fdc_generated(from: "SourceMaterialFolder", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `SourceMaterialTag` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  sourceMaterialTag_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: SourceMaterialTag_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: SourceMaterialTag_FirstRow
+  ): SourceMaterialTag_KeyOutput @fdc_generated(from: "SourceMaterialTag", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `SourceMaterialTagAssignment` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  sourceMaterialTagAssignment_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: SourceMaterialTagAssignment_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: SourceMaterialTagAssignment_FirstRow
+  ): SourceMaterialTagAssignment_KeyOutput @fdc_generated(from: "SourceMaterialTagAssignment", purpose: DELETE_SINGLE)
+  """
   ✨ Delete a single `User` based on `id`, `key` or `first` and return its key (or `null` if not found).
   """
   user_delete(
@@ -1943,6 +2335,62 @@ extend type Mutation {
     """
     all: Boolean = false
   ): Int! @fdc_generated(from: "SourceMaterial", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `SourceMaterialActivity` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  sourceMaterialActivity_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: SourceMaterialActivity_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterialActivity", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `SourceMaterialFolder` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  sourceMaterialFolder_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: SourceMaterialFolder_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterialFolder", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `SourceMaterialTag` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  sourceMaterialTag_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: SourceMaterialTag_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterialTag", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `SourceMaterialTagAssignment` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  sourceMaterialTagAssignment_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: SourceMaterialTagAssignment_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "SourceMaterialTagAssignment", purpose: DELETE_MULTIPLE)
   """
   ✨ Delete `User` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
   """

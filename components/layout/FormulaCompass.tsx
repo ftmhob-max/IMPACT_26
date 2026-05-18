@@ -1,12 +1,15 @@
 "use client";
 
-import { useMemo, useState, type ComponentType } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as Icons from "@/components/ui/Icons";
 import { cn } from "@/lib/utils";
-import { IconTile, StatusBadge } from "@/components/ui/LearnerPrimitives";
+import { StatusBadge } from "@/components/ui/LearnerPrimitives";
 import { FormulaCalculatorPanel } from "@/components/layout/FormulaCalculatorPanel";
+import { FormulaCalculatorPopup } from "@/components/quiz/FormulaCalculatorPopup";
 import { useFormulaCalc } from "@/components/layout/FormulaCalculatorProvider";
 import { getIdToken } from "@/lib/firebase/auth";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Formula {
   id: string;
@@ -31,116 +34,80 @@ interface FormulaCompassProps {
 }
 
 type SortOption = "manual" | "name" | "code";
+type CompassMode = "browse" | "drill";
+type DrillVerdict = "mastered" | "practice";
+
+// ─── Mastery helpers ──────────────────────────────────────────────────────────
+
+const MASTERY_KEY = "impact_formula_mastery_v1";
+
+function loadMastery(): Record<string, DrillVerdict> {
+  if (typeof window === "undefined") return {};
+  try { return JSON.parse(localStorage.getItem(MASTERY_KEY) ?? "{}"); } catch { return {}; }
+}
+function saveMastery(m: Record<string, DrillVerdict>) {
+  try { localStorage.setItem(MASTERY_KEY, JSON.stringify(m)); } catch { /* ignore */ }
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export function FormulaCompass({
   sections,
   initialFavoriteFormulaIds = [],
   canFavorite = false,
 }: FormulaCompassProps) {
-  const [openSections, setOpenSections] = useState<Set<string>>(
-    new Set(sections.map((s) => s.id))
-  );
+  // ── Browse state ──────────────────────────────────────────────────────────
+  const [openSections, setOpenSections] = useState<Set<string>>(new Set(sections.map((s) => s.id)));
   const [search, setSearch] = useState("");
   const [selectedSections, setSelectedSections] = useState<Set<string>>(new Set());
   const [sortBy, setSortBy] = useState<SortOption>("manual");
-  const [favoriteFormulaIds, setFavoriteFormulaIds] = useState<Set<string>>(
-    new Set(initialFavoriteFormulaIds)
-  );
+  const [favoriteFormulaIds, setFavoriteFormulaIds] = useState<Set<string>>(new Set(initialFavoriteFormulaIds));
   const [busyFavoriteId, setBusyFavoriteId] = useState<string | null>(null);
 
-  // Use provider for calculator (may be unavailable if rendered without provider)
+  // ── Mode ──────────────────────────────────────────────────────────────────
+  const [mode, setMode] = useState<CompassMode>("browse");
+
+  // ── Drill state ───────────────────────────────────────────────────────────
+  const [drillIndex, setDrillIndex] = useState(0);
+  const [drillRevealed, setDrillRevealed] = useState(false);
+  const [mastery, setMastery] = useState<Record<string, DrillVerdict>>(loadMastery);
+  const [drillSectionId, setDrillSectionId] = useState<string | null>(null); // null = all
+
+  // ── Calculator context ─────────────────────────────────────────────────────
   let calcCtx: ReturnType<typeof useFormulaCalc> | null = null;
   try { calcCtx = useFormulaCalc(); } catch { /* not in provider */ }
 
-  function toggleSection(id: string) {
-    setOpenSections((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
+  // ── Derived data ───────────────────────────────────────────────────────────
+  const allFormulas = useMemo(
+    () => sections.flatMap((s) => s.formulas.map((f) => ({ ...f, sectionCode: s.code, sectionId: s.id }))),
+    [sections]
+  );
 
-  function toggleSectionFilter(id: string) {
-    setSelectedSections((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
-
-  function clearFilters() {
-    setSearch("");
-    setSelectedSections(new Set());
-    setSortBy("manual");
-  }
-
-  function sectionDisplayTitle(section: FormulaSection) {
-    return section.title
-      .replace(new RegExp(`^${section.code}\\s*[·:-]\\s*`, "i"), "")
-      .trim();
-  }
-
-  async function toggleFavorite(formulaId: string) {
-    if (!canFavorite || busyFavoriteId === formulaId) return;
-    const isFavorite = favoriteFormulaIds.has(formulaId);
-
-    // Optimistic update — flip immediately so the UI responds at once.
-    setFavoriteFormulaIds((prev) => {
-      const next = new Set(prev);
-      if (isFavorite) next.delete(formulaId);
-      else next.add(formulaId);
-      return next;
-    });
-    setBusyFavoriteId(formulaId);
-
-    try {
-      const token = await getIdToken();
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const res = await fetch("/api/favorites", {
-        method: isFavorite ? "DELETE" : "POST",
-        headers,
-        body: JSON.stringify({ itemType: "formula", itemId: formulaId }),
-      });
-
-      if (!res.ok) {
-        // Revert on API failure.
-        setFavoriteFormulaIds((prev) => {
-          const next = new Set(prev);
-          if (isFavorite) next.add(formulaId);
-          else next.delete(formulaId);
-          return next;
-        });
-      }
-    } catch {
-      // Revert on network error.
-      setFavoriteFormulaIds((prev) => {
-        const next = new Set(prev);
-        if (isFavorite) next.add(formulaId);
-        else next.delete(formulaId);
-        return next;
-      });
-    } finally {
-      setBusyFavoriteId(null);
+  const drillFormulas = useMemo(() => {
+    if (drillSectionId) {
+      const sec = sections.find((s) => s.id === drillSectionId);
+      return sec ? sec.formulas.map((f) => ({ ...f, sectionCode: sec.code, sectionId: sec.id })) : allFormulas;
     }
-  }
+    return allFormulas;
+  }, [allFormulas, drillSectionId, sections]);
 
+  const masteredCount = drillFormulas.filter((f) => mastery[f.id] === "mastered").length;
+  const totalDrill = drillFormulas.length;
+
+  // Keep drillIndex in bounds when drillFormulas changes
+  const boundedDrillIndex = Math.min(drillIndex, Math.max(0, drillFormulas.length - 1));
+
+  // ── Browse visible sections ────────────────────────────────────────────────
   const visibleSections = useMemo(() => {
     const query = search.trim().toLowerCase();
     return sections
-      .filter((section) => selectedSections.size === 0 || selectedSections.has(section.id))
-      .map((section) => ({
-        ...section,
-        formulas: [...section.formulas]
-          .filter((formula) => {
+      .filter((s) => selectedSections.size === 0 || selectedSections.has(s.id))
+      .map((s) => ({
+        ...s,
+        formulas: [...s.formulas]
+          .filter((f) => {
             if (!query) return true;
-            return [formula.name, formula.code, formula.expression, formula.notes ?? ""]
-              .join(" ")
-              .toLowerCase()
-              .includes(query);
+            return [f.name, f.code, f.expression, f.notes ?? ""].join(" ").toLowerCase().includes(query);
           })
           .sort((a, b) => {
             if (sortBy === "name") return a.name.localeCompare(b.name);
@@ -148,265 +115,715 @@ export function FormulaCompass({
             return 0;
           }),
       }))
-      .filter((section) => section.formulas.length > 0);
+      .filter((s) => s.formulas.length > 0);
   }, [search, sections, selectedSections, sortBy]);
 
-  const totalVisible = visibleSections.reduce((sum, section) => sum + section.formulas.length, 0);
-  const totalFormulas = sections.reduce((sum, section) => sum + section.formulas.length, 0);
-  const favoriteCount = favoriteFormulaIds.size;
-  const activeFilterCount = selectedSections.size;
-  const hasActiveControls = Boolean(search.trim()) || activeFilterCount > 0 || sortBy !== "manual";
+  const totalVisible = visibleSections.reduce((sum, s) => sum + s.formulas.length, 0);
+  const hasActiveControls = Boolean(search.trim()) || selectedSections.size > 0 || sortBy !== "manual";
 
+  // ── Mastery actions ────────────────────────────────────────────────────────
+  function setVerdict(formulaId: string, verdict: DrillVerdict) {
+    setMastery((prev) => {
+      const next = { ...prev, [formulaId]: verdict };
+      saveMastery(next);
+      return next;
+    });
+    // Advance to next
+    setDrillIndex((i) => Math.min(i + 1, drillFormulas.length - 1));
+    setDrillRevealed(false);
+  }
+
+  function resetMastery() {
+    setMastery({});
+    saveMastery({});
+    setDrillIndex(0);
+    setDrillRevealed(false);
+  }
+
+  // ── Favorite toggle ────────────────────────────────────────────────────────
+  async function toggleFavorite(formulaId: string) {
+    if (!canFavorite || busyFavoriteId === formulaId) return;
+    const isFavorite = favoriteFormulaIds.has(formulaId);
+    setFavoriteFormulaIds((prev) => {
+      const next = new Set(prev);
+      if (isFavorite) next.delete(formulaId); else next.add(formulaId);
+      return next;
+    });
+    setBusyFavoriteId(formulaId);
+    try {
+      const token = await getIdToken();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch("/api/favorites", {
+        method: isFavorite ? "DELETE" : "POST",
+        headers,
+        body: JSON.stringify({ itemType: "formula", itemId: formulaId }),
+      });
+      if (!res.ok) {
+        setFavoriteFormulaIds((prev) => {
+          const next = new Set(prev);
+          if (isFavorite) next.add(formulaId); else next.delete(formulaId);
+          return next;
+        });
+      }
+    } catch {
+      setFavoriteFormulaIds((prev) => {
+        const next = new Set(prev);
+        if (isFavorite) next.add(formulaId); else next.delete(formulaId);
+        return next;
+      });
+    } finally {
+      setBusyFavoriteId(null);
+    }
+  }
+
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-5">
-      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-        <div className="grid border-b border-slate-100 sm:grid-cols-3">
-          <CompassMetric icon={Icons.ListOrdered} label="Total formulas" value={totalFormulas} />
-          <CompassMetric icon={Icons.BookMarked} label="Saved" value={favoriteCount} />
-          <CompassMetric icon={Icons.Compass} label="Visible now" value={totalVisible} />
-        </div>
+    <div className="space-y-0">
+      {/* ── Exam-style sticky header ─────────────────────────────────────── */}
+      <CompassHeader
+        sections={sections}
+        mode={mode}
+        onSetMode={(m) => { setMode(m); setDrillRevealed(false); setDrillIndex(0); }}
+        selectedSections={selectedSections}
+        onToggleSection={(id) => {
+          setSelectedSections((prev) => {
+            const next = new Set(prev);
+            next.has(id) ? next.delete(id) : next.add(id);
+            return next;
+          });
+          if (mode === "drill") setDrillSectionId((prev) => prev === id ? null : id);
+        }}
+        search={search}
+        onSearch={setSearch}
+        sortBy={sortBy}
+        onSort={setSortBy}
+        totalVisible={mode === "drill" ? totalDrill : totalVisible}
+        totalFormulas={allFormulas.length}
+        masteredCount={masteredCount}
+        calcCtx={calcCtx}
+        hasActiveControls={hasActiveControls}
+        onClearFilters={() => { setSearch(""); setSelectedSections(new Set()); setSortBy("manual"); }}
+      />
 
-        <div className="p-4 sm:p-5">
-          <div className="flex items-start gap-3">
-            <IconTile icon={Icons.Calculator} size={16} className="hidden h-9 w-9 sm:flex" />
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <p className="text-xs font-extrabold uppercase tracking-[0.08em] text-[#185FA5]">
-                    Formula Compass controls
-                  </p>
-                  <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
-                    Search formulas, narrow by assessment section, then open the calculator from the formula you need.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={clearFilters}
-                  disabled={!hasActiveControls}
-                  className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold text-slate-600 transition hover:border-[#185FA5] hover:text-[#185FA5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <Icons.X size={14} />
-                  Reset
-                </button>
-              </div>
-
-              <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.65fr)]">
-                <div>
-                  <label
-                    htmlFor="formula-search"
-                    className="text-xs font-extrabold uppercase tracking-[0.08em] text-[#185FA5]"
-                  >
-                    Search formulas
-                  </label>
-                  <div className="relative mt-2">
-                    <Icons.Search size={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input
-                      id="formula-search"
-                      type="search"
-                      placeholder="Try cap rate, COD, RCNLD, assessment ratio..."
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      className="h-11 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-3 text-sm text-slate-800 outline-none transition focus:border-[#185FA5] focus:ring-2 focus:ring-[#E6F1FB]"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="formula-sort"
-                    className="text-xs font-extrabold uppercase tracking-[0.08em] text-[#185FA5]"
-                  >
-                    Sort formulas
-                  </label>
-                  <select
-                    id="formula-sort"
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as SortOption)}
-                    className="mt-2 h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-[#185FA5] focus:ring-2 focus:ring-[#E6F1FB]"
-                  >
-                    <option value="manual">Manual order</option>
-                    <option value="name">Name A-Z</option>
-                    <option value="code">Code A-Z</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="mt-4">
-                <div className="flex items-center justify-between gap-3">
-                  <label className="text-xs font-extrabold uppercase tracking-[0.08em] text-[#185FA5]">
-                    Filter by section
-                  </label>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-400">
-                    {activeFilterCount === 0 ? "All sections" : `${activeFilterCount} selected`}
-                  </p>
-                </div>
-
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedSections(new Set())}
-                    className={cn(
-                      "rounded-md border px-3 py-1.5 text-[11px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2",
-                      activeFilterCount === 0
-                        ? "border-[#185FA5] bg-[#185FA5] text-white"
-                        : "border-slate-200 bg-white text-slate-600 hover:border-[#185FA5] hover:text-[#185FA5]"
-                    )}
-                  >
-                    All sections
-                  </button>
-                  {sections.map((section) => {
-                    const isActive = selectedSections.has(section.id);
-                    return (
-                      <button
-                        key={section.id}
-                        type="button"
-                        onClick={() => toggleSectionFilter(section.id)}
-                        className={cn(
-                          "inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-[11px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2",
-                          isActive
-                            ? "border-[#185FA5] bg-[#E6F1FB] text-[#185FA5]"
-                            : "border-slate-200 bg-white text-slate-600 hover:border-[#185FA5] hover:text-[#185FA5]"
-                        )}
-                      >
-                        <span>{section.code}</span>
-                        <span className={cn("h-1 w-1 rounded-full", isActive ? "bg-[#185FA5]" : "bg-slate-300")} />
-                        <span>{sectionDisplayTitle(section)}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3">
-                <p className="text-xs text-slate-500">
-                  Showing <span className="font-bold text-slate-800">{totalVisible}</span> of <span className="font-bold text-slate-800">{totalFormulas}</span> formulas across <span className="font-bold text-slate-800">{visibleSections.length}</span> sections.
-                </p>
-                {hasActiveControls && (
-                  <div className="flex flex-wrap gap-1.5">
-                    {search.trim() && <StatusBadge tone="blue">Search active</StatusBadge>}
-                    {activeFilterCount > 0 && <StatusBadge tone="slate">{activeFilterCount} sections</StatusBadge>}
-                    {sortBy !== "manual" && <StatusBadge tone="purple">Sorted {sortBy}</StatusBadge>}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {visibleSections.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-slate-200 bg-white px-6 py-10 text-center text-sm text-slate-500">
-          <Icons.Inbox size={32} className="mx-auto mb-3 text-slate-300" />
-          No formulas match the current search and filter settings.
-        </div>
-      ) : (
-        visibleSections.map((section) => {
-          const isOpen = openSections.has(section.id) || Boolean(search.trim()) || activeFilterCount > 0;
-          return (
-            <section key={section.id} className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-              <button
-                onClick={() => toggleSection(section.id)}
-                className="flex w-full items-start justify-between gap-4 px-5 py-4 text-left transition-colors hover:bg-[#F8F7F4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-inset"
-              >
-                <div className="flex min-w-0 items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[#b8d7f0] bg-[#E6F1FB] text-xs font-extrabold text-[#185FA5]">
-                    {section.code}
-                  </div>
-                  <div className="min-w-0">
-                    <h2 className="text-sm font-extrabold text-slate-900">{sectionDisplayTitle(section)}</h2>
-                    <p className="mt-1 text-xs leading-5 text-slate-500">
-                      {section.formulas.length} formula{section.formulas.length !== 1 ? "s" : ""} in this view
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="hidden shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-500 sm:inline-flex">
-                    {section.formulas.length}
-                  </span>
-                  {isOpen ? (
-                    <Icons.ChevronUp size={18} className="text-slate-400" />
-                  ) : (
-                    <Icons.ChevronDown size={18} className="text-slate-400" />
-                  )}
-                </div>
-              </button>
-
-              {isOpen && (
-                <div className="grid gap-0 border-t border-slate-100 lg:grid-cols-2 xl:grid-cols-3">
-                  {section.formulas.map((formula) => (
-                    <article key={formula.id} className="border-b border-slate-100 px-5 py-4 transition-colors hover:bg-[#fbfcfd] lg:border-r lg:[&:nth-child(2n)]:border-r-0 xl:[&:nth-child(2n)]:border-r xl:[&:nth-child(3n)]:border-r-0">
-                      <div className="mb-3 flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="font-mono text-xs font-extrabold text-[#185FA5]">{formula.code}</p>
-                          <h3 className="mt-1 text-sm font-bold leading-snug text-slate-900">{formula.name}</h3>
-                        </div>
-                        <div className="flex shrink-0 items-center gap-2">
-                          {calcCtx && (
-                            <button
-                              type="button"
-                              onClick={() => calcCtx!.open(formula.code)}
-                              aria-label={`Open calculator for ${formula.name}`}
-                              title="Open calculator"
-                              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#b8d7f0] bg-white text-[#185FA5] transition hover:bg-[#E6F1FB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2"
-                            >
-                              <Icons.Calculator size={14} />
-                            </button>
-                          )}
-                          {canFavorite && (
-                            <button
-                              type="button"
-                              onClick={() => toggleFavorite(formula.id)}
-                              disabled={busyFavoriteId === formula.id}
-                              aria-pressed={favoriteFormulaIds.has(formula.id)}
-                              aria-label={favoriteFormulaIds.has(formula.id) ? "Remove favorite formula" : "Save formula"}
-                              title={favoriteFormulaIds.has(formula.id) ? "Remove favorite formula" : "Save formula"}
-                              className={cn(
-                                "inline-flex h-8 w-8 items-center justify-center rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60",
-                                favoriteFormulaIds.has(formula.id)
-                                  ? "border-[#185FA5] bg-[#E6F1FB] text-[#185FA5]"
-                                  : "border-slate-200 bg-white text-slate-400 hover:border-[#185FA5] hover:text-[#185FA5]"
-                              )}
-                            >
-                              <Icons.BookMarked size={15} />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                      <p className="font-calc overflow-x-auto rounded-md border border-[#b8d7f0] bg-[#f8fbff] px-3 py-2 text-[12px] text-slate-800">
-                        {formula.expression}
-                      </p>
-                      {formula.notes && <p className="mt-2 text-xs leading-5 text-slate-500">{formula.notes}</p>}
-                    </article>
-                  ))}
-                </div>
-              )}
-            </section>
-          );
-        })
+      {/* ── Drill mode ────────────────────────────────────────────────────── */}
+      {mode === "drill" && (
+        <DrillView
+          formulas={drillFormulas}
+          index={boundedDrillIndex}
+          revealed={drillRevealed}
+          mastery={mastery}
+          masteredCount={masteredCount}
+          onReveal={() => setDrillRevealed(true)}
+          onVerdict={(id, v) => setVerdict(id, v)}
+          onNavigate={(delta) => {
+            setDrillIndex((i) => Math.max(0, Math.min(drillFormulas.length - 1, i + delta)));
+            setDrillRevealed(false);
+          }}
+          onResetMastery={resetMastery}
+          canFavorite={canFavorite}
+          favoriteFormulaIds={favoriteFormulaIds}
+          onToggleFavorite={toggleFavorite}
+          busyFavoriteId={busyFavoriteId}
+          calcCtx={calcCtx}
+        />
       )}
 
-      {/* Modal rendered by FormulaCalculatorPanel when isOpen (driven by provider) */}
-      {calcCtx && <FormulaCalculatorPanel />}
+      {/* ── Browse mode ───────────────────────────────────────────────────── */}
+      {mode === "browse" && (
+        <div className="space-y-4 mt-4">
+          {visibleSections.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-slate-200 bg-white px-6 py-10 text-center text-sm text-slate-500">
+              <Icons.Inbox size={32} className="mx-auto mb-3 text-slate-300" />
+              No formulas match the current search and filter settings.
+            </div>
+          ) : (
+            visibleSections.map((section) => {
+              const isOpen = openSections.has(section.id) || Boolean(search.trim()) || selectedSections.size > 0;
+              return (
+                <section key={section.id} className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+                  <button
+                    onClick={() => {
+                      setOpenSections((prev) => {
+                        const next = new Set(prev);
+                        next.has(section.id) ? next.delete(section.id) : next.add(section.id);
+                        return next;
+                      });
+                    }}
+                    className="flex w-full items-start justify-between gap-4 px-5 py-4 text-left transition-colors hover:bg-[#F8F7F4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-inset"
+                  >
+                    <div>
+                      <StatusBadge tone="blue" className="mb-2">{section.code}</StatusBadge>
+                      <h2 className="text-sm font-extrabold text-slate-900">{section.title}</h2>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-500">
+                        {section.formulas.length}
+                      </span>
+                      {isOpen ? <Icons.ChevronUp size={18} className="text-slate-400" /> : <Icons.ChevronDown size={18} className="text-slate-400" />}
+                    </div>
+                  </button>
+
+                  {isOpen && (
+                    <div className="grid gap-0 border-t border-slate-100 sm:grid-cols-2">
+                      {section.formulas.map((formula) => (
+                        <FormulaCard
+                          key={formula.id}
+                          formula={formula}
+                          isFavorite={favoriteFormulaIds.has(formula.id)}
+                          isBusy={busyFavoriteId === formula.id}
+                          canFavorite={canFavorite}
+                          mastery={mastery[formula.id]}
+                          searchQuery={search}
+                          calcCtx={calcCtx}
+                          onToggleFavorite={() => toggleFavorite(formula.id)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </section>
+              );
+            })
+          )}
+        </div>
+      )}
+
+      {/* ── Floating calculator popup (same as quiz engine) ──────────────── */}
+      {calcCtx && <FormulaCalculatorPopup />}
+
+      {/* ── Full modal fallback (only when not in provider) ──────────────── */}
+      {!calcCtx && <FormulaCalculatorPanel />}
     </div>
   );
 }
 
-function CompassMetric({
-  icon,
-  label,
-  value,
+// ─── Exam-style sticky header ─────────────────────────────────────────────────
+
+function CompassHeader({
+  sections,
+  mode,
+  onSetMode,
+  selectedSections,
+  onToggleSection,
+  search,
+  onSearch,
+  sortBy,
+  onSort,
+  totalVisible,
+  totalFormulas,
+  masteredCount,
+  calcCtx,
+  hasActiveControls,
+  onClearFilters,
 }: {
-  icon: ComponentType<Icons.IconProps>;
-  label: string;
-  value: number;
+  sections: FormulaSection[];
+  mode: CompassMode;
+  onSetMode: (m: CompassMode) => void;
+  selectedSections: Set<string>;
+  onToggleSection: (id: string) => void;
+  search: string;
+  onSearch: (v: string) => void;
+  sortBy: SortOption;
+  onSort: (v: SortOption) => void;
+  totalVisible: number;
+  totalFormulas: number;
+  masteredCount: number;
+  calcCtx: ReturnType<typeof useFormulaCalc> | null;
+  hasActiveControls: boolean;
+  onClearFilters: () => void;
 }) {
   return (
-    <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-4 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0">
-      <IconTile icon={icon} size={16} className="h-9 w-9" />
-      <div>
-        <p className="text-xl font-extrabold leading-none tracking-[-0.02em] text-slate-950">{value}</p>
-        <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-400">{label}</p>
+    <header className="sticky top-0 z-30 rounded-xl overflow-hidden shadow-lg ring-1 ring-black/10">
+      {/* Dark blue bar */}
+      <div className="bg-[#073866] px-4 py-3 sm:px-5">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-white/60">
+              IMPACT_26 / Formula Compass
+            </p>
+            <p className="mt-0.5 text-base font-extrabold leading-tight text-white">
+              Assessment Formula Reference
+            </p>
+            {mode === "drill" ? (
+              <p className="mt-0.5 text-[11.5px] text-white/75">
+                {masteredCount} of {totalVisible} mastered
+                {selectedSections.size > 0 && ` · ${sections.find((s) => selectedSections.has(s.id))?.code ?? "Filtered"} section`}
+              </p>
+            ) : (
+              <p className="mt-0.5 text-[11.5px] text-white/75">
+                {totalVisible} of {totalFormulas} formulas
+                {hasActiveControls && " · Filters active"}
+              </p>
+            )}
+          </div>
+
+          {/* Mode toggle + calculator button */}
+          <div className="flex shrink-0 items-center gap-2">
+            {/* Browse / Drill toggle */}
+            <div className="flex rounded-lg border border-white/20 overflow-hidden text-[11px] font-bold">
+              {(["browse", "drill"] as CompassMode[]).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => onSetMode(m)}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 transition-colors",
+                    mode === m ? "bg-white text-[#073866]" : "text-white/80 hover:bg-white/15"
+                  )}
+                >
+                  {m === "browse" ? <Icons.List size={12} /> : <Icons.GraduationCap size={12} />}
+                  {m === "browse" ? "Browse" : "Drill"}
+                </button>
+              ))}
+            </div>
+
+            {/* Calculator button */}
+            {calcCtx && (
+              <button
+                type="button"
+                onClick={() => calcCtx!.isOpen ? (calcCtx!.isMinimized ? calcCtx!.restore() : undefined) : calcCtx!.open()}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[11px] font-bold transition-colors",
+                  calcCtx.isOpen && !calcCtx.isMinimized
+                    ? "border-white/60 bg-white/20 text-white"
+                    : "border-white/20 text-white/80 hover:bg-white/15"
+                )}
+              >
+                <Icons.Calculator size={12} />
+                Calculator
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Section chips — like domain pills in the quiz */}
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          <button
+            type="button"
+            onClick={onClearFilters}
+            className={cn(
+              "rounded-full border px-2.5 py-0.5 text-[10px] font-bold transition-colors",
+              selectedSections.size === 0 && !search.trim()
+                ? "border-white/60 bg-white/20 text-white"
+                : "border-white/20 text-white/60 hover:bg-white/15"
+            )}
+          >
+            All sections
+          </button>
+          {sections.map((section) => {
+            const active = selectedSections.has(section.id);
+            return (
+              <button
+                key={section.id}
+                type="button"
+                onClick={() => onToggleSection(section.id)}
+                className={cn(
+                  "rounded-full border px-2.5 py-0.5 text-[10px] font-bold transition-colors",
+                  active
+                    ? "border-white/80 bg-white text-[#073866]"
+                    : "border-white/20 text-white/70 hover:bg-white/15"
+                )}
+              >
+                {section.code}
+              </button>
+            );
+          })}
+        </div>
       </div>
+
+      {/* Search + sort bar (browse mode only) */}
+      {mode === "browse" && (
+        <div className="flex flex-wrap gap-2 bg-[#0a4a7a]/90 backdrop-blur px-4 py-2.5 sm:px-5">
+          <div className="relative flex-1 min-w-[180px]">
+            <Icons.Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-white/50" />
+            <input
+              type="search"
+              placeholder="Search formulas…"
+              value={search}
+              onChange={(e) => onSearch(e.target.value)}
+              className="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 pl-8 text-[12px] text-white placeholder-white/40 outline-none transition focus:border-white/50 focus:bg-white/15"
+            />
+          </div>
+          <select
+            value={sortBy}
+            onChange={(e) => onSort(e.target.value as SortOption)}
+            className="rounded-lg border border-white/20 bg-white/10 px-2.5 py-1.5 text-[12px] text-white/80 outline-none focus:border-white/50"
+          >
+            <option value="manual">Manual order</option>
+            <option value="name">Name A-Z</option>
+            <option value="code">Code A-Z</option>
+          </select>
+        </div>
+      )}
+
+      {/* Mastery progress bar (drill mode) */}
+      {mode === "drill" && totalVisible > 0 && (
+        <div className="h-1.5 bg-white/20">
+          <div
+            className="h-full bg-emerald-400 transition-all duration-500"
+            style={{ width: `${(masteredCount / totalVisible) * 100}%` }}
+          />
+        </div>
+      )}
+    </header>
+  );
+}
+
+// ─── Drill / Flash-card view ──────────────────────────────────────────────────
+
+function DrillView({
+  formulas,
+  index,
+  revealed,
+  mastery,
+  masteredCount,
+  onReveal,
+  onVerdict,
+  onNavigate,
+  onResetMastery,
+  canFavorite,
+  favoriteFormulaIds,
+  onToggleFavorite,
+  busyFavoriteId,
+  calcCtx,
+}: {
+  formulas: Array<Formula & { sectionCode: string; sectionId: string }>;
+  index: number;
+  revealed: boolean;
+  mastery: Record<string, DrillVerdict>;
+  masteredCount: number;
+  onReveal: () => void;
+  onVerdict: (id: string, verdict: DrillVerdict) => void;
+  onNavigate: (delta: number) => void;
+  onResetMastery: () => void;
+  canFavorite: boolean;
+  favoriteFormulaIds: Set<string>;
+  onToggleFavorite: (id: string) => void;
+  busyFavoriteId: string | null;
+  calcCtx: ReturnType<typeof useFormulaCalc> | null;
+}) {
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  // Keyboard navigation in drill mode
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if ((e.target as HTMLElement).tagName === "INPUT") return;
+      if (e.key === "ArrowLeft") onNavigate(-1);
+      if (e.key === "ArrowRight") onNavigate(1);
+      if (e.key === " " || e.key === "Enter") { e.preventDefault(); if (!revealed) onReveal(); }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [revealed]);
+
+  if (formulas.length === 0) {
+    return (
+      <div className="mt-8 flex flex-col items-center gap-4 rounded-xl border border-dashed border-slate-200 bg-white py-16 text-center">
+        <Icons.Calculator size={40} className="text-slate-300" />
+        <p className="text-sm font-semibold text-slate-500">No formulas to drill. Select a section to get started.</p>
+      </div>
+    );
+  }
+
+  const formula = formulas[index];
+  const currentVerdict = mastery[formula.id];
+  const allDone = formulas.every((f) => mastery[f.id]);
+
+  return (
+    <div className="mt-5 space-y-4">
+      {/* Counter */}
+      <div className="flex items-center justify-between text-xs text-slate-500 px-1">
+        <span className="font-semibold">Card {index + 1} of {formulas.length}</span>
+        <div className="flex items-center gap-3">
+          <span className="flex items-center gap-1">
+            <span className="h-2 w-2 rounded-full bg-emerald-400" />
+            {masteredCount} mastered
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="h-2 w-2 rounded-full bg-amber-400" />
+            {formulas.filter((f) => mastery[f.id] === "practice").length} practicing
+          </span>
+          <button
+            type="button"
+            onClick={onResetMastery}
+            className="text-slate-400 hover:text-slate-700 underline underline-offset-2"
+          >
+            Reset
+          </button>
+        </div>
+      </div>
+
+      {/* Flash card */}
+      <div
+        ref={cardRef}
+        className={cn(
+          "relative overflow-hidden rounded-2xl border bg-white shadow-lg transition-all duration-300",
+          currentVerdict === "mastered" ? "border-emerald-300" :
+          currentVerdict === "practice" ? "border-amber-300" : "border-slate-200"
+        )}
+      >
+        {/* Card top accent */}
+        <div className={cn(
+          "h-1.5 w-full",
+          currentVerdict === "mastered" ? "bg-emerald-400" :
+          currentVerdict === "practice" ? "bg-amber-400" : "bg-[#185FA5]"
+        )} />
+
+        <div className="px-6 pb-6 pt-5">
+          {/* Formula code + name */}
+          <div className="mb-5">
+            <span className="font-mono text-xs font-bold text-[#185FA5] tracking-wider">{formula.code}</span>
+            <h2 className="mt-1.5 text-xl font-extrabold leading-snug text-slate-900">{formula.name}</h2>
+            {currentVerdict && (
+              <span className={cn(
+                "mt-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold",
+                currentVerdict === "mastered"
+                  ? "bg-emerald-100 text-emerald-700"
+                  : "bg-amber-100 text-amber-700"
+              )}>
+                {currentVerdict === "mastered" ? <Icons.Check size={11} /> : <Icons.RotateCcw size={11} />}
+                {currentVerdict === "mastered" ? "Mastered" : "Still practicing"}
+              </span>
+            )}
+          </div>
+
+          {/* Reveal / expression area */}
+          {!revealed ? (
+            <div className="flex flex-col items-center gap-4 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 py-8">
+              <p className="text-sm text-slate-400">Can you recall this formula?</p>
+              <button
+                type="button"
+                onClick={onReveal}
+                className="rounded-lg bg-[#185FA5] px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-[#134d88] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] active:scale-95 transition-all"
+              >
+                Reveal expression
+              </button>
+              <p className="text-[11px] text-slate-400">Press Space or Enter to reveal</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Expression */}
+              <div className="font-calc rounded-xl border border-[#b8d7f0] bg-[#f8fbff] px-4 py-3 text-[13px] leading-relaxed text-slate-800 shadow-sm">
+                {formula.expression}
+              </div>
+
+              {/* Notes */}
+              {formula.notes && (
+                <p className="text-[13px] leading-relaxed text-slate-500 italic">{formula.notes}</p>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={() => onVerdict(formula.id, "mastered")}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl border-2 border-emerald-300 bg-emerald-50 py-3 text-sm font-bold text-emerald-700 transition-all hover:bg-emerald-100 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+                >
+                  <Icons.Check size={15} />
+                  Got it
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onVerdict(formula.id, "practice")}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl border-2 border-amber-300 bg-amber-50 py-3 text-sm font-bold text-amber-700 transition-all hover:bg-amber-100 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                >
+                  <Icons.RotateCcw size={14} />
+                  Need review
+                </button>
+              </div>
+
+              {/* Calculator + favorite row */}
+              <div className="flex items-center gap-2 pt-1 border-t border-slate-100">
+                {calcCtx && (
+                  <button
+                    type="button"
+                    onClick={() => calcCtx!.open(formula.code)}
+                    className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-[#185FA5] hover:bg-[#E6F1FB] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5]"
+                  >
+                    <Icons.Calculator size={12} />
+                    Open calculator
+                  </button>
+                )}
+                {canFavorite && (
+                  <button
+                    type="button"
+                    onClick={() => onToggleFavorite(formula.id)}
+                    disabled={busyFavoriteId === formula.id}
+                    aria-pressed={favoriteFormulaIds.has(formula.id)}
+                    aria-label={favoriteFormulaIds.has(formula.id) ? "Remove from saved" : "Save formula"}
+                    className={cn(
+                      "ml-auto flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] disabled:opacity-60",
+                      favoriteFormulaIds.has(formula.id)
+                        ? "bg-[#E6F1FB] text-[#185FA5]"
+                        : "text-slate-400 hover:bg-slate-100"
+                    )}
+                  >
+                    <Icons.BookMarked size={12} />
+                    {favoriteFormulaIds.has(formula.id) ? "Saved" : "Save"}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <div className="flex items-center justify-between px-1">
+        <button
+          type="button"
+          onClick={() => onNavigate(-1)}
+          disabled={index === 0}
+          className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-[#185FA5] hover:text-[#185FA5] disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5]"
+        >
+          <Icons.ChevronLeft size={15} />
+          Previous
+        </button>
+
+        {/* Dot indicators */}
+        <div className="flex items-center gap-1.5">
+          {formulas.slice(Math.max(0, index - 3), index + 4).map((f, i) => {
+            const abs = Math.max(0, index - 3) + i;
+            const v = mastery[f.id];
+            return (
+              <span
+                key={f.id}
+                className={cn(
+                  "rounded-full transition-all",
+                  abs === index ? "h-2.5 w-2.5" : "h-1.5 w-1.5",
+                  v === "mastered" ? "bg-emerald-400" :
+                  v === "practice" ? "bg-amber-400" :
+                  abs === index ? "bg-[#185FA5]" : "bg-slate-200"
+                )}
+              />
+            );
+          })}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => onNavigate(1)}
+          disabled={index === formulas.length - 1}
+          className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-[#185FA5] hover:text-[#185FA5] disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5]"
+        >
+          Next
+          <Icons.ChevronRight size={15} />
+        </button>
+      </div>
+
+      {/* All done banner */}
+      {allDone && (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-center">
+          <p className="text-sm font-bold text-emerald-800">
+            🎉 All {formulas.length} formulas reviewed!
+          </p>
+          <p className="mt-1 text-xs text-emerald-700">
+            {masteredCount} mastered · {formulas.length - masteredCount} need more practice
+          </p>
+          <button
+            type="button"
+            onClick={onResetMastery}
+            className="mt-3 rounded-lg border border-emerald-300 bg-white px-4 py-1.5 text-xs font-bold text-emerald-700 hover:bg-emerald-100 transition"
+          >
+            Start over
+          </button>
+        </div>
+      )}
     </div>
+  );
+}
+
+// ─── Browse mode formula card ─────────────────────────────────────────────────
+
+function FormulaCard({
+  formula,
+  isFavorite,
+  isBusy,
+  canFavorite,
+  mastery,
+  searchQuery,
+  calcCtx,
+  onToggleFavorite,
+}: {
+  formula: Formula;
+  isFavorite: boolean;
+  isBusy: boolean;
+  canFavorite: boolean;
+  mastery?: DrillVerdict;
+  searchQuery: string;
+  calcCtx: ReturnType<typeof useFormulaCalc> | null;
+  onToggleFavorite: () => void;
+}) {
+  return (
+    <article className="border-b border-slate-100 px-5 py-4 transition-colors hover:bg-[#fbfcfd]">
+      <div className="mb-2 flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="font-mono text-xs font-semibold text-[#185FA5]">{formula.code}</p>
+            {mastery === "mastered" && (
+              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-bold text-emerald-700 flex items-center gap-1">
+                <Icons.Check size={9} /> Mastered
+              </span>
+            )}
+            {mastery === "practice" && (
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-bold text-amber-700">
+                Practicing
+              </span>
+            )}
+          </div>
+          <h3 className="mt-1 text-sm font-semibold leading-snug text-slate-800">{formula.name}</h3>
+        </div>
+        {canFavorite && (
+          <button
+            type="button"
+            onClick={onToggleFavorite}
+            disabled={isBusy}
+            aria-pressed={isFavorite}
+            aria-label={isFavorite ? "Remove favorite formula" : "Save formula"}
+            className={cn(
+              "inline-flex h-8 w-8 items-center justify-center rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60",
+              isFavorite
+                ? "border-[#185FA5] bg-[#E6F1FB] text-[#185FA5]"
+                : "border-slate-200 bg-white text-slate-400 hover:border-[#185FA5] hover:text-[#185FA5]"
+            )}
+          >
+            <Icons.BookMarked size={15} />
+          </button>
+        )}
+      </div>
+      <p className="font-calc rounded-md border border-[#b8d7f0] bg-[#f8fbff] px-3 py-2 text-[12px] text-slate-800">
+        {HighlightText(formula.expression, searchQuery)}
+      </p>
+      {formula.notes && <p className="mt-2 text-xs leading-5 text-slate-500">{formula.notes}</p>}
+      {calcCtx && (
+        <button
+          type="button"
+          onClick={() => calcCtx.open(formula.code)}
+          className="mt-3 inline-flex items-center gap-1.5 rounded text-xs font-semibold text-[#185FA5] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2"
+        >
+          <Icons.Calculator size={12} />
+          Open calculator
+        </button>
+      )}
+    </article>
+  );
+}
+
+// ─── Search highlight helper ──────────────────────────────────────────────────
+
+function HighlightText(text: string, query: string) {
+  if (!query.trim()) return <>{text}</>;
+  const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "ig");
+  return (
+    <>
+      {text.split(regex).map((part, i) =>
+        part.toLowerCase() === query.toLowerCase() ? (
+          <mark key={i} className="rounded bg-[#fff0b8] px-0.5 text-inherit">{part}</mark>
+        ) : (
+          <span key={i}>{part}</span>
+        )
+      )}
+    </>
   );
 }

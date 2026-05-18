@@ -136,11 +136,18 @@ export function QuestionCard({
 
   return (
     <article className="overflow-hidden rounded-lg border border-[rgba(0,0,0,0.11)] bg-white shadow-sm transition-shadow duration-150 hover:shadow-md">
-      <div className={`h-[3.5px] ${domainConfig?.barClass ?? "bar-math"}`} />
+      <div className={`h-[5px] ${domainConfig?.barClass ?? "bar-math"}`} />
 
       <div className="px-4 pb-3 pt-3.5 sm:px-5">
         <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start">
-          <span className="w-fit rounded-md bg-[#f8f7f4] px-2 py-1 text-[11px] font-extrabold tabular-nums text-[#888880]">
+          <span
+            className="w-fit rounded-md px-2 py-1 text-[12px] font-extrabold tabular-nums"
+            style={{
+              background: domainConfig?.color ? `${domainConfig.color}18` : "#f8f7f4",
+              color: domainConfig?.color ?? "#888880",
+              border: `1px solid ${domainConfig?.color ?? "#e8e7e0"}40`,
+            }}
+          >
             Q{index + 1}
           </span>
           <div className="min-w-0 flex-1">
@@ -152,7 +159,17 @@ export function QuestionCard({
           <div className="flex shrink-0 flex-wrap gap-1.5 sm:max-w-[210px] sm:justify-end">
             <DifficultyBadge difficulty={question.difficulty as Difficulty} />
             <DomainBadge domain={question.domain as Domain} />
-            {question.formulaRef && (
+            {question.formulaRef && canUseCalc && (
+              <button
+                type="button"
+                onClick={handleOpenCalculator}
+                title={`Open ${question.formulaRef} in calculator`}
+                className="rounded-full border border-[#b8d7f0] bg-[#f0f7ff] px-1.5 py-0.5 font-mono text-[9px] font-bold text-[#185FA5] transition-colors hover:border-[#185FA5] hover:bg-[#E6F1FB] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#185FA5]"
+              >
+                {question.formulaRef}
+              </button>
+            )}
+            {question.formulaRef && !canUseCalc && (
               <span className="rounded-full border border-[rgba(0,0,0,0.11)] bg-[#f8f7f4] px-1.5 py-0.5 font-mono text-[9px] font-bold text-[#888880]">
                 {question.formulaRef}
               </span>
@@ -172,41 +189,49 @@ export function QuestionCard({
             />
           ))}
 
+          {/* Separator between choices and actions */}
+          {(selectedLetters.length > 0 || true) && (
+            <hr className="border-[rgba(0,0,0,0.08)] mt-1" />
+          )}
+
+          {/* Primary action: Submit */}
           {!isLocked && selectedLetters.length > 0 && (
             <button
               onClick={onSubmit}
               disabled={isSubmitting}
-              className="mt-1 w-full rounded-lg bg-[#185FA5] px-4 py-2 text-sm font-bold text-white transition-colors duration-150 hover:bg-[#0d3d6e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2 disabled:opacity-50"
+              className="mt-1 w-full rounded-lg bg-[#185FA5] px-4 py-2.5 text-[13px] font-bold text-white transition-colors duration-150 hover:bg-[#0d3d6e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2 disabled:opacity-50"
             >
               {isSubmitting ? "Checking..." : "Submit answer"}
             </button>
           )}
 
-          {/* Use Calculator button — shown when quiz allows calculator */}
-          {canUseCalc && (
-            <button
-              type="button"
-              onClick={handleOpenCalculator}
-              className="mt-1 inline-flex items-center gap-1.5 rounded-md border border-[#b8d7f0] bg-[#f8fbff] px-3.5 py-1.5 text-left text-[11.5px] font-semibold text-[#185FA5] transition-colors hover:border-[#185FA5] hover:bg-[#E6F1FB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2"
-            >
-              <Icons.Calculator size={12} />
-              {question.formulaRef ? `${question.formulaRef} Calculator` : "Use Calculator"}
-            </button>
-          )}
+          {/* Secondary actions: Calculator + Show answer side-by-side */}
+          <div className="flex gap-2 mt-1">
+            {canUseCalc && (
+              <button
+                type="button"
+                onClick={handleOpenCalculator}
+                className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-md border border-[#b8d7f0] bg-[#f8fbff] px-3 py-1.5 text-[11.5px] font-semibold text-[#185FA5] transition-colors hover:border-[#185FA5] hover:bg-[#E6F1FB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2"
+              >
+                <Icons.Calculator size={12} />
+                {question.formulaRef ? `${question.formulaRef} Calc` : "Calculator"}
+              </button>
+            )}
 
-          <button
-            onClick={handleTogglePanel}
-            disabled={isPeeking}
-            className="mt-1 inline-flex w-fit items-center gap-1.5 rounded-md border px-4 py-1.5 text-left text-[11.5px] font-bold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2 disabled:opacity-50"
-            style={
-              answerPanelOpen
-                ? { color: "#185FA5", borderColor: "#185FA5", background: "#E6F1FB" }
-                : { color: "#888880", borderColor: "rgba(0,0,0,0.20)", background: "transparent" }
-            }
-          >
-            {isPeeking ? "Loading..." : answerPanelOpen ? "Hide answer" : "Show answer"}
-            {!isPeeking && (answerPanelOpen ? <Icons.ChevronUp size={13} /> : <Icons.ChevronRight size={13} />)}
-          </button>
+            <button
+              onClick={handleTogglePanel}
+              disabled={isPeeking}
+              className={`inline-flex items-center justify-center gap-1.5 rounded-md border px-4 py-1.5 text-[11.5px] font-bold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2 disabled:opacity-50 ${canUseCalc ? "flex-1" : ""}`}
+              style={
+                answerPanelOpen
+                  ? { color: "#185FA5", borderColor: "#185FA5", background: "#E6F1FB" }
+                  : { color: "#888880", borderColor: "rgba(0,0,0,0.20)", background: "transparent" }
+              }
+            >
+              {isPeeking ? "Loading..." : answerPanelOpen ? "Hide answer" : "Show answer"}
+              {!isPeeking && (answerPanelOpen ? <Icons.ChevronUp size={13} /> : <Icons.ChevronRight size={13} />)}
+            </button>
+          </div>
 
           {panelData && (
             <AnswerPanel result={panelData} isOpen={answerPanelOpen} />

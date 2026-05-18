@@ -9,6 +9,8 @@ export async function GET(req: NextRequest) {
   const format = new URL(req.url).searchParams.get("format") ?? "csv";
 
   if (format === "docx") {
+    // Serve as plain text (.txt) so users can open and edit it in any text editor.
+    // The importer accepts .txt files directly, which is simpler than a real .docx.
     return new Response(DOCX_TEMPLATE, {
       headers: {
         "Content-Type": "text/plain; charset=utf-8",

@@ -11,14 +11,14 @@ interface GlossaryTerm {
   id: string;
   term: string;
   definition: string;
+  fullDefinition?: string | null;
   domain?: string | null;
   category?: string | null;
   example?: string | null;
   relatedTerms: string[];
   isPublished: boolean;
+  sourceDocument?: string | null;
 }
-
-const DOMAINS = ["math", "appraisal", "law", "philly", "admin", "ethics", "general"] as const;
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
@@ -142,7 +142,9 @@ export function GlossaryManager() {
           />
           <select className="admin-input w-36" value={filterDomain} onChange={(e) => setFilterDomain(e.target.value)}>
             <option value="">All domains</option>
-            {DOMAINS.map((d) => <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>)}
+            {[...new Set(terms.map((t) => t.domain).filter(Boolean))].sort().map((d) => (
+              <option key={d} value={d!}>{d!.charAt(0).toUpperCase() + d!.slice(1)}</option>
+            ))}
           </select>
           <select className="admin-input w-32" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value as any)}>
             <option value="">All statuses</option>
@@ -368,11 +370,13 @@ function TermForm({
 }) {
   const [term, setTerm] = useState(initial?.term ?? "");
   const [definition, setDefinition] = useState(initial?.definition ?? "");
+  const [fullDefinition, setFullDefinition] = useState(initial?.fullDefinition ?? "");
   const [domain, setDomain] = useState(initial?.domain ?? "");
   const [category, setCategory] = useState(initial?.category ?? "");
   const [example, setExample] = useState(initial?.example ?? "");
   const [relatedText, setRelatedText] = useState(initial?.relatedTerms.join(", ") ?? "");
   const [isPublished, setIsPublished] = useState(initial?.isPublished ?? false);
+  const [sourceDocument, setSourceDocument] = useState(initial?.sourceDocument ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -383,11 +387,13 @@ function TermForm({
     await onSave({
       term: term.trim(),
       definition: definition.trim(),
-      domain: domain || null,
+      fullDefinition: fullDefinition.trim() || null,
+      domain: domain.trim() || null,
       category: category.trim() || null,
       example: example.trim() || null,
       relatedTerms: relatedText.split(",").map((s) => s.trim()).filter(Boolean),
       isPublished,
+      sourceDocument: sourceDocument.trim() || null,
     });
     setBusy(false);
   }
@@ -408,20 +414,27 @@ function TermForm({
       <div>
         <label className="admin-label">Definition <span className="text-red-400">*</span></label>
         <textarea
-          className="admin-input min-h-24 leading-relaxed"
+          className="admin-input min-h-16 leading-relaxed"
           value={definition}
           onChange={(e) => setDefinition(e.target.value)}
-          placeholder="Clear, concise definition that students will see…"
+          placeholder="Short one-liner summary that appears in the collapsed card…"
+        />
+      </div>
+
+      <div>
+        <label className="admin-label">Full definition (optional)</label>
+        <textarea
+          className="admin-input min-h-24 leading-relaxed"
+          value={fullDefinition}
+          onChange={(e) => setFullDefinition(e.target.value)}
+          placeholder="Detailed explanation shown when a student expands the term…"
         />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="admin-label">Domain</label>
-          <select className="admin-input" value={domain} onChange={(e) => setDomain(e.target.value)}>
-            <option value="">— None —</option>
-            {DOMAINS.map((d) => <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>)}
-          </select>
+          <label className="admin-label">Domain (optional)</label>
+          <input className="admin-input" value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="e.g. assessment, appraisal, law" />
         </div>
         <div>
           <label className="admin-label">Category (optional)</label>
@@ -446,6 +459,16 @@ function TermForm({
           value={relatedText}
           onChange={(e) => setRelatedText(e.target.value)}
           placeholder="e.g. Market Value, Equalization Ratio"
+        />
+      </div>
+
+      <div>
+        <label className="admin-label">Source document (optional)</label>
+        <input
+          className="admin-input"
+          value={sourceDocument}
+          onChange={(e) => setSourceDocument(e.target.value)}
+          placeholder="e.g. Master Reference Glossary IMPACT 26V"
         />
       </div>
 

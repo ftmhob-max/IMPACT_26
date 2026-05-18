@@ -75,14 +75,63 @@ type SourceMaterial @table(name: "source_materials", singular: "sourceMaterial",
   title: String! @col(dataType: "text")
   fileName: String! @col(dataType: "text")
   fileType: String! @col(dataType: "text")
+  folder: SourceMaterialFolder
   storagePath: String! @col(dataType: "text")
   downloadUrl: String @col(dataType: "text")
   extractedText: String @col(dataType: "text")
   metadataJson: String @col(dataType: "text")
   status: String! @col(dataType: "text") @default(value: "uploaded")
   uploadedBy: User
+  starred: Boolean! @default(value: false)
+  archivedAt: Date
+  trashedAt: Date
+  reviewStatus: String! @col(dataType: "text") @default(value: "unreviewed")
+  visibility: String! @col(dataType: "text") @default(value: "admin")
+  duplicateOf: SourceMaterial
+  lastActivityAt: Date
   createdAt: Date! @default(expr: "request.time")
   updatedAt: Date! @default(expr: "request.time")
+}
+
+type SourceMaterialFolder @table(name: "source_material_folders", singular: "sourceMaterialFolder", plural: "sourceMaterialFolders", key: ["id"]) {
+  id: UUID! @col(name: "id") @default(expr: "uuidV4()")
+  name: String! @col(dataType: "text")
+  parentFolder: SourceMaterialFolder
+  folderType: String! @col(dataType: "text") @default(value: "custom")
+  course: Course
+  lesson: Lesson
+  createdBy: User
+  archivedAt: Date
+  trashedAt: Date
+  createdAt: Date! @default(expr: "request.time")
+  updatedAt: Date! @default(expr: "request.time")
+}
+
+type SourceMaterialTag @table(name: "source_material_tags", singular: "sourceMaterialTag", plural: "sourceMaterialTags", key: ["id"]) {
+  id: UUID! @col(name: "id") @default(expr: "uuidV4()")
+  name: String! @col(dataType: "text")
+  color: String @col(dataType: "text")
+  createdBy: User
+  createdAt: Date! @default(expr: "request.time")
+  updatedAt: Date! @default(expr: "request.time")
+}
+
+type SourceMaterialTagAssignment @table(name: "source_material_tag_assignments", singular: "sourceMaterialTagAssignment", plural: "sourceMaterialTagAssignments", key: ["id"]) {
+  id: UUID! @col(name: "id") @default(expr: "uuidV4()")
+  sourceMaterial: SourceMaterial! @ref
+  tag: SourceMaterialTag! @ref
+  createdAt: Date! @default(expr: "request.time")
+}
+
+type SourceMaterialActivity @table(name: "source_material_activity", singular: "sourceMaterialActivity", plural: "sourceMaterialActivities", key: ["id"]) {
+  id: UUID! @col(name: "id") @default(expr: "uuidV4()")
+  sourceMaterial: SourceMaterial
+  folder: SourceMaterialFolder
+  actor: User
+  activityType: String! @col(dataType: "text")
+  message: String @col(dataType: "text")
+  metadataJson: String @col(dataType: "text")
+  createdAt: Date! @default(expr: "request.time")
 }
 
 type IngestionJob @table(name: "ingestion_jobs", singular: "ingestionJob", plural: "ingestionJobs", key: ["id"]) {

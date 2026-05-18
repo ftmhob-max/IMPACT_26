@@ -2,7 +2,12 @@ import { randomUUID } from "crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAdminRequest } from "@/lib/admin/auth";
 import { ingestBuffer, uploadSourceBuffer } from "@/lib/admin/ingestion";
-import { listAdminMaterials, fetchAdminMaterialLibrary } from "@/lib/admin/material-library";
+import {
+  fetchAdminMaterialFolders,
+  fetchAdminMaterialLibrary,
+  fetchAdminMaterialTags,
+  listAdminMaterials,
+} from "@/lib/admin/material-library";
 import { adminDcMutate } from "@/lib/firebase/admin-dc";
 
 export const maxDuration = 600;
@@ -34,6 +39,19 @@ function parseTitlesJson(value: FormDataEntryValue | null) {
   }
 }
 
+function parseTagsValue(value: FormDataEntryValue | null) {
+  if (typeof value !== "string" || !value.trim()) return [];
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (Array.isArray(parsed)) {
+      return parsed.map((entry) => String(entry ?? "").trim()).filter(Boolean);
+    }
+  } catch {
+    // Fall back to comma parsing below.
+  }
+  return value.split(",").map((entry) => entry.trim()).filter(Boolean);
+}
+
 function isMultipartFormData(contentType: string) {
   const lower = contentType.toLowerCase();
   return lower.startsWith("multipart/form-data") && lower.includes("boundary=");
@@ -43,10 +61,18 @@ async function ingestSourceMaterial({
   file,
   title,
   uploadedById,
+  folderId,
+  tagNames,
+  courseId,
+  lessonId,
 }: {
   file: File;
   title: string;
   uploadedById: string;
+  folderId?: string | null;
+  tagNames?: string[];
+  courseId?: string | null;
+  lessonId?: string | null;
 }) {
   const materialId = randomUUID();
   const jobId = randomUUID();
@@ -92,6 +118,7 @@ async function ingestSourceMaterial({
     title,
     fileName: file.name,
     fileType: file.type || "application/octet-stream",
+    folderId: folderId ?? null,
     storagePath: storageUri,
     downloadUrl: null,
     extractedText: ingestion.extractedText,
@@ -126,6 +153,48 @@ async function ingestSourceMaterial({
     completedAt: new Date().toISOString().split("T")[0],
   });
 
+  if (courseId || lessonId) {
+    await adminDcMutate("CreateContentSourceLink", {
+      id: randomUUID(),
+      sourceMaterialId: materialId,
+      lessonId: lessonId ?? null,
+      courseId: courseId ?? null,
+      questionId: null,
+      referenceLabel: "Upload link",
+    }).catch(() => null);
+  }
+
+  if (tagNames?.length) {
+    const existingTags = await fetchAdminMaterialTags();
+    for (const name of tagNames) {
+      const existing = existingTags.find((tag) => tag.name.toLowerCase() === name.toLowerCase());
+      const tagId = existing?.id ?? randomUUID();
+      if (!existing) {
+        await adminDcMutate("CreateSourceMaterialTag", {
+          id: tagId,
+          name,
+          color: null,
+          createdById: uploadedById,
+        }).catch(() => null);
+      }
+      await adminDcMutate("CreateSourceMaterialTagAssignment", {
+        id: randomUUID(),
+        sourceMaterialId: materialId,
+        tagId,
+      }).catch(() => null);
+    }
+  }
+
+  await adminDcMutate("CreateSourceMaterialActivity", {
+    id: randomUUID(),
+    sourceMaterialId: materialId,
+    folderId: folderId ?? null,
+    actorId: uploadedById,
+    activityType: "upload",
+    message: `Uploaded ${file.name}`,
+    metadataJson: JSON.stringify({ sizeBytes: file.size, parser: ingestion.parser }),
+  }).catch(() => null);
+
   return {
     id: materialId,
     jobId,
@@ -150,6 +219,17 @@ export async function GET(request: NextRequest) {
     parser: request.nextUrl.searchParams.get("parser") ?? undefined,
     status: request.nextUrl.searchParams.get("status") ?? undefined,
     linked: request.nextUrl.searchParams.get("linked") ?? undefined,
+    folderId: request.nextUrl.searchParams.get("folderId") ?? undefined,
+    view: request.nextUrl.searchParams.get("view") ?? undefined,
+    tags: request.nextUrl.searchParams.get("tags") ?? undefined,
+    fileType: request.nextUrl.searchParams.get("fileType") ?? undefined,
+    parserStatus: request.nextUrl.searchParams.get("parserStatus") ?? undefined,
+    linkStatus: request.nextUrl.searchParams.get("linkStatus") ?? undefined,
+    reviewStatus: request.nextUrl.searchParams.get("reviewStatus") ?? undefined,
+    starred: request.nextUrl.searchParams.get("starred") ?? undefined,
+    archived: request.nextUrl.searchParams.get("archived") ?? undefined,
+    trashed: request.nextUrl.searchParams.get("trashed") ?? undefined,
+    uploadedById: auth.session.uid,
     hasAsset: request.nextUrl.searchParams.get("hasAsset") ?? undefined,
     hasText: request.nextUrl.searchParams.get("hasText") ?? undefined,
     sort: request.nextUrl.searchParams.get("sort") ?? undefined,
@@ -157,16 +237,41 @@ export async function GET(request: NextRequest) {
     page: Number(request.nextUrl.searchParams.get("page") ?? 1),
     limit: Number(request.nextUrl.searchParams.get("limit") ?? 50),
   });
+  const folders = await fetchAdminMaterialFolders();
+  const tags = await fetchAdminMaterialTags();
+  const folderCounts = new Map<string, number>();
+  for (const material of materials) {
+    if (material.folder?.id && !material.archivedAt && !material.trashedAt) {
+      folderCounts.set(material.folder.id, (folderCounts.get(material.folder.id) ?? 0) + 1);
+    }
+  }
 
   return NextResponse.json({
+    folders: folders.map((folder) => ({
+      ...folder,
+      materialCount: folderCounts.get(folder.id) ?? 0,
+    })),
+    tags,
     materials: result.materials.map((material) => ({
       id: material.id,
       title: material.title,
       fileName: material.fileName,
       fileType: material.fileType,
       status: material.status,
+      displayStatus: material.displayStatus,
       createdAt: material.createdAt,
       updatedAt: material.updatedAt,
+      starred: material.starred,
+      archivedAt: material.archivedAt,
+      trashedAt: material.trashedAt,
+      reviewStatus: material.reviewStatus,
+      visibility: material.visibility,
+      duplicateOf: material.duplicateOf,
+      lastActivityAt: material.lastActivityAt,
+      folder: material.folder,
+      uploader: material.uploader,
+      tags: material.tags,
+      activities: material.activities,
       kind: material.kind,
       parser: material.parser,
       sizeBytes: material.sizeBytes,
@@ -196,7 +301,11 @@ export async function POST(request: NextRequest) {
     const contentType = request.headers.get("content-type") || "";
     let files: File[] = [];
     let parsedTitles: string[] = [];
+    let tagNames: string[] = [];
     let singleTitle = "";
+    let folderId: string | null = null;
+    let courseId: string | null = null;
+    let lessonId: string | null = null;
 
     if (contentType.toLowerCase().startsWith("multipart/form-data")) {
       if (!isMultipartFormData(contentType)) {
@@ -221,12 +330,23 @@ export async function POST(request: NextRequest) {
         ? batchFiles
         : (isFormDataFile(singleFile) ? [singleFile] : []);
       parsedTitles = parseTitlesJson(form.get("titlesJson"));
+      tagNames = parseTagsValue(form.get("tags"));
       singleTitle = String(form.get("title") ?? "").trim();
+      folderId = String(form.get("folderId") ?? "").trim() || null;
+      courseId = String(form.get("courseId") ?? "").trim() || null;
+      lessonId = String(form.get("lessonId") ?? "").trim() || null;
     } else {
       // Raw binary upload
       const fileName = decodeURIComponent(request.headers.get("x-file-name") || "upload.bin");
       const fileType = contentType;
       singleTitle = decodeURIComponent(request.headers.get("x-title") || "");
+      folderId = decodeURIComponent(request.headers.get("x-folder-id") || "").trim() || null;
+      tagNames = decodeURIComponent(request.headers.get("x-tags") || "")
+        .split(",")
+        .map((entry) => entry.trim())
+        .filter(Boolean);
+      courseId = decodeURIComponent(request.headers.get("x-course-id") || "").trim() || null;
+      lessonId = decodeURIComponent(request.headers.get("x-lesson-id") || "").trim() || null;
       const arrayBuffer = await request.arrayBuffer();
       const file = new File([arrayBuffer], fileName, { type: fileType });
       files = [file];
@@ -249,6 +369,10 @@ export async function POST(request: NextRequest) {
           file,
           title,
           uploadedById,
+          folderId,
+          tagNames,
+          courseId,
+          lessonId,
         });
         created.push(result);
       } catch (error) {

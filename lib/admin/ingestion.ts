@@ -105,7 +105,7 @@ export function detectMetadata(text: string): {
 
 export interface IngestionResult {
   parser: string;
-  status: "parsed" | "uploaded" | "failed";
+  status: "parsed" | "uploaded" | "failed" | "needs-ocr";
   extractedText: string;
   metadata: Record<string, unknown>;
   errorMessage?: string;
@@ -128,6 +128,9 @@ const DEFAULT_WHISPER_MODEL = "base";
 const DEFAULT_WHISPER_DEVICE = "cpu";
 const DEFAULT_MAX_TRANSCRIPTION_MB = 100;
 const DEFAULT_TRANSCRIPTION_TIMEOUT_MS = 600_000;
+
+// Minimum characters from pdf-parse before trying pdfjs-dist fallback
+const PDF_SPARSE_THRESHOLD = 100;
 
 function getPositiveNumberEnv(name: string, fallback: number) {
   const raw = process.env[name];
@@ -221,6 +224,35 @@ export function normalizeWhisperTranscript(data: WhisperJson) {
   return (segmentText || String(data.text ?? "")).replace(/\r\n/g, "\n").trim();
 }
 
+// Probe whisper-compatible binaries in preference order.
+// WHISPER_BINARY env var pins a specific binary and skips auto-detection.
+// Probe order (best to fallback):
+//   insanely-fast-whisper — Flash Attention 2, fastest on GPU
+//   faster-whisper        — CTranslate2, 4× faster on CPU (recommended)
+//   whisper-ctranslate2   — alias for faster-whisper in some environments
+//   moonshine             — tiny, purpose-built for CPU/edge, English-only
+//   whisper               — original OpenAI Whisper CLI
+async function detectWhisperBinary(): Promise<string | null> {
+  const envBinary = process.env.WHISPER_BINARY;
+  const candidates = envBinary
+    ? [envBinary]
+    : ["insanely-fast-whisper", "faster-whisper", "whisper-ctranslate2", "moonshine", "whisper"];
+  for (const bin of candidates) {
+    if (await commandSucceeds(bin, ["--help"])) return bin;
+  }
+  return null;
+}
+
+const WHISPER_INSTALL_HINT =
+  "No speech-to-text binary found. Install one of the following:\n" +
+  "  • pip install faster-whisper         (recommended — 4× faster on CPU, all model sizes)\n" +
+  "  • pip install openai-whisper         (original OpenAI Whisper)\n" +
+  "  • pip install moonshine              (tiny/fast, great on CPU, English-only)\n" +
+  "  • pip install insanely-fast-whisper  (GPU only, Flash Attention 2)\n" +
+  "Then set WHISPER_MODEL=large-v3-turbo in your environment for the best accuracy/speed balance.\n" +
+  "Or set WHISPER_BINARY to point to any compatible speech-to-text CLI.\n" +
+  "Model weights are downloaded from Hugging Face automatically on first use.";
+
 async function transcribeMediaBuffer({
   buffer,
   fileName,
@@ -242,20 +274,14 @@ async function transcribeMediaBuffer({
   const maxBytes = maxMb * 1024 * 1024;
   const model = process.env.WHISPER_MODEL || DEFAULT_WHISPER_MODEL;
   const device = process.env.WHISPER_DEVICE || DEFAULT_WHISPER_DEVICE;
-  const whisperBinary = process.env.WHISPER_BINARY || "whisper";
   const timeoutMs = getPositiveNumberEnv("SOURCE_MATERIAL_TRANSCRIPTION_TIMEOUT_MS", DEFAULT_TRANSCRIPTION_TIMEOUT_MS);
-  const providerMetadata = {
-    ...metadata,
-    transcriptionProvider: "local-whisper",
-    transcriptionModel: model,
-  };
 
   if (actualSize > maxBytes) {
     return {
       parser: "whisper",
       status: "failed",
       extractedText: "",
-      metadata: providerMetadata,
+      metadata: { ...metadata, transcriptionProvider: "local-whisper", transcriptionModel: model },
       errorMessage: `Media file is too large for local transcription (${Math.ceil(actualSize / (1024 * 1024))} MB). Limit is ${maxMb} MB.`,
     };
   }
@@ -265,20 +291,28 @@ async function transcribeMediaBuffer({
       parser: "whisper",
       status: "failed",
       extractedText: "",
-      metadata: providerMetadata,
-      errorMessage: "Local transcription requires ffmpeg on PATH.",
+      metadata: { ...metadata, transcriptionProvider: "local-whisper", transcriptionModel: model },
+      errorMessage: "Local transcription requires ffmpeg on PATH. Install it via your system package manager (e.g. brew install ffmpeg).",
     };
   }
 
-  if (!(await commandSucceeds(whisperBinary, ["--help"]))) {
+  const whisperBinary = await detectWhisperBinary();
+  if (!whisperBinary) {
     return {
       parser: "whisper",
       status: "failed",
       extractedText: "",
-      metadata: providerMetadata,
-      errorMessage: "Local transcription requires the whisper CLI on PATH. Install OpenAI Whisper or set WHISPER_BINARY.",
+      metadata: { ...metadata, transcriptionProvider: "local-whisper", transcriptionModel: model },
+      errorMessage: WHISPER_INSTALL_HINT,
     };
   }
+
+  const providerMetadata = {
+    ...metadata,
+    transcriptionProvider: "local-whisper",
+    transcriptionBinary: whisperBinary,
+    transcriptionModel: model,
+  };
 
   const tempDir = await mkdtemp(path.join(tmpdir(), "impact-source-transcription-"));
   const safeExtension = extension || (kind === "video" ? "mp4" : "mp3");
@@ -380,6 +414,36 @@ export async function uploadSourceBuffer({
   throw lastError instanceof Error ? lastError : new Error("Unable to upload source material");
 }
 
+// Run ocrmypdf on a PDF buffer and return the extracted text.
+// ocrmypdf adds an invisible text layer over each scanned page using Tesseract 5.
+// Install: brew install ocrmypdf | apt-get install ocrmypdf | pip install ocrmypdf
+async function runOcrmypdf(buffer: Buffer): Promise<string> {
+  const tempDir = await mkdtemp(path.join(tmpdir(), "impact-ocrmypdf-"));
+  const inputPath = path.join(tempDir, "input.pdf");
+  const outputPath = path.join(tempDir, "output.pdf");
+
+  try {
+    await writeFile(inputPath, buffer);
+    // --force-ocr: OCR even if text layer already exists (covers mixed PDFs)
+    // --skip-text: alternatively, skip pages that already have text (faster but less thorough)
+    await runCommand(
+      "ocrmypdf",
+      ["--force-ocr", "--quiet", inputPath, outputPath],
+      120_000 // 2-min timeout per PDF
+    );
+
+    const outputBuffer = await readFile(outputPath);
+    const { PDFParse } = await import("pdf-parse");
+    const parser = new (PDFParse as any)({ data: outputBuffer });
+    if (typeof parser.load === "function") await parser.load();
+    const textResult = await parser.getText();
+    if (typeof parser.destroy === "function") await parser.destroy().catch(() => null);
+    return ((textResult as any).text ?? "").trim();
+  } finally {
+    await rm(tempDir, { recursive: true, force: true }).catch(() => null);
+  }
+}
+
 export async function ingestBuffer(
   buffer: Buffer,
   fileName: string,
@@ -417,45 +481,90 @@ export async function ingestBuffer(
         extension,
       });
     } else if (lowerType.includes("pdf") || lowerName.endsWith(".pdf")) {
+      const pdfMeta = { kind, extension, mimeType: fileType, sizeBytes: sizeBytes ?? buffer.length };
+      let extractedText = "";
+      let pages: number | null = null;
+      let tier = "pdf-parse";
+
+      // Tier 1: pdf-parse (fast, works on digital PDFs)
       try {
         const { PDFParse } = await import("pdf-parse");
-        // pdf-parse v2: construct with { data: Buffer }, call load() first,
-        // then getText() and getInfo() in parallel.
         const parser = new (PDFParse as any)({ data: buffer });
-        if (typeof parser.load === "function") {
-          await parser.load();
-        }
+        if (typeof parser.load === "function") await parser.load();
         const [textResult, info] = await Promise.all([
           parser.getText(),
-          typeof parser.getInfo === "function"
-            ? parser.getInfo().catch(() => ({}))
-            : Promise.resolve({}),
+          typeof parser.getInfo === "function" ? parser.getInfo().catch(() => ({})) : Promise.resolve({}),
         ]);
-        if (typeof parser.destroy === "function") {
-          await parser.destroy().catch(() => null);
+        if (typeof parser.destroy === "function") await parser.destroy().catch(() => null);
+        extractedText = ((textResult as any).text ?? "").trim();
+        pages = (info as any).total ?? null;
+      } catch {
+        // pdf-parse failed — fall through to pdfjs-dist
+      }
+
+      // Tier 2: pdfjs-dist fallback (better layout handling for complex PDFs)
+      if (extractedText.length < PDF_SPARSE_THRESHOLD) {
+        try {
+          tier = "pdfjs-dist";
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-expect-error — pdfjs-dist ships .mjs without a matching .d.ts at this path
+          const pdfjsLib = await import("pdfjs-dist/build/pdf.mjs");
+          const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(buffer), useSystemFonts: true });
+          const pdfDoc = await loadingTask.promise;
+          pages = pages ?? pdfDoc.numPages;
+          const pageTexts: string[] = [];
+          for (let i = 1; i <= pdfDoc.numPages; i++) {
+            const page = await pdfDoc.getPage(i);
+            const content = await page.getTextContent();
+            const pageText = content.items
+              .map((item: unknown) => (item as { str?: string }).str ?? "")
+              .join(" ")
+              .trim();
+            if (pageText) pageTexts.push(pageText);
+          }
+          await pdfDoc.destroy();
+          const pdfjsText = pageTexts.join("\n").trim();
+          if (pdfjsText.length > extractedText.length) extractedText = pdfjsText;
+        } catch {
+          // pdfjs-dist also failed — fall through to needs-ocr
         }
-        const extractedText = ((textResult as any).text ?? "").trim();
+      }
+
+      // Tier 4: ocrmypdf CLI (free, local, Tesseract 5-backed)
+      // Install: brew install ocrmypdf  |  apt-get install ocrmypdf  |  pip install ocrmypdf
+      if (extractedText.length < PDF_SPARSE_THRESHOLD && await commandSucceeds("ocrmypdf", ["--version"])) {
+        try {
+          tier = "ocrmypdf";
+          const ocrText = await runOcrmypdf(buffer);
+          if (ocrText.length > extractedText.length) extractedText = ocrText;
+        } catch {
+          // ocrmypdf failed — fall through to needs-ocr
+        }
+      }
+
+      // Tier 3 (final): flag as likely scanned/image-based PDF
+      if (extractedText.length < PDF_SPARSE_THRESHOLD) {
+        const hasOcrmypdf = await commandSucceeds("ocrmypdf", ["--version"]);
         result = {
-          parser: "pdf-parse",
-          status: extractedText ? "parsed" : "failed",
-          extractedText,
-          metadata: {
-            kind,
-            extension,
-            mimeType: fileType,
-            sizeBytes: sizeBytes ?? buffer.length,
-            pages: (info as any).total ?? null,
-            info: (info as any).info ?? null,
-          },
-          errorMessage: extractedText ? undefined : "PDF parsing completed but no text was extracted.",
+          parser: tier,
+          status: "needs-ocr",
+          extractedText: extractedText,
+          metadata: { ...pdfMeta, pages },
+          errorMessage: hasOcrmypdf
+            ? "OCR attempted but returned no text. The PDF may contain non-standard image formats or be heavily degraded."
+            : "This PDF appears to be image-based or scanned. No selectable text could be extracted.\n" +
+              "Install ocrmypdf to enable automatic OCR:\n" +
+              "  • brew install ocrmypdf\n" +
+              "  • apt-get install ocrmypdf\n" +
+              "  • pip install ocrmypdf\n" +
+              "For complex academic PDFs (equations, tables), consider: pip install nougat-ocr",
         };
-      } catch (err) {
+      } else {
         result = {
-          parser: "pdf-parse",
-          status: "failed",
-          extractedText: "",
-          metadata: { kind, extension, mimeType: fileType, sizeBytes: sizeBytes ?? buffer.length },
-          errorMessage: err instanceof Error ? err.message : "PDF parsing failed",
+          parser: tier,
+          status: "parsed",
+          extractedText,
+          metadata: { ...pdfMeta, pages },
         };
       }
     } else if (

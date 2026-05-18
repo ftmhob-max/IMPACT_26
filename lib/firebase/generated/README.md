@@ -35,7 +35,10 @@ This README will guide you through the process of using the generated JavaScript
   - [*AdminListQuizQuestionUsage*](#adminlistquizquestionusage)
   - [*AdminListCourses*](#adminlistcourses)
   - [*GetLessonVersions*](#getlessonversions)
+  - [*AdminListSourceMaterialsRich*](#adminlistsourcematerialsrich)
   - [*AdminListSourceMaterials*](#adminlistsourcematerials)
+  - [*AdminListSourceMaterialFolders*](#adminlistsourcematerialfolders)
+  - [*AdminListSourceMaterialTags*](#adminlistsourcematerialtags)
   - [*AdminListUsers*](#adminlistusers)
   - [*AdminCohortStats*](#admincohortstats)
 - [**Mutations**](#mutations)
@@ -58,8 +61,16 @@ This README will guide you through the process of using the generated JavaScript
   - [*DeleteIngestionJobsForMaterial*](#deleteingestionjobsformaterial)
   - [*DeleteSourceMaterial*](#deletesourcematerial)
   - [*UpdateSourceMaterial*](#updatesourcematerial)
+  - [*UpdateSourceMaterialLibraryState*](#updatesourcemateriallibrarystate)
   - [*CreateSourceMaterial*](#createsourcematerial)
   - [*CreateIngestionJob*](#createingestionjob)
+  - [*CreateSourceMaterialFolder*](#createsourcematerialfolder)
+  - [*UpdateSourceMaterialFolder*](#updatesourcematerialfolder)
+  - [*DeleteSourceMaterialFolder*](#deletesourcematerialfolder)
+  - [*CreateSourceMaterialTag*](#createsourcematerialtag)
+  - [*CreateSourceMaterialTagAssignment*](#createsourcematerialtagassignment)
+  - [*DeleteTagAssignmentsForMaterial*](#deletetagassignmentsformaterial)
+  - [*CreateSourceMaterialActivity*](#createsourcematerialactivity)
   - [*CreateQuestion*](#createquestion)
   - [*UpdateQuestion*](#updatequestion)
   - [*UpdateQuestionStatus*](#updatequestionstatus)
@@ -3372,6 +3383,201 @@ executeQuery(ref).then((response) => {
 });
 ```
 
+## AdminListSourceMaterialsRich
+You can execute the `AdminListSourceMaterialsRich` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+adminListSourceMaterialsRich(options?: ExecuteQueryOptions): QueryPromise<AdminListSourceMaterialsRichData, undefined>;
+
+interface AdminListSourceMaterialsRichRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (): QueryRef<AdminListSourceMaterialsRichData, undefined>;
+}
+export const adminListSourceMaterialsRichRef: AdminListSourceMaterialsRichRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `QueryRef` function.
+```typescript
+adminListSourceMaterialsRich(dc: DataConnect, options?: ExecuteQueryOptions): QueryPromise<AdminListSourceMaterialsRichData, undefined>;
+
+interface AdminListSourceMaterialsRichRef {
+  ...
+  (dc: DataConnect): QueryRef<AdminListSourceMaterialsRichData, undefined>;
+}
+export const adminListSourceMaterialsRichRef: AdminListSourceMaterialsRichRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the adminListSourceMaterialsRichRef:
+```typescript
+const name = adminListSourceMaterialsRichRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `AdminListSourceMaterialsRich` query has no variables.
+### Return Type
+Recall that executing the `AdminListSourceMaterialsRich` query returns a `QueryPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `AdminListSourceMaterialsRichData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface AdminListSourceMaterialsRichData {
+  sourceMaterials: ({
+    id: UUIDString;
+    title: string;
+    fileName: string;
+    fileType: string;
+    folder?: {
+      id: UUIDString;
+      name: string;
+      folderType: string;
+      parentFolder?: {
+        id: UUIDString;
+        name: string;
+      } & SourceMaterialFolder_Key;
+        course?: {
+          id: UUIDString;
+          title: string;
+        } & Course_Key;
+          lesson?: {
+            id: UUIDString;
+            title: string;
+          } & Lesson_Key;
+            archivedAt?: DateString | null;
+            trashedAt?: DateString | null;
+            createdAt: DateString;
+            updatedAt: DateString;
+    } & SourceMaterialFolder_Key;
+      storagePath: string;
+      downloadUrl?: string | null;
+      extractedText?: string | null;
+      metadataJson?: string | null;
+      status: string;
+      starred: boolean;
+      archivedAt?: DateString | null;
+      trashedAt?: DateString | null;
+      reviewStatus: string;
+      visibility: string;
+      duplicateOf?: {
+        id: UUIDString;
+        title: string;
+      } & SourceMaterial_Key;
+        lastActivityAt?: DateString | null;
+        createdAt: DateString;
+        updatedAt: DateString;
+        uploadedBy?: {
+          id: string;
+          email: string;
+          fullName?: string | null;
+        } & User_Key;
+          sourceMaterialTagAssignments_on_sourceMaterial: ({
+            id: UUIDString;
+            tag: {
+              id: UUIDString;
+              name: string;
+              color?: string | null;
+            } & SourceMaterialTag_Key;
+          } & SourceMaterialTagAssignment_Key)[];
+            sourceMaterialActivities_on_sourceMaterial: ({
+              id: UUIDString;
+              activityType: string;
+              message?: string | null;
+              metadataJson?: string | null;
+              createdAt: DateString;
+              actor?: {
+                id: string;
+                email: string;
+                fullName?: string | null;
+              } & User_Key;
+            } & SourceMaterialActivity_Key)[];
+              ingestionJobs_on_sourceMaterial: ({
+                id: UUIDString;
+                status: string;
+                parser: string;
+                extractedCharacters: number;
+                errorMessage?: string | null;
+                createdAt: DateString;
+                completedAt?: DateString | null;
+              } & IngestionJob_Key)[];
+                contentSourceLinks_on_sourceMaterial: ({
+                  id: UUIDString;
+                  referenceLabel?: string | null;
+                  createdAt: DateString;
+                  course?: {
+                    id: UUIDString;
+                    title: string;
+                  } & Course_Key;
+                    lesson?: {
+                      id: UUIDString;
+                      title: string;
+                      module: {
+                        id: UUIDString;
+                        title: string;
+                        course: {
+                          id: UUIDString;
+                          title: string;
+                        } & Course_Key;
+                      } & Module_Key;
+                    } & Lesson_Key;
+                      question?: {
+                        id: UUIDString;
+                        questionText: string;
+                        domain: string;
+                        difficulty: string;
+                      } & Question_Key;
+                } & ContentSourceLink_Key)[];
+  } & SourceMaterial_Key)[];
+}
+```
+### Using `AdminListSourceMaterialsRich`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, adminListSourceMaterialsRich } from '@impact26/dataconnect-sdk';
+
+
+// Call the `adminListSourceMaterialsRich()` function to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await adminListSourceMaterialsRich();
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await adminListSourceMaterialsRich(dataConnect);
+
+console.log(data.sourceMaterials);
+
+// Or, you can use the `Promise` API.
+adminListSourceMaterialsRich().then((response) => {
+  const data = response.data;
+  console.log(data.sourceMaterials);
+});
+```
+
+### Using `AdminListSourceMaterialsRich`'s `QueryRef` function
+
+```typescript
+import { getDataConnect, executeQuery } from 'firebase/data-connect';
+import { connectorConfig, adminListSourceMaterialsRichRef } from '@impact26/dataconnect-sdk';
+
+
+// Call the `adminListSourceMaterialsRichRef()` function to get a reference to the query.
+const ref = adminListSourceMaterialsRichRef();
+
+// You can also pass in a `DataConnect` instance to the `QueryRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = adminListSourceMaterialsRichRef(dataConnect);
+
+// Call `executeQuery()` on the reference to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeQuery(ref);
+
+console.log(data.sourceMaterials);
+
+// Or, you can use the `Promise` API.
+executeQuery(ref).then((response) => {
+  const data = response.data;
+  console.log(data.sourceMaterials);
+});
+```
+
 ## AdminListSourceMaterials
 You can execute the `AdminListSourceMaterials` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
 ```typescript
@@ -3513,6 +3719,227 @@ console.log(data.sourceMaterials);
 executeQuery(ref).then((response) => {
   const data = response.data;
   console.log(data.sourceMaterials);
+});
+```
+
+## AdminListSourceMaterialFolders
+You can execute the `AdminListSourceMaterialFolders` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+adminListSourceMaterialFolders(options?: ExecuteQueryOptions): QueryPromise<AdminListSourceMaterialFoldersData, undefined>;
+
+interface AdminListSourceMaterialFoldersRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (): QueryRef<AdminListSourceMaterialFoldersData, undefined>;
+}
+export const adminListSourceMaterialFoldersRef: AdminListSourceMaterialFoldersRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `QueryRef` function.
+```typescript
+adminListSourceMaterialFolders(dc: DataConnect, options?: ExecuteQueryOptions): QueryPromise<AdminListSourceMaterialFoldersData, undefined>;
+
+interface AdminListSourceMaterialFoldersRef {
+  ...
+  (dc: DataConnect): QueryRef<AdminListSourceMaterialFoldersData, undefined>;
+}
+export const adminListSourceMaterialFoldersRef: AdminListSourceMaterialFoldersRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the adminListSourceMaterialFoldersRef:
+```typescript
+const name = adminListSourceMaterialFoldersRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `AdminListSourceMaterialFolders` query has no variables.
+### Return Type
+Recall that executing the `AdminListSourceMaterialFolders` query returns a `QueryPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `AdminListSourceMaterialFoldersData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface AdminListSourceMaterialFoldersData {
+  sourceMaterialFolders: ({
+    id: UUIDString;
+    name: string;
+    folderType: string;
+    archivedAt?: DateString | null;
+    trashedAt?: DateString | null;
+    createdAt: DateString;
+    updatedAt: DateString;
+    parentFolder?: {
+      id: UUIDString;
+      name: string;
+    } & SourceMaterialFolder_Key;
+      course?: {
+        id: UUIDString;
+        title: string;
+      } & Course_Key;
+        lesson?: {
+          id: UUIDString;
+          title: string;
+          module: {
+            id: UUIDString;
+            title: string;
+            course: {
+              id: UUIDString;
+              title: string;
+            } & Course_Key;
+          } & Module_Key;
+        } & Lesson_Key;
+          createdBy?: {
+            id: string;
+            email: string;
+            fullName?: string | null;
+          } & User_Key;
+  } & SourceMaterialFolder_Key)[];
+}
+```
+### Using `AdminListSourceMaterialFolders`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, adminListSourceMaterialFolders } from '@impact26/dataconnect-sdk';
+
+
+// Call the `adminListSourceMaterialFolders()` function to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await adminListSourceMaterialFolders();
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await adminListSourceMaterialFolders(dataConnect);
+
+console.log(data.sourceMaterialFolders);
+
+// Or, you can use the `Promise` API.
+adminListSourceMaterialFolders().then((response) => {
+  const data = response.data;
+  console.log(data.sourceMaterialFolders);
+});
+```
+
+### Using `AdminListSourceMaterialFolders`'s `QueryRef` function
+
+```typescript
+import { getDataConnect, executeQuery } from 'firebase/data-connect';
+import { connectorConfig, adminListSourceMaterialFoldersRef } from '@impact26/dataconnect-sdk';
+
+
+// Call the `adminListSourceMaterialFoldersRef()` function to get a reference to the query.
+const ref = adminListSourceMaterialFoldersRef();
+
+// You can also pass in a `DataConnect` instance to the `QueryRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = adminListSourceMaterialFoldersRef(dataConnect);
+
+// Call `executeQuery()` on the reference to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeQuery(ref);
+
+console.log(data.sourceMaterialFolders);
+
+// Or, you can use the `Promise` API.
+executeQuery(ref).then((response) => {
+  const data = response.data;
+  console.log(data.sourceMaterialFolders);
+});
+```
+
+## AdminListSourceMaterialTags
+You can execute the `AdminListSourceMaterialTags` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+adminListSourceMaterialTags(options?: ExecuteQueryOptions): QueryPromise<AdminListSourceMaterialTagsData, undefined>;
+
+interface AdminListSourceMaterialTagsRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (): QueryRef<AdminListSourceMaterialTagsData, undefined>;
+}
+export const adminListSourceMaterialTagsRef: AdminListSourceMaterialTagsRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `QueryRef` function.
+```typescript
+adminListSourceMaterialTags(dc: DataConnect, options?: ExecuteQueryOptions): QueryPromise<AdminListSourceMaterialTagsData, undefined>;
+
+interface AdminListSourceMaterialTagsRef {
+  ...
+  (dc: DataConnect): QueryRef<AdminListSourceMaterialTagsData, undefined>;
+}
+export const adminListSourceMaterialTagsRef: AdminListSourceMaterialTagsRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the adminListSourceMaterialTagsRef:
+```typescript
+const name = adminListSourceMaterialTagsRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `AdminListSourceMaterialTags` query has no variables.
+### Return Type
+Recall that executing the `AdminListSourceMaterialTags` query returns a `QueryPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `AdminListSourceMaterialTagsData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface AdminListSourceMaterialTagsData {
+  sourceMaterialTags: ({
+    id: UUIDString;
+    name: string;
+    color?: string | null;
+    createdAt: DateString;
+    updatedAt: DateString;
+  } & SourceMaterialTag_Key)[];
+}
+```
+### Using `AdminListSourceMaterialTags`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, adminListSourceMaterialTags } from '@impact26/dataconnect-sdk';
+
+
+// Call the `adminListSourceMaterialTags()` function to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await adminListSourceMaterialTags();
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await adminListSourceMaterialTags(dataConnect);
+
+console.log(data.sourceMaterialTags);
+
+// Or, you can use the `Promise` API.
+adminListSourceMaterialTags().then((response) => {
+  const data = response.data;
+  console.log(data.sourceMaterialTags);
+});
+```
+
+### Using `AdminListSourceMaterialTags`'s `QueryRef` function
+
+```typescript
+import { getDataConnect, executeQuery } from 'firebase/data-connect';
+import { connectorConfig, adminListSourceMaterialTagsRef } from '@impact26/dataconnect-sdk';
+
+
+// Call the `adminListSourceMaterialTagsRef()` function to get a reference to the query.
+const ref = adminListSourceMaterialTagsRef();
+
+// You can also pass in a `DataConnect` instance to the `QueryRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = adminListSourceMaterialTagsRef(dataConnect);
+
+// Call `executeQuery()` on the reference to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeQuery(ref);
+
+console.log(data.sourceMaterialTags);
+
+// Or, you can use the `Promise` API.
+executeQuery(ref).then((response) => {
+  const data = response.data;
+  console.log(data.sourceMaterialTags);
 });
 ```
 
@@ -5957,6 +6384,148 @@ executeMutation(ref).then((response) => {
 });
 ```
 
+## UpdateSourceMaterialLibraryState
+You can execute the `UpdateSourceMaterialLibraryState` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+updateSourceMaterialLibraryState(vars: UpdateSourceMaterialLibraryStateVariables): MutationPromise<UpdateSourceMaterialLibraryStateData, UpdateSourceMaterialLibraryStateVariables>;
+
+interface UpdateSourceMaterialLibraryStateRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateSourceMaterialLibraryStateVariables): MutationRef<UpdateSourceMaterialLibraryStateData, UpdateSourceMaterialLibraryStateVariables>;
+}
+export const updateSourceMaterialLibraryStateRef: UpdateSourceMaterialLibraryStateRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+updateSourceMaterialLibraryState(dc: DataConnect, vars: UpdateSourceMaterialLibraryStateVariables): MutationPromise<UpdateSourceMaterialLibraryStateData, UpdateSourceMaterialLibraryStateVariables>;
+
+interface UpdateSourceMaterialLibraryStateRef {
+  ...
+  (dc: DataConnect, vars: UpdateSourceMaterialLibraryStateVariables): MutationRef<UpdateSourceMaterialLibraryStateData, UpdateSourceMaterialLibraryStateVariables>;
+}
+export const updateSourceMaterialLibraryStateRef: UpdateSourceMaterialLibraryStateRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the updateSourceMaterialLibraryStateRef:
+```typescript
+const name = updateSourceMaterialLibraryStateRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `UpdateSourceMaterialLibraryState` mutation requires an argument of type `UpdateSourceMaterialLibraryStateVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface UpdateSourceMaterialLibraryStateVariables {
+  id: UUIDString;
+  title?: string | null;
+  folderId?: UUIDString | null;
+  starred?: boolean | null;
+  archivedAt?: DateString | null;
+  trashedAt?: DateString | null;
+  reviewStatus?: string | null;
+  visibility?: string | null;
+  duplicateOfId?: UUIDString | null;
+  lastActivityAt?: DateString | null;
+  metadataJson?: string | null;
+  status?: string | null;
+}
+```
+### Return Type
+Recall that executing the `UpdateSourceMaterialLibraryState` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `UpdateSourceMaterialLibraryStateData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface UpdateSourceMaterialLibraryStateData {
+  sourceMaterial_update?: SourceMaterial_Key | null;
+}
+```
+### Using `UpdateSourceMaterialLibraryState`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, updateSourceMaterialLibraryState, UpdateSourceMaterialLibraryStateVariables } from '@impact26/dataconnect-sdk';
+
+// The `UpdateSourceMaterialLibraryState` mutation requires an argument of type `UpdateSourceMaterialLibraryStateVariables`:
+const updateSourceMaterialLibraryStateVars: UpdateSourceMaterialLibraryStateVariables = {
+  id: ..., 
+  title: ..., // optional
+  folderId: ..., // optional
+  starred: ..., // optional
+  archivedAt: ..., // optional
+  trashedAt: ..., // optional
+  reviewStatus: ..., // optional
+  visibility: ..., // optional
+  duplicateOfId: ..., // optional
+  lastActivityAt: ..., // optional
+  metadataJson: ..., // optional
+  status: ..., // optional
+};
+
+// Call the `updateSourceMaterialLibraryState()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await updateSourceMaterialLibraryState(updateSourceMaterialLibraryStateVars);
+// Variables can be defined inline as well.
+const { data } = await updateSourceMaterialLibraryState({ id: ..., title: ..., folderId: ..., starred: ..., archivedAt: ..., trashedAt: ..., reviewStatus: ..., visibility: ..., duplicateOfId: ..., lastActivityAt: ..., metadataJson: ..., status: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await updateSourceMaterialLibraryState(dataConnect, updateSourceMaterialLibraryStateVars);
+
+console.log(data.sourceMaterial_update);
+
+// Or, you can use the `Promise` API.
+updateSourceMaterialLibraryState(updateSourceMaterialLibraryStateVars).then((response) => {
+  const data = response.data;
+  console.log(data.sourceMaterial_update);
+});
+```
+
+### Using `UpdateSourceMaterialLibraryState`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, updateSourceMaterialLibraryStateRef, UpdateSourceMaterialLibraryStateVariables } from '@impact26/dataconnect-sdk';
+
+// The `UpdateSourceMaterialLibraryState` mutation requires an argument of type `UpdateSourceMaterialLibraryStateVariables`:
+const updateSourceMaterialLibraryStateVars: UpdateSourceMaterialLibraryStateVariables = {
+  id: ..., 
+  title: ..., // optional
+  folderId: ..., // optional
+  starred: ..., // optional
+  archivedAt: ..., // optional
+  trashedAt: ..., // optional
+  reviewStatus: ..., // optional
+  visibility: ..., // optional
+  duplicateOfId: ..., // optional
+  lastActivityAt: ..., // optional
+  metadataJson: ..., // optional
+  status: ..., // optional
+};
+
+// Call the `updateSourceMaterialLibraryStateRef()` function to get a reference to the mutation.
+const ref = updateSourceMaterialLibraryStateRef(updateSourceMaterialLibraryStateVars);
+// Variables can be defined inline as well.
+const ref = updateSourceMaterialLibraryStateRef({ id: ..., title: ..., folderId: ..., starred: ..., archivedAt: ..., trashedAt: ..., reviewStatus: ..., visibility: ..., duplicateOfId: ..., lastActivityAt: ..., metadataJson: ..., status: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = updateSourceMaterialLibraryStateRef(dataConnect, updateSourceMaterialLibraryStateVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.sourceMaterial_update);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.sourceMaterial_update);
+});
+```
+
 ## CreateSourceMaterial
 You can execute the `CreateSourceMaterial` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
 ```typescript
@@ -5995,6 +6564,7 @@ export interface CreateSourceMaterialVariables {
   title: string;
   fileName: string;
   fileType: string;
+  folderId?: UUIDString | null;
   storagePath: string;
   downloadUrl?: string | null;
   extractedText?: string | null;
@@ -6024,6 +6594,7 @@ const createSourceMaterialVars: CreateSourceMaterialVariables = {
   title: ..., 
   fileName: ..., 
   fileType: ..., 
+  folderId: ..., // optional
   storagePath: ..., 
   downloadUrl: ..., // optional
   extractedText: ..., // optional
@@ -6036,7 +6607,7 @@ const createSourceMaterialVars: CreateSourceMaterialVariables = {
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await createSourceMaterial(createSourceMaterialVars);
 // Variables can be defined inline as well.
-const { data } = await createSourceMaterial({ id: ..., title: ..., fileName: ..., fileType: ..., storagePath: ..., downloadUrl: ..., extractedText: ..., metadataJson: ..., status: ..., uploadedById: ..., });
+const { data } = await createSourceMaterial({ id: ..., title: ..., fileName: ..., fileType: ..., folderId: ..., storagePath: ..., downloadUrl: ..., extractedText: ..., metadataJson: ..., status: ..., uploadedById: ..., });
 
 // You can also pass in a `DataConnect` instance to the action shortcut function.
 const dataConnect = getDataConnect(connectorConfig);
@@ -6063,6 +6634,7 @@ const createSourceMaterialVars: CreateSourceMaterialVariables = {
   title: ..., 
   fileName: ..., 
   fileType: ..., 
+  folderId: ..., // optional
   storagePath: ..., 
   downloadUrl: ..., // optional
   extractedText: ..., // optional
@@ -6074,7 +6646,7 @@ const createSourceMaterialVars: CreateSourceMaterialVariables = {
 // Call the `createSourceMaterialRef()` function to get a reference to the mutation.
 const ref = createSourceMaterialRef(createSourceMaterialVars);
 // Variables can be defined inline as well.
-const ref = createSourceMaterialRef({ id: ..., title: ..., fileName: ..., fileType: ..., storagePath: ..., downloadUrl: ..., extractedText: ..., metadataJson: ..., status: ..., uploadedById: ..., });
+const ref = createSourceMaterialRef({ id: ..., title: ..., fileName: ..., fileType: ..., folderId: ..., storagePath: ..., downloadUrl: ..., extractedText: ..., metadataJson: ..., status: ..., uploadedById: ..., });
 
 // You can also pass in a `DataConnect` instance to the `MutationRef` function.
 const dataConnect = getDataConnect(connectorConfig);
@@ -6217,6 +6789,832 @@ console.log(data.ingestionJob_insert);
 executeMutation(ref).then((response) => {
   const data = response.data;
   console.log(data.ingestionJob_insert);
+});
+```
+
+## CreateSourceMaterialFolder
+You can execute the `CreateSourceMaterialFolder` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+createSourceMaterialFolder(vars: CreateSourceMaterialFolderVariables): MutationPromise<CreateSourceMaterialFolderData, CreateSourceMaterialFolderVariables>;
+
+interface CreateSourceMaterialFolderRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateSourceMaterialFolderVariables): MutationRef<CreateSourceMaterialFolderData, CreateSourceMaterialFolderVariables>;
+}
+export const createSourceMaterialFolderRef: CreateSourceMaterialFolderRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+createSourceMaterialFolder(dc: DataConnect, vars: CreateSourceMaterialFolderVariables): MutationPromise<CreateSourceMaterialFolderData, CreateSourceMaterialFolderVariables>;
+
+interface CreateSourceMaterialFolderRef {
+  ...
+  (dc: DataConnect, vars: CreateSourceMaterialFolderVariables): MutationRef<CreateSourceMaterialFolderData, CreateSourceMaterialFolderVariables>;
+}
+export const createSourceMaterialFolderRef: CreateSourceMaterialFolderRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the createSourceMaterialFolderRef:
+```typescript
+const name = createSourceMaterialFolderRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `CreateSourceMaterialFolder` mutation requires an argument of type `CreateSourceMaterialFolderVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface CreateSourceMaterialFolderVariables {
+  id: UUIDString;
+  name: string;
+  parentFolderId?: UUIDString | null;
+  folderType: string;
+  courseId?: UUIDString | null;
+  lessonId?: UUIDString | null;
+  createdById?: string | null;
+}
+```
+### Return Type
+Recall that executing the `CreateSourceMaterialFolder` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `CreateSourceMaterialFolderData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface CreateSourceMaterialFolderData {
+  sourceMaterialFolder_insert: SourceMaterialFolder_Key;
+}
+```
+### Using `CreateSourceMaterialFolder`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, createSourceMaterialFolder, CreateSourceMaterialFolderVariables } from '@impact26/dataconnect-sdk';
+
+// The `CreateSourceMaterialFolder` mutation requires an argument of type `CreateSourceMaterialFolderVariables`:
+const createSourceMaterialFolderVars: CreateSourceMaterialFolderVariables = {
+  id: ..., 
+  name: ..., 
+  parentFolderId: ..., // optional
+  folderType: ..., 
+  courseId: ..., // optional
+  lessonId: ..., // optional
+  createdById: ..., // optional
+};
+
+// Call the `createSourceMaterialFolder()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await createSourceMaterialFolder(createSourceMaterialFolderVars);
+// Variables can be defined inline as well.
+const { data } = await createSourceMaterialFolder({ id: ..., name: ..., parentFolderId: ..., folderType: ..., courseId: ..., lessonId: ..., createdById: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await createSourceMaterialFolder(dataConnect, createSourceMaterialFolderVars);
+
+console.log(data.sourceMaterialFolder_insert);
+
+// Or, you can use the `Promise` API.
+createSourceMaterialFolder(createSourceMaterialFolderVars).then((response) => {
+  const data = response.data;
+  console.log(data.sourceMaterialFolder_insert);
+});
+```
+
+### Using `CreateSourceMaterialFolder`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, createSourceMaterialFolderRef, CreateSourceMaterialFolderVariables } from '@impact26/dataconnect-sdk';
+
+// The `CreateSourceMaterialFolder` mutation requires an argument of type `CreateSourceMaterialFolderVariables`:
+const createSourceMaterialFolderVars: CreateSourceMaterialFolderVariables = {
+  id: ..., 
+  name: ..., 
+  parentFolderId: ..., // optional
+  folderType: ..., 
+  courseId: ..., // optional
+  lessonId: ..., // optional
+  createdById: ..., // optional
+};
+
+// Call the `createSourceMaterialFolderRef()` function to get a reference to the mutation.
+const ref = createSourceMaterialFolderRef(createSourceMaterialFolderVars);
+// Variables can be defined inline as well.
+const ref = createSourceMaterialFolderRef({ id: ..., name: ..., parentFolderId: ..., folderType: ..., courseId: ..., lessonId: ..., createdById: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = createSourceMaterialFolderRef(dataConnect, createSourceMaterialFolderVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.sourceMaterialFolder_insert);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.sourceMaterialFolder_insert);
+});
+```
+
+## UpdateSourceMaterialFolder
+You can execute the `UpdateSourceMaterialFolder` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+updateSourceMaterialFolder(vars: UpdateSourceMaterialFolderVariables): MutationPromise<UpdateSourceMaterialFolderData, UpdateSourceMaterialFolderVariables>;
+
+interface UpdateSourceMaterialFolderRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateSourceMaterialFolderVariables): MutationRef<UpdateSourceMaterialFolderData, UpdateSourceMaterialFolderVariables>;
+}
+export const updateSourceMaterialFolderRef: UpdateSourceMaterialFolderRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+updateSourceMaterialFolder(dc: DataConnect, vars: UpdateSourceMaterialFolderVariables): MutationPromise<UpdateSourceMaterialFolderData, UpdateSourceMaterialFolderVariables>;
+
+interface UpdateSourceMaterialFolderRef {
+  ...
+  (dc: DataConnect, vars: UpdateSourceMaterialFolderVariables): MutationRef<UpdateSourceMaterialFolderData, UpdateSourceMaterialFolderVariables>;
+}
+export const updateSourceMaterialFolderRef: UpdateSourceMaterialFolderRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the updateSourceMaterialFolderRef:
+```typescript
+const name = updateSourceMaterialFolderRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `UpdateSourceMaterialFolder` mutation requires an argument of type `UpdateSourceMaterialFolderVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface UpdateSourceMaterialFolderVariables {
+  id: UUIDString;
+  name?: string | null;
+  parentFolderId?: UUIDString | null;
+  archivedAt?: DateString | null;
+  trashedAt?: DateString | null;
+}
+```
+### Return Type
+Recall that executing the `UpdateSourceMaterialFolder` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `UpdateSourceMaterialFolderData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface UpdateSourceMaterialFolderData {
+  sourceMaterialFolder_update?: SourceMaterialFolder_Key | null;
+}
+```
+### Using `UpdateSourceMaterialFolder`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, updateSourceMaterialFolder, UpdateSourceMaterialFolderVariables } from '@impact26/dataconnect-sdk';
+
+// The `UpdateSourceMaterialFolder` mutation requires an argument of type `UpdateSourceMaterialFolderVariables`:
+const updateSourceMaterialFolderVars: UpdateSourceMaterialFolderVariables = {
+  id: ..., 
+  name: ..., // optional
+  parentFolderId: ..., // optional
+  archivedAt: ..., // optional
+  trashedAt: ..., // optional
+};
+
+// Call the `updateSourceMaterialFolder()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await updateSourceMaterialFolder(updateSourceMaterialFolderVars);
+// Variables can be defined inline as well.
+const { data } = await updateSourceMaterialFolder({ id: ..., name: ..., parentFolderId: ..., archivedAt: ..., trashedAt: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await updateSourceMaterialFolder(dataConnect, updateSourceMaterialFolderVars);
+
+console.log(data.sourceMaterialFolder_update);
+
+// Or, you can use the `Promise` API.
+updateSourceMaterialFolder(updateSourceMaterialFolderVars).then((response) => {
+  const data = response.data;
+  console.log(data.sourceMaterialFolder_update);
+});
+```
+
+### Using `UpdateSourceMaterialFolder`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, updateSourceMaterialFolderRef, UpdateSourceMaterialFolderVariables } from '@impact26/dataconnect-sdk';
+
+// The `UpdateSourceMaterialFolder` mutation requires an argument of type `UpdateSourceMaterialFolderVariables`:
+const updateSourceMaterialFolderVars: UpdateSourceMaterialFolderVariables = {
+  id: ..., 
+  name: ..., // optional
+  parentFolderId: ..., // optional
+  archivedAt: ..., // optional
+  trashedAt: ..., // optional
+};
+
+// Call the `updateSourceMaterialFolderRef()` function to get a reference to the mutation.
+const ref = updateSourceMaterialFolderRef(updateSourceMaterialFolderVars);
+// Variables can be defined inline as well.
+const ref = updateSourceMaterialFolderRef({ id: ..., name: ..., parentFolderId: ..., archivedAt: ..., trashedAt: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = updateSourceMaterialFolderRef(dataConnect, updateSourceMaterialFolderVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.sourceMaterialFolder_update);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.sourceMaterialFolder_update);
+});
+```
+
+## DeleteSourceMaterialFolder
+You can execute the `DeleteSourceMaterialFolder` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+deleteSourceMaterialFolder(vars: DeleteSourceMaterialFolderVariables): MutationPromise<DeleteSourceMaterialFolderData, DeleteSourceMaterialFolderVariables>;
+
+interface DeleteSourceMaterialFolderRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteSourceMaterialFolderVariables): MutationRef<DeleteSourceMaterialFolderData, DeleteSourceMaterialFolderVariables>;
+}
+export const deleteSourceMaterialFolderRef: DeleteSourceMaterialFolderRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+deleteSourceMaterialFolder(dc: DataConnect, vars: DeleteSourceMaterialFolderVariables): MutationPromise<DeleteSourceMaterialFolderData, DeleteSourceMaterialFolderVariables>;
+
+interface DeleteSourceMaterialFolderRef {
+  ...
+  (dc: DataConnect, vars: DeleteSourceMaterialFolderVariables): MutationRef<DeleteSourceMaterialFolderData, DeleteSourceMaterialFolderVariables>;
+}
+export const deleteSourceMaterialFolderRef: DeleteSourceMaterialFolderRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the deleteSourceMaterialFolderRef:
+```typescript
+const name = deleteSourceMaterialFolderRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `DeleteSourceMaterialFolder` mutation requires an argument of type `DeleteSourceMaterialFolderVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface DeleteSourceMaterialFolderVariables {
+  id: UUIDString;
+}
+```
+### Return Type
+Recall that executing the `DeleteSourceMaterialFolder` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `DeleteSourceMaterialFolderData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface DeleteSourceMaterialFolderData {
+  sourceMaterialFolder_delete?: SourceMaterialFolder_Key | null;
+}
+```
+### Using `DeleteSourceMaterialFolder`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, deleteSourceMaterialFolder, DeleteSourceMaterialFolderVariables } from '@impact26/dataconnect-sdk';
+
+// The `DeleteSourceMaterialFolder` mutation requires an argument of type `DeleteSourceMaterialFolderVariables`:
+const deleteSourceMaterialFolderVars: DeleteSourceMaterialFolderVariables = {
+  id: ..., 
+};
+
+// Call the `deleteSourceMaterialFolder()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await deleteSourceMaterialFolder(deleteSourceMaterialFolderVars);
+// Variables can be defined inline as well.
+const { data } = await deleteSourceMaterialFolder({ id: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await deleteSourceMaterialFolder(dataConnect, deleteSourceMaterialFolderVars);
+
+console.log(data.sourceMaterialFolder_delete);
+
+// Or, you can use the `Promise` API.
+deleteSourceMaterialFolder(deleteSourceMaterialFolderVars).then((response) => {
+  const data = response.data;
+  console.log(data.sourceMaterialFolder_delete);
+});
+```
+
+### Using `DeleteSourceMaterialFolder`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, deleteSourceMaterialFolderRef, DeleteSourceMaterialFolderVariables } from '@impact26/dataconnect-sdk';
+
+// The `DeleteSourceMaterialFolder` mutation requires an argument of type `DeleteSourceMaterialFolderVariables`:
+const deleteSourceMaterialFolderVars: DeleteSourceMaterialFolderVariables = {
+  id: ..., 
+};
+
+// Call the `deleteSourceMaterialFolderRef()` function to get a reference to the mutation.
+const ref = deleteSourceMaterialFolderRef(deleteSourceMaterialFolderVars);
+// Variables can be defined inline as well.
+const ref = deleteSourceMaterialFolderRef({ id: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = deleteSourceMaterialFolderRef(dataConnect, deleteSourceMaterialFolderVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.sourceMaterialFolder_delete);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.sourceMaterialFolder_delete);
+});
+```
+
+## CreateSourceMaterialTag
+You can execute the `CreateSourceMaterialTag` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+createSourceMaterialTag(vars: CreateSourceMaterialTagVariables): MutationPromise<CreateSourceMaterialTagData, CreateSourceMaterialTagVariables>;
+
+interface CreateSourceMaterialTagRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateSourceMaterialTagVariables): MutationRef<CreateSourceMaterialTagData, CreateSourceMaterialTagVariables>;
+}
+export const createSourceMaterialTagRef: CreateSourceMaterialTagRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+createSourceMaterialTag(dc: DataConnect, vars: CreateSourceMaterialTagVariables): MutationPromise<CreateSourceMaterialTagData, CreateSourceMaterialTagVariables>;
+
+interface CreateSourceMaterialTagRef {
+  ...
+  (dc: DataConnect, vars: CreateSourceMaterialTagVariables): MutationRef<CreateSourceMaterialTagData, CreateSourceMaterialTagVariables>;
+}
+export const createSourceMaterialTagRef: CreateSourceMaterialTagRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the createSourceMaterialTagRef:
+```typescript
+const name = createSourceMaterialTagRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `CreateSourceMaterialTag` mutation requires an argument of type `CreateSourceMaterialTagVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface CreateSourceMaterialTagVariables {
+  id: UUIDString;
+  name: string;
+  color?: string | null;
+  createdById?: string | null;
+}
+```
+### Return Type
+Recall that executing the `CreateSourceMaterialTag` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `CreateSourceMaterialTagData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface CreateSourceMaterialTagData {
+  sourceMaterialTag_insert: SourceMaterialTag_Key;
+}
+```
+### Using `CreateSourceMaterialTag`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, createSourceMaterialTag, CreateSourceMaterialTagVariables } from '@impact26/dataconnect-sdk';
+
+// The `CreateSourceMaterialTag` mutation requires an argument of type `CreateSourceMaterialTagVariables`:
+const createSourceMaterialTagVars: CreateSourceMaterialTagVariables = {
+  id: ..., 
+  name: ..., 
+  color: ..., // optional
+  createdById: ..., // optional
+};
+
+// Call the `createSourceMaterialTag()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await createSourceMaterialTag(createSourceMaterialTagVars);
+// Variables can be defined inline as well.
+const { data } = await createSourceMaterialTag({ id: ..., name: ..., color: ..., createdById: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await createSourceMaterialTag(dataConnect, createSourceMaterialTagVars);
+
+console.log(data.sourceMaterialTag_insert);
+
+// Or, you can use the `Promise` API.
+createSourceMaterialTag(createSourceMaterialTagVars).then((response) => {
+  const data = response.data;
+  console.log(data.sourceMaterialTag_insert);
+});
+```
+
+### Using `CreateSourceMaterialTag`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, createSourceMaterialTagRef, CreateSourceMaterialTagVariables } from '@impact26/dataconnect-sdk';
+
+// The `CreateSourceMaterialTag` mutation requires an argument of type `CreateSourceMaterialTagVariables`:
+const createSourceMaterialTagVars: CreateSourceMaterialTagVariables = {
+  id: ..., 
+  name: ..., 
+  color: ..., // optional
+  createdById: ..., // optional
+};
+
+// Call the `createSourceMaterialTagRef()` function to get a reference to the mutation.
+const ref = createSourceMaterialTagRef(createSourceMaterialTagVars);
+// Variables can be defined inline as well.
+const ref = createSourceMaterialTagRef({ id: ..., name: ..., color: ..., createdById: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = createSourceMaterialTagRef(dataConnect, createSourceMaterialTagVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.sourceMaterialTag_insert);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.sourceMaterialTag_insert);
+});
+```
+
+## CreateSourceMaterialTagAssignment
+You can execute the `CreateSourceMaterialTagAssignment` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+createSourceMaterialTagAssignment(vars: CreateSourceMaterialTagAssignmentVariables): MutationPromise<CreateSourceMaterialTagAssignmentData, CreateSourceMaterialTagAssignmentVariables>;
+
+interface CreateSourceMaterialTagAssignmentRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateSourceMaterialTagAssignmentVariables): MutationRef<CreateSourceMaterialTagAssignmentData, CreateSourceMaterialTagAssignmentVariables>;
+}
+export const createSourceMaterialTagAssignmentRef: CreateSourceMaterialTagAssignmentRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+createSourceMaterialTagAssignment(dc: DataConnect, vars: CreateSourceMaterialTagAssignmentVariables): MutationPromise<CreateSourceMaterialTagAssignmentData, CreateSourceMaterialTagAssignmentVariables>;
+
+interface CreateSourceMaterialTagAssignmentRef {
+  ...
+  (dc: DataConnect, vars: CreateSourceMaterialTagAssignmentVariables): MutationRef<CreateSourceMaterialTagAssignmentData, CreateSourceMaterialTagAssignmentVariables>;
+}
+export const createSourceMaterialTagAssignmentRef: CreateSourceMaterialTagAssignmentRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the createSourceMaterialTagAssignmentRef:
+```typescript
+const name = createSourceMaterialTagAssignmentRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `CreateSourceMaterialTagAssignment` mutation requires an argument of type `CreateSourceMaterialTagAssignmentVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface CreateSourceMaterialTagAssignmentVariables {
+  id: UUIDString;
+  sourceMaterialId: UUIDString;
+  tagId: UUIDString;
+}
+```
+### Return Type
+Recall that executing the `CreateSourceMaterialTagAssignment` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `CreateSourceMaterialTagAssignmentData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface CreateSourceMaterialTagAssignmentData {
+  sourceMaterialTagAssignment_insert: SourceMaterialTagAssignment_Key;
+}
+```
+### Using `CreateSourceMaterialTagAssignment`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, createSourceMaterialTagAssignment, CreateSourceMaterialTagAssignmentVariables } from '@impact26/dataconnect-sdk';
+
+// The `CreateSourceMaterialTagAssignment` mutation requires an argument of type `CreateSourceMaterialTagAssignmentVariables`:
+const createSourceMaterialTagAssignmentVars: CreateSourceMaterialTagAssignmentVariables = {
+  id: ..., 
+  sourceMaterialId: ..., 
+  tagId: ..., 
+};
+
+// Call the `createSourceMaterialTagAssignment()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await createSourceMaterialTagAssignment(createSourceMaterialTagAssignmentVars);
+// Variables can be defined inline as well.
+const { data } = await createSourceMaterialTagAssignment({ id: ..., sourceMaterialId: ..., tagId: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await createSourceMaterialTagAssignment(dataConnect, createSourceMaterialTagAssignmentVars);
+
+console.log(data.sourceMaterialTagAssignment_insert);
+
+// Or, you can use the `Promise` API.
+createSourceMaterialTagAssignment(createSourceMaterialTagAssignmentVars).then((response) => {
+  const data = response.data;
+  console.log(data.sourceMaterialTagAssignment_insert);
+});
+```
+
+### Using `CreateSourceMaterialTagAssignment`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, createSourceMaterialTagAssignmentRef, CreateSourceMaterialTagAssignmentVariables } from '@impact26/dataconnect-sdk';
+
+// The `CreateSourceMaterialTagAssignment` mutation requires an argument of type `CreateSourceMaterialTagAssignmentVariables`:
+const createSourceMaterialTagAssignmentVars: CreateSourceMaterialTagAssignmentVariables = {
+  id: ..., 
+  sourceMaterialId: ..., 
+  tagId: ..., 
+};
+
+// Call the `createSourceMaterialTagAssignmentRef()` function to get a reference to the mutation.
+const ref = createSourceMaterialTagAssignmentRef(createSourceMaterialTagAssignmentVars);
+// Variables can be defined inline as well.
+const ref = createSourceMaterialTagAssignmentRef({ id: ..., sourceMaterialId: ..., tagId: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = createSourceMaterialTagAssignmentRef(dataConnect, createSourceMaterialTagAssignmentVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.sourceMaterialTagAssignment_insert);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.sourceMaterialTagAssignment_insert);
+});
+```
+
+## DeleteTagAssignmentsForMaterial
+You can execute the `DeleteTagAssignmentsForMaterial` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+deleteTagAssignmentsForMaterial(vars: DeleteTagAssignmentsForMaterialVariables): MutationPromise<DeleteTagAssignmentsForMaterialData, DeleteTagAssignmentsForMaterialVariables>;
+
+interface DeleteTagAssignmentsForMaterialRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteTagAssignmentsForMaterialVariables): MutationRef<DeleteTagAssignmentsForMaterialData, DeleteTagAssignmentsForMaterialVariables>;
+}
+export const deleteTagAssignmentsForMaterialRef: DeleteTagAssignmentsForMaterialRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+deleteTagAssignmentsForMaterial(dc: DataConnect, vars: DeleteTagAssignmentsForMaterialVariables): MutationPromise<DeleteTagAssignmentsForMaterialData, DeleteTagAssignmentsForMaterialVariables>;
+
+interface DeleteTagAssignmentsForMaterialRef {
+  ...
+  (dc: DataConnect, vars: DeleteTagAssignmentsForMaterialVariables): MutationRef<DeleteTagAssignmentsForMaterialData, DeleteTagAssignmentsForMaterialVariables>;
+}
+export const deleteTagAssignmentsForMaterialRef: DeleteTagAssignmentsForMaterialRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the deleteTagAssignmentsForMaterialRef:
+```typescript
+const name = deleteTagAssignmentsForMaterialRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `DeleteTagAssignmentsForMaterial` mutation requires an argument of type `DeleteTagAssignmentsForMaterialVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface DeleteTagAssignmentsForMaterialVariables {
+  sourceMaterialId: UUIDString;
+}
+```
+### Return Type
+Recall that executing the `DeleteTagAssignmentsForMaterial` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `DeleteTagAssignmentsForMaterialData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface DeleteTagAssignmentsForMaterialData {
+  sourceMaterialTagAssignment_deleteMany: number;
+}
+```
+### Using `DeleteTagAssignmentsForMaterial`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, deleteTagAssignmentsForMaterial, DeleteTagAssignmentsForMaterialVariables } from '@impact26/dataconnect-sdk';
+
+// The `DeleteTagAssignmentsForMaterial` mutation requires an argument of type `DeleteTagAssignmentsForMaterialVariables`:
+const deleteTagAssignmentsForMaterialVars: DeleteTagAssignmentsForMaterialVariables = {
+  sourceMaterialId: ..., 
+};
+
+// Call the `deleteTagAssignmentsForMaterial()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await deleteTagAssignmentsForMaterial(deleteTagAssignmentsForMaterialVars);
+// Variables can be defined inline as well.
+const { data } = await deleteTagAssignmentsForMaterial({ sourceMaterialId: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await deleteTagAssignmentsForMaterial(dataConnect, deleteTagAssignmentsForMaterialVars);
+
+console.log(data.sourceMaterialTagAssignment_deleteMany);
+
+// Or, you can use the `Promise` API.
+deleteTagAssignmentsForMaterial(deleteTagAssignmentsForMaterialVars).then((response) => {
+  const data = response.data;
+  console.log(data.sourceMaterialTagAssignment_deleteMany);
+});
+```
+
+### Using `DeleteTagAssignmentsForMaterial`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, deleteTagAssignmentsForMaterialRef, DeleteTagAssignmentsForMaterialVariables } from '@impact26/dataconnect-sdk';
+
+// The `DeleteTagAssignmentsForMaterial` mutation requires an argument of type `DeleteTagAssignmentsForMaterialVariables`:
+const deleteTagAssignmentsForMaterialVars: DeleteTagAssignmentsForMaterialVariables = {
+  sourceMaterialId: ..., 
+};
+
+// Call the `deleteTagAssignmentsForMaterialRef()` function to get a reference to the mutation.
+const ref = deleteTagAssignmentsForMaterialRef(deleteTagAssignmentsForMaterialVars);
+// Variables can be defined inline as well.
+const ref = deleteTagAssignmentsForMaterialRef({ sourceMaterialId: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = deleteTagAssignmentsForMaterialRef(dataConnect, deleteTagAssignmentsForMaterialVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.sourceMaterialTagAssignment_deleteMany);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.sourceMaterialTagAssignment_deleteMany);
+});
+```
+
+## CreateSourceMaterialActivity
+You can execute the `CreateSourceMaterialActivity` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+createSourceMaterialActivity(vars: CreateSourceMaterialActivityVariables): MutationPromise<CreateSourceMaterialActivityData, CreateSourceMaterialActivityVariables>;
+
+interface CreateSourceMaterialActivityRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateSourceMaterialActivityVariables): MutationRef<CreateSourceMaterialActivityData, CreateSourceMaterialActivityVariables>;
+}
+export const createSourceMaterialActivityRef: CreateSourceMaterialActivityRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+createSourceMaterialActivity(dc: DataConnect, vars: CreateSourceMaterialActivityVariables): MutationPromise<CreateSourceMaterialActivityData, CreateSourceMaterialActivityVariables>;
+
+interface CreateSourceMaterialActivityRef {
+  ...
+  (dc: DataConnect, vars: CreateSourceMaterialActivityVariables): MutationRef<CreateSourceMaterialActivityData, CreateSourceMaterialActivityVariables>;
+}
+export const createSourceMaterialActivityRef: CreateSourceMaterialActivityRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the createSourceMaterialActivityRef:
+```typescript
+const name = createSourceMaterialActivityRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `CreateSourceMaterialActivity` mutation requires an argument of type `CreateSourceMaterialActivityVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface CreateSourceMaterialActivityVariables {
+  id: UUIDString;
+  sourceMaterialId?: UUIDString | null;
+  folderId?: UUIDString | null;
+  actorId?: string | null;
+  activityType: string;
+  message?: string | null;
+  metadataJson?: string | null;
+}
+```
+### Return Type
+Recall that executing the `CreateSourceMaterialActivity` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `CreateSourceMaterialActivityData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface CreateSourceMaterialActivityData {
+  sourceMaterialActivity_insert: SourceMaterialActivity_Key;
+}
+```
+### Using `CreateSourceMaterialActivity`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, createSourceMaterialActivity, CreateSourceMaterialActivityVariables } from '@impact26/dataconnect-sdk';
+
+// The `CreateSourceMaterialActivity` mutation requires an argument of type `CreateSourceMaterialActivityVariables`:
+const createSourceMaterialActivityVars: CreateSourceMaterialActivityVariables = {
+  id: ..., 
+  sourceMaterialId: ..., // optional
+  folderId: ..., // optional
+  actorId: ..., // optional
+  activityType: ..., 
+  message: ..., // optional
+  metadataJson: ..., // optional
+};
+
+// Call the `createSourceMaterialActivity()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await createSourceMaterialActivity(createSourceMaterialActivityVars);
+// Variables can be defined inline as well.
+const { data } = await createSourceMaterialActivity({ id: ..., sourceMaterialId: ..., folderId: ..., actorId: ..., activityType: ..., message: ..., metadataJson: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await createSourceMaterialActivity(dataConnect, createSourceMaterialActivityVars);
+
+console.log(data.sourceMaterialActivity_insert);
+
+// Or, you can use the `Promise` API.
+createSourceMaterialActivity(createSourceMaterialActivityVars).then((response) => {
+  const data = response.data;
+  console.log(data.sourceMaterialActivity_insert);
+});
+```
+
+### Using `CreateSourceMaterialActivity`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, createSourceMaterialActivityRef, CreateSourceMaterialActivityVariables } from '@impact26/dataconnect-sdk';
+
+// The `CreateSourceMaterialActivity` mutation requires an argument of type `CreateSourceMaterialActivityVariables`:
+const createSourceMaterialActivityVars: CreateSourceMaterialActivityVariables = {
+  id: ..., 
+  sourceMaterialId: ..., // optional
+  folderId: ..., // optional
+  actorId: ..., // optional
+  activityType: ..., 
+  message: ..., // optional
+  metadataJson: ..., // optional
+};
+
+// Call the `createSourceMaterialActivityRef()` function to get a reference to the mutation.
+const ref = createSourceMaterialActivityRef(createSourceMaterialActivityVars);
+// Variables can be defined inline as well.
+const ref = createSourceMaterialActivityRef({ id: ..., sourceMaterialId: ..., folderId: ..., actorId: ..., activityType: ..., message: ..., metadataJson: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = createSourceMaterialActivityRef(dataConnect, createSourceMaterialActivityVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.sourceMaterialActivity_insert);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.sourceMaterialActivity_insert);
 });
 ```
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import * as Icons from "@/components/ui/Icons";
 import { cn } from "@/lib/utils";
@@ -247,7 +247,7 @@ export function LessonPlanDetailView({
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar: module/lesson outline */}
-        <aside className="w-64 shrink-0 overflow-y-auto border-r border-black/10 bg-white">
+        <aside className="w-72 shrink-0 overflow-y-auto border-r border-black/10 bg-white">
           <div className="space-y-1 p-3">
             {modules.map((mod) => (
               <ModuleSidebarSection
@@ -403,6 +403,11 @@ function LessonSidebarButton({
                 <span className="text-[10px] text-slate-400">{insight.blockCountLabel}</span>
               </>
             )}
+            {lesson.sourceMaterial && (
+              <span title={`Source: ${lesson.sourceMaterial.title}`} className="flex items-center gap-0.5 text-[10px] text-[#185FA5]">
+                <Icons.Database size={9} />
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -441,7 +446,7 @@ function LessonDetailPanel({
   const showInlinePreview = mode === "split" && activeTab === "content";
 
   return (
-    <div className={cn("mx-auto space-y-4", showInlinePreview ? "max-w-7xl" : "max-w-3xl")}>
+    <div className={cn("mx-auto space-y-4", showInlinePreview ? "max-w-7xl" : "max-w-4xl")}>
       {/* Lesson header */}
       <div className="flex items-center gap-3 flex-wrap">
         <LessonTypeIcon type={lesson.lessonType} size={18} className="text-[#185FA5]" />
@@ -452,33 +457,31 @@ function LessonDetailPanel({
         </div>
       </div>
 
-      {/* Tabs */}
-      {mode === "edit" && (
-        <div className="flex gap-0 border-b border-slate-200">
-          {visibleTabs.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => onTabChange(tab.id)}
-                className={cn(
-                  "flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-xs font-semibold transition-colors",
-                  activeTab === tab.id
-                    ? "border-[#185FA5] text-[#185FA5]"
-                    : "border-transparent text-slate-500 hover:text-slate-800"
-                )}
-              >
-                <Icon size={13} />
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-      )}
+      {/* Tabs — always visible regardless of mode */}
+      <div className="flex gap-0 border-b border-slate-200">
+        {visibleTabs.map((tab) => {
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => onTabChange(tab.id)}
+              className={cn(
+                "flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-xs font-semibold transition-colors",
+                activeTab === tab.id
+                  ? "border-[#185FA5] text-[#185FA5]"
+                  : "border-transparent text-slate-500 hover:text-slate-800"
+              )}
+            >
+              <Icon size={13} />
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
 
       {/* Tab content / Preview */}
-      {mode === "preview" ? (
+      {mode === "preview" && activeTab === "content" ? (
         <LessonStudentPreview lesson={{ ...lesson, quiz: lesson.quiz ?? undefined }} />
       ) : (
         <>
@@ -648,6 +651,15 @@ function ContentTab({
 
 // ─── Resources Tab ────────────────────────────────────────────────────────────
 
+interface ResourceMaterial {
+  id: string;
+  title: string;
+  kind?: string;
+  pages?: number | null;
+  fileType?: string;
+  previewSnippet?: string;
+}
+
 function ResourcesTab({
   lesson,
   onUpdate,
@@ -657,21 +669,34 @@ function ResourcesTab({
   onUpdate: (updates: Record<string, unknown>) => Promise<void>;
   onReload: () => Promise<void>;
 }) {
-  const [materials, setMaterials] = useState<Array<{ id: string; title: string }>>([]);
+  const [materials, setMaterials] = useState<ResourceMaterial[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [query, setQuery] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [uploadTitle, setUploadTitle] = useState("");
   const [busy, setBusy] = useState(false);
+  const [showUpload, setShowUpload] = useState(false);
 
-  async function loadMaterials() {
+  // Load eagerly when tab mounts
+  useEffect(() => {
     if (loaded) return;
-    const res = await fetch("/api/admin/materials", { cache: "no-store" });
-    if (res.ok) {
-      const data = await res.json();
-      setMaterials(data.materials ?? []);
-    }
-    setLoaded(true);
-  }
+    fetch("/api/admin/materials", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : { materials: [] }))
+      .then((data) => {
+        setMaterials(
+          (data.materials ?? []).map((m: any) => ({
+            id: m.id,
+            title: m.title,
+            kind: m.kind,
+            pages: m.pages ?? null,
+            fileType: m.fileType,
+            previewSnippet: m.previewSnippet ?? "",
+          }))
+        );
+        setLoaded(true);
+      })
+      .catch(() => setLoaded(true));
+  }, [loaded]);
 
   async function linkMaterial(materialId: string) {
     await onUpdate({ sourceMaterialId: materialId || null });
@@ -689,12 +714,14 @@ function ResourcesTab({
       await onUpdate({ sourceMaterialId: data.id });
       setFile(null);
       setUploadTitle("");
+      setShowUpload(false);
+      setLoaded(false); // reload library
     } else {
       const text = await res.text();
       let message = "Upload failed.";
       try {
-        const data = JSON.parse(text) as { error?: string };
-        message = data.error ?? message;
+        const parsed = JSON.parse(text) as { error?: string };
+        message = parsed.error ?? message;
       } catch {
         if (text) message = text;
       }
@@ -703,90 +730,181 @@ function ResourcesTab({
     setBusy(false);
   }
 
+  const filtered = query.trim()
+    ? materials.filter((m) => m.title.toLowerCase().includes(query.toLowerCase()))
+    : materials;
+
+  function kindIcon(kind?: string) {
+    if (kind === "video") return Icons.Video;
+    if (kind === "audio") return Icons.FileText;
+    if (kind === "image") return Icons.BookOpen;
+    return Icons.FileText;
+  }
+
+  function kindLabel(kind?: string) {
+    if (!kind) return "Doc";
+    return kind.charAt(0).toUpperCase() + kind.slice(1);
+  }
+
   return (
     <div className="space-y-4">
       {/* Current attachment */}
       <div className="rounded-xl border border-black/10 bg-white shadow-sm p-5 space-y-3">
-        <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-          <Icons.Database size={15} className="text-[#185FA5]" />
-          Attached resource
-        </h3>
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <Icons.Database size={15} className="text-[#185FA5]" />
+            Lesson source material
+          </h3>
+          <a
+            href="/admin/materials"
+            className="flex items-center gap-1 text-[11px] font-semibold text-[#185FA5] hover:underline"
+          >
+            <Icons.ExternalLink size={11} />
+            Manage library
+          </a>
+        </div>
         {lesson.sourceMaterial ? (
-          <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
-            <Icons.FileText size={16} className="text-slate-400 shrink-0" />
-            <span className="flex-1 text-sm font-medium text-slate-800">{lesson.sourceMaterial.title}</span>
-            <button
-              type="button"
-              onClick={() => linkMaterial("")}
-              className="text-xs text-red-500 hover:text-red-700 font-semibold"
-            >
-              Unlink
-            </button>
+          <div className="rounded-xl border border-[#b8d7f0] bg-[#E6F1FB]/40 px-4 py-3">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#E6F1FB] text-[#185FA5]">
+                <Icons.Database size={15} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-slate-900 truncate">{lesson.sourceMaterial.title}</p>
+                <p className="text-[11px] text-[#185FA5] font-medium mt-0.5">Linked to this lesson</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => linkMaterial("")}
+                className="text-xs text-red-500 hover:text-red-700 font-semibold shrink-0"
+              >
+                Unlink
+              </button>
+            </div>
           </div>
         ) : (
-          <p className="text-xs text-slate-400">No resource attached yet.</p>
+          <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center">
+            <Icons.Database size={22} className="mx-auto text-slate-300 mb-2" />
+            <p className="text-xs text-slate-500 font-medium">No source material linked yet.</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">Search the library below or upload a new file.</p>
+          </div>
         )}
       </div>
 
-      {/* Attach from library */}
-      <div className="rounded-xl border border-black/10 bg-white shadow-sm p-5 space-y-3">
-        <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-          <Icons.Link size={15} className="text-[#185FA5]" />
-          Attach from library
-        </h3>
-        <div
-          onClick={loadMaterials}
-          className="space-y-2"
-        >
-          <select
-            className="admin-input"
-            defaultValue=""
-            onChange={(e) => linkMaterial(e.target.value)}
-            onFocus={loadMaterials}
-          >
-            <option value="">— Select a material —</option>
-            {materials.map((m) => (
-              <option key={m.id} value={m.id}>{m.title}</option>
-            ))}
-          </select>
+      {/* Browse library */}
+      <div className="rounded-xl border border-black/10 bg-white shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100">
+          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <Icons.Link size={15} className="text-[#185FA5]" />
+            Link from library
+          </h3>
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search materials…"
+            className="admin-input mt-3"
+          />
+        </div>
+        <div className="max-h-80 overflow-y-auto divide-y divide-slate-100">
+          {!loaded ? (
+            <div className="flex items-center justify-center py-10 text-xs text-slate-400">
+              <Icons.Loader size={14} className="animate-spin mr-2" />
+              Loading library…
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="py-8 text-center text-xs text-slate-400">
+              {query ? "No materials match your search." : "No materials in your library yet."}
+            </div>
+          ) : (
+            filtered.map((material) => {
+              const Icon = kindIcon(material.kind);
+              const isLinked = lesson.sourceMaterial?.id === material.id;
+              return (
+                <div
+                  key={material.id}
+                  className={cn(
+                    "flex items-start gap-3 px-5 py-3 transition",
+                    isLinked ? "bg-[#E6F1FB]/30" : "hover:bg-slate-50"
+                  )}
+                >
+                  <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+                    <Icon size={13} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-slate-800 truncate">{material.title}</p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold uppercase text-slate-500">
+                        {kindLabel(material.kind)}
+                      </span>
+                      {material.pages ? <span className="text-[10px] text-slate-400">{material.pages}p</span> : null}
+                    </div>
+                  </div>
+                  {isLinked ? (
+                    <span className="flex items-center gap-1 text-[11px] font-semibold text-[#185FA5] shrink-0">
+                      <Icons.Check size={12} />
+                      Linked
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => linkMaterial(material.id)}
+                      className="shrink-0 rounded-lg border border-slate-200 px-2.5 py-1 text-[11px] font-semibold text-slate-600 transition hover:border-[#185FA5] hover:text-[#185FA5]"
+                    >
+                      Link
+                    </button>
+                  )}
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 
       {/* Upload new */}
-      <div className="rounded-xl border border-black/10 bg-white shadow-sm p-5 space-y-3">
-        <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-          <Icons.Upload size={15} className="text-[#185FA5]" />
-          Upload new file
-        </h3>
-        <input
-          className="admin-input"
-          value={uploadTitle}
-          onChange={(e) => setUploadTitle(e.target.value)}
-          placeholder="File title…"
-        />
-        <label className="flex min-h-20 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-[#185FA5]/40 bg-[#E6F1FB]/30 text-center text-xs text-slate-500 px-4 py-3">
-          <Icons.Upload size={18} className="text-[#185FA5] mb-1.5" />
-          <span className="font-semibold text-[#185FA5]">{file ? file.name : "Drop or choose file"}</span>
-          <span>PDF, DOCX, CSV, TXT</span>
-          <input
-            type="file"
-            className="sr-only"
-            onChange={(e) => {
-              const f = e.target.files?.[0] ?? null;
-              setFile(f);
-              if (f && !uploadTitle) setUploadTitle(f.name.replace(/\.[^.]+$/, "").replace(/[-_]/g, " "));
-            }}
-          />
-        </label>
+      <div className="rounded-xl border border-black/10 bg-white shadow-sm overflow-hidden">
         <button
           type="button"
-          onClick={uploadAndLink}
-          disabled={busy || !file || !uploadTitle.trim()}
-          className="admin-action w-full flex items-center justify-center gap-2 text-sm"
+          onClick={() => setShowUpload((v) => !v)}
+          className="flex w-full items-center gap-2 px-5 py-4 text-left"
         >
-          {busy ? <Icons.Loader size={13} className="animate-spin" /> : <Icons.Upload size={13} />}
-          Upload and attach
+          <Icons.Upload size={15} className="text-[#185FA5]" />
+          <span className="text-sm font-bold text-slate-900 flex-1">Upload new file</span>
+          <Icons.ChevronDown size={14} className={cn("text-slate-400 transition-transform", showUpload && "rotate-180")} />
         </button>
+        {showUpload && (
+          <div className="border-t border-slate-100 px-5 py-4 space-y-3">
+            <input
+              className="admin-input"
+              value={uploadTitle}
+              onChange={(e) => setUploadTitle(e.target.value)}
+              placeholder="File title…"
+            />
+            <label className="flex min-h-20 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-[#185FA5]/40 bg-[#E6F1FB]/30 text-center text-xs text-slate-500 px-4 py-3">
+              <Icons.Upload size={18} className="text-[#185FA5] mb-1.5" />
+              <span className="font-semibold text-[#185FA5]">{file ? file.name : "Drop or choose file"}</span>
+              <span>PDF, DOCX, CSV, TXT</span>
+              <input
+                type="file"
+                className="sr-only"
+                onChange={(e) => {
+                  const f = e.target.files?.[0] ?? null;
+                  setFile(f);
+                  if (f && !uploadTitle) setUploadTitle(f.name.replace(/\.[^.]+$/, "").replace(/[-_]/g, " "));
+                }}
+              />
+            </label>
+            <button
+              type="button"
+              onClick={uploadAndLink}
+              disabled={busy || !file || !uploadTitle.trim()}
+              className="admin-action w-full flex items-center justify-center gap-2 text-sm"
+            >
+              {busy ? <Icons.Loader size={13} className="animate-spin" /> : <Icons.Upload size={13} />}
+              Upload and attach
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

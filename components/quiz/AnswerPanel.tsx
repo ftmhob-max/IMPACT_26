@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import type { EvaluationResult } from "@/lib/quiz-engine/evaluate";
+import * as Icons from "@/components/ui/Icons";
 
 interface AnswerPanelProps {
   result: EvaluationResult;
@@ -16,7 +17,8 @@ export function AnswerPanel({ result, isOpen }: AnswerPanelProps) {
       {/* Per-choice breakdown */}
       {result.choices.length > 0 && (
         <div className="px-3.5 py-2.5 border-b border-[rgba(0,0,0,0.11)] space-y-2">
-          <p className="text-[9.5px] font-extrabold uppercase tracking-[0.07em] text-[#888880]">
+          <p className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.07em] text-[#3B6D11]">
+            <Icons.Check size={12} />
             Correct Answer
           </p>
           {result.choices.map((choice) => (
@@ -51,7 +53,8 @@ export function AnswerPanel({ result, isOpen }: AnswerPanelProps) {
       {/* Calculation */}
       {result.calculation && (
         <div className="px-3.5 py-2.5 border-b border-[rgba(0,0,0,0.11)]">
-          <p className="text-[9.5px] font-extrabold uppercase tracking-[0.07em] text-[#888880] mb-1">
+          <p className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.07em] text-[#888880] mb-1">
+            <Icons.Calculator size={12} />
             Step-by-step Calculation
           </p>
           <pre className="font-calc text-[#1a1a18] whitespace-pre-wrap text-[11.5px] leading-[1.85] bg-white px-3 py-2.5 rounded border border-[rgba(0,0,0,0.11)]">
@@ -60,20 +63,25 @@ export function AnswerPanel({ result, isOpen }: AnswerPanelProps) {
         </div>
       )}
 
-      {/* Rationale */}
+      {/* Rationale — with 2px left accent bar */}
       {result.rationale && (
-        <div className="px-3.5 py-2.5 border-b border-[rgba(0,0,0,0.11)]">
-          <p className="text-[9.5px] font-extrabold uppercase tracking-[0.07em] text-[#888880] mb-1">
-            Rationale
-          </p>
-          <p className="text-[12.5px] text-[#4a4a46] leading-[1.7]">{result.rationale}</p>
+        <div className="border-b border-[rgba(0,0,0,0.11)] flex">
+          <div className="w-[3px] shrink-0 bg-[#185FA5] rounded-l-sm" />
+          <div className="px-3.5 py-2.5 flex-1">
+            <p className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.07em] text-[#185FA5] mb-1">
+              <Icons.BookOpen size={12} />
+              Rationale
+            </p>
+            <p className="text-[12.5px] text-[#4a4a46] leading-[1.7]">{result.rationale}</p>
+          </div>
         </div>
       )}
 
       {/* Source reference */}
       {result.sourceRef && (
         <div className="px-3.5 py-2.5">
-          <p className="text-[9.5px] font-extrabold uppercase tracking-[0.07em] text-[#888880] mb-1">
+          <p className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.07em] text-[#888880] mb-1">
+            <Icons.FileText size={12} />
             Source Reference
           </p>
           <p className="text-[12px] italic text-[#4a4a46]">{result.sourceRef}</p>

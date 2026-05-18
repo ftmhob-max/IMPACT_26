@@ -6,11 +6,13 @@ import { z } from "zod";
 const updateSchema = z.object({
   term: z.string().trim().min(1).optional(),
   definition: z.string().trim().min(1).optional(),
+  fullDefinition: z.string().trim().optional().nullable(),
   domain: z.string().trim().optional().nullable(),
   category: z.string().trim().optional().nullable(),
   example: z.string().trim().optional().nullable(),
   relatedTerms: z.array(z.string().trim().min(1)).optional(),
   isPublished: z.boolean().optional(),
+  sourceDocument: z.string().trim().optional().nullable(),
 });
 
 export async function PUT(

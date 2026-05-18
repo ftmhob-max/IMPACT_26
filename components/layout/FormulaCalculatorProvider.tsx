@@ -11,6 +11,7 @@ import {
 } from "react";
 import {
   getFormulaCalculator,
+  normalizeCode,
   formatValue,
   type FormulaCalculatorConfig,
 } from "@/lib/formula-calculator";
@@ -187,8 +188,12 @@ export function FormulaCalculatorProvider({
 
   const activeFormula = useMemo<FormulaItem | null>(() => {
     if (!activeFormulaCode) return null;
+    const normalizedTarget = normalizeCode(activeFormulaCode);
     for (const s of sections) {
-      const f = s.formulas.find((f) => f.code === activeFormulaCode);
+      // Try exact match first, then normalized (handles dots, case, etc.)
+      const f =
+        s.formulas.find((f) => f.code === activeFormulaCode) ??
+        s.formulas.find((f) => normalizeCode(f.code) === normalizedTarget);
       if (f) return f;
     }
     return null;

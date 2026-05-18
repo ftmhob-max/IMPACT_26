@@ -275,6 +275,82 @@ extend type Query {
     first: SourceMaterial_FirstRow
   ): SourceMaterial @fdc_generated(from: "SourceMaterial", purpose: QUERY_SINGLE)
   """
+  ✨ Look up a single `SourceMaterialActivity` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  sourceMaterialActivity(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: SourceMaterialActivity_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: SourceMaterialActivity_FirstRow
+  ): SourceMaterialActivity @fdc_generated(from: "SourceMaterialActivity", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `SourceMaterialFolder` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  sourceMaterialFolder(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: SourceMaterialFolder_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: SourceMaterialFolder_FirstRow
+  ): SourceMaterialFolder @fdc_generated(from: "SourceMaterialFolder", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `SourceMaterialTag` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  sourceMaterialTag(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: SourceMaterialTag_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: SourceMaterialTag_FirstRow
+  ): SourceMaterialTag @fdc_generated(from: "SourceMaterialTag", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `SourceMaterialTagAssignment` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  sourceMaterialTagAssignment(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: SourceMaterialTagAssignment_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: SourceMaterialTagAssignment_FirstRow
+  ): SourceMaterialTagAssignment @fdc_generated(from: "SourceMaterialTagAssignment", purpose: QUERY_SINGLE)
+  """
   ✨ Look up a single `User` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
   user(
@@ -836,6 +912,142 @@ extend type Query {
     """
     having: SourceMaterial_Having
   ): [SourceMaterial!]! @fdc_generated(from: "SourceMaterial", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `SourceMaterialActivity` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  sourceMaterialActivities(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: SourceMaterialActivity_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [SourceMaterialActivity_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: SourceMaterialActivity_Having
+  ): [SourceMaterialActivity!]! @fdc_generated(from: "SourceMaterialActivity", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `SourceMaterialFolder` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  sourceMaterialFolders(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: SourceMaterialFolder_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [SourceMaterialFolder_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: SourceMaterialFolder_Having
+  ): [SourceMaterialFolder!]! @fdc_generated(from: "SourceMaterialFolder", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `SourceMaterialTag` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  sourceMaterialTags(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: SourceMaterialTag_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [SourceMaterialTag_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: SourceMaterialTag_Having
+  ): [SourceMaterialTag!]! @fdc_generated(from: "SourceMaterialTag", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `SourceMaterialTagAssignment` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  sourceMaterialTagAssignments(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: SourceMaterialTagAssignment_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [SourceMaterialTagAssignment_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: SourceMaterialTagAssignment_Having
+  ): [SourceMaterialTagAssignment!]! @fdc_generated(from: "SourceMaterialTagAssignment", purpose: QUERY_MULTIPLE)
   """
   ✨ List `User` objects in the table and return selected fields, optionally filtered by `where` conditions
   """

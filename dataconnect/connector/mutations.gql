@@ -141,12 +141,42 @@ mutation UpdateSourceMaterial($id: UUID!, $extractedText: String, $metadataJson:
   })
 }
 
-mutation CreateSourceMaterial($id: UUID!, $title: String!, $fileName: String!, $fileType: String!, $storagePath: String!, $downloadUrl: String, $extractedText: String, $metadataJson: String, $status: String!, $uploadedById: String) @auth(level: NO_ACCESS) {
+mutation UpdateSourceMaterialLibraryState(
+  $id: UUID!,
+  $title: String,
+  $folderId: UUID,
+  $starred: Boolean,
+  $archivedAt: Date,
+  $trashedAt: Date,
+  $reviewStatus: String,
+  $visibility: String,
+  $duplicateOfId: UUID,
+  $lastActivityAt: Date,
+  $metadataJson: String,
+  $status: String
+) @auth(level: NO_ACCESS) {
+  sourceMaterial_update(id: $id, data: {
+    title: $title
+    folder: { id: $folderId }
+    starred: $starred
+    archivedAt: $archivedAt
+    trashedAt: $trashedAt
+    reviewStatus: $reviewStatus
+    visibility: $visibility
+    duplicateOf: { id: $duplicateOfId }
+    lastActivityAt: $lastActivityAt
+    metadataJson: $metadataJson
+    status: $status
+  })
+}
+
+mutation CreateSourceMaterial($id: UUID!, $title: String!, $fileName: String!, $fileType: String!, $folderId: UUID, $storagePath: String!, $downloadUrl: String, $extractedText: String, $metadataJson: String, $status: String!, $uploadedById: String) @auth(level: NO_ACCESS) {
   sourceMaterial_insert(data: {
     id: $id
     title: $title
     fileName: $fileName
     fileType: $fileType
+    folder: { id: $folderId }
     storagePath: $storagePath
     downloadUrl: $downloadUrl
     extractedText: $extractedText
@@ -165,6 +195,64 @@ mutation CreateIngestionJob($id: UUID!, $sourceMaterialId: UUID!, $status: Strin
     extractedCharacters: $extractedCharacters
     errorMessage: $errorMessage
     completedAt: $completedAt
+  })
+}
+
+mutation CreateSourceMaterialFolder($id: UUID!, $name: String!, $parentFolderId: UUID, $folderType: String!, $courseId: UUID, $lessonId: UUID, $createdById: String) @auth(level: NO_ACCESS) {
+  sourceMaterialFolder_insert(data: {
+    id: $id
+    name: $name
+    parentFolder: { id: $parentFolderId }
+    folderType: $folderType
+    course: { id: $courseId }
+    lesson: { id: $lessonId }
+    createdBy: { id: $createdById }
+  })
+}
+
+mutation UpdateSourceMaterialFolder($id: UUID!, $name: String, $parentFolderId: UUID, $archivedAt: Date, $trashedAt: Date) @auth(level: NO_ACCESS) {
+  sourceMaterialFolder_update(id: $id, data: {
+    name: $name
+    parentFolder: { id: $parentFolderId }
+    archivedAt: $archivedAt
+    trashedAt: $trashedAt
+  })
+}
+
+mutation DeleteSourceMaterialFolder($id: UUID!) @auth(level: NO_ACCESS) {
+  sourceMaterialFolder_delete(id: $id)
+}
+
+mutation CreateSourceMaterialTag($id: UUID!, $name: String!, $color: String, $createdById: String) @auth(level: NO_ACCESS) {
+  sourceMaterialTag_insert(data: {
+    id: $id
+    name: $name
+    color: $color
+    createdBy: { id: $createdById }
+  })
+}
+
+mutation CreateSourceMaterialTagAssignment($id: UUID!, $sourceMaterialId: UUID!, $tagId: UUID!) @auth(level: NO_ACCESS) {
+  sourceMaterialTagAssignment_insert(data: {
+    id: $id
+    sourceMaterial: { id: $sourceMaterialId }
+    tag: { id: $tagId }
+  })
+}
+
+mutation DeleteTagAssignmentsForMaterial($sourceMaterialId: UUID!) @auth(level: NO_ACCESS) {
+  sourceMaterialTagAssignment_deleteMany(where: { sourceMaterial: { id: { eq: $sourceMaterialId } } })
+}
+
+mutation CreateSourceMaterialActivity($id: UUID!, $sourceMaterialId: UUID, $folderId: UUID, $actorId: String, $activityType: String!, $message: String, $metadataJson: String) @auth(level: NO_ACCESS) {
+  sourceMaterialActivity_insert(data: {
+    id: $id
+    sourceMaterial: { id: $sourceMaterialId }
+    folder: { id: $folderId }
+    actor: { id: $actorId }
+    activityType: $activityType
+    message: $message
+    metadataJson: $metadataJson
   })
 }
 

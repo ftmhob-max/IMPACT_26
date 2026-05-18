@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import { ProgressBar } from "./ProgressBar";
 import * as Icons from "@/components/ui/Icons";
 
@@ -32,6 +33,19 @@ export function QuizHeader({
   calculatorLauncher,
 }: QuizHeaderProps) {
   const allAnswered = answeredCount === total && total > 0;
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
+        setMoreOpen(false);
+      }
+    }
+    if (moreOpen) document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [moreOpen]);
 
   return (
     <>
@@ -71,22 +85,17 @@ export function QuizHeader({
             </div>
           </div>
 
-          <div className="mt-4 flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+          {/* Toolbar: always-visible + "More" dropdown for secondary actions */}
+          <div className="mt-4 flex items-center gap-1.5">
+            {/* Always visible: Shuffle */}
             <HaBtn onClick={onShuffle} primary icon={<Icons.Shuffle size={13} />}>
               Shuffle
             </HaBtn>
-            <HaBtn onClick={onShowAll} icon={<Icons.Eye size={13} />}>
-              Show all answers
-            </HaBtn>
-            <HaBtn onClick={onHideAll} icon={<Icons.EyeOff size={13} />}>
-              Hide all answers
-            </HaBtn>
-            <HaBtn onClick={onReset} icon={<Icons.RotateCcw size={13} />}>
-              Reset
-            </HaBtn>
-            <HaBtn onClick={() => window.print()} icon={<Icons.Printer size={13} />}>
-              Print / PDF
-            </HaBtn>
+
+            {/* Always visible: Calculator (passed as slot) */}
+            {calculatorLauncher && <div>{calculatorLauncher}</div>}
+
+            {/* Always visible: Finish Exam (only when all answered) */}
             {allAnswered && (
               <button
                 onClick={onFinish}
@@ -97,9 +106,48 @@ export function QuizHeader({
                 {isCompleting ? "Finishing..." : "Finish exam"}
               </button>
             )}
-            {calculatorLauncher && (
-              <div className="ml-auto">{calculatorLauncher}</div>
-            )}
+
+            {/* More dropdown: secondary actions */}
+            <div ref={moreRef} className="relative ml-auto">
+              <button
+                onClick={() => setMoreOpen((v) => !v)}
+                className="flex items-center gap-1 whitespace-nowrap rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-[11px] font-bold text-white backdrop-blur transition-all hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white active:scale-95"
+                aria-expanded={moreOpen}
+                aria-haspopup="menu"
+              >
+                More
+                <Icons.ChevronDown size={12} />
+              </button>
+
+              {moreOpen && (
+                <div className="absolute right-0 top-full mt-1.5 z-50 w-48 overflow-hidden rounded-lg border border-white/20 bg-[#0a4a7a] shadow-xl">
+                  <DropdownItem
+                    icon={<Icons.Eye size={13} />}
+                    onClick={() => { onShowAll(); setMoreOpen(false); }}
+                  >
+                    Show all answers
+                  </DropdownItem>
+                  <DropdownItem
+                    icon={<Icons.EyeOff size={13} />}
+                    onClick={() => { onHideAll(); setMoreOpen(false); }}
+                  >
+                    Hide all answers
+                  </DropdownItem>
+                  <DropdownItem
+                    icon={<Icons.RotateCcw size={13} />}
+                    onClick={() => { onReset(); setMoreOpen(false); }}
+                  >
+                    Reset exam
+                  </DropdownItem>
+                  <DropdownItem
+                    icon={<Icons.Printer size={13} />}
+                    onClick={() => { window.print(); setMoreOpen(false); }}
+                  >
+                    Print / PDF
+                  </DropdownItem>
+                </div>
+              )}
+            </div>
           </div>
         </div>
         <ProgressBar answered={answeredCount} total={total} />
@@ -126,6 +174,26 @@ function HaBtn({
       className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-white/20 px-3.5 py-2 text-[11px] font-bold text-white backdrop-blur transition-all hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white active:scale-95 ${
         primary ? "bg-white/20" : "bg-white/10"
       }`}
+    >
+      {icon}
+      {children}
+    </button>
+  );
+}
+
+function DropdownItem({
+  children,
+  icon,
+  onClick,
+}: {
+  children: React.ReactNode;
+  icon?: React.ReactNode;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-[11.5px] font-semibold text-white/90 transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-inset focus-visible:ring-2 focus-visible:ring-white"
     >
       {icon}
       {children}

@@ -33,7 +33,7 @@ export interface FormulaCalculatorConfig {
   explanation?: string;
 }
 
-function normalizeCode(code: string): string {
+export function normalizeCode(code: string): string {
   return code.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
 }
 
