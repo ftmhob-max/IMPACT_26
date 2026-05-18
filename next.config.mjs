@@ -7,7 +7,15 @@ const nextConfig = {
       { protocol: "https", hostname: "image.mux.com" },
     ],
   },
-  serverExternalPackages: ["firebase-admin"],
+  serverExternalPackages: [
+    "firebase-admin",
+    "firebase-admin/app",
+    "firebase-admin/auth",
+    "firebase-admin/firestore",
+    "firebase-admin/database",
+    "firebase-admin/storage",
+    "firebase-admin/messaging",
+  ],
   async headers() {
     return [
       {

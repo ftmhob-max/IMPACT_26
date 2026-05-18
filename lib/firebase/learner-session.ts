@@ -14,7 +14,7 @@ export async function getLearnerSession(): Promise<LearnerSession | null> {
   const sessionCookie = cookieStore.get("__session")?.value;
   if (!sessionCookie) return null;
   try {
-    const decoded = await adminAuth.verifySessionCookie(sessionCookie, true);
+    const decoded = await adminAuth.verifySessionCookie(sessionCookie, false);
     const user = await adminAuth.getUser(decoded.uid).catch(() => null);
     return {
       uid: decoded.uid,

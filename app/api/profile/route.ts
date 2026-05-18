@@ -12,7 +12,7 @@ async function requireProfileUser() {
   const sessionCookie = cookieStore.get("__session")?.value;
   if (!sessionCookie) return null;
 
-  const decoded = await adminAuth.verifySessionCookie(sessionCookie, true);
+  const decoded = await adminAuth.verifySessionCookie(sessionCookie, false);
   const user = await adminAuth.getUser(decoded.uid);
   return { decoded, user };
 }
