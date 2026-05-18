@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { runFlow } from 'genkit';
 import { chatFlow, summarizeMaterialFlow } from '@/lib/ai/flows';
 
 export async function POST(req: Request) {
