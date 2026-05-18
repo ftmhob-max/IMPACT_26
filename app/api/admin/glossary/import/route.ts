@@ -97,6 +97,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ imported, updated, skipped });
   } catch (err: any) {
     console.error("[admin/glossary/import:POST] Failed to import terms:", err.message);
-    return NextResponse.json({ error: "Failed to import terms. Ensure Firestore is initialized." }, { status: 500 });
+    if (err.message?.includes("5 NOT_FOUND")) {
+      return NextResponse.json({ error: "Firestore database is not initialized. Please create the default Firestore database in the Google Cloud Console or Firebase Console to enable Glossary features." }, { status: 500 });
+    }
+    return NextResponse.json({ error: `Import failed: ${err.message}` }, { status: 500 });
   }
 }
