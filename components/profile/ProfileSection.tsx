@@ -7,6 +7,7 @@ import {
 import * as Icons from "@/components/ui/Icons";
 import { SignOutButton } from "@/components/auth/SignOutButton";
 import { LearnerSession } from "@/lib/firebase/learner-session";
+import { UserAvatar } from "@/components/profile/UserAvatar";
 
 export function ProfileSection({
   session,
@@ -25,23 +26,18 @@ export function ProfileSection({
   strongestDomainLabel: string | null;
   nextAction: { href: string; label: string; detail: string };
 }) {
-  const fallbackInitial = session.email?.[0]?.toUpperCase() ?? "?";
-  const displayInitials = session.fullName
-    ? session.fullName
-        .split(" ")
-        .map((name) => name[0])
-        .join("")
-        .toUpperCase()
-    : fallbackInitial;
-
   return (
     <SectionPanel className="mb-6 overflow-hidden">
       <div className="border-b border-slate-100 bg-[radial-gradient(circle_at_top_left,_rgba(24,95,165,0.12),_transparent_32%),linear-gradient(135deg,#ffffff_0%,#f8fbff_48%,#f8f6f0_100%)] p-5 sm:p-6">
         <div className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
           <div className="flex items-start gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-900 text-base font-bold text-white shadow-sm ring-4 ring-white/90">
-              {displayInitials}
-            </div>
+            <UserAvatar
+              fullName={session.fullName}
+              email={session.email}
+              photoURL={session.photoURL}
+              size="lg"
+              className="shadow-sm"
+            />
 
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">

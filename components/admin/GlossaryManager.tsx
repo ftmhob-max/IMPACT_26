@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import * as Icons from "@/components/ui/Icons";
 import { cn } from "@/lib/utils";
 import { GlossaryImportPanel } from "@/components/admin/GlossaryImportPanel";
@@ -32,6 +32,9 @@ export function GlossaryManager() {
   const [showCreate, setShowCreate] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [notice, setNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -45,6 +48,27 @@ export function GlossaryManager() {
   function showNotice(type: "success" | "error", text: string) {
     setNotice({ type, text });
     setTimeout(() => setNotice(null), 4000);
+  }
+
+  function enterSelectMode() {
+    setSelectMode(true);
+    setSelected(null);
+    setShowCreate(false);
+    setSelectedIds(new Set());
+  }
+
+  function exitSelectMode() {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  }
+
+  function toggleSelectId(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   }
 
   async function deleteTerm(id: string) {
@@ -81,6 +105,48 @@ export function GlossaryManager() {
     return true;
   });
 
+  const allFilteredSelected = filtered.length > 0 && filtered.every((t) => selectedIds.has(t.id));
+  const someFilteredSelected = filtered.some((t) => selectedIds.has(t.id));
+
+  function toggleSelectAll() {
+    if (allFilteredSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map((t) => t.id)));
+    }
+  }
+
+  async function bulkPublish(publish: boolean) {
+    const targets = [...selectedIds];
+    if (targets.length === 0) return;
+    setBulkBusy(true);
+    await Promise.all(
+      targets.map((id) =>
+        fetch(`/api/admin/glossary/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ isPublished: publish }),
+        })
+      )
+    );
+    showNotice("success", `${targets.length} term${targets.length > 1 ? "s" : ""} ${publish ? "published" : "unpublished"}.`);
+    setSelectedIds(new Set());
+    setBulkBusy(false);
+    await load();
+  }
+
+  async function bulkDelete() {
+    if (!confirm(`Delete ${selectedIds.size} term(s)? All student notes will also be removed.`)) return;
+    const targets = [...selectedIds];
+    setBulkBusy(true);
+    await Promise.all(targets.map((id) => fetch(`/api/admin/glossary/${id}`, { method: "DELETE" })));
+    showNotice("success", `${targets.length} term${targets.length > 1 ? "s" : ""} deleted.`);
+    if (selected && selectedIds.has(selected.id)) setSelected(null);
+    setSelectedIds(new Set());
+    setBulkBusy(false);
+    await load();
+  }
+
   // Group by first letter
   const grouped = filtered.reduce<Record<string, GlossaryTerm[]>>((acc, t) => {
     const key = t.term[0]?.toUpperCase() ?? "#";
@@ -106,7 +172,18 @@ export function GlossaryManager() {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => { setShowImport((v) => !v); setShowCreate(false); setSelected(null); }}
+              onClick={selectMode ? exitSelectMode : enterSelectMode}
+              className={cn(
+                "admin-action secondary flex items-center gap-1.5 text-sm",
+                selectMode && "bg-[#185FA5] text-white border-[#185FA5]"
+              )}
+            >
+              <SelectIcon size={14} checked={someFilteredSelected} indeterminate={someFilteredSelected && !allFilteredSelected} />
+              {selectMode ? "Cancel" : "Select"}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setShowImport((v) => !v); setShowCreate(false); setSelected(null); exitSelectMode(); }}
               className={cn("admin-action secondary flex items-center gap-1.5 text-sm", showImport && "bg-[#185FA5] text-white border-[#185FA5]")}
             >
               <Icons.Upload size={14} />
@@ -114,7 +191,7 @@ export function GlossaryManager() {
             </button>
             <button
               type="button"
-              onClick={() => { setShowCreate(true); setShowImport(false); setSelected(null); }}
+              onClick={() => { setShowCreate(true); setShowImport(false); setSelected(null); exitSelectMode(); }}
               className="admin-action flex items-center gap-1.5 text-sm"
             >
               <Icons.Plus size={14} />
@@ -152,6 +229,21 @@ export function GlossaryManager() {
             <option value="draft">Draft</option>
           </select>
         </div>
+
+        {/* Bulk action bar */}
+        {selectMode && (
+          <BulkActionBar
+            selectedCount={selectedIds.size}
+            allSelected={allFilteredSelected}
+            someSelected={someFilteredSelected}
+            filteredCount={filtered.length}
+            busy={bulkBusy}
+            onToggleAll={toggleSelectAll}
+            onPublish={() => bulkPublish(true)}
+            onUnpublish={() => bulkPublish(false)}
+            onDelete={bulkDelete}
+          />
+        )}
 
         {/* Notice */}
         {notice && (
@@ -209,7 +301,10 @@ export function GlossaryManager() {
                       term={term}
                       active={selected?.id === term.id}
                       compact={!!selected}
+                      selectMode={selectMode}
+                      checked={selectedIds.has(term.id)}
                       onSelect={() => { setSelected(term); setShowCreate(false); }}
+                      onToggleSelect={() => toggleSelectId(term.id)}
                       onTogglePublish={() => togglePublish(term)}
                       onDelete={() => deleteTerm(term.id)}
                     />
@@ -222,7 +317,7 @@ export function GlossaryManager() {
       </div>
 
       {/* Right column: detail/edit */}
-      {selected && (
+      {selected && !selectMode && (
         <TermEditPanel
           key={selected.id}
           term={selected}
@@ -244,36 +339,141 @@ export function GlossaryManager() {
   );
 }
 
+// ─── Bulk Action Bar ──────────────────────────────────────────────────────────
+
+function BulkActionBar({
+  selectedCount,
+  allSelected,
+  someSelected,
+  filteredCount,
+  busy,
+  onToggleAll,
+  onPublish,
+  onUnpublish,
+  onDelete,
+}: {
+  selectedCount: number;
+  allSelected: boolean;
+  someSelected: boolean;
+  filteredCount: number;
+  busy: boolean;
+  onToggleAll: () => void;
+  onPublish: () => void;
+  onUnpublish: () => void;
+  onDelete: () => void;
+}) {
+  const indeterminate = someSelected && !allSelected;
+  const checkboxRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (checkboxRef.current) {
+      checkboxRef.current.indeterminate = indeterminate;
+    }
+  }, [indeterminate]);
+
+  return (
+    <div className="flex items-center gap-3 rounded-lg border border-[#185FA5]/20 bg-[#E6F1FB] px-3 py-2 flex-wrap">
+      <label className="flex items-center gap-2 cursor-pointer select-none">
+        <input
+          ref={checkboxRef}
+          type="checkbox"
+          checked={allSelected}
+          onChange={onToggleAll}
+          className="h-4 w-4 rounded border-slate-300 accent-[#185FA5] cursor-pointer"
+        />
+        <span className="text-xs font-medium text-slate-700">
+          {selectedCount === 0
+            ? `${filteredCount} visible`
+            : `${selectedCount} selected`}
+        </span>
+      </label>
+
+      {selectedCount > 0 && (
+        <>
+          <div className="h-4 w-px bg-slate-300" />
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={onPublish}
+              disabled={busy}
+              className="flex items-center gap-1 rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-60 transition-colors"
+            >
+              {busy ? <Icons.Loader size={11} className="animate-spin" /> : <Icons.Eye size={11} />}
+              Publish
+            </button>
+            <button
+              type="button"
+              onClick={onUnpublish}
+              disabled={busy}
+              className="flex items-center gap-1 rounded-md bg-slate-500 px-2.5 py-1 text-xs font-medium text-white hover:bg-slate-600 disabled:opacity-60 transition-colors"
+            >
+              {busy ? <Icons.Loader size={11} className="animate-spin" /> : <Icons.EyeOff size={11} />}
+              Unpublish
+            </button>
+            <button
+              type="button"
+              onClick={onDelete}
+              disabled={busy}
+              className="flex items-center gap-1 rounded-md bg-red-500 px-2.5 py-1 text-xs font-medium text-white hover:bg-red-600 disabled:opacity-60 transition-colors"
+            >
+              {busy ? <Icons.Loader size={11} className="animate-spin" /> : <Icons.Trash2 size={11} />}
+              Delete
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // ─── Term List Row ────────────────────────────────────────────────────────────
 
 function TermListRow({
   term,
   active,
   compact,
+  selectMode,
+  checked,
   onSelect,
+  onToggleSelect,
   onTogglePublish,
   onDelete,
 }: {
   term: GlossaryTerm;
   active: boolean;
   compact: boolean;
+  selectMode: boolean;
+  checked: boolean;
   onSelect: () => void;
+  onToggleSelect: () => void;
   onTogglePublish: () => void;
   onDelete: () => void;
 }) {
   return (
     <div
-      onClick={onSelect}
+      onClick={selectMode ? onToggleSelect : onSelect}
       className={cn(
         "group flex items-start gap-3 rounded-lg border px-3 py-2.5 cursor-pointer transition-colors",
-        active
+        selectMode && checked
+          ? "border-[#185FA5] bg-[#E6F1FB]"
+          : active
           ? "border-[#185FA5] bg-[#E6F1FB]"
           : "border-transparent bg-white hover:border-slate-200 hover:bg-slate-50"
       )}
     >
+      {selectMode && (
+        <div className="pt-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+          <input
+            type="checkbox"
+            checked={checked}
+            onChange={onToggleSelect}
+            className="h-4 w-4 rounded border-slate-300 accent-[#185FA5] cursor-pointer"
+          />
+        </div>
+      )}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className={cn("text-sm font-semibold truncate", active ? "text-[#185FA5]" : "text-slate-900")}>
+          <span className={cn("text-sm font-semibold truncate", (active || (selectMode && checked)) ? "text-[#185FA5]" : "text-slate-900")}>
             {term.term}
           </span>
           <PublishBadge published={term.isPublished} />
@@ -283,24 +483,26 @@ function TermListRow({
           <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{term.definition}</p>
         )}
       </div>
-      <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); onTogglePublish(); }}
-          className="rounded p-1 text-slate-400 hover:text-emerald-600 transition-colors"
-          title={term.isPublished ? "Unpublish" : "Publish"}
-        >
-          {term.isPublished ? <Icons.EyeOff size={13} /> : <Icons.Eye size={13} />}
-        </button>
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); onDelete(); }}
-          className="rounded p-1 text-slate-400 hover:text-red-600 transition-colors"
-          title="Delete term"
-        >
-          <Icons.Trash2 size={13} />
-        </button>
-      </div>
+      {!selectMode && (
+        <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onTogglePublish(); }}
+            className="rounded p-1 text-slate-400 hover:text-emerald-600 transition-colors"
+            title={term.isPublished ? "Unpublish" : "Publish"}
+          >
+            {term.isPublished ? <Icons.EyeOff size={13} /> : <Icons.Eye size={13} />}
+          </button>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+            className="rounded p-1 text-slate-400 hover:text-red-600 transition-colors"
+            title="Delete term"
+          >
+            <Icons.Trash2 size={13} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -500,6 +702,30 @@ function TermForm({
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function SelectIcon({ size, checked, indeterminate }: { size: number; checked: boolean; indeterminate: boolean }) {
+  if (indeterminate) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+        <rect x="1" y="1" width="14" height="14" rx="3" stroke="currentColor" strokeWidth="1.5" fill="none" />
+        <line x1="4" y1="8" x2="12" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    );
+  }
+  if (checked) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+        <rect x="1" y="1" width="14" height="14" rx="3" stroke="currentColor" strokeWidth="1.5" fill="none" />
+        <polyline points="4,8.5 6.5,11 12,5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      </svg>
+    );
+  }
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+      <rect x="1" y="1" width="14" height="14" rx="3" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    </svg>
+  );
+}
 
 function PublishBadge({ published }: { published: boolean }) {
   return (

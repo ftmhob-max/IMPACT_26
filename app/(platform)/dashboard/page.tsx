@@ -125,7 +125,7 @@ export default async function DashboardPage() {
               icon={Icons.Calculator}
             />
             <Shortcut
-              href="/profile"
+              href="/progress"
               title="My progress"
               detail={
                 latestAttempt?.scorePct != null

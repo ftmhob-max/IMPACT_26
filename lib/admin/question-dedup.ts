@@ -1,6 +1,7 @@
 import { adminDcQuery } from "@/lib/firebase/admin-dc";
 
 interface ExistingQuestionRecord {
+  id: string;
   questionText: string;
 }
 
@@ -60,4 +61,27 @@ export async function loadExistingQuestionDedupSet(): Promise<Set<string>> {
   }
 
   return createQuestionDedupSet(questionTexts);
+}
+
+export async function loadExistingQuestionMap(): Promise<Map<string, string>> {
+  const countData = await adminDcQuery<{ questions: Array<{ id: string }> }>("AdminCountQuestions").catch(() => ({
+    questions: [],
+  }));
+  const total = countData.questions?.length ?? 0;
+
+  const map = new Map<string, string>();
+  if (total === 0) return map;
+
+  for (let offset = 0; offset < total; offset += PAGE_SIZE) {
+    const page = await adminDcQuery<{ questions: ExistingQuestionRecord[] }>("AdminListQuestionsPage", {
+      limit: PAGE_SIZE,
+      offset,
+    }).catch(() => ({ questions: [] }));
+    for (const question of page.questions ?? []) {
+      const normalized = normalizeQuestionTextForDedup(question.questionText);
+      if (normalized) map.set(normalized, question.id);
+    }
+  }
+
+  return map;
 }

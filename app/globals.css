@@ -147,3 +147,26 @@ body {
   color: #185FA5;
 }
 .admin-action.secondary:hover { background: #E6F1FB; border-color: rgba(24, 95, 165, 0.35); }
+
+.profile-input {
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  padding: 0.75rem 0.875rem;
+  font-size: 0.875rem;
+  line-height: 1.35;
+  color: #0f172a;
+  outline: none;
+}
+
+.profile-input:focus {
+  border-color: #185FA5;
+  box-shadow: 0 0 0 4px rgba(24, 95, 165, 0.12);
+}
+
+/* Glossary term highlights inside Tiptap read-only renderer */
+.glossary-term {
+  border-bottom: 1.5px dotted #185FA5;
+  cursor: help;
+}

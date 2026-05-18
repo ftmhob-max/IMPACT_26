@@ -38,6 +38,22 @@ extend type Formula {
   """
   sectionId: UUID! @fdc_generated(from: "Formula.section", purpose: IMPLICIT_REF_FIELD)
 }
+extend type GlossaryNote {
+  """
+  ✨ Implicit foreign key field based on `GlossaryNote`.`term`. It must match the value of `GlossaryTerm`.`id`. See `@ref` for how to customize it.
+  """
+  termId: UUID! @fdc_generated(from: "GlossaryNote.term", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `GlossaryNote`.`user`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  userId: String! @fdc_generated(from: "GlossaryNote.user", purpose: IMPLICIT_REF_FIELD)
+}
+extend type GlossaryTerm {
+  """
+  ✨ Implicit foreign key field based on `GlossaryTerm`.`createdBy`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  createdById: String @fdc_generated(from: "GlossaryTerm.createdBy", purpose: IMPLICIT_REF_FIELD)
+}
 extend type IngestionJob {
   """
   ✨ Implicit foreign key field based on `IngestionJob`.`sourceMaterial`. It must match the value of `SourceMaterial`.`id`. See `@ref` for how to customize it.
@@ -61,6 +77,12 @@ extend type Lesson {
   ✨ Implicit foreign key field based on `Lesson`.`updatedBy`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
   """
   updatedById: String @fdc_generated(from: "Lesson.updatedBy", purpose: IMPLICIT_REF_FIELD)
+}
+extend type LessonNote {
+  """
+  ✨ Implicit foreign key field based on `LessonNote`.`user`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  userId: String! @fdc_generated(from: "LessonNote.user", purpose: IMPLICIT_REF_FIELD)
 }
 extend type LessonVersion {
   """

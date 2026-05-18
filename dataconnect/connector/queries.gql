@@ -747,3 +747,29 @@ query GetGlossaryNoteForUserTerm($userId: String!, $termId: UUID!) @auth(level: 
     updatedAt
   }
 }
+
+# ─── Lesson notes (learner) ───────────────────────────────────────────────────
+
+# All lesson notes for a user, newest first
+query GetLessonNotesForUser($userId: String!) @auth(level: NO_ACCESS) {
+  lessonNotes(where: { user: { id: { eq: $userId } } }, orderBy: { updatedAt: DESC }) {
+    id
+    lessonId
+    lessonTitle
+    content
+    createdAt
+    updatedAt
+  }
+}
+
+# Single note for a specific user + lesson (for upsert check)
+query GetLessonNoteForUserLesson($userId: String!, $lessonId: UUID!) @auth(level: NO_ACCESS) {
+  lessonNotes(
+    where: { user: { id: { eq: $userId } }, lessonId: { eq: $lessonId } }
+    limit: 1
+  ) {
+    id
+    content
+    updatedAt
+  }
+}

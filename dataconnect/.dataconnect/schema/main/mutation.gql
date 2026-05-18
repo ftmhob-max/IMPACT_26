@@ -45,6 +45,24 @@ extend type Mutation {
     data: FormulaSection_Data!
   ): FormulaSection_KeyOutput! @fdc_generated(from: "FormulaSection", purpose: INSERT_SINGLE)
   """
+  ✨ Insert a single `GlossaryNote` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  glossaryNote_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: GlossaryNote_Data!
+  ): GlossaryNote_KeyOutput! @fdc_generated(from: "GlossaryNote", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `GlossaryTerm` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  glossaryTerm_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: GlossaryTerm_Data!
+  ): GlossaryTerm_KeyOutput! @fdc_generated(from: "GlossaryTerm", purpose: INSERT_SINGLE)
+  """
   ✨ Insert a single `IngestionJob` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
   ingestionJob_insert(
@@ -62,6 +80,15 @@ extend type Mutation {
     """
     data: Lesson_Data!
   ): Lesson_KeyOutput! @fdc_generated(from: "Lesson", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `LessonNote` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  lessonNote_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: LessonNote_Data!
+  ): LessonNote_KeyOutput! @fdc_generated(from: "LessonNote", purpose: INSERT_SINGLE)
   """
   ✨ Insert a single `LessonVersion` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
@@ -243,6 +270,24 @@ extend type Mutation {
     data: [FormulaSection_Data!]!
   ): [FormulaSection_KeyOutput!]! @fdc_generated(from: "FormulaSection", purpose: INSERT_MULTIPLE)
   """
+  ✨ Insert `GlossaryNote` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  glossaryNote_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [GlossaryNote_Data!]!
+  ): [GlossaryNote_KeyOutput!]! @fdc_generated(from: "GlossaryNote", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `GlossaryTerm` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  glossaryTerm_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [GlossaryTerm_Data!]!
+  ): [GlossaryTerm_KeyOutput!]! @fdc_generated(from: "GlossaryTerm", purpose: INSERT_MULTIPLE)
+  """
   ✨ Insert `IngestionJob` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
   ingestionJob_insertMany(
@@ -260,6 +305,15 @@ extend type Mutation {
     """
     data: [Lesson_Data!]!
   ): [Lesson_KeyOutput!]! @fdc_generated(from: "Lesson", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `LessonNote` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  lessonNote_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [LessonNote_Data!]!
+  ): [LessonNote_KeyOutput!]! @fdc_generated(from: "LessonNote", purpose: INSERT_MULTIPLE)
   """
   ✨ Insert `LessonVersion` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
@@ -441,6 +495,24 @@ extend type Mutation {
     data: FormulaSection_Data!
   ): FormulaSection_KeyOutput! @fdc_generated(from: "FormulaSection", purpose: UPSERT_SINGLE)
   """
+  ✨ Insert or update a single `GlossaryNote` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `GlossaryNote`.
+  """
+  glossaryNote_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: GlossaryNote_Data!
+  ): GlossaryNote_KeyOutput! @fdc_generated(from: "GlossaryNote", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `GlossaryTerm` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `GlossaryTerm`.
+  """
+  glossaryTerm_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: GlossaryTerm_Data!
+  ): GlossaryTerm_KeyOutput! @fdc_generated(from: "GlossaryTerm", purpose: UPSERT_SINGLE)
+  """
   ✨ Insert or update a single `IngestionJob` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `IngestionJob`.
   """
   ingestionJob_upsert(
@@ -458,6 +530,15 @@ extend type Mutation {
     """
     data: Lesson_Data!
   ): Lesson_KeyOutput! @fdc_generated(from: "Lesson", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `LessonNote` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `LessonNote`.
+  """
+  lessonNote_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: LessonNote_Data!
+  ): LessonNote_KeyOutput! @fdc_generated(from: "LessonNote", purpose: UPSERT_SINGLE)
   """
   ✨ Insert or update a single `LessonVersion` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `LessonVersion`.
   """
@@ -639,6 +720,24 @@ extend type Mutation {
     data: [FormulaSection_Data!]!
   ): [FormulaSection_KeyOutput!]! @fdc_generated(from: "FormulaSection", purpose: UPSERT_MULTIPLE)
   """
+  ✨ Insert or update `GlossaryNote` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `GlossaryNote`.
+  """
+  glossaryNote_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [GlossaryNote_Data!]!
+  ): [GlossaryNote_KeyOutput!]! @fdc_generated(from: "GlossaryNote", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `GlossaryTerm` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `GlossaryTerm`.
+  """
+  glossaryTerm_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [GlossaryTerm_Data!]!
+  ): [GlossaryTerm_KeyOutput!]! @fdc_generated(from: "GlossaryTerm", purpose: UPSERT_MULTIPLE)
+  """
   ✨ Insert or update `IngestionJob` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `IngestionJob`.
   """
   ingestionJob_upsertMany(
@@ -656,6 +755,15 @@ extend type Mutation {
     """
     data: [Lesson_Data!]!
   ): [Lesson_KeyOutput!]! @fdc_generated(from: "Lesson", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `LessonNote` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `LessonNote`.
+  """
+  lessonNote_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [LessonNote_Data!]!
+  ): [LessonNote_KeyOutput!]! @fdc_generated(from: "LessonNote", purpose: UPSERT_MULTIPLE)
   """
   ✨ Insert or update `LessonVersion` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `LessonVersion`.
   """
@@ -912,6 +1020,54 @@ extend type Mutation {
     data: FormulaSection_Data!
   ): FormulaSection_KeyOutput @fdc_generated(from: "FormulaSection", purpose: UPDATE_SINGLE)
   """
+  ✨ Update a single `GlossaryNote` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `GlossaryNote` or `null` if not found.
+  """
+  glossaryNote_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: GlossaryNote_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: GlossaryNote_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: GlossaryNote_Data!
+  ): GlossaryNote_KeyOutput @fdc_generated(from: "GlossaryNote", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `GlossaryTerm` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `GlossaryTerm` or `null` if not found.
+  """
+  glossaryTerm_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: GlossaryTerm_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: GlossaryTerm_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: GlossaryTerm_Data!
+  ): GlossaryTerm_KeyOutput @fdc_generated(from: "GlossaryTerm", purpose: UPDATE_SINGLE)
+  """
   ✨ Update a single `IngestionJob` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `IngestionJob` or `null` if not found.
   """
   ingestionJob_update(
@@ -959,6 +1115,30 @@ extend type Mutation {
     """
     data: Lesson_Data!
   ): Lesson_KeyOutput @fdc_generated(from: "Lesson", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `LessonNote` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `LessonNote` or `null` if not found.
+  """
+  lessonNote_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: LessonNote_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: LessonNote_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: LessonNote_Data!
+  ): LessonNote_KeyOutput @fdc_generated(from: "LessonNote", purpose: UPDATE_SINGLE)
   """
   ✨ Update a single `LessonVersion` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `LessonVersion` or `null` if not found.
   """
@@ -1400,6 +1580,44 @@ extend type Mutation {
     data: FormulaSection_Data!
   ): Int! @fdc_generated(from: "FormulaSection", purpose: UPDATE_MULTIPLE)
   """
+  ✨ Update `GlossaryNote` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  glossaryNote_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: GlossaryNote_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: GlossaryNote_Data!
+  ): Int! @fdc_generated(from: "GlossaryNote", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `GlossaryTerm` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  glossaryTerm_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: GlossaryTerm_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: GlossaryTerm_Data!
+  ): Int! @fdc_generated(from: "GlossaryTerm", purpose: UPDATE_MULTIPLE)
+  """
   ✨ Update `IngestionJob` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
   """
   ingestionJob_updateMany(
@@ -1437,6 +1655,25 @@ extend type Mutation {
     """
     data: Lesson_Data!
   ): Int! @fdc_generated(from: "Lesson", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `LessonNote` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  lessonNote_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: LessonNote_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: LessonNote_Data!
+  ): Int! @fdc_generated(from: "LessonNote", purpose: UPDATE_MULTIPLE)
   """
   ✨ Update `LessonVersion` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
   """
@@ -1818,6 +2055,44 @@ extend type Mutation {
     first: FormulaSection_FirstRow
   ): FormulaSection_KeyOutput @fdc_generated(from: "FormulaSection", purpose: DELETE_SINGLE)
   """
+  ✨ Delete a single `GlossaryNote` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  glossaryNote_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: GlossaryNote_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: GlossaryNote_FirstRow
+  ): GlossaryNote_KeyOutput @fdc_generated(from: "GlossaryNote", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `GlossaryTerm` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  glossaryTerm_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: GlossaryTerm_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: GlossaryTerm_FirstRow
+  ): GlossaryTerm_KeyOutput @fdc_generated(from: "GlossaryTerm", purpose: DELETE_SINGLE)
+  """
   ✨ Delete a single `IngestionJob` based on `id`, `key` or `first` and return its key (or `null` if not found).
   """
   ingestionJob_delete(
@@ -1855,6 +2130,25 @@ extend type Mutation {
     """
     first: Lesson_FirstRow
   ): Lesson_KeyOutput @fdc_generated(from: "Lesson", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `LessonNote` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  lessonNote_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: LessonNote_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: LessonNote_FirstRow
+  ): LessonNote_KeyOutput @fdc_generated(from: "LessonNote", purpose: DELETE_SINGLE)
   """
   ✨ Delete a single `LessonVersion` based on `id`, `key` or `first` and return its key (or `null` if not found).
   """
@@ -2196,6 +2490,34 @@ extend type Mutation {
     all: Boolean = false
   ): Int! @fdc_generated(from: "FormulaSection", purpose: DELETE_MULTIPLE)
   """
+  ✨ Delete `GlossaryNote` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  glossaryNote_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: GlossaryNote_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "GlossaryNote", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `GlossaryTerm` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  glossaryTerm_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: GlossaryTerm_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "GlossaryTerm", purpose: DELETE_MULTIPLE)
+  """
   ✨ Delete `IngestionJob` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
   """
   ingestionJob_deleteMany(
@@ -2223,6 +2545,20 @@ extend type Mutation {
     """
     all: Boolean = false
   ): Int! @fdc_generated(from: "Lesson", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `LessonNote` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  lessonNote_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: LessonNote_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "LessonNote", purpose: DELETE_MULTIPLE)
   """
   ✨ Delete `LessonVersion` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
   """

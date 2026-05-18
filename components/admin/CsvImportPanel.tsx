@@ -25,7 +25,7 @@ interface PreviewResult {
 }
 
 interface CsvImportPanelProps {
-  onImported: (message: string) => void;
+  onImported: (result: { message: string; quizId?: string }) => void;
 }
 
 type InputMode = "text" | "file";
@@ -98,11 +98,12 @@ export function CsvImportPanel({ onImported }: CsvImportPanelProps) {
             ? `${importedCount} questions imported. ${duplicatesSkipped} duplicate question${duplicatesSkipped !== 1 ? "s were" : " was"} skipped.`
             : `${importedCount} questions imported as a draft quiz.`,
       });
-      onImported(
-        duplicatesSkipped > 0
+      onImported({
+        message: duplicatesSkipped > 0
           ? `Assessment imported: "${quizTitle}" (${importedCount} added, ${duplicatesSkipped} duplicate${duplicatesSkipped !== 1 ? "s" : ""} skipped out of ${attemptedCount})`
-          : `Assessment imported: "${quizTitle}" (${importedCount} questions)`
-      );
+          : `Assessment imported: "${quizTitle}" (${importedCount} questions)`,
+        quizId: data.quizId ?? undefined,
+      });
     } else {
       const err = await res.json().catch(() => ({}));
       setNotice({ type: "error", text: err.error ?? "Import failed." });

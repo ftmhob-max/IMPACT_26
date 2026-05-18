@@ -51,6 +51,17 @@ async function fetchLesson(id: string) {
   }
 }
 
+async function fetchPublishedGlossaryTerms() {
+  try {
+    const data = await adminDcQuery<{ glossaryTerms: Array<{ term: string; definition: string; example?: string | null }> }>(
+      "ListPublishedGlossaryTerms"
+    );
+    return data.glossaryTerms ?? [];
+  } catch {
+    return [];
+  }
+}
+
 async function fetchCourseOutline(slug: string | null | undefined) {
   if (!slug) return null;
   try {
@@ -75,7 +86,10 @@ export default async function LessonPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const lesson = await fetchLesson(id);
+  const [lesson, glossaryTerms] = await Promise.all([
+    fetchLesson(id),
+    fetchPublishedGlossaryTerms(),
+  ]);
   const outline = await fetchCourseOutline((lesson as any)?.module?.course?.slug);
 
   const backHref = (lesson as any)?.module?.course
@@ -131,6 +145,7 @@ export default async function LessonPage({
           contentJson={lesson.contentJson ?? null}
           fallbackDurationSeconds={lesson.durationSeconds ?? null}
           nextLesson={nextLesson}
+          glossaryTerms={glossaryTerms}
         />
       </LearnerPage>
     );

@@ -22,6 +22,7 @@ export async function POST(
     const shuffleQuestions: boolean = body.shuffleQuestions ?? false;
     const shuffleChoices: boolean = body.shuffleChoices ?? false;
     const calculatorSettingsJson: string | null = body.calculatorSettingsJson ?? null;
+    const glossaryEnabled: boolean = body.glossaryEnabled ?? false;
 
     // ── Check for an existing in-progress attempt ───────────────────────────
     // Wrapped in try/catch: if the deployed connector is out of sync with the
@@ -87,6 +88,7 @@ export async function POST(
         isResume: true,
         timeLimitSeconds,
         calculatorSettingsJson,
+        glossaryEnabled,
         answeredQuestionIds: [...answeredIds],
         previousResponses: existing.quizResponses_on_attempt ?? [],
         questions: finalQuestions.map(sanitizeQuestion),
@@ -130,6 +132,7 @@ export async function POST(
       isResume: false,
       timeLimitSeconds,
       calculatorSettingsJson,
+      glossaryEnabled,
       answeredQuestionIds: [],
       previousResponses: [],
       questions: questionList.map(sanitizeQuestion),

@@ -317,7 +317,7 @@ export function DocxImportClient() {
             </div>
           )}
 
-          <CsvImportPanel onImported={(message) => setCsvNotice(message)} />
+          <CsvImportPanel onImported={({ message }) => setCsvNotice(message)} />
         </div>
       ) : (
         <>

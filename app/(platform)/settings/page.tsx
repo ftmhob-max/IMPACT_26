@@ -1,22 +1,22 @@
 import { redirect } from "next/navigation";
 import { LearnerPage, PageHeader } from "@/components/ui/LearnerPrimitives";
 import * as Icons from "@/components/ui/Icons";
-import { ProfileClient } from "@/components/profile/ProfileClient";
+import { SettingsClient } from "@/components/profile/SettingsClient";
 import { getLearnerSession } from "@/lib/firebase/learner-session";
 
-export default async function ProfilePage() {
+export default async function SettingsPage() {
   const session = await getLearnerSession();
   if (!session) redirect("/sign-in");
 
   return (
     <LearnerPage>
       <PageHeader
-        eyebrow="Profile"
-        title="Your learner profile"
-        description="Manage your identity, avatar, and account details for IMPACT_26."
-        icon={Icons.User}
+        eyebrow="Settings"
+        title="Platform settings"
+        description="Set study reminders, notification preferences, display defaults, privacy, and security shortcuts."
+        icon={Icons.Settings}
       />
-      <ProfileClient />
+      <SettingsClient />
     </LearnerPage>
   );
 }

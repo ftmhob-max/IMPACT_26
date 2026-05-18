@@ -556,6 +556,19 @@ export interface CreateLessonData {
   lesson_insert: Lesson_Key;
 }
 
+export interface CreateLessonNoteData {
+  lessonNote_insert: LessonNote_Key;
+}
+
+export interface CreateLessonNoteVariables {
+  id: UUIDString;
+  userId: string;
+  lessonId?: UUIDString | null;
+  lessonTitle?: string | null;
+  content: string;
+  updatedAt: DateString;
+}
+
 export interface CreateLessonVariables {
   id: UUIDString;
   moduleId: UUIDString;
@@ -777,6 +790,14 @@ export interface DeleteIngestionJobsForMaterialVariables {
 
 export interface DeleteLessonData {
   lesson_delete?: Lesson_Key | null;
+}
+
+export interface DeleteLessonNoteData {
+  lessonNote_delete?: LessonNote_Key | null;
+}
+
+export interface DeleteLessonNoteVariables {
+  id: UUIDString;
 }
 
 export interface DeleteLessonVariables {
@@ -1151,6 +1172,34 @@ export interface GetLessonData {
   } & Lesson_Key;
 }
 
+export interface GetLessonNoteForUserLessonData {
+  lessonNotes: ({
+    id: UUIDString;
+    content: string;
+    updatedAt: DateString;
+  } & LessonNote_Key)[];
+}
+
+export interface GetLessonNoteForUserLessonVariables {
+  userId: string;
+  lessonId: UUIDString;
+}
+
+export interface GetLessonNotesForUserData {
+  lessonNotes: ({
+    id: UUIDString;
+    lessonId?: UUIDString | null;
+    lessonTitle?: string | null;
+    content: string;
+    createdAt: DateString;
+    updatedAt: DateString;
+  } & LessonNote_Key)[];
+}
+
+export interface GetLessonNotesForUserVariables {
+  userId: string;
+}
+
 export interface GetLessonProgressData {
   userLessonProgresses: ({
     status: string;
@@ -1399,6 +1448,11 @@ export interface IngestionJob_Key {
   __typename?: 'IngestionJob_Key';
 }
 
+export interface LessonNote_Key {
+  id: UUIDString;
+  __typename?: 'LessonNote_Key';
+}
+
 export interface LessonVersion_Key {
   id: UUIDString;
   __typename?: 'LessonVersion_Key';
@@ -1601,6 +1655,17 @@ export interface UpdateGlossaryTermVariables {
 
 export interface UpdateLessonData {
   lesson_update?: Lesson_Key | null;
+}
+
+export interface UpdateLessonNoteData {
+  lessonNote_update?: LessonNote_Key | null;
+}
+
+export interface UpdateLessonNoteVariables {
+  id: UUIDString;
+  lessonTitle?: string | null;
+  content: string;
+  updatedAt: DateString;
 }
 
 export interface UpdateLessonVariables {
@@ -2561,6 +2626,42 @@ export const deleteGlossaryNoteRef: DeleteGlossaryNoteRef;
 export function deleteGlossaryNote(vars: DeleteGlossaryNoteVariables): MutationPromise<DeleteGlossaryNoteData, DeleteGlossaryNoteVariables>;
 export function deleteGlossaryNote(dc: DataConnect, vars: DeleteGlossaryNoteVariables): MutationPromise<DeleteGlossaryNoteData, DeleteGlossaryNoteVariables>;
 
+interface CreateLessonNoteRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateLessonNoteVariables): MutationRef<CreateLessonNoteData, CreateLessonNoteVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: CreateLessonNoteVariables): MutationRef<CreateLessonNoteData, CreateLessonNoteVariables>;
+  operationName: string;
+}
+export const createLessonNoteRef: CreateLessonNoteRef;
+
+export function createLessonNote(vars: CreateLessonNoteVariables): MutationPromise<CreateLessonNoteData, CreateLessonNoteVariables>;
+export function createLessonNote(dc: DataConnect, vars: CreateLessonNoteVariables): MutationPromise<CreateLessonNoteData, CreateLessonNoteVariables>;
+
+interface UpdateLessonNoteRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateLessonNoteVariables): MutationRef<UpdateLessonNoteData, UpdateLessonNoteVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: UpdateLessonNoteVariables): MutationRef<UpdateLessonNoteData, UpdateLessonNoteVariables>;
+  operationName: string;
+}
+export const updateLessonNoteRef: UpdateLessonNoteRef;
+
+export function updateLessonNote(vars: UpdateLessonNoteVariables): MutationPromise<UpdateLessonNoteData, UpdateLessonNoteVariables>;
+export function updateLessonNote(dc: DataConnect, vars: UpdateLessonNoteVariables): MutationPromise<UpdateLessonNoteData, UpdateLessonNoteVariables>;
+
+interface DeleteLessonNoteRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteLessonNoteVariables): MutationRef<DeleteLessonNoteData, DeleteLessonNoteVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteLessonNoteVariables): MutationRef<DeleteLessonNoteData, DeleteLessonNoteVariables>;
+  operationName: string;
+}
+export const deleteLessonNoteRef: DeleteLessonNoteRef;
+
+export function deleteLessonNote(vars: DeleteLessonNoteVariables): MutationPromise<DeleteLessonNoteData, DeleteLessonNoteVariables>;
+export function deleteLessonNote(dc: DataConnect, vars: DeleteLessonNoteVariables): MutationPromise<DeleteLessonNoteData, DeleteLessonNoteVariables>;
+
 interface ListPublishedCoursesRef {
   /* Allow users to create refs without passing in DataConnect */
   (): QueryRef<ListPublishedCoursesData, undefined>;
@@ -3004,4 +3105,28 @@ export const getGlossaryNoteForUserTermRef: GetGlossaryNoteForUserTermRef;
 
 export function getGlossaryNoteForUserTerm(vars: GetGlossaryNoteForUserTermVariables, options?: ExecuteQueryOptions): QueryPromise<GetGlossaryNoteForUserTermData, GetGlossaryNoteForUserTermVariables>;
 export function getGlossaryNoteForUserTerm(dc: DataConnect, vars: GetGlossaryNoteForUserTermVariables, options?: ExecuteQueryOptions): QueryPromise<GetGlossaryNoteForUserTermData, GetGlossaryNoteForUserTermVariables>;
+
+interface GetLessonNotesForUserRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetLessonNotesForUserVariables): QueryRef<GetLessonNotesForUserData, GetLessonNotesForUserVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: GetLessonNotesForUserVariables): QueryRef<GetLessonNotesForUserData, GetLessonNotesForUserVariables>;
+  operationName: string;
+}
+export const getLessonNotesForUserRef: GetLessonNotesForUserRef;
+
+export function getLessonNotesForUser(vars: GetLessonNotesForUserVariables, options?: ExecuteQueryOptions): QueryPromise<GetLessonNotesForUserData, GetLessonNotesForUserVariables>;
+export function getLessonNotesForUser(dc: DataConnect, vars: GetLessonNotesForUserVariables, options?: ExecuteQueryOptions): QueryPromise<GetLessonNotesForUserData, GetLessonNotesForUserVariables>;
+
+interface GetLessonNoteForUserLessonRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetLessonNoteForUserLessonVariables): QueryRef<GetLessonNoteForUserLessonData, GetLessonNoteForUserLessonVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: GetLessonNoteForUserLessonVariables): QueryRef<GetLessonNoteForUserLessonData, GetLessonNoteForUserLessonVariables>;
+  operationName: string;
+}
+export const getLessonNoteForUserLessonRef: GetLessonNoteForUserLessonRef;
+
+export function getLessonNoteForUserLesson(vars: GetLessonNoteForUserLessonVariables, options?: ExecuteQueryOptions): QueryPromise<GetLessonNoteForUserLessonData, GetLessonNoteForUserLessonVariables>;
+export function getLessonNoteForUserLesson(dc: DataConnect, vars: GetLessonNoteForUserLessonVariables, options?: ExecuteQueryOptions): QueryPromise<GetLessonNoteForUserLessonData, GetLessonNoteForUserLessonVariables>;
 

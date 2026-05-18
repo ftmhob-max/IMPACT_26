@@ -512,7 +512,7 @@ function Footer() {
   const groups = [
     { title: "Learn", links: [{ label: "Courses", href: "/courses" }, { label: "Formula Compass", href: "/formulas" }, { label: "Practice Exam", href: "/courses" }] },
     { title: "Account", links: [{ label: "Sign in", href: "/sign-in" }, { label: "Create Account", href: "/sign-up" }] },
-    { title: "Platform", links: [{ label: "Dashboard", href: "/dashboard" }, { label: "My Progress", href: "/profile" }] },
+    { title: "Platform", links: [{ label: "Dashboard", href: "/dashboard" }, { label: "My Progress", href: "/progress" }, { label: "Profile", href: "/profile" }] },
   ];
 
   return (

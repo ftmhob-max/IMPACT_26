@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 interface ChoiceButtonProps {
   letter: string;
-  text: string;
+  text: React.ReactNode;
   state: "default" | "selected" | "correct" | "incorrect" | "missed";
   disabled?: boolean;
   onClick?: () => void;

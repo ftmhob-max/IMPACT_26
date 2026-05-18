@@ -10,6 +10,9 @@ import type { SafeQuestion } from "@/lib/quiz-engine/sanitize";
 import type { EvaluationResult } from "@/lib/quiz-engine/evaluate";
 import * as Icons from "@/components/ui/Icons";
 import { useFormulaCalc } from "@/components/layout/FormulaCalculatorProvider";
+import type { GlossaryTermData } from "@/components/lessons/GlossaryTooltip";
+import { buildTermsMap } from "@/components/lessons/GlossaryTooltip";
+import { GlossaryText } from "@/components/quiz/GlossaryText";
 
 interface QuestionCardProps {
   question: SafeQuestion;
@@ -22,6 +25,7 @@ interface QuestionCardProps {
   isSubmitting: boolean;
   forceOpen?: boolean | null;
   onPeek: () => Promise<EvaluationResult | null>;
+  glossaryTerms?: GlossaryTermData[];
 }
 
 export function QuestionCard({
@@ -35,7 +39,9 @@ export function QuestionCard({
   isSubmitting,
   forceOpen,
   onPeek,
+  glossaryTerms,
 }: QuestionCardProps) {
+  const termsMap = glossaryTerms && glossaryTerms.length > 0 ? buildTermsMap(glossaryTerms) : null;
   const [answerPanelOpen, setAnswerPanelOpen] = useState(false);
   const [panelData, setPanelData] = useState<EvaluationResult | null>(null);
   const [isPeeking, setIsPeeking] = useState(false);
@@ -150,8 +156,12 @@ export function QuestionCard({
           >
             Q{index + 1}
           </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-[14px] leading-7 text-[#1a1a18]">{question.questionText}</p>
+          <div className="min-w-0 flex-1" data-glossary-container>
+            <p className="text-[14px] leading-7 text-[#1a1a18]">
+              {termsMap
+                ? <GlossaryText text={question.questionText} termsMap={termsMap} />
+                : question.questionText}
+            </p>
             {question.isMultiselect && (
               <p className="mt-2 text-xs font-semibold text-[#534AB7]">Select all answers that apply.</p>
             )}
@@ -182,7 +192,11 @@ export function QuestionCard({
             <ChoiceButton
               key={choice.id}
               letter={choice.letter}
-              text={choice.choiceText}
+              text={
+                termsMap
+                  ? <GlossaryText text={choice.choiceText} termsMap={termsMap} />
+                  : choice.choiceText
+              }
               state={getChoiceState(choice.letter)}
               disabled={isLocked}
               onClick={() => !isLocked && onSelect(choice.letter)}

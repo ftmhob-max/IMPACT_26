@@ -1213,6 +1213,19 @@ function BlockSpecificFields({
             </select>
           </div>
           <TextAreaField label="Description" value={block.description ?? ""} onChange={(value) => onChange({ ...block, description: value })} placeholder="Tell students how to use this checkpoint." rows={3} />
+          <div className="flex items-center gap-3 pt-1">
+            <button
+              type="button"
+              onClick={() => onChange({ ...block, glossaryEnabled: !block.glossaryEnabled })}
+              className={`relative h-5 w-9 rounded-full transition-colors ${block.glossaryEnabled ? "bg-emerald-500" : "bg-slate-200"}`}
+            >
+              <span className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${block.glossaryEnabled ? "translate-x-4" : ""}`} />
+            </button>
+            <div>
+              <p className="text-xs font-semibold text-slate-700">Enable glossary hints</p>
+              <p className="text-[11px] text-slate-400">Students can hover over terms to see definitions during this quiz.</p>
+            </div>
+          </div>
         </div>
       );
     case "reflectionPrompt":

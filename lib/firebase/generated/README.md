@@ -45,6 +45,8 @@ This README will guide you through the process of using the generated JavaScript
   - [*ListPublishedGlossaryTerms*](#listpublishedglossaryterms)
   - [*GetGlossaryNotesForUser*](#getglossarynotesforuser)
   - [*GetGlossaryNoteForUserTerm*](#getglossarynoteforuserterm)
+  - [*GetLessonNotesForUser*](#getlessonnotesforuser)
+  - [*GetLessonNoteForUserLesson*](#getlessonnoteforuserlesson)
 - [**Mutations**](#mutations)
   - [*CreateUser*](#createuser)
   - [*UpdateUserRole*](#updateuserrole)
@@ -112,6 +114,9 @@ This README will guide you through the process of using the generated JavaScript
   - [*CreateGlossaryNote*](#createglossarynote)
   - [*UpdateGlossaryNote*](#updateglossarynote)
   - [*DeleteGlossaryNote*](#deleteglossarynote)
+  - [*CreateLessonNote*](#createlessonnote)
+  - [*UpdateLessonNote*](#updatelessonnote)
+  - [*DeleteLessonNote*](#deletelessonnote)
 
 # Accessing the connector
 A connector is a collection of Queries and Mutations. One SDK is generated for each connector - this SDK is generated for the connector `impact26-connector`. You can find more information about connectors in the [Data Connect documentation](https://firebase.google.com/docs/data-connect#how-does).
@@ -4609,6 +4614,238 @@ console.log(data.glossaryNotes);
 executeQuery(ref).then((response) => {
   const data = response.data;
   console.log(data.glossaryNotes);
+});
+```
+
+## GetLessonNotesForUser
+You can execute the `GetLessonNotesForUser` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+getLessonNotesForUser(vars: GetLessonNotesForUserVariables, options?: ExecuteQueryOptions): QueryPromise<GetLessonNotesForUserData, GetLessonNotesForUserVariables>;
+
+interface GetLessonNotesForUserRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetLessonNotesForUserVariables): QueryRef<GetLessonNotesForUserData, GetLessonNotesForUserVariables>;
+}
+export const getLessonNotesForUserRef: GetLessonNotesForUserRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `QueryRef` function.
+```typescript
+getLessonNotesForUser(dc: DataConnect, vars: GetLessonNotesForUserVariables, options?: ExecuteQueryOptions): QueryPromise<GetLessonNotesForUserData, GetLessonNotesForUserVariables>;
+
+interface GetLessonNotesForUserRef {
+  ...
+  (dc: DataConnect, vars: GetLessonNotesForUserVariables): QueryRef<GetLessonNotesForUserData, GetLessonNotesForUserVariables>;
+}
+export const getLessonNotesForUserRef: GetLessonNotesForUserRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the getLessonNotesForUserRef:
+```typescript
+const name = getLessonNotesForUserRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `GetLessonNotesForUser` query requires an argument of type `GetLessonNotesForUserVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface GetLessonNotesForUserVariables {
+  userId: string;
+}
+```
+### Return Type
+Recall that executing the `GetLessonNotesForUser` query returns a `QueryPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `GetLessonNotesForUserData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface GetLessonNotesForUserData {
+  lessonNotes: ({
+    id: UUIDString;
+    lessonId?: UUIDString | null;
+    lessonTitle?: string | null;
+    content: string;
+    createdAt: DateString;
+    updatedAt: DateString;
+  } & LessonNote_Key)[];
+}
+```
+### Using `GetLessonNotesForUser`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, getLessonNotesForUser, GetLessonNotesForUserVariables } from '@impact26/dataconnect-sdk';
+
+// The `GetLessonNotesForUser` query requires an argument of type `GetLessonNotesForUserVariables`:
+const getLessonNotesForUserVars: GetLessonNotesForUserVariables = {
+  userId: ..., 
+};
+
+// Call the `getLessonNotesForUser()` function to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await getLessonNotesForUser(getLessonNotesForUserVars);
+// Variables can be defined inline as well.
+const { data } = await getLessonNotesForUser({ userId: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await getLessonNotesForUser(dataConnect, getLessonNotesForUserVars);
+
+console.log(data.lessonNotes);
+
+// Or, you can use the `Promise` API.
+getLessonNotesForUser(getLessonNotesForUserVars).then((response) => {
+  const data = response.data;
+  console.log(data.lessonNotes);
+});
+```
+
+### Using `GetLessonNotesForUser`'s `QueryRef` function
+
+```typescript
+import { getDataConnect, executeQuery } from 'firebase/data-connect';
+import { connectorConfig, getLessonNotesForUserRef, GetLessonNotesForUserVariables } from '@impact26/dataconnect-sdk';
+
+// The `GetLessonNotesForUser` query requires an argument of type `GetLessonNotesForUserVariables`:
+const getLessonNotesForUserVars: GetLessonNotesForUserVariables = {
+  userId: ..., 
+};
+
+// Call the `getLessonNotesForUserRef()` function to get a reference to the query.
+const ref = getLessonNotesForUserRef(getLessonNotesForUserVars);
+// Variables can be defined inline as well.
+const ref = getLessonNotesForUserRef({ userId: ..., });
+
+// You can also pass in a `DataConnect` instance to the `QueryRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = getLessonNotesForUserRef(dataConnect, getLessonNotesForUserVars);
+
+// Call `executeQuery()` on the reference to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeQuery(ref);
+
+console.log(data.lessonNotes);
+
+// Or, you can use the `Promise` API.
+executeQuery(ref).then((response) => {
+  const data = response.data;
+  console.log(data.lessonNotes);
+});
+```
+
+## GetLessonNoteForUserLesson
+You can execute the `GetLessonNoteForUserLesson` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+getLessonNoteForUserLesson(vars: GetLessonNoteForUserLessonVariables, options?: ExecuteQueryOptions): QueryPromise<GetLessonNoteForUserLessonData, GetLessonNoteForUserLessonVariables>;
+
+interface GetLessonNoteForUserLessonRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetLessonNoteForUserLessonVariables): QueryRef<GetLessonNoteForUserLessonData, GetLessonNoteForUserLessonVariables>;
+}
+export const getLessonNoteForUserLessonRef: GetLessonNoteForUserLessonRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `QueryRef` function.
+```typescript
+getLessonNoteForUserLesson(dc: DataConnect, vars: GetLessonNoteForUserLessonVariables, options?: ExecuteQueryOptions): QueryPromise<GetLessonNoteForUserLessonData, GetLessonNoteForUserLessonVariables>;
+
+interface GetLessonNoteForUserLessonRef {
+  ...
+  (dc: DataConnect, vars: GetLessonNoteForUserLessonVariables): QueryRef<GetLessonNoteForUserLessonData, GetLessonNoteForUserLessonVariables>;
+}
+export const getLessonNoteForUserLessonRef: GetLessonNoteForUserLessonRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the getLessonNoteForUserLessonRef:
+```typescript
+const name = getLessonNoteForUserLessonRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `GetLessonNoteForUserLesson` query requires an argument of type `GetLessonNoteForUserLessonVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface GetLessonNoteForUserLessonVariables {
+  userId: string;
+  lessonId: UUIDString;
+}
+```
+### Return Type
+Recall that executing the `GetLessonNoteForUserLesson` query returns a `QueryPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `GetLessonNoteForUserLessonData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface GetLessonNoteForUserLessonData {
+  lessonNotes: ({
+    id: UUIDString;
+    content: string;
+    updatedAt: DateString;
+  } & LessonNote_Key)[];
+}
+```
+### Using `GetLessonNoteForUserLesson`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, getLessonNoteForUserLesson, GetLessonNoteForUserLessonVariables } from '@impact26/dataconnect-sdk';
+
+// The `GetLessonNoteForUserLesson` query requires an argument of type `GetLessonNoteForUserLessonVariables`:
+const getLessonNoteForUserLessonVars: GetLessonNoteForUserLessonVariables = {
+  userId: ..., 
+  lessonId: ..., 
+};
+
+// Call the `getLessonNoteForUserLesson()` function to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await getLessonNoteForUserLesson(getLessonNoteForUserLessonVars);
+// Variables can be defined inline as well.
+const { data } = await getLessonNoteForUserLesson({ userId: ..., lessonId: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await getLessonNoteForUserLesson(dataConnect, getLessonNoteForUserLessonVars);
+
+console.log(data.lessonNotes);
+
+// Or, you can use the `Promise` API.
+getLessonNoteForUserLesson(getLessonNoteForUserLessonVars).then((response) => {
+  const data = response.data;
+  console.log(data.lessonNotes);
+});
+```
+
+### Using `GetLessonNoteForUserLesson`'s `QueryRef` function
+
+```typescript
+import { getDataConnect, executeQuery } from 'firebase/data-connect';
+import { connectorConfig, getLessonNoteForUserLessonRef, GetLessonNoteForUserLessonVariables } from '@impact26/dataconnect-sdk';
+
+// The `GetLessonNoteForUserLesson` query requires an argument of type `GetLessonNoteForUserLessonVariables`:
+const getLessonNoteForUserLessonVars: GetLessonNoteForUserLessonVariables = {
+  userId: ..., 
+  lessonId: ..., 
+};
+
+// Call the `getLessonNoteForUserLessonRef()` function to get a reference to the query.
+const ref = getLessonNoteForUserLessonRef(getLessonNoteForUserLessonVars);
+// Variables can be defined inline as well.
+const ref = getLessonNoteForUserLessonRef({ userId: ..., lessonId: ..., });
+
+// You can also pass in a `DataConnect` instance to the `QueryRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = getLessonNoteForUserLessonRef(dataConnect, getLessonNoteForUserLessonVars);
+
+// Call `executeQuery()` on the reference to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeQuery(ref);
+
+console.log(data.lessonNotes);
+
+// Or, you can use the `Promise` API.
+executeQuery(ref).then((response) => {
+  const data = response.data;
+  console.log(data.lessonNotes);
 });
 ```
 
@@ -12436,6 +12673,357 @@ console.log(data.glossaryNote_delete);
 executeMutation(ref).then((response) => {
   const data = response.data;
   console.log(data.glossaryNote_delete);
+});
+```
+
+## CreateLessonNote
+You can execute the `CreateLessonNote` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+createLessonNote(vars: CreateLessonNoteVariables): MutationPromise<CreateLessonNoteData, CreateLessonNoteVariables>;
+
+interface CreateLessonNoteRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateLessonNoteVariables): MutationRef<CreateLessonNoteData, CreateLessonNoteVariables>;
+}
+export const createLessonNoteRef: CreateLessonNoteRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+createLessonNote(dc: DataConnect, vars: CreateLessonNoteVariables): MutationPromise<CreateLessonNoteData, CreateLessonNoteVariables>;
+
+interface CreateLessonNoteRef {
+  ...
+  (dc: DataConnect, vars: CreateLessonNoteVariables): MutationRef<CreateLessonNoteData, CreateLessonNoteVariables>;
+}
+export const createLessonNoteRef: CreateLessonNoteRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the createLessonNoteRef:
+```typescript
+const name = createLessonNoteRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `CreateLessonNote` mutation requires an argument of type `CreateLessonNoteVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface CreateLessonNoteVariables {
+  id: UUIDString;
+  userId: string;
+  lessonId?: UUIDString | null;
+  lessonTitle?: string | null;
+  content: string;
+  updatedAt: DateString;
+}
+```
+### Return Type
+Recall that executing the `CreateLessonNote` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `CreateLessonNoteData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface CreateLessonNoteData {
+  lessonNote_insert: LessonNote_Key;
+}
+```
+### Using `CreateLessonNote`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, createLessonNote, CreateLessonNoteVariables } from '@impact26/dataconnect-sdk';
+
+// The `CreateLessonNote` mutation requires an argument of type `CreateLessonNoteVariables`:
+const createLessonNoteVars: CreateLessonNoteVariables = {
+  id: ..., 
+  userId: ..., 
+  lessonId: ..., // optional
+  lessonTitle: ..., // optional
+  content: ..., 
+  updatedAt: ..., 
+};
+
+// Call the `createLessonNote()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await createLessonNote(createLessonNoteVars);
+// Variables can be defined inline as well.
+const { data } = await createLessonNote({ id: ..., userId: ..., lessonId: ..., lessonTitle: ..., content: ..., updatedAt: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await createLessonNote(dataConnect, createLessonNoteVars);
+
+console.log(data.lessonNote_insert);
+
+// Or, you can use the `Promise` API.
+createLessonNote(createLessonNoteVars).then((response) => {
+  const data = response.data;
+  console.log(data.lessonNote_insert);
+});
+```
+
+### Using `CreateLessonNote`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, createLessonNoteRef, CreateLessonNoteVariables } from '@impact26/dataconnect-sdk';
+
+// The `CreateLessonNote` mutation requires an argument of type `CreateLessonNoteVariables`:
+const createLessonNoteVars: CreateLessonNoteVariables = {
+  id: ..., 
+  userId: ..., 
+  lessonId: ..., // optional
+  lessonTitle: ..., // optional
+  content: ..., 
+  updatedAt: ..., 
+};
+
+// Call the `createLessonNoteRef()` function to get a reference to the mutation.
+const ref = createLessonNoteRef(createLessonNoteVars);
+// Variables can be defined inline as well.
+const ref = createLessonNoteRef({ id: ..., userId: ..., lessonId: ..., lessonTitle: ..., content: ..., updatedAt: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = createLessonNoteRef(dataConnect, createLessonNoteVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.lessonNote_insert);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.lessonNote_insert);
+});
+```
+
+## UpdateLessonNote
+You can execute the `UpdateLessonNote` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+updateLessonNote(vars: UpdateLessonNoteVariables): MutationPromise<UpdateLessonNoteData, UpdateLessonNoteVariables>;
+
+interface UpdateLessonNoteRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateLessonNoteVariables): MutationRef<UpdateLessonNoteData, UpdateLessonNoteVariables>;
+}
+export const updateLessonNoteRef: UpdateLessonNoteRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+updateLessonNote(dc: DataConnect, vars: UpdateLessonNoteVariables): MutationPromise<UpdateLessonNoteData, UpdateLessonNoteVariables>;
+
+interface UpdateLessonNoteRef {
+  ...
+  (dc: DataConnect, vars: UpdateLessonNoteVariables): MutationRef<UpdateLessonNoteData, UpdateLessonNoteVariables>;
+}
+export const updateLessonNoteRef: UpdateLessonNoteRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the updateLessonNoteRef:
+```typescript
+const name = updateLessonNoteRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `UpdateLessonNote` mutation requires an argument of type `UpdateLessonNoteVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface UpdateLessonNoteVariables {
+  id: UUIDString;
+  lessonTitle?: string | null;
+  content: string;
+  updatedAt: DateString;
+}
+```
+### Return Type
+Recall that executing the `UpdateLessonNote` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `UpdateLessonNoteData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface UpdateLessonNoteData {
+  lessonNote_update?: LessonNote_Key | null;
+}
+```
+### Using `UpdateLessonNote`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, updateLessonNote, UpdateLessonNoteVariables } from '@impact26/dataconnect-sdk';
+
+// The `UpdateLessonNote` mutation requires an argument of type `UpdateLessonNoteVariables`:
+const updateLessonNoteVars: UpdateLessonNoteVariables = {
+  id: ..., 
+  lessonTitle: ..., // optional
+  content: ..., 
+  updatedAt: ..., 
+};
+
+// Call the `updateLessonNote()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await updateLessonNote(updateLessonNoteVars);
+// Variables can be defined inline as well.
+const { data } = await updateLessonNote({ id: ..., lessonTitle: ..., content: ..., updatedAt: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await updateLessonNote(dataConnect, updateLessonNoteVars);
+
+console.log(data.lessonNote_update);
+
+// Or, you can use the `Promise` API.
+updateLessonNote(updateLessonNoteVars).then((response) => {
+  const data = response.data;
+  console.log(data.lessonNote_update);
+});
+```
+
+### Using `UpdateLessonNote`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, updateLessonNoteRef, UpdateLessonNoteVariables } from '@impact26/dataconnect-sdk';
+
+// The `UpdateLessonNote` mutation requires an argument of type `UpdateLessonNoteVariables`:
+const updateLessonNoteVars: UpdateLessonNoteVariables = {
+  id: ..., 
+  lessonTitle: ..., // optional
+  content: ..., 
+  updatedAt: ..., 
+};
+
+// Call the `updateLessonNoteRef()` function to get a reference to the mutation.
+const ref = updateLessonNoteRef(updateLessonNoteVars);
+// Variables can be defined inline as well.
+const ref = updateLessonNoteRef({ id: ..., lessonTitle: ..., content: ..., updatedAt: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = updateLessonNoteRef(dataConnect, updateLessonNoteVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.lessonNote_update);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.lessonNote_update);
+});
+```
+
+## DeleteLessonNote
+You can execute the `DeleteLessonNote` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+deleteLessonNote(vars: DeleteLessonNoteVariables): MutationPromise<DeleteLessonNoteData, DeleteLessonNoteVariables>;
+
+interface DeleteLessonNoteRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteLessonNoteVariables): MutationRef<DeleteLessonNoteData, DeleteLessonNoteVariables>;
+}
+export const deleteLessonNoteRef: DeleteLessonNoteRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+deleteLessonNote(dc: DataConnect, vars: DeleteLessonNoteVariables): MutationPromise<DeleteLessonNoteData, DeleteLessonNoteVariables>;
+
+interface DeleteLessonNoteRef {
+  ...
+  (dc: DataConnect, vars: DeleteLessonNoteVariables): MutationRef<DeleteLessonNoteData, DeleteLessonNoteVariables>;
+}
+export const deleteLessonNoteRef: DeleteLessonNoteRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the deleteLessonNoteRef:
+```typescript
+const name = deleteLessonNoteRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `DeleteLessonNote` mutation requires an argument of type `DeleteLessonNoteVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface DeleteLessonNoteVariables {
+  id: UUIDString;
+}
+```
+### Return Type
+Recall that executing the `DeleteLessonNote` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `DeleteLessonNoteData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface DeleteLessonNoteData {
+  lessonNote_delete?: LessonNote_Key | null;
+}
+```
+### Using `DeleteLessonNote`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, deleteLessonNote, DeleteLessonNoteVariables } from '@impact26/dataconnect-sdk';
+
+// The `DeleteLessonNote` mutation requires an argument of type `DeleteLessonNoteVariables`:
+const deleteLessonNoteVars: DeleteLessonNoteVariables = {
+  id: ..., 
+};
+
+// Call the `deleteLessonNote()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await deleteLessonNote(deleteLessonNoteVars);
+// Variables can be defined inline as well.
+const { data } = await deleteLessonNote({ id: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await deleteLessonNote(dataConnect, deleteLessonNoteVars);
+
+console.log(data.lessonNote_delete);
+
+// Or, you can use the `Promise` API.
+deleteLessonNote(deleteLessonNoteVars).then((response) => {
+  const data = response.data;
+  console.log(data.lessonNote_delete);
+});
+```
+
+### Using `DeleteLessonNote`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, deleteLessonNoteRef, DeleteLessonNoteVariables } from '@impact26/dataconnect-sdk';
+
+// The `DeleteLessonNote` mutation requires an argument of type `DeleteLessonNoteVariables`:
+const deleteLessonNoteVars: DeleteLessonNoteVariables = {
+  id: ..., 
+};
+
+// Call the `deleteLessonNoteRef()` function to get a reference to the mutation.
+const ref = deleteLessonNoteRef(deleteLessonNoteVars);
+// Variables can be defined inline as well.
+const ref = deleteLessonNoteRef({ id: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = deleteLessonNoteRef(dataConnect, deleteLessonNoteVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.lessonNote_delete);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.lessonNote_delete);
 });
 ```
 

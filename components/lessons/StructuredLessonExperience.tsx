@@ -10,11 +10,13 @@ import {
   parseStructuredLessonContent,
 } from "@/lib/lessons/structured-content";
 import { RichTextRenderer } from "@/components/lessons/RichTextRenderer";
+import type { GlossaryTermData } from "@/components/lessons/GlossaryTooltip";
 import { LessonMuxPlayer } from "@/components/platform/LessonMuxPlayer";
 import { LessonExternalVideo } from "@/components/platform/LessonExternalVideo";
 import { parseVideoUrl } from "@/lib/video-url";
 import { StartQuizButton } from "@/components/quiz/StartQuizButton";
 import { LessonMarkComplete } from "@/components/platform/LessonMarkComplete";
+import { getIdToken } from "@/lib/firebase/auth";
 
 export function StructuredLessonExperience({
   lessonId,
@@ -23,6 +25,7 @@ export function StructuredLessonExperience({
   fallbackDurationSeconds,
   previewMode = false,
   nextLesson,
+  glossaryTerms,
 }: {
   lessonId: string;
   lessonTitle: string;
@@ -30,6 +33,7 @@ export function StructuredLessonExperience({
   fallbackDurationSeconds?: number | null;
   previewMode?: boolean;
   nextLesson?: { title: string; href: string } | null;
+  glossaryTerms?: GlossaryTermData[];
 }) {
   const document = useMemo(() => parseStructuredLessonContent(contentJson), [contentJson]);
   const visibleBlocks = useMemo(
@@ -40,6 +44,7 @@ export function StructuredLessonExperience({
   const [visitedBlockIds, setVisitedBlockIds] = useState<Set<string>>(new Set(visibleBlocks[0] ? [visibleBlocks[0].id] : []));
   const [bookmarkedBlockIds, setBookmarkedBlockIds] = useState<Set<string>>(new Set());
   const [notes, setNotes] = useState("");
+  const [noteId, setNoteId] = useState<string | null>(null);
   const blockRefs = useRef<Record<string, HTMLElement | null>>({});
 
   useEffect(() => {
@@ -57,16 +62,63 @@ export function StructuredLessonExperience({
     window.localStorage.setItem(`lesson-bookmarks:${lessonId}`, JSON.stringify([...bookmarkedBlockIds]));
   }, [bookmarkedBlockIds, lessonId, previewMode]);
 
+  // Load note: prefer server, fall back to localStorage
   useEffect(() => {
     if (previewMode || typeof window === "undefined") return;
-    const saved = window.localStorage.getItem(`lesson-notes:${lessonId}`);
-    if (saved) setNotes(saved);
+    const localFallback = window.localStorage.getItem(`lesson-notes:${lessonId}`) ?? "";
+    getIdToken()
+      .then((token) =>
+        fetch(`/api/lessons/notes?lessonId=${lessonId}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        })
+      )
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { note: { id: string; content: string } | null } | null) => {
+        if (data?.note) {
+          setNoteId(data.note.id);
+          setNotes(data.note.content);
+          window.localStorage.setItem(`lesson-notes:${lessonId}`, data.note.content);
+        } else if (localFallback) {
+          setNotes(localFallback);
+        }
+      })
+      .catch(() => {
+        if (localFallback) setNotes(localFallback);
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lessonId, previewMode]);
 
+  // Persist note: localStorage immediately, server debounced
   useEffect(() => {
     if (previewMode || typeof window === "undefined") return;
     window.localStorage.setItem(`lesson-notes:${lessonId}`, notes);
-  }, [lessonId, notes, previewMode]);
+    if (!notes.trim()) return;
+    const timer = setTimeout(async () => {
+      try {
+        const token = await getIdToken();
+        const headers: Record<string, string> = { "Content-Type": "application/json" };
+        if (token) headers.Authorization = `Bearer ${token}`;
+        if (noteId) {
+          await fetch(`/api/lessons/notes/${noteId}`, {
+            method: "PUT",
+            headers,
+            body: JSON.stringify({ content: notes }),
+          });
+        } else {
+          const res = await fetch("/api/lessons/notes", {
+            method: "POST",
+            headers,
+            body: JSON.stringify({ lessonId, lessonTitle, content: notes }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setNoteId(data.id);
+          }
+        }
+      } catch {}
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [lessonId, lessonTitle, noteId, notes, previewMode]);
 
   useEffect(() => {
     if (typeof IntersectionObserver === "undefined" || visibleBlocks.length === 0) return;
@@ -266,6 +318,7 @@ export function StructuredLessonExperience({
                   block={block}
                   lessonId={lessonId}
                   previewMode={previewMode}
+                  glossaryTerms={glossaryTerms}
                   bookmarked={bookmarkedBlockIds.has(block.id)}
                   stepLabel={`${index + 1} of ${visibleBlocks.length}`}
                   nextLabel={visibleBlocks[index + 1] ? titleForBlock(visibleBlocks[index + 1]) : null}
@@ -305,6 +358,7 @@ function LessonBlockCard({
   block,
   lessonId,
   previewMode,
+  glossaryTerms,
   bookmarked,
   stepLabel,
   nextLabel,
@@ -314,6 +368,7 @@ function LessonBlockCard({
   block: LessonBlock;
   lessonId: string;
   previewMode: boolean;
+  glossaryTerms?: GlossaryTermData[];
   bookmarked: boolean;
   stepLabel: string;
   nextLabel: string | null;
@@ -372,7 +427,7 @@ function LessonBlockCard({
       </div>
 
       <div className="px-5 py-5 sm:px-6">
-        <LessonBlockRenderer block={block} lessonId={lessonId} previewMode={previewMode} />
+        <LessonBlockRenderer block={block} lessonId={lessonId} previewMode={previewMode} glossaryTerms={glossaryTerms} />
         {onContinue && (
           <div className="mt-5 flex justify-end border-t border-slate-100 pt-4">
             <button
@@ -394,14 +449,16 @@ function LessonBlockRenderer({
   block,
   lessonId,
   previewMode,
+  glossaryTerms,
 }: {
   block: LessonBlock;
   lessonId: string;
   previewMode: boolean;
+  glossaryTerms?: GlossaryTermData[];
 }) {
   switch (block.type) {
     case "richText":
-      return <RichTextRenderer content={block.content} />;
+      return <RichTextRenderer content={block.content} glossaryTerms={glossaryTerms} />;
     case "audio":
       return (
         <div className="space-y-4">
@@ -527,6 +584,7 @@ function LessonBlockRenderer({
               timeLimitSeconds={block.timeLimitSeconds ?? null}
               shuffleQuestions={Boolean(block.shuffleQuestions)}
               shuffleChoices={Boolean(block.shuffleChoices)}
+              glossaryEnabled={Boolean(block.glossaryEnabled)}
             />
           ) : (
             <EmptyBlockMessage message="Link a quiz to activate this checkpoint." />

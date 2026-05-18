@@ -5,6 +5,7 @@ export interface LearnerSession {
   uid: string;
   email: string;
   fullName?: string;
+  photoURL?: string | null;
   role: string;
 }
 
@@ -14,11 +15,13 @@ export async function getLearnerSession(): Promise<LearnerSession | null> {
   if (!sessionCookie) return null;
   try {
     const decoded = await adminAuth.verifySessionCookie(sessionCookie, true);
+    const user = await adminAuth.getUser(decoded.uid).catch(() => null);
     return {
       uid: decoded.uid,
-      email: decoded.email ?? "",
-      fullName: decoded.name,
-      role: (decoded.role as string) ?? "learner",
+      email: user?.email ?? decoded.email ?? "",
+      fullName: user?.displayName ?? decoded.name,
+      photoURL: user?.photoURL ?? (typeof decoded.picture === "string" ? decoded.picture : null),
+      role: (decoded.role as string) ?? (user?.customClaims?.role as string | undefined) ?? "learner",
     };
   } catch {
     return null;

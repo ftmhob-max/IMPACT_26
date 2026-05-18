@@ -329,3 +329,13 @@ type GlossaryNote @table(name: "glossary_notes", singular: "glossaryNote", plura
   createdAt: Date! @default(expr: "request.time")
   updatedAt: Date! @default(expr: "request.time")
 }
+
+type LessonNote @table(name: "lesson_notes", singular: "lessonNote", plural: "lessonNotes") {
+  id: UUID! @col(name: "id") @default(expr: "uuidV4()")
+  user: User! @ref
+  lessonId: UUID @col(name: "lesson_id")
+  lessonTitle: String @col(dataType: "text")
+  content: String! @col(dataType: "text")
+  createdAt: Date! @default(expr: "request.time")
+  updatedAt: Date! @default(expr: "request.time")
+}

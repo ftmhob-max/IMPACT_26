@@ -15,6 +15,8 @@ import type { SafeQuestion } from "@/lib/quiz-engine/sanitize";
 import type { EvaluationResult } from "@/lib/quiz-engine/evaluate";
 import { getIdToken } from "@/lib/firebase/auth";
 import { shuffleArray } from "@/lib/utils";
+import type { GlossaryTermData } from "@/components/lessons/GlossaryTooltip";
+import { buildTermsMap } from "@/components/lessons/GlossaryTooltip";
 
 
 export interface QuizSession {
@@ -32,6 +34,8 @@ export interface QuizSession {
   questions: SafeQuestion[];
   /** Optional quiz-level calculator settings (from quiz config) */
   calculatorSettingsJson?: string | null;
+  /** Whether glossary hover hints are enabled for this quiz */
+  glossaryEnabled?: boolean;
 }
 
 interface QuizEngineProps {
@@ -112,6 +116,7 @@ function QuizEngineInner({ session, onComplete, onBack }: QuizEngineProps) {
   const [globalPanelState, setGlobalPanelState] = useState<"neutral" | "all-open" | "all-closed">("neutral");
   const [formulaSections, setFormulaSections] = useState<FormulaSectionData[]>([]);
   const [formulasLoading, setFormulasLoading] = useState(true);
+  const [glossaryTerms, setGlossaryTerms] = useState<GlossaryTermData[]>([]);
 
   // Fetch formula sections on mount
   useEffect(() => {
@@ -121,6 +126,20 @@ function QuizEngineInner({ session, onComplete, onBack }: QuizEngineProps) {
       .catch(() => {})
       .finally(() => setFormulasLoading(false));
   }, []);
+
+  // Fetch glossary terms when enabled
+  useEffect(() => {
+    if (!session.glossaryEnabled) return;
+    getIdToken()
+      .then((token) =>
+        fetch("/api/glossary", {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        })
+      )
+      .then((r) => r.ok ? r.json() : { terms: [] })
+      .then((data: { terms: GlossaryTermData[] }) => setGlossaryTerms(data.terms ?? []))
+      .catch(() => {});
+  }, [session.glossaryEnabled]);
 
   // Derived state
   const orderedQuestions = displayOrder
@@ -328,6 +347,7 @@ function QuizEngineInner({ session, onComplete, onBack }: QuizEngineProps) {
                   isLocked={state?.isLocked ?? false}
                   isSubmitting={state?.isSubmitting ?? false}
                   forceOpen={forceOpen}
+                  glossaryTerms={glossaryTerms.length > 0 ? glossaryTerms : undefined}
                   onSelect={(letter) => handleSelect(q.id, letter, q.isMultiselect)}
                   onSubmit={() => handleSubmit(q.id)}
                   onPeek={() => handlePeek(q.id)}

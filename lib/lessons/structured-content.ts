@@ -107,6 +107,7 @@ export interface LessonQuizCheckpointBlock extends LessonBlockBase {
   timeLimitSeconds?: number | null;
   shuffleQuestions?: boolean;
   shuffleChoices?: boolean;
+  glossaryEnabled?: boolean;
 }
 
 export interface LessonReflectionPromptBlock extends LessonBlockBase {
@@ -223,6 +224,7 @@ export function createDefaultLessonBlock(type: LessonBlockType): LessonBlock {
         timeLimitSeconds: null,
         shuffleQuestions: false,
         shuffleChoices: false,
+        glossaryEnabled: false,
       };
     case "reflectionPrompt":
       return { ...base, type, prompt: "", guidance: "" };
@@ -557,6 +559,7 @@ function normalizeLessonBlock(block: LessonBlock): LessonBlock {
         timeLimitSeconds: block.timeLimitSeconds == null ? null : Number(block.timeLimitSeconds),
         shuffleQuestions: Boolean(block.shuffleQuestions),
         shuffleChoices: Boolean(block.shuffleChoices),
+        glossaryEnabled: Boolean(block.glossaryEnabled),
       };
     case "reflectionPrompt":
       return { ...base, type: "reflectionPrompt", prompt: String(block.prompt ?? ""), guidance: String(block.guidance ?? "") };

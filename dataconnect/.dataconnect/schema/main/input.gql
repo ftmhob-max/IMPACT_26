@@ -29,6 +29,18 @@ It has the same format as `FormulaSection_Key`, but is only used as mutation ret
 """
 scalar FormulaSection_KeyOutput
 """
+✨ `GlossaryNote_KeyOutput` returns the primary key fields of table type `GlossaryNote`.
+
+It has the same format as `GlossaryNote_Key`, but is only used as mutation return value.
+"""
+scalar GlossaryNote_KeyOutput
+"""
+✨ `GlossaryTerm_KeyOutput` returns the primary key fields of table type `GlossaryTerm`.
+
+It has the same format as `GlossaryTerm_Key`, but is only used as mutation return value.
+"""
+scalar GlossaryTerm_KeyOutput
+"""
 ✨ `IngestionJob_KeyOutput` returns the primary key fields of table type `IngestionJob`.
 
 It has the same format as `IngestionJob_Key`, but is only used as mutation return value.
@@ -40,6 +52,12 @@ scalar IngestionJob_KeyOutput
 It has the same format as `Lesson_Key`, but is only used as mutation return value.
 """
 scalar Lesson_KeyOutput
+"""
+✨ `LessonNote_KeyOutput` returns the primary key fields of table type `LessonNote`.
+
+It has the same format as `LessonNote_Key`, but is only used as mutation return value.
+"""
+scalar LessonNote_KeyOutput
 """
 ✨ `LessonVersion_KeyOutput` returns the primary key fields of table type `LessonVersion`.
 
@@ -1902,6 +1920,788 @@ input FormulaSection_Order {
   position_max: OrderDirection
 }
 """
+✨ Generated data input type for table 'GlossaryNote'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input GlossaryNote_Data {
+  """
+  ✨ Generated from Field `GlossaryNote`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `GlossaryNote`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `GlossaryNote`.`termId` of type `UUID!`
+  """
+  termId: UUID
+  """
+  ✨ `_expr` server value variant of `termId` (✨ Generated from Field `GlossaryNote`.`termId` of type `UUID!`)
+  """
+  termId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `GlossaryNote`.`userId` of type `String!`
+  """
+  userId: String
+  """
+  ✨ `_expr` server value variant of `userId` (✨ Generated from Field `GlossaryNote`.`userId` of type `String!`)
+  """
+  userId_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `GlossaryNote`.`term` of type `GlossaryTerm!`
+  """
+  term: GlossaryTerm_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `GlossaryNote`.`user` of type `User!`
+  """
+  user: User_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `GlossaryNote`.`createdAt` of type `Date!`
+  """
+  createdAt: Date
+  """
+  ✨ `_date` server value variant of `createdAt` (✨ Generated from Field `GlossaryNote`.`createdAt` of type `Date!`)
+  """
+  createdAt_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `GlossaryNote`.`createdAt` of type `Date!`)
+  """
+  createdAt_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `GlossaryNote`.`createdAt` of type `Date!`)
+  """
+  createdAt_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `GlossaryNote`.`note` of type `String!`
+  """
+  note: String
+  """
+  ✨ `_expr` server value variant of `note` (✨ Generated from Field `GlossaryNote`.`note` of type `String!`)
+  """
+  note_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `GlossaryNote`.`updatedAt` of type `Date!`
+  """
+  updatedAt: Date
+  """
+  ✨ `_date` server value variant of `updatedAt` (✨ Generated from Field `GlossaryNote`.`updatedAt` of type `Date!`)
+  """
+  updatedAt_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `updatedAt` (✨ Generated from Field `GlossaryNote`.`updatedAt` of type `Date!`)
+  """
+  updatedAt_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `updatedAt` (✨ Generated from Field `GlossaryNote`.`updatedAt` of type `Date!`)
+  """
+  updatedAt_update: [Date_Update!] @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'GlossaryNote'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input GlossaryNote_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [GlossaryNote_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: GlossaryNote_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [GlossaryNote_Filter!]
+  """
+  ✨ Generated from Field `GlossaryNote`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `GlossaryNote`.`termId` of type `UUID!`
+  """
+  termId: UUID_Filter
+  """
+  ✨ Generated from Field `GlossaryNote`.`userId` of type `String!`
+  """
+  userId: String_Filter
+  """
+  ✨ Generated from Field `GlossaryNote`.`term` of type `GlossaryTerm!`
+  """
+  term: GlossaryTerm_Filter
+  """
+  ✨ Generated from Field `GlossaryNote`.`user` of type `User!`
+  """
+  user: User_Filter
+  """
+  ✨ Generated from Field `GlossaryNote`.`createdAt` of type `Date!`
+  """
+  createdAt: Date_Filter
+  """
+  ✨ Generated from Field `GlossaryNote`.`note` of type `String!`
+  """
+  note: String_Filter
+  """
+  ✨ Generated from Field `GlossaryNote`.`updatedAt` of type `Date!`
+  """
+  updatedAt: Date_Filter
+}
+"""
+✨ Generated first-row input type for table 'GlossaryNote'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input GlossaryNote_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [GlossaryNote_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: GlossaryNote_Filter
+}
+"""
+✨ Generated having input type for table 'GlossaryNote'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input GlossaryNote_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [GlossaryNote_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: GlossaryNote_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [GlossaryNote_Having!]
+  """
+  ✨ Generated from Field `GlossaryNote`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `GlossaryNote`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `GlossaryNote`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `GlossaryNote`.`note_count` of type `Int!`
+  """
+  note_count: Int_Filter
+  """
+  ✨ Generated from Field `GlossaryNote`.`termId_count` of type `Int!`
+  """
+  termId_count: Int_Filter
+  """
+  ✨ Generated from Field `GlossaryNote`.`updatedAt_count` of type `Int!`
+  """
+  updatedAt_count: Int_Filter
+  """
+  ✨ Generated from Field `GlossaryNote`.`userId_count` of type `Int!`
+  """
+  userId_count: Int_Filter
+  """
+  ✨ Generated from Field `GlossaryNote`.`createdAt_min` of type `Date`
+  """
+  createdAt_min: Date_Filter
+  """
+  ✨ Generated from Field `GlossaryNote`.`updatedAt_min` of type `Date`
+  """
+  updatedAt_min: Date_Filter
+  """
+  ✨ Generated from Field `GlossaryNote`.`createdAt_max` of type `Date`
+  """
+  createdAt_max: Date_Filter
+  """
+  ✨ Generated from Field `GlossaryNote`.`updatedAt_max` of type `Date`
+  """
+  updatedAt_max: Date_Filter
+}
+"""
+✨ Generated key input type for table 'GlossaryNote'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input GlossaryNote_Key {
+  """
+  ✨ Generated from Field `GlossaryNote`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `GlossaryNote`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'GlossaryNote'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input GlossaryNote_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: GlossaryNote_Filter
+}
+"""
+✨ Generated order input type for table 'GlossaryNote'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input GlossaryNote_Order {
+  """
+  ✨ Generated from Field `GlossaryNote`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryNote`.`termId` of type `UUID!`
+  """
+  termId: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryNote`.`userId` of type `String!`
+  """
+  userId: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryNote`.`term` of type `GlossaryTerm!`
+  """
+  term: GlossaryTerm_Order
+  """
+  ✨ Generated from Field `GlossaryNote`.`user` of type `User!`
+  """
+  user: User_Order
+  """
+  ✨ Generated from Field `GlossaryNote`.`createdAt` of type `Date!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryNote`.`note` of type `String!`
+  """
+  note: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryNote`.`updatedAt` of type `Date!`
+  """
+  updatedAt: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryNote`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryNote`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryNote`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryNote`.`note_count` of type `Int!`
+  """
+  note_count: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryNote`.`termId_count` of type `Int!`
+  """
+  termId_count: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryNote`.`updatedAt_count` of type `Int!`
+  """
+  updatedAt_count: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryNote`.`userId_count` of type `Int!`
+  """
+  userId_count: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryNote`.`createdAt_min` of type `Date`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryNote`.`updatedAt_min` of type `Date`
+  """
+  updatedAt_min: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryNote`.`createdAt_max` of type `Date`
+  """
+  createdAt_max: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryNote`.`updatedAt_max` of type `Date`
+  """
+  updatedAt_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'GlossaryTerm'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input GlossaryTerm_Data {
+  """
+  ✨ Generated from Field `GlossaryTerm`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `GlossaryTerm`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `GlossaryTerm`.`createdById` of type `String`
+  """
+  createdById: String
+  """
+  ✨ `_expr` server value variant of `createdById` (✨ Generated from Field `GlossaryTerm`.`createdById` of type `String`)
+  """
+  createdById_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `GlossaryTerm`.`createdBy` of type `User`
+  """
+  createdBy: User_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `GlossaryTerm`.`category` of type `String`
+  """
+  category: String
+  """
+  ✨ `_expr` server value variant of `category` (✨ Generated from Field `GlossaryTerm`.`category` of type `String`)
+  """
+  category_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `GlossaryTerm`.`createdAt` of type `Date!`
+  """
+  createdAt: Date
+  """
+  ✨ `_date` server value variant of `createdAt` (✨ Generated from Field `GlossaryTerm`.`createdAt` of type `Date!`)
+  """
+  createdAt_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `GlossaryTerm`.`createdAt` of type `Date!`)
+  """
+  createdAt_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `GlossaryTerm`.`createdAt` of type `Date!`)
+  """
+  createdAt_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `GlossaryTerm`.`definition` of type `String!`
+  """
+  definition: String
+  """
+  ✨ `_expr` server value variant of `definition` (✨ Generated from Field `GlossaryTerm`.`definition` of type `String!`)
+  """
+  definition_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `GlossaryTerm`.`domain` of type `String`
+  """
+  domain: String
+  """
+  ✨ `_expr` server value variant of `domain` (✨ Generated from Field `GlossaryTerm`.`domain` of type `String`)
+  """
+  domain_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `GlossaryTerm`.`example` of type `String`
+  """
+  example: String
+  """
+  ✨ `_expr` server value variant of `example` (✨ Generated from Field `GlossaryTerm`.`example` of type `String`)
+  """
+  example_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `GlossaryTerm`.`fullDefinition` of type `String`
+  """
+  fullDefinition: String
+  """
+  ✨ `_expr` server value variant of `fullDefinition` (✨ Generated from Field `GlossaryTerm`.`fullDefinition` of type `String`)
+  """
+  fullDefinition_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `GlossaryTerm`.`isPublished` of type `Boolean!`
+  """
+  isPublished: Boolean
+  """
+  ✨ `_expr` server value variant of `isPublished` (✨ Generated from Field `GlossaryTerm`.`isPublished` of type `Boolean!`)
+  """
+  isPublished_expr: Boolean_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `GlossaryTerm`.`relatedTerms` of type `String`
+  """
+  relatedTerms: String
+  """
+  ✨ `_expr` server value variant of `relatedTerms` (✨ Generated from Field `GlossaryTerm`.`relatedTerms` of type `String`)
+  """
+  relatedTerms_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `GlossaryTerm`.`sourceDocument` of type `String`
+  """
+  sourceDocument: String
+  """
+  ✨ `_expr` server value variant of `sourceDocument` (✨ Generated from Field `GlossaryTerm`.`sourceDocument` of type `String`)
+  """
+  sourceDocument_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `GlossaryTerm`.`term` of type `String!`
+  """
+  term: String
+  """
+  ✨ `_expr` server value variant of `term` (✨ Generated from Field `GlossaryTerm`.`term` of type `String!`)
+  """
+  term_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `GlossaryTerm`.`updatedAt` of type `Date!`
+  """
+  updatedAt: Date
+  """
+  ✨ `_date` server value variant of `updatedAt` (✨ Generated from Field `GlossaryTerm`.`updatedAt` of type `Date!`)
+  """
+  updatedAt_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `updatedAt` (✨ Generated from Field `GlossaryTerm`.`updatedAt` of type `Date!`)
+  """
+  updatedAt_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `updatedAt` (✨ Generated from Field `GlossaryTerm`.`updatedAt` of type `Date!`)
+  """
+  updatedAt_update: [Date_Update!] @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'GlossaryTerm'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input GlossaryTerm_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [GlossaryTerm_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: GlossaryTerm_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [GlossaryTerm_Filter!]
+  """
+  ✨ Generated from Field `GlossaryTerm`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `GlossaryTerm`.`createdById` of type `String`
+  """
+  createdById: String_Filter
+  """
+  ✨ Generated from Field `GlossaryTerm`.`createdBy` of type `User`
+  """
+  createdBy: User_Filter
+  """
+  ✨ Generated from Field `GlossaryTerm`.`category` of type `String`
+  """
+  category: String_Filter
+  """
+  ✨ Generated from Field `GlossaryTerm`.`createdAt` of type `Date!`
+  """
+  createdAt: Date_Filter
+  """
+  ✨ Generated from Field `GlossaryTerm`.`definition` of type `String!`
+  """
+  definition: String_Filter
+  """
+  ✨ Generated from Field `GlossaryTerm`.`domain` of type `String`
+  """
+  domain: String_Filter
+  """
+  ✨ Generated from Field `GlossaryTerm`.`example` of type `String`
+  """
+  example: String_Filter
+  """
+  ✨ Generated from Field `GlossaryTerm`.`fullDefinition` of type `String`
+  """
+  fullDefinition: String_Filter
+  """
+  ✨ Generated from Field `GlossaryTerm`.`isPublished` of type `Boolean!`
+  """
+  isPublished: Boolean_Filter
+  """
+  ✨ Generated from Field `GlossaryTerm`.`relatedTerms` of type `String`
+  """
+  relatedTerms: String_Filter
+  """
+  ✨ Generated from Field `GlossaryTerm`.`sourceDocument` of type `String`
+  """
+  sourceDocument: String_Filter
+  """
+  ✨ Generated from Field `GlossaryTerm`.`term` of type `String!`
+  """
+  term: String_Filter
+  """
+  ✨ Generated from Field `GlossaryTerm`.`updatedAt` of type `Date!`
+  """
+  updatedAt: Date_Filter
+  """
+  ✨ Generated from Field `GlossaryTerm`.`glossaryNotes_on_term` of type `[GlossaryNote!]!`
+  """
+  glossaryNotes_on_term: GlossaryNote_ListFilter
+}
+"""
+✨ Generated first-row input type for table 'GlossaryTerm'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input GlossaryTerm_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [GlossaryTerm_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: GlossaryTerm_Filter
+}
+"""
+✨ Generated having input type for table 'GlossaryTerm'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input GlossaryTerm_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [GlossaryTerm_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: GlossaryTerm_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [GlossaryTerm_Having!]
+  """
+  ✨ Generated from Field `GlossaryTerm`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `GlossaryTerm`.`category_count` of type `Int!`
+  """
+  category_count: Int_Filter
+  """
+  ✨ Generated from Field `GlossaryTerm`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `GlossaryTerm`.`createdById_count` of type `Int!`
+  """
+  createdById_count: Int_Filter
+  """
+  ✨ Generated from Field `GlossaryTerm`.`definition_count` of type `Int!`
+  """
+  definition_count: Int_Filter
+  """
+  ✨ Generated from Field `GlossaryTerm`.`domain_count` of type `Int!`
+  """
+  domain_count: Int_Filter
+  """
+  ✨ Generated from Field `GlossaryTerm`.`example_count` of type `Int!`
+  """
+  example_count: Int_Filter
+  """
+  ✨ Generated from Field `GlossaryTerm`.`fullDefinition_count` of type `Int!`
+  """
+  fullDefinition_count: Int_Filter
+  """
+  ✨ Generated from Field `GlossaryTerm`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `GlossaryTerm`.`isPublished_count` of type `Int!`
+  """
+  isPublished_count: Int_Filter
+  """
+  ✨ Generated from Field `GlossaryTerm`.`relatedTerms_count` of type `Int!`
+  """
+  relatedTerms_count: Int_Filter
+  """
+  ✨ Generated from Field `GlossaryTerm`.`sourceDocument_count` of type `Int!`
+  """
+  sourceDocument_count: Int_Filter
+  """
+  ✨ Generated from Field `GlossaryTerm`.`term_count` of type `Int!`
+  """
+  term_count: Int_Filter
+  """
+  ✨ Generated from Field `GlossaryTerm`.`updatedAt_count` of type `Int!`
+  """
+  updatedAt_count: Int_Filter
+  """
+  ✨ Generated from Field `GlossaryTerm`.`createdAt_min` of type `Date`
+  """
+  createdAt_min: Date_Filter
+  """
+  ✨ Generated from Field `GlossaryTerm`.`updatedAt_min` of type `Date`
+  """
+  updatedAt_min: Date_Filter
+  """
+  ✨ Generated from Field `GlossaryTerm`.`createdAt_max` of type `Date`
+  """
+  createdAt_max: Date_Filter
+  """
+  ✨ Generated from Field `GlossaryTerm`.`updatedAt_max` of type `Date`
+  """
+  updatedAt_max: Date_Filter
+}
+"""
+✨ Generated key input type for table 'GlossaryTerm'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input GlossaryTerm_Key {
+  """
+  ✨ Generated from Field `GlossaryTerm`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `GlossaryTerm`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'GlossaryTerm'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input GlossaryTerm_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: GlossaryTerm_Filter
+}
+"""
+✨ Generated order input type for table 'GlossaryTerm'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input GlossaryTerm_Order {
+  """
+  ✨ Generated from Field `GlossaryTerm`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryTerm`.`createdById` of type `String`
+  """
+  createdById: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryTerm`.`createdBy` of type `User`
+  """
+  createdBy: User_Order
+  """
+  ✨ Generated from Field `GlossaryTerm`.`category` of type `String`
+  """
+  category: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryTerm`.`createdAt` of type `Date!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryTerm`.`definition` of type `String!`
+  """
+  definition: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryTerm`.`domain` of type `String`
+  """
+  domain: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryTerm`.`example` of type `String`
+  """
+  example: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryTerm`.`fullDefinition` of type `String`
+  """
+  fullDefinition: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryTerm`.`isPublished` of type `Boolean!`
+  """
+  isPublished: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryTerm`.`relatedTerms` of type `String`
+  """
+  relatedTerms: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryTerm`.`sourceDocument` of type `String`
+  """
+  sourceDocument: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryTerm`.`term` of type `String!`
+  """
+  term: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryTerm`.`updatedAt` of type `Date!`
+  """
+  updatedAt: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryTerm`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryTerm`.`category_count` of type `Int!`
+  """
+  category_count: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryTerm`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryTerm`.`createdById_count` of type `Int!`
+  """
+  createdById_count: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryTerm`.`definition_count` of type `Int!`
+  """
+  definition_count: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryTerm`.`domain_count` of type `Int!`
+  """
+  domain_count: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryTerm`.`example_count` of type `Int!`
+  """
+  example_count: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryTerm`.`fullDefinition_count` of type `Int!`
+  """
+  fullDefinition_count: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryTerm`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryTerm`.`isPublished_count` of type `Int!`
+  """
+  isPublished_count: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryTerm`.`relatedTerms_count` of type `Int!`
+  """
+  relatedTerms_count: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryTerm`.`sourceDocument_count` of type `Int!`
+  """
+  sourceDocument_count: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryTerm`.`term_count` of type `Int!`
+  """
+  term_count: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryTerm`.`updatedAt_count` of type `Int!`
+  """
+  updatedAt_count: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryTerm`.`createdAt_min` of type `Date`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryTerm`.`updatedAt_min` of type `Date`
+  """
+  updatedAt_min: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryTerm`.`createdAt_max` of type `Date`
+  """
+  createdAt_max: OrderDirection
+  """
+  ✨ Generated from Field `GlossaryTerm`.`updatedAt_max` of type `Date`
+  """
+  updatedAt_max: OrderDirection
+}
+"""
 ✨ Generated data input type for table 'IngestionJob'. It includes all necessary fields for creating or upserting rows into table.
 """
 input IngestionJob_Data {
@@ -3058,6 +3858,329 @@ input Lesson_Order {
   ✨ Generated from Field `Lesson`.`version_max` of type `Int`
   """
   version_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'LessonNote'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input LessonNote_Data {
+  """
+  ✨ Generated from Field `LessonNote`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `LessonNote`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `LessonNote`.`userId` of type `String!`
+  """
+  userId: String
+  """
+  ✨ `_expr` server value variant of `userId` (✨ Generated from Field `LessonNote`.`userId` of type `String!`)
+  """
+  userId_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `LessonNote`.`user` of type `User!`
+  """
+  user: User_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `LessonNote`.`content` of type `String!`
+  """
+  content: String
+  """
+  ✨ `_expr` server value variant of `content` (✨ Generated from Field `LessonNote`.`content` of type `String!`)
+  """
+  content_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `LessonNote`.`createdAt` of type `Date!`
+  """
+  createdAt: Date
+  """
+  ✨ `_date` server value variant of `createdAt` (✨ Generated from Field `LessonNote`.`createdAt` of type `Date!`)
+  """
+  createdAt_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `LessonNote`.`createdAt` of type `Date!`)
+  """
+  createdAt_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `LessonNote`.`createdAt` of type `Date!`)
+  """
+  createdAt_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `LessonNote`.`lessonId` of type `UUID`
+  """
+  lessonId: UUID
+  """
+  ✨ `_expr` server value variant of `lessonId` (✨ Generated from Field `LessonNote`.`lessonId` of type `UUID`)
+  """
+  lessonId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `LessonNote`.`lessonTitle` of type `String`
+  """
+  lessonTitle: String
+  """
+  ✨ `_expr` server value variant of `lessonTitle` (✨ Generated from Field `LessonNote`.`lessonTitle` of type `String`)
+  """
+  lessonTitle_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `LessonNote`.`updatedAt` of type `Date!`
+  """
+  updatedAt: Date
+  """
+  ✨ `_date` server value variant of `updatedAt` (✨ Generated from Field `LessonNote`.`updatedAt` of type `Date!`)
+  """
+  updatedAt_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `updatedAt` (✨ Generated from Field `LessonNote`.`updatedAt` of type `Date!`)
+  """
+  updatedAt_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `updatedAt` (✨ Generated from Field `LessonNote`.`updatedAt` of type `Date!`)
+  """
+  updatedAt_update: [Date_Update!] @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'LessonNote'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input LessonNote_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [LessonNote_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: LessonNote_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [LessonNote_Filter!]
+  """
+  ✨ Generated from Field `LessonNote`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `LessonNote`.`userId` of type `String!`
+  """
+  userId: String_Filter
+  """
+  ✨ Generated from Field `LessonNote`.`user` of type `User!`
+  """
+  user: User_Filter
+  """
+  ✨ Generated from Field `LessonNote`.`content` of type `String!`
+  """
+  content: String_Filter
+  """
+  ✨ Generated from Field `LessonNote`.`createdAt` of type `Date!`
+  """
+  createdAt: Date_Filter
+  """
+  ✨ Generated from Field `LessonNote`.`lessonId` of type `UUID`
+  """
+  lessonId: UUID_Filter
+  """
+  ✨ Generated from Field `LessonNote`.`lessonTitle` of type `String`
+  """
+  lessonTitle: String_Filter
+  """
+  ✨ Generated from Field `LessonNote`.`updatedAt` of type `Date!`
+  """
+  updatedAt: Date_Filter
+}
+"""
+✨ Generated first-row input type for table 'LessonNote'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input LessonNote_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [LessonNote_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: LessonNote_Filter
+}
+"""
+✨ Generated having input type for table 'LessonNote'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input LessonNote_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [LessonNote_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: LessonNote_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [LessonNote_Having!]
+  """
+  ✨ Generated from Field `LessonNote`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `LessonNote`.`content_count` of type `Int!`
+  """
+  content_count: Int_Filter
+  """
+  ✨ Generated from Field `LessonNote`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `LessonNote`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `LessonNote`.`lessonId_count` of type `Int!`
+  """
+  lessonId_count: Int_Filter
+  """
+  ✨ Generated from Field `LessonNote`.`lessonTitle_count` of type `Int!`
+  """
+  lessonTitle_count: Int_Filter
+  """
+  ✨ Generated from Field `LessonNote`.`updatedAt_count` of type `Int!`
+  """
+  updatedAt_count: Int_Filter
+  """
+  ✨ Generated from Field `LessonNote`.`userId_count` of type `Int!`
+  """
+  userId_count: Int_Filter
+  """
+  ✨ Generated from Field `LessonNote`.`createdAt_min` of type `Date`
+  """
+  createdAt_min: Date_Filter
+  """
+  ✨ Generated from Field `LessonNote`.`updatedAt_min` of type `Date`
+  """
+  updatedAt_min: Date_Filter
+  """
+  ✨ Generated from Field `LessonNote`.`createdAt_max` of type `Date`
+  """
+  createdAt_max: Date_Filter
+  """
+  ✨ Generated from Field `LessonNote`.`updatedAt_max` of type `Date`
+  """
+  updatedAt_max: Date_Filter
+}
+"""
+✨ Generated key input type for table 'LessonNote'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input LessonNote_Key {
+  """
+  ✨ Generated from Field `LessonNote`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `LessonNote`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'LessonNote'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input LessonNote_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: LessonNote_Filter
+}
+"""
+✨ Generated order input type for table 'LessonNote'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input LessonNote_Order {
+  """
+  ✨ Generated from Field `LessonNote`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `LessonNote`.`userId` of type `String!`
+  """
+  userId: OrderDirection
+  """
+  ✨ Generated from Field `LessonNote`.`user` of type `User!`
+  """
+  user: User_Order
+  """
+  ✨ Generated from Field `LessonNote`.`content` of type `String!`
+  """
+  content: OrderDirection
+  """
+  ✨ Generated from Field `LessonNote`.`createdAt` of type `Date!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `LessonNote`.`lessonId` of type `UUID`
+  """
+  lessonId: OrderDirection
+  """
+  ✨ Generated from Field `LessonNote`.`lessonTitle` of type `String`
+  """
+  lessonTitle: OrderDirection
+  """
+  ✨ Generated from Field `LessonNote`.`updatedAt` of type `Date!`
+  """
+  updatedAt: OrderDirection
+  """
+  ✨ Generated from Field `LessonNote`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `LessonNote`.`content_count` of type `Int!`
+  """
+  content_count: OrderDirection
+  """
+  ✨ Generated from Field `LessonNote`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `LessonNote`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `LessonNote`.`lessonId_count` of type `Int!`
+  """
+  lessonId_count: OrderDirection
+  """
+  ✨ Generated from Field `LessonNote`.`lessonTitle_count` of type `Int!`
+  """
+  lessonTitle_count: OrderDirection
+  """
+  ✨ Generated from Field `LessonNote`.`updatedAt_count` of type `Int!`
+  """
+  updatedAt_count: OrderDirection
+  """
+  ✨ Generated from Field `LessonNote`.`userId_count` of type `Int!`
+  """
+  userId_count: OrderDirection
+  """
+  ✨ Generated from Field `LessonNote`.`createdAt_min` of type `Date`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `LessonNote`.`updatedAt_min` of type `Date`
+  """
+  updatedAt_min: OrderDirection
+  """
+  ✨ Generated from Field `LessonNote`.`createdAt_max` of type `Date`
+  """
+  createdAt_max: OrderDirection
+  """
+  ✨ Generated from Field `LessonNote`.`updatedAt_max` of type `Date`
+  """
+  updatedAt_max: OrderDirection
 }
 """
 ✨ Generated data input type for table 'LessonVersion'. It includes all necessary fields for creating or upserting rows into table.
@@ -8569,9 +9692,21 @@ input User_Filter {
   """
   courses_on_updatedBy: Course_ListFilter
   """
+  ✨ Generated from Field `User`.`glossaryNotes_on_user` of type `[GlossaryNote!]!`
+  """
+  glossaryNotes_on_user: GlossaryNote_ListFilter
+  """
+  ✨ Generated from Field `User`.`glossaryTerms_on_createdBy` of type `[GlossaryTerm!]!`
+  """
+  glossaryTerms_on_createdBy: GlossaryTerm_ListFilter
+  """
   ✨ Generated from Field `User`.`lessons_on_updatedBy` of type `[Lesson!]!`
   """
   lessons_on_updatedBy: Lesson_ListFilter
+  """
+  ✨ Generated from Field `User`.`lessonNotes_on_user` of type `[LessonNote!]!`
+  """
+  lessonNotes_on_user: LessonNote_ListFilter
   """
   ✨ Generated from Field `User`.`lessonVersions_on_createdBy` of type `[LessonVersion!]!`
   """

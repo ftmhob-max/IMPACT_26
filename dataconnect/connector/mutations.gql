@@ -590,3 +590,28 @@ mutation DeleteGlossaryNote($id: UUID!) @auth(level: NO_ACCESS) {
   glossaryNote_delete(id: $id)
 }
 
+# ─── Lesson notes (learner) ───────────────────────────────────────────────────
+
+mutation CreateLessonNote(
+  $id: UUID!, $userId: String!,
+  $lessonId: UUID, $lessonTitle: String,
+  $content: String!, $updatedAt: Date!
+) @auth(level: NO_ACCESS) {
+  lessonNote_insert(data: {
+    id: $id
+    user: { id: $userId }
+    lessonId: $lessonId
+    lessonTitle: $lessonTitle
+    content: $content
+    updatedAt: $updatedAt
+  })
+}
+
+mutation UpdateLessonNote($id: UUID!, $lessonTitle: String, $content: String!, $updatedAt: Date!) @auth(level: NO_ACCESS) {
+  lessonNote_update(id: $id, data: { lessonTitle: $lessonTitle, content: $content, updatedAt: $updatedAt })
+}
+
+mutation DeleteLessonNote($id: UUID!) @auth(level: NO_ACCESS) {
+  lessonNote_delete(id: $id)
+}
+

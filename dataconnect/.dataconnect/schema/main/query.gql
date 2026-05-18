@@ -95,6 +95,44 @@ extend type Query {
     first: FormulaSection_FirstRow
   ): FormulaSection @fdc_generated(from: "FormulaSection", purpose: QUERY_SINGLE)
   """
+  ✨ Look up a single `GlossaryNote` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  glossaryNote(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: GlossaryNote_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: GlossaryNote_FirstRow
+  ): GlossaryNote @fdc_generated(from: "GlossaryNote", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `GlossaryTerm` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  glossaryTerm(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: GlossaryTerm_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: GlossaryTerm_FirstRow
+  ): GlossaryTerm @fdc_generated(from: "GlossaryTerm", purpose: QUERY_SINGLE)
+  """
   ✨ Look up a single `IngestionJob` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
   ingestionJob(
@@ -132,6 +170,25 @@ extend type Query {
     """
     first: Lesson_FirstRow
   ): Lesson @fdc_generated(from: "Lesson", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `LessonNote` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  lessonNote(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: LessonNote_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: LessonNote_FirstRow
+  ): LessonNote @fdc_generated(from: "LessonNote", purpose: QUERY_SINGLE)
   """
   ✨ Look up a single `LessonVersion` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
@@ -573,6 +630,74 @@ extend type Query {
     having: FormulaSection_Having
   ): [FormulaSection!]! @fdc_generated(from: "FormulaSection", purpose: QUERY_MULTIPLE)
   """
+  ✨ List `GlossaryNote` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  glossaryNotes(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: GlossaryNote_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [GlossaryNote_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: GlossaryNote_Having
+  ): [GlossaryNote!]! @fdc_generated(from: "GlossaryNote", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `GlossaryTerm` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  glossaryTerms(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: GlossaryTerm_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [GlossaryTerm_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: GlossaryTerm_Having
+  ): [GlossaryTerm!]! @fdc_generated(from: "GlossaryTerm", purpose: QUERY_MULTIPLE)
+  """
   ✨ List `IngestionJob` objects in the table and return selected fields, optionally filtered by `where` conditions
   """
   ingestionJobs(
@@ -640,6 +765,40 @@ extend type Query {
     """
     having: Lesson_Having
   ): [Lesson!]! @fdc_generated(from: "Lesson", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `LessonNote` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  lessonNotes(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: LessonNote_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [LessonNote_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: LessonNote_Having
+  ): [LessonNote!]! @fdc_generated(from: "LessonNote", purpose: QUERY_MULTIPLE)
   """
   ✨ List `LessonVersion` objects in the table and return selected fields, optionally filtered by `where` conditions
   """

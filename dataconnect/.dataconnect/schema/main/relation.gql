@@ -759,6 +759,271 @@ extend type FormulaSection {
   """
   _id: ID! @fdc_generated(from: "FormulaSection.id", purpose: ENTITY_ID)
 }
+extend type GlossaryNote {
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "GlossaryNote", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `GlossaryNote` table.
+  """
+  _count: Int! @fdc_generated(from: "GlossaryNote.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `GlossaryNote` table where the `createdAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "GlossaryNote.createdAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `GlossaryNote` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "GlossaryNote.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `GlossaryNote` table where the `note` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  note_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "GlossaryNote.note", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `GlossaryNote` table where the `termId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  termId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "GlossaryNote.termId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `GlossaryNote` table where the `updatedAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  updatedAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "GlossaryNote.updatedAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `GlossaryNote` table where the `userId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  userId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "GlossaryNote.userId", purpose: QUERY_COUNT)
+  """
+  ✨ Minimum of the `createdAt` field in the `GlossaryNote` table.
+  """
+  createdAt_min: Date @fdc_generated(from: "GlossaryNote.createdAt", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `updatedAt` field in the `GlossaryNote` table.
+  """
+  updatedAt_min: Date @fdc_generated(from: "GlossaryNote.updatedAt", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `createdAt` field in the `GlossaryNote` table.
+  """
+  createdAt_max: Date @fdc_generated(from: "GlossaryNote.createdAt", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `updatedAt` field in the `GlossaryNote` table.
+  """
+  updatedAt_max: Date @fdc_generated(from: "GlossaryNote.updatedAt", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "GlossaryNote.id", purpose: ENTITY_ID)
+}
+extend type GlossaryTerm {
+  """
+  ✨ List `GlossaryNote` objects in a one-to-many relationship (where `GlossaryNote`.`term` is this object).
+  """
+  glossaryNotes_on_term(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: GlossaryNote_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [GlossaryNote_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: GlossaryNote_Having
+  ): [GlossaryNote!]! @fdc_generated(from: "GlossaryNote.term", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "GlossaryTerm", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `GlossaryTerm` table.
+  """
+  _count: Int! @fdc_generated(from: "GlossaryTerm.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `GlossaryTerm` table where the `category` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  category_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "GlossaryTerm.category", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `GlossaryTerm` table where the `createdAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "GlossaryTerm.createdAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `GlossaryTerm` table where the `createdById` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdById_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "GlossaryTerm.createdById", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `GlossaryTerm` table where the `definition` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  definition_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "GlossaryTerm.definition", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `GlossaryTerm` table where the `domain` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  domain_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "GlossaryTerm.domain", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `GlossaryTerm` table where the `example` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  example_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "GlossaryTerm.example", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `GlossaryTerm` table where the `fullDefinition` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  fullDefinition_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "GlossaryTerm.fullDefinition", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `GlossaryTerm` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "GlossaryTerm.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `GlossaryTerm` table where the `isPublished` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  isPublished_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "GlossaryTerm.isPublished", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `GlossaryTerm` table where the `relatedTerms` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  relatedTerms_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "GlossaryTerm.relatedTerms", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `GlossaryTerm` table where the `sourceDocument` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  sourceDocument_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "GlossaryTerm.sourceDocument", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `GlossaryTerm` table where the `term` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  term_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "GlossaryTerm.term", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `GlossaryTerm` table where the `updatedAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  updatedAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "GlossaryTerm.updatedAt", purpose: QUERY_COUNT)
+  """
+  ✨ Minimum of the `createdAt` field in the `GlossaryTerm` table.
+  """
+  createdAt_min: Date @fdc_generated(from: "GlossaryTerm.createdAt", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `updatedAt` field in the `GlossaryTerm` table.
+  """
+  updatedAt_min: Date @fdc_generated(from: "GlossaryTerm.updatedAt", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `createdAt` field in the `GlossaryTerm` table.
+  """
+  createdAt_max: Date @fdc_generated(from: "GlossaryTerm.createdAt", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `updatedAt` field in the `GlossaryTerm` table.
+  """
+  updatedAt_max: Date @fdc_generated(from: "GlossaryTerm.updatedAt", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "GlossaryTerm.id", purpose: ENTITY_ID)
+}
 extend type IngestionJob {
   """
   Implicit metadata field that cannot be written. It provides extra information about query results.
@@ -1334,6 +1599,99 @@ extend type Lesson {
   A generated field that is used for caching results in SDKs.
   """
   _id: ID! @fdc_generated(from: "Lesson.id", purpose: ENTITY_ID)
+}
+extend type LessonNote {
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "LessonNote", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `LessonNote` table.
+  """
+  _count: Int! @fdc_generated(from: "LessonNote.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `LessonNote` table where the `content` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  content_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "LessonNote.content", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `LessonNote` table where the `createdAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "LessonNote.createdAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `LessonNote` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "LessonNote.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `LessonNote` table where the `lessonId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  lessonId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "LessonNote.lessonId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `LessonNote` table where the `lessonTitle` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  lessonTitle_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "LessonNote.lessonTitle", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `LessonNote` table where the `updatedAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  updatedAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "LessonNote.updatedAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `LessonNote` table where the `userId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  userId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "LessonNote.userId", purpose: QUERY_COUNT)
+  """
+  ✨ Minimum of the `createdAt` field in the `LessonNote` table.
+  """
+  createdAt_min: Date @fdc_generated(from: "LessonNote.createdAt", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `updatedAt` field in the `LessonNote` table.
+  """
+  updatedAt_min: Date @fdc_generated(from: "LessonNote.updatedAt", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `createdAt` field in the `LessonNote` table.
+  """
+  createdAt_max: Date @fdc_generated(from: "LessonNote.createdAt", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `updatedAt` field in the `LessonNote` table.
+  """
+  updatedAt_max: Date @fdc_generated(from: "LessonNote.updatedAt", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "LessonNote.id", purpose: ENTITY_ID)
 }
 extend type LessonVersion {
   """
@@ -3940,6 +4298,74 @@ extend type User {
     having: Course_Having
   ): [Course!]! @fdc_generated(from: "Course.updatedBy", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
   """
+  ✨ List `GlossaryNote` objects in a one-to-many relationship (where `GlossaryNote`.`user` is this object).
+  """
+  glossaryNotes_on_user(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: GlossaryNote_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [GlossaryNote_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: GlossaryNote_Having
+  ): [GlossaryNote!]! @fdc_generated(from: "GlossaryNote.user", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `GlossaryTerm` objects in a one-to-many relationship (where `GlossaryTerm`.`createdBy` is this object).
+  """
+  glossaryTerms_on_createdBy(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: GlossaryTerm_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [GlossaryTerm_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: GlossaryTerm_Having
+  ): [GlossaryTerm!]! @fdc_generated(from: "GlossaryTerm.createdBy", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
   ✨ List `Lesson` objects in a one-to-many relationship (where `Lesson`.`updatedBy` is this object).
   """
   lessons_on_updatedBy(
@@ -3973,6 +4399,40 @@ extend type User {
     """
     having: Lesson_Having
   ): [Lesson!]! @fdc_generated(from: "Lesson.updatedBy", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `LessonNote` objects in a one-to-many relationship (where `LessonNote`.`user` is this object).
+  """
+  lessonNotes_on_user(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: LessonNote_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [LessonNote_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: LessonNote_Having
+  ): [LessonNote!]! @fdc_generated(from: "LessonNote.user", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
   """
   ✨ List `LessonVersion` objects in a one-to-many relationship (where `LessonVersion`.`createdBy` is this object).
   """

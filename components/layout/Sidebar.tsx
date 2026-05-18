@@ -7,6 +7,7 @@ import { onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
 import { auth } from "@/lib/firebase/client";
 import { cn } from "@/lib/utils";
 import * as Icons from "@/components/ui/Icons";
+import { UserAvatar as ProfileAvatar } from "@/components/profile/UserAvatar";
 
 const DESKTOP_SIDEBAR_MODE_KEY = "impact26:desktop-sidebar-mode";
 const STUDY_RHYTHM_OPEN_KEY = "impact26:study-rhythm-open";
@@ -31,9 +32,11 @@ type DesktopSidebarMode = "expanded" | "collapsed" | "auto";
 const navItems: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: Icons.LayoutDashboard },
   { href: "/courses", label: "Courses", icon: Icons.GraduationCap },
+  { href: "/progress", label: "My Progress", icon: Icons.BarChart3 },
   { href: "/formulas", label: "Formula Compass", icon: Icons.Calculator },
   { href: "/glossary", label: "Glossary", icon: Icons.BookOpen },
-  { href: "/profile", label: "My Progress", icon: Icons.User },
+  { href: "/profile", label: "Profile", icon: Icons.User },
+  { href: "/settings", label: "Settings", icon: Icons.Settings },
 ];
 
 const adminItems: NavItem[] = [
@@ -58,11 +61,23 @@ interface SidebarProps {
 export function Sidebar({ isAdmin }: SidebarProps) {
   const pathname = usePathname();
   const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [profileRefresh, setProfileRefresh] = useState(0);
   const [desktopMode, setDesktopMode] = useState<DesktopSidebarMode>("expanded");
   const [autoReveal, setAutoReveal] = useState(false);
 
   useEffect(() => {
     return onAuthStateChanged(auth, (u) => setUser(u));
+  }, []);
+
+  useEffect(() => {
+    const refreshProfile = async () => {
+      await auth.currentUser?.reload();
+      setUser(auth.currentUser);
+      setProfileRefresh((value) => value + 1);
+    };
+
+    window.addEventListener("impact26:profile-updated", refreshProfile);
+    return () => window.removeEventListener("impact26:profile-updated", refreshProfile);
   }, []);
 
   useEffect(() => {
@@ -117,7 +132,7 @@ export function Sidebar({ isAdmin }: SidebarProps) {
 
           <div className="flex items-center gap-2 shrink-0">
             <RolePill isAdmin={isAdmin} />
-            {user && <UserAvatar user={user} />}
+            {user && <UserAvatar key={profileRefresh} user={user} />}
           </div>
         </div>
       </div>
@@ -191,6 +206,7 @@ export function Sidebar({ isAdmin }: SidebarProps) {
               <SidebarPanelContent
                 isAdmin={isAdmin}
                 user={user}
+                profileRefresh={profileRefresh}
                 pathname={pathname}
                 compact={false}
                 onSetDesktopMode={setDesktopMode}
@@ -211,6 +227,7 @@ export function Sidebar({ isAdmin }: SidebarProps) {
             <SidebarPanelContent
               isAdmin={isAdmin}
               user={user}
+              profileRefresh={profileRefresh}
               pathname={pathname}
               compact={!isDesktopExpanded}
               onSetDesktopMode={setDesktopMode}
@@ -250,6 +267,7 @@ export function Sidebar({ isAdmin }: SidebarProps) {
 function SidebarPanelContent({
   isAdmin,
   user,
+  profileRefresh,
   pathname,
   compact,
   onSetDesktopMode,
@@ -257,6 +275,7 @@ function SidebarPanelContent({
 }: {
   isAdmin?: boolean;
   user: FirebaseUser | null;
+  profileRefresh: number;
   pathname: string;
   compact: boolean;
   onSetDesktopMode: (mode: DesktopSidebarMode) => void;
@@ -290,7 +309,7 @@ function SidebarPanelContent({
 
           <div className={cn("flex items-center gap-2 shrink-0", compact && "flex-col")}>
             <RolePill isAdmin={isAdmin} compact={compact} />
-            {user && <UserAvatar user={user} />}
+            {user && <UserAvatar key={profileRefresh} user={user} />}
           </div>
         </div>
 
@@ -385,22 +404,19 @@ function RolePill({ isAdmin, compact }: { isAdmin?: boolean; compact?: boolean }
 
 /** Circular avatar linking to /profile */
 function UserAvatar({ user }: { user: FirebaseUser }) {
-  const initials = user.displayName
-    ? user.displayName
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2)
-    : user.email?.[0].toUpperCase() ?? "?";
-
   return (
     <Link
       href="/profile"
       className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/25 bg-white/[0.14] text-[11px] font-bold text-white ring-1 ring-white/10 transition-all hover:scale-105 hover:bg-white/20 active:scale-95"
       title="Profile"
     >
-      {initials}
+      <ProfileAvatar
+        fullName={user.displayName}
+        email={user.email}
+        photoURL={user.photoURL}
+        size="sm"
+        className="h-full w-full border-0 bg-transparent ring-0"
+      />
     </Link>
   );
 }

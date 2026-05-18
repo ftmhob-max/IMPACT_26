@@ -4,7 +4,7 @@ import { csvQuestionRowSchema, type CsvQuestionRow } from "@/lib/validations/adm
 export interface CsvPreviewResult {
   validRows: CsvQuestionRow[];
   errors: Array<{ row: number; field: string; message: string }>;
-  duplicates: Array<{ row: number; questionText: string }>;
+  duplicates: Array<{ row: number; questionText: string; existingQuestionId: string }>;
 }
 
 const REQUIRED_COLUMNS = [
@@ -71,7 +71,7 @@ export function parseDelimitedList(value: unknown): string[] {
   return raw.split(delimiter).map((item) => item.trim()).filter(Boolean);
 }
 
-export function previewAssessmentCsv(csvText: string): CsvPreviewResult {
+export function previewAssessmentCsv(csvText: string, existingQuestionMap?: Map<string, string>): CsvPreviewResult {
   const rawRecords = parse(csvText, {
     columns: true,
     skip_empty_lines: true,
@@ -124,8 +124,20 @@ export function previewAssessmentCsv(csvText: string): CsvPreviewResult {
     }
 
     const duplicateKey = parsed.data.question_text.toLowerCase();
+
+    // Check against the bank first (when map is provided)
+    if (existingQuestionMap && existingQuestionMap.has(duplicateKey)) {
+      duplicates.push({
+        row: rowNumber,
+        questionText: parsed.data.question_text,
+        existingQuestionId: existingQuestionMap.get(duplicateKey)!,
+      });
+      return; // exclude from validRows — already in the bank
+    }
+
+    // Check intra-file duplicate
     if (seen.has(duplicateKey)) {
-      duplicates.push({ row: rowNumber, questionText: parsed.data.question_text });
+      duplicates.push({ row: rowNumber, questionText: parsed.data.question_text, existingQuestionId: "" });
     } else {
       seen.set(duplicateKey, rowNumber);
     }
