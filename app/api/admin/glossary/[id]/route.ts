@@ -36,9 +36,9 @@ export async function PUT(
       updatedAt: FieldValue.serverTimestamp(),
     });
     return NextResponse.json({ ok: true });
-  } catch (err) {
-    console.error("[admin/glossary/[id]:PUT]", err);
-    return NextResponse.json({ error: "Failed to update term" }, { status: 500 });
+  } catch (err: any) {
+    console.error("[admin/glossary/[id]:PUT] Failed to update term:", err.message);
+    return NextResponse.json({ error: "Failed to update term. Ensure Firestore is initialized." }, { status: 500 });
   }
 }
 
@@ -59,8 +59,8 @@ export async function DELETE(
     batch.delete(db.collection("glossaryTerms").doc(id));
     await batch.commit();
     return NextResponse.json({ ok: true });
-  } catch (err) {
-    console.error("[admin/glossary/[id]:DELETE]", err);
-    return NextResponse.json({ error: "Failed to delete term" }, { status: 500 });
+  } catch (err: any) {
+    console.error("[admin/glossary/[id]:DELETE] Failed to delete term:", err.message);
+    return NextResponse.json({ error: "Failed to delete term. Ensure Firestore is initialized." }, { status: 500 });
   }
 }

@@ -25,9 +25,9 @@ export async function GET(request: NextRequest) {
     const snap = await db.collection("glossaryTerms").orderBy("term").get();
     const terms = snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
     return NextResponse.json({ terms });
-  } catch (err) {
-    console.error("[admin/glossary:GET]", err);
-    return NextResponse.json({ error: "Failed to load glossary" }, { status: 500 });
+  } catch (err: any) {
+    console.warn("[admin/glossary:GET] Failed to load glossary, database might not exist:", err.message);
+    return NextResponse.json({ terms: [] });
   }
 }
 
@@ -51,8 +51,8 @@ export async function POST(request: NextRequest) {
       createdBy: auth.session.uid,
     });
     return NextResponse.json({ id }, { status: 201 });
-  } catch (err) {
-    console.error("[admin/glossary:POST]", err);
-    return NextResponse.json({ error: "Failed to create term" }, { status: 500 });
+  } catch (err: any) {
+    console.error("[admin/glossary:POST] Failed to create term:", err.message);
+    return NextResponse.json({ error: "Failed to create term. Ensure Firestore is initialized." }, { status: 500 });
   }
 }

@@ -76,15 +76,19 @@ export async function POST(request: NextRequest) {
 
   // ── Cross-check against existing Firestore terms ──────────────────────────
   const db = getAdminFirestore();
-  const existingSnap = await db.collection("glossaryTerms").get();
   const existingMap = new Map<string, { id: string; definition: string }>();
-  existingSnap.docs.forEach((doc: any) => {
-    const data = doc.data();
-    existingMap.set((data.term as string).toLowerCase().trim(), {
-      id: doc.id,
-      definition: data.definition as string,
+  try {
+    const existingSnap = await db.collection("glossaryTerms").get();
+    existingSnap.docs.forEach((doc: any) => {
+      const data = doc.data();
+      existingMap.set((data.term as string).toLowerCase().trim(), {
+        id: doc.id,
+        definition: data.definition as string,
+      });
     });
-  });
+  } catch (err: any) {
+    console.warn("Firestore collection 'glossaryTerms' could not be read (database might not exist):", err.message);
+  }
 
   const duplicates: DuplicateEntry[] = [];
   rows.forEach((row, idx) => {
