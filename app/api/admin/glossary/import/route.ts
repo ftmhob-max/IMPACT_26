@@ -37,61 +37,66 @@ export async function POST(request: NextRequest) {
   const db = getAdminFirestore();
   const now = FieldValue.serverTimestamp();
 
-  let imported = 0;
-  let updated = 0;
-  let skipped = 0;
+  try {
+    let imported = 0;
+    let updated = 0;
+    let skipped = 0;
 
-  // Firestore batch — max 500 ops; split into chunks if needed
-  const BATCH_LIMIT = 400;
-  let batch = db.batch();
-  let opsInBatch = 0;
+    // Firestore batch — max 500 ops; split into chunks if needed
+    const BATCH_LIMIT = 400;
+    let batch = db.batch();
+    let opsInBatch = 0;
 
-  async function commitIfNeeded() {
-    if (opsInBatch >= BATCH_LIMIT) {
-      await batch.commit();
-      batch = db.batch();
-      opsInBatch = 0;
+    async function commitIfNeeded() {
+      if (opsInBatch >= BATCH_LIMIT) {
+        await batch.commit();
+        batch = db.batch();
+        opsInBatch = 0;
+      }
     }
+
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      const resolution = resolutions[String(i)];
+      const existingId = existingIds[String(i)];
+
+      if (resolution === "skip") {
+        skipped++;
+        continue;
+      }
+
+      const data = {
+        term: row.term,
+        definition: row.definition,
+        fullDefinition: row.fullDefinition ?? null,
+        domain: row.domain ?? null,
+        category: row.category ?? null,
+        example: row.example ?? null,
+        relatedTerms: row.relatedTerms,
+        isPublished: row.isPublished,
+        sourceDocument: row.sourceDocument ?? null,
+      };
+
+      if (resolution === "overwrite" && existingId) {
+        const ref = db.collection("glossaryTerms").doc(existingId);
+        batch.update(ref, { ...data, updatedAt: now });
+        updated++;
+      } else {
+        // "keep_both" or no resolution (brand-new term)
+        const ref = db.collection("glossaryTerms").doc(randomUUID());
+        batch.set(ref, { ...data, createdAt: now, updatedAt: now, createdBy: auth.session.uid });
+        imported++;
+      }
+
+      opsInBatch++;
+      await commitIfNeeded();
+    }
+
+    if (opsInBatch > 0) await batch.commit();
+
+    return NextResponse.json({ imported, updated, skipped });
+  } catch (err: any) {
+    console.error("[admin/glossary/import:POST] Failed to import terms:", err.message);
+    return NextResponse.json({ error: "Failed to import terms. Ensure Firestore is initialized." }, { status: 500 });
   }
-
-  for (let i = 0; i < rows.length; i++) {
-    const row = rows[i];
-    const resolution = resolutions[String(i)];
-    const existingId = existingIds[String(i)];
-
-    if (resolution === "skip") {
-      skipped++;
-      continue;
-    }
-
-    const data = {
-      term: row.term,
-      definition: row.definition,
-      fullDefinition: row.fullDefinition ?? null,
-      domain: row.domain ?? null,
-      category: row.category ?? null,
-      example: row.example ?? null,
-      relatedTerms: row.relatedTerms,
-      isPublished: row.isPublished,
-      sourceDocument: row.sourceDocument ?? null,
-    };
-
-    if (resolution === "overwrite" && existingId) {
-      const ref = db.collection("glossaryTerms").doc(existingId);
-      batch.update(ref, { ...data, updatedAt: now });
-      updated++;
-    } else {
-      // "keep_both" or no resolution (brand-new term)
-      const ref = db.collection("glossaryTerms").doc(randomUUID());
-      batch.set(ref, { ...data, createdAt: now, updatedAt: now, createdBy: auth.session.uid });
-      imported++;
-    }
-
-    opsInBatch++;
-    await commitIfNeeded();
-  }
-
-  if (opsInBatch > 0) await batch.commit();
-
-  return NextResponse.json({ imported, updated, skipped });
 }
