@@ -686,3 +686,64 @@ query AdminCohortStats @auth(level: NO_ACCESS) {
     }
   }
 }
+
+# ─── Glossary ─────────────────────────────────────────────────────────────────
+
+# All terms (published + draft) — admin only, called server-side
+query AdminListGlossaryTerms @auth(level: NO_ACCESS) {
+  glossaryTerms(orderBy: { term: ASC }) {
+    id
+    term
+    definition
+    fullDefinition
+    domain
+    category
+    example
+    relatedTerms
+    isPublished
+    sourceDocument
+    createdBy { id fullName }
+    createdAt
+    updatedAt
+  }
+}
+
+# Only published terms — learner endpoint, called server-side
+query ListPublishedGlossaryTerms @auth(level: NO_ACCESS) {
+  glossaryTerms(where: { isPublished: { eq: true } }, orderBy: { term: ASC }) {
+    id
+    term
+    definition
+    fullDefinition
+    domain
+    category
+    example
+    relatedTerms
+    sourceDocument
+    createdAt
+    updatedAt
+  }
+}
+
+# All notes for a given user (optionally filtered by term in API layer)
+query GetGlossaryNotesForUser($userId: String!) @auth(level: NO_ACCESS) {
+  glossaryNotes(where: { user: { id: { eq: $userId } } }, orderBy: { updatedAt: DESC }) {
+    id
+    note
+    term { id }
+    createdAt
+    updatedAt
+  }
+}
+
+# Single note for a specific user + term (for upsert check)
+query GetGlossaryNoteForUserTerm($userId: String!, $termId: UUID!) @auth(level: NO_ACCESS) {
+  glossaryNotes(
+    where: { user: { id: { eq: $userId } }, term: { id: { eq: $termId } } }
+    limit: 1
+  ) {
+    id
+    note
+    updatedAt
+  }
+}

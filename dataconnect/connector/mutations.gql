@@ -499,3 +499,94 @@ mutation CreateContentSourceLink($id: UUID!, $sourceMaterialId: UUID!, $lessonId
     referenceLabel: $referenceLabel
   })
 }
+
+# ─── Glossary (admin) ─────────────────────────────────────────────────────────
+
+mutation CreateGlossaryTerm(
+  $id: UUID!,
+  $term: String!,
+  $definition: String!,
+  $fullDefinition: String,
+  $domain: String,
+  $category: String,
+  $example: String,
+  $relatedTerms: String,
+  $isPublished: Boolean!,
+  $sourceDocument: String,
+  $createdById: String,
+  $updatedAt: Date!
+) @auth(level: NO_ACCESS) {
+  glossaryTerm_insert(data: {
+    id: $id
+    term: $term
+    definition: $definition
+    fullDefinition: $fullDefinition
+    domain: $domain
+    category: $category
+    example: $example
+    relatedTerms: $relatedTerms
+    isPublished: $isPublished
+    sourceDocument: $sourceDocument
+    createdBy: { id: $createdById }
+    updatedAt: $updatedAt
+  })
+}
+
+mutation UpdateGlossaryTerm(
+  $id: UUID!,
+  $term: String,
+  $definition: String,
+  $fullDefinition: String,
+  $domain: String,
+  $category: String,
+  $example: String,
+  $relatedTerms: String,
+  $isPublished: Boolean,
+  $sourceDocument: String,
+  $updatedAt: Date!
+) @auth(level: NO_ACCESS) {
+  glossaryTerm_update(id: $id, data: {
+    term: $term
+    definition: $definition
+    fullDefinition: $fullDefinition
+    domain: $domain
+    category: $category
+    example: $example
+    relatedTerms: $relatedTerms
+    isPublished: $isPublished
+    sourceDocument: $sourceDocument
+    updatedAt: $updatedAt
+  })
+}
+
+mutation DeleteGlossaryTerm($id: UUID!) @auth(level: NO_ACCESS) {
+  glossaryTerm_delete(id: $id)
+}
+
+mutation DeleteGlossaryNotesForTerm($termId: UUID!) @auth(level: NO_ACCESS) {
+  glossaryNote_deleteMany(where: { term: { id: { eq: $termId } } })
+}
+
+# ─── Glossary notes (learner) ─────────────────────────────────────────────────
+
+mutation CreateGlossaryNote($id: UUID!, $userId: String!, $termId: UUID!, $note: String!, $updatedAt: Date!) @auth(level: NO_ACCESS) {
+  glossaryNote_insert(data: {
+    id: $id
+    user: { id: $userId }
+    term: { id: $termId }
+    note: $note
+    updatedAt: $updatedAt
+  })
+}
+
+mutation UpdateGlossaryNote($id: UUID!, $note: String!, $updatedAt: Date!) @auth(level: NO_ACCESS) {
+  glossaryNote_update(id: $id, data: {
+    note: $note
+    updatedAt: $updatedAt
+  })
+}
+
+mutation DeleteGlossaryNote($id: UUID!) @auth(level: NO_ACCESS) {
+  glossaryNote_delete(id: $id)
+}
+

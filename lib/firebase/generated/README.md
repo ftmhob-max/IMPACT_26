@@ -41,6 +41,10 @@ This README will guide you through the process of using the generated JavaScript
   - [*AdminListSourceMaterialTags*](#adminlistsourcematerialtags)
   - [*AdminListUsers*](#adminlistusers)
   - [*AdminCohortStats*](#admincohortstats)
+  - [*AdminListGlossaryTerms*](#adminlistglossaryterms)
+  - [*ListPublishedGlossaryTerms*](#listpublishedglossaryterms)
+  - [*GetGlossaryNotesForUser*](#getglossarynotesforuser)
+  - [*GetGlossaryNoteForUserTerm*](#getglossarynoteforuserterm)
 - [**Mutations**](#mutations)
   - [*CreateUser*](#createuser)
   - [*UpdateUserRole*](#updateuserrole)
@@ -101,6 +105,13 @@ This README will guide you through the process of using the generated JavaScript
   - [*DeleteFormulasForSection*](#deleteformulasforsection)
   - [*DeleteFormulaSection*](#deleteformulasection)
   - [*CreateContentSourceLink*](#createcontentsourcelink)
+  - [*CreateGlossaryTerm*](#createglossaryterm)
+  - [*UpdateGlossaryTerm*](#updateglossaryterm)
+  - [*DeleteGlossaryTerm*](#deleteglossaryterm)
+  - [*DeleteGlossaryNotesForTerm*](#deleteglossarynotesforterm)
+  - [*CreateGlossaryNote*](#createglossarynote)
+  - [*UpdateGlossaryNote*](#updateglossarynote)
+  - [*DeleteGlossaryNote*](#deleteglossarynote)
 
 # Accessing the connector
 A connector is a collection of Queries and Mutations. One SDK is generated for each connector - this SDK is generated for the connector `impact26-connector`. You can find more information about connectors in the [Data Connect documentation](https://firebase.google.com/docs/data-connect#how-does).
@@ -4154,6 +4165,450 @@ console.log(data.quizAttempts);
 executeQuery(ref).then((response) => {
   const data = response.data;
   console.log(data.quizAttempts);
+});
+```
+
+## AdminListGlossaryTerms
+You can execute the `AdminListGlossaryTerms` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+adminListGlossaryTerms(options?: ExecuteQueryOptions): QueryPromise<AdminListGlossaryTermsData, undefined>;
+
+interface AdminListGlossaryTermsRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (): QueryRef<AdminListGlossaryTermsData, undefined>;
+}
+export const adminListGlossaryTermsRef: AdminListGlossaryTermsRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `QueryRef` function.
+```typescript
+adminListGlossaryTerms(dc: DataConnect, options?: ExecuteQueryOptions): QueryPromise<AdminListGlossaryTermsData, undefined>;
+
+interface AdminListGlossaryTermsRef {
+  ...
+  (dc: DataConnect): QueryRef<AdminListGlossaryTermsData, undefined>;
+}
+export const adminListGlossaryTermsRef: AdminListGlossaryTermsRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the adminListGlossaryTermsRef:
+```typescript
+const name = adminListGlossaryTermsRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `AdminListGlossaryTerms` query has no variables.
+### Return Type
+Recall that executing the `AdminListGlossaryTerms` query returns a `QueryPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `AdminListGlossaryTermsData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface AdminListGlossaryTermsData {
+  glossaryTerms: ({
+    id: UUIDString;
+    term: string;
+    definition: string;
+    fullDefinition?: string | null;
+    domain?: string | null;
+    category?: string | null;
+    example?: string | null;
+    relatedTerms?: string | null;
+    isPublished: boolean;
+    sourceDocument?: string | null;
+    createdBy?: {
+      id: string;
+      fullName?: string | null;
+    } & User_Key;
+      createdAt: DateString;
+      updatedAt: DateString;
+  } & GlossaryTerm_Key)[];
+}
+```
+### Using `AdminListGlossaryTerms`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, adminListGlossaryTerms } from '@impact26/dataconnect-sdk';
+
+
+// Call the `adminListGlossaryTerms()` function to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await adminListGlossaryTerms();
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await adminListGlossaryTerms(dataConnect);
+
+console.log(data.glossaryTerms);
+
+// Or, you can use the `Promise` API.
+adminListGlossaryTerms().then((response) => {
+  const data = response.data;
+  console.log(data.glossaryTerms);
+});
+```
+
+### Using `AdminListGlossaryTerms`'s `QueryRef` function
+
+```typescript
+import { getDataConnect, executeQuery } from 'firebase/data-connect';
+import { connectorConfig, adminListGlossaryTermsRef } from '@impact26/dataconnect-sdk';
+
+
+// Call the `adminListGlossaryTermsRef()` function to get a reference to the query.
+const ref = adminListGlossaryTermsRef();
+
+// You can also pass in a `DataConnect` instance to the `QueryRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = adminListGlossaryTermsRef(dataConnect);
+
+// Call `executeQuery()` on the reference to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeQuery(ref);
+
+console.log(data.glossaryTerms);
+
+// Or, you can use the `Promise` API.
+executeQuery(ref).then((response) => {
+  const data = response.data;
+  console.log(data.glossaryTerms);
+});
+```
+
+## ListPublishedGlossaryTerms
+You can execute the `ListPublishedGlossaryTerms` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+listPublishedGlossaryTerms(options?: ExecuteQueryOptions): QueryPromise<ListPublishedGlossaryTermsData, undefined>;
+
+interface ListPublishedGlossaryTermsRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (): QueryRef<ListPublishedGlossaryTermsData, undefined>;
+}
+export const listPublishedGlossaryTermsRef: ListPublishedGlossaryTermsRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `QueryRef` function.
+```typescript
+listPublishedGlossaryTerms(dc: DataConnect, options?: ExecuteQueryOptions): QueryPromise<ListPublishedGlossaryTermsData, undefined>;
+
+interface ListPublishedGlossaryTermsRef {
+  ...
+  (dc: DataConnect): QueryRef<ListPublishedGlossaryTermsData, undefined>;
+}
+export const listPublishedGlossaryTermsRef: ListPublishedGlossaryTermsRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the listPublishedGlossaryTermsRef:
+```typescript
+const name = listPublishedGlossaryTermsRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `ListPublishedGlossaryTerms` query has no variables.
+### Return Type
+Recall that executing the `ListPublishedGlossaryTerms` query returns a `QueryPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `ListPublishedGlossaryTermsData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface ListPublishedGlossaryTermsData {
+  glossaryTerms: ({
+    id: UUIDString;
+    term: string;
+    definition: string;
+    fullDefinition?: string | null;
+    domain?: string | null;
+    category?: string | null;
+    example?: string | null;
+    relatedTerms?: string | null;
+    sourceDocument?: string | null;
+    createdAt: DateString;
+    updatedAt: DateString;
+  } & GlossaryTerm_Key)[];
+}
+```
+### Using `ListPublishedGlossaryTerms`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, listPublishedGlossaryTerms } from '@impact26/dataconnect-sdk';
+
+
+// Call the `listPublishedGlossaryTerms()` function to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await listPublishedGlossaryTerms();
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await listPublishedGlossaryTerms(dataConnect);
+
+console.log(data.glossaryTerms);
+
+// Or, you can use the `Promise` API.
+listPublishedGlossaryTerms().then((response) => {
+  const data = response.data;
+  console.log(data.glossaryTerms);
+});
+```
+
+### Using `ListPublishedGlossaryTerms`'s `QueryRef` function
+
+```typescript
+import { getDataConnect, executeQuery } from 'firebase/data-connect';
+import { connectorConfig, listPublishedGlossaryTermsRef } from '@impact26/dataconnect-sdk';
+
+
+// Call the `listPublishedGlossaryTermsRef()` function to get a reference to the query.
+const ref = listPublishedGlossaryTermsRef();
+
+// You can also pass in a `DataConnect` instance to the `QueryRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = listPublishedGlossaryTermsRef(dataConnect);
+
+// Call `executeQuery()` on the reference to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeQuery(ref);
+
+console.log(data.glossaryTerms);
+
+// Or, you can use the `Promise` API.
+executeQuery(ref).then((response) => {
+  const data = response.data;
+  console.log(data.glossaryTerms);
+});
+```
+
+## GetGlossaryNotesForUser
+You can execute the `GetGlossaryNotesForUser` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+getGlossaryNotesForUser(vars: GetGlossaryNotesForUserVariables, options?: ExecuteQueryOptions): QueryPromise<GetGlossaryNotesForUserData, GetGlossaryNotesForUserVariables>;
+
+interface GetGlossaryNotesForUserRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetGlossaryNotesForUserVariables): QueryRef<GetGlossaryNotesForUserData, GetGlossaryNotesForUserVariables>;
+}
+export const getGlossaryNotesForUserRef: GetGlossaryNotesForUserRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `QueryRef` function.
+```typescript
+getGlossaryNotesForUser(dc: DataConnect, vars: GetGlossaryNotesForUserVariables, options?: ExecuteQueryOptions): QueryPromise<GetGlossaryNotesForUserData, GetGlossaryNotesForUserVariables>;
+
+interface GetGlossaryNotesForUserRef {
+  ...
+  (dc: DataConnect, vars: GetGlossaryNotesForUserVariables): QueryRef<GetGlossaryNotesForUserData, GetGlossaryNotesForUserVariables>;
+}
+export const getGlossaryNotesForUserRef: GetGlossaryNotesForUserRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the getGlossaryNotesForUserRef:
+```typescript
+const name = getGlossaryNotesForUserRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `GetGlossaryNotesForUser` query requires an argument of type `GetGlossaryNotesForUserVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface GetGlossaryNotesForUserVariables {
+  userId: string;
+}
+```
+### Return Type
+Recall that executing the `GetGlossaryNotesForUser` query returns a `QueryPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `GetGlossaryNotesForUserData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface GetGlossaryNotesForUserData {
+  glossaryNotes: ({
+    id: UUIDString;
+    note: string;
+    term: {
+      id: UUIDString;
+    } & GlossaryTerm_Key;
+      createdAt: DateString;
+      updatedAt: DateString;
+  } & GlossaryNote_Key)[];
+}
+```
+### Using `GetGlossaryNotesForUser`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, getGlossaryNotesForUser, GetGlossaryNotesForUserVariables } from '@impact26/dataconnect-sdk';
+
+// The `GetGlossaryNotesForUser` query requires an argument of type `GetGlossaryNotesForUserVariables`:
+const getGlossaryNotesForUserVars: GetGlossaryNotesForUserVariables = {
+  userId: ..., 
+};
+
+// Call the `getGlossaryNotesForUser()` function to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await getGlossaryNotesForUser(getGlossaryNotesForUserVars);
+// Variables can be defined inline as well.
+const { data } = await getGlossaryNotesForUser({ userId: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await getGlossaryNotesForUser(dataConnect, getGlossaryNotesForUserVars);
+
+console.log(data.glossaryNotes);
+
+// Or, you can use the `Promise` API.
+getGlossaryNotesForUser(getGlossaryNotesForUserVars).then((response) => {
+  const data = response.data;
+  console.log(data.glossaryNotes);
+});
+```
+
+### Using `GetGlossaryNotesForUser`'s `QueryRef` function
+
+```typescript
+import { getDataConnect, executeQuery } from 'firebase/data-connect';
+import { connectorConfig, getGlossaryNotesForUserRef, GetGlossaryNotesForUserVariables } from '@impact26/dataconnect-sdk';
+
+// The `GetGlossaryNotesForUser` query requires an argument of type `GetGlossaryNotesForUserVariables`:
+const getGlossaryNotesForUserVars: GetGlossaryNotesForUserVariables = {
+  userId: ..., 
+};
+
+// Call the `getGlossaryNotesForUserRef()` function to get a reference to the query.
+const ref = getGlossaryNotesForUserRef(getGlossaryNotesForUserVars);
+// Variables can be defined inline as well.
+const ref = getGlossaryNotesForUserRef({ userId: ..., });
+
+// You can also pass in a `DataConnect` instance to the `QueryRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = getGlossaryNotesForUserRef(dataConnect, getGlossaryNotesForUserVars);
+
+// Call `executeQuery()` on the reference to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeQuery(ref);
+
+console.log(data.glossaryNotes);
+
+// Or, you can use the `Promise` API.
+executeQuery(ref).then((response) => {
+  const data = response.data;
+  console.log(data.glossaryNotes);
+});
+```
+
+## GetGlossaryNoteForUserTerm
+You can execute the `GetGlossaryNoteForUserTerm` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+getGlossaryNoteForUserTerm(vars: GetGlossaryNoteForUserTermVariables, options?: ExecuteQueryOptions): QueryPromise<GetGlossaryNoteForUserTermData, GetGlossaryNoteForUserTermVariables>;
+
+interface GetGlossaryNoteForUserTermRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetGlossaryNoteForUserTermVariables): QueryRef<GetGlossaryNoteForUserTermData, GetGlossaryNoteForUserTermVariables>;
+}
+export const getGlossaryNoteForUserTermRef: GetGlossaryNoteForUserTermRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `QueryRef` function.
+```typescript
+getGlossaryNoteForUserTerm(dc: DataConnect, vars: GetGlossaryNoteForUserTermVariables, options?: ExecuteQueryOptions): QueryPromise<GetGlossaryNoteForUserTermData, GetGlossaryNoteForUserTermVariables>;
+
+interface GetGlossaryNoteForUserTermRef {
+  ...
+  (dc: DataConnect, vars: GetGlossaryNoteForUserTermVariables): QueryRef<GetGlossaryNoteForUserTermData, GetGlossaryNoteForUserTermVariables>;
+}
+export const getGlossaryNoteForUserTermRef: GetGlossaryNoteForUserTermRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the getGlossaryNoteForUserTermRef:
+```typescript
+const name = getGlossaryNoteForUserTermRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `GetGlossaryNoteForUserTerm` query requires an argument of type `GetGlossaryNoteForUserTermVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface GetGlossaryNoteForUserTermVariables {
+  userId: string;
+  termId: UUIDString;
+}
+```
+### Return Type
+Recall that executing the `GetGlossaryNoteForUserTerm` query returns a `QueryPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `GetGlossaryNoteForUserTermData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface GetGlossaryNoteForUserTermData {
+  glossaryNotes: ({
+    id: UUIDString;
+    note: string;
+    updatedAt: DateString;
+  } & GlossaryNote_Key)[];
+}
+```
+### Using `GetGlossaryNoteForUserTerm`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, getGlossaryNoteForUserTerm, GetGlossaryNoteForUserTermVariables } from '@impact26/dataconnect-sdk';
+
+// The `GetGlossaryNoteForUserTerm` query requires an argument of type `GetGlossaryNoteForUserTermVariables`:
+const getGlossaryNoteForUserTermVars: GetGlossaryNoteForUserTermVariables = {
+  userId: ..., 
+  termId: ..., 
+};
+
+// Call the `getGlossaryNoteForUserTerm()` function to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await getGlossaryNoteForUserTerm(getGlossaryNoteForUserTermVars);
+// Variables can be defined inline as well.
+const { data } = await getGlossaryNoteForUserTerm({ userId: ..., termId: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await getGlossaryNoteForUserTerm(dataConnect, getGlossaryNoteForUserTermVars);
+
+console.log(data.glossaryNotes);
+
+// Or, you can use the `Promise` API.
+getGlossaryNoteForUserTerm(getGlossaryNoteForUserTermVars).then((response) => {
+  const data = response.data;
+  console.log(data.glossaryNotes);
+});
+```
+
+### Using `GetGlossaryNoteForUserTerm`'s `QueryRef` function
+
+```typescript
+import { getDataConnect, executeQuery } from 'firebase/data-connect';
+import { connectorConfig, getGlossaryNoteForUserTermRef, GetGlossaryNoteForUserTermVariables } from '@impact26/dataconnect-sdk';
+
+// The `GetGlossaryNoteForUserTerm` query requires an argument of type `GetGlossaryNoteForUserTermVariables`:
+const getGlossaryNoteForUserTermVars: GetGlossaryNoteForUserTermVariables = {
+  userId: ..., 
+  termId: ..., 
+};
+
+// Call the `getGlossaryNoteForUserTermRef()` function to get a reference to the query.
+const ref = getGlossaryNoteForUserTermRef(getGlossaryNoteForUserTermVars);
+// Variables can be defined inline as well.
+const ref = getGlossaryNoteForUserTermRef({ userId: ..., termId: ..., });
+
+// You can also pass in a `DataConnect` instance to the `QueryRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = getGlossaryNoteForUserTermRef(dataConnect, getGlossaryNoteForUserTermVars);
+
+// Call `executeQuery()` on the reference to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeQuery(ref);
+
+console.log(data.glossaryNotes);
+
+// Or, you can use the `Promise` API.
+executeQuery(ref).then((response) => {
+  const data = response.data;
+  console.log(data.glossaryNotes);
 });
 ```
 
@@ -11137,6 +11592,850 @@ console.log(data.contentSourceLink_insert);
 executeMutation(ref).then((response) => {
   const data = response.data;
   console.log(data.contentSourceLink_insert);
+});
+```
+
+## CreateGlossaryTerm
+You can execute the `CreateGlossaryTerm` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+createGlossaryTerm(vars: CreateGlossaryTermVariables): MutationPromise<CreateGlossaryTermData, CreateGlossaryTermVariables>;
+
+interface CreateGlossaryTermRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateGlossaryTermVariables): MutationRef<CreateGlossaryTermData, CreateGlossaryTermVariables>;
+}
+export const createGlossaryTermRef: CreateGlossaryTermRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+createGlossaryTerm(dc: DataConnect, vars: CreateGlossaryTermVariables): MutationPromise<CreateGlossaryTermData, CreateGlossaryTermVariables>;
+
+interface CreateGlossaryTermRef {
+  ...
+  (dc: DataConnect, vars: CreateGlossaryTermVariables): MutationRef<CreateGlossaryTermData, CreateGlossaryTermVariables>;
+}
+export const createGlossaryTermRef: CreateGlossaryTermRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the createGlossaryTermRef:
+```typescript
+const name = createGlossaryTermRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `CreateGlossaryTerm` mutation requires an argument of type `CreateGlossaryTermVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface CreateGlossaryTermVariables {
+  id: UUIDString;
+  term: string;
+  definition: string;
+  fullDefinition?: string | null;
+  domain?: string | null;
+  category?: string | null;
+  example?: string | null;
+  relatedTerms?: string | null;
+  isPublished: boolean;
+  sourceDocument?: string | null;
+  createdById?: string | null;
+  updatedAt: DateString;
+}
+```
+### Return Type
+Recall that executing the `CreateGlossaryTerm` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `CreateGlossaryTermData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface CreateGlossaryTermData {
+  glossaryTerm_insert: GlossaryTerm_Key;
+}
+```
+### Using `CreateGlossaryTerm`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, createGlossaryTerm, CreateGlossaryTermVariables } from '@impact26/dataconnect-sdk';
+
+// The `CreateGlossaryTerm` mutation requires an argument of type `CreateGlossaryTermVariables`:
+const createGlossaryTermVars: CreateGlossaryTermVariables = {
+  id: ..., 
+  term: ..., 
+  definition: ..., 
+  fullDefinition: ..., // optional
+  domain: ..., // optional
+  category: ..., // optional
+  example: ..., // optional
+  relatedTerms: ..., // optional
+  isPublished: ..., 
+  sourceDocument: ..., // optional
+  createdById: ..., // optional
+  updatedAt: ..., 
+};
+
+// Call the `createGlossaryTerm()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await createGlossaryTerm(createGlossaryTermVars);
+// Variables can be defined inline as well.
+const { data } = await createGlossaryTerm({ id: ..., term: ..., definition: ..., fullDefinition: ..., domain: ..., category: ..., example: ..., relatedTerms: ..., isPublished: ..., sourceDocument: ..., createdById: ..., updatedAt: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await createGlossaryTerm(dataConnect, createGlossaryTermVars);
+
+console.log(data.glossaryTerm_insert);
+
+// Or, you can use the `Promise` API.
+createGlossaryTerm(createGlossaryTermVars).then((response) => {
+  const data = response.data;
+  console.log(data.glossaryTerm_insert);
+});
+```
+
+### Using `CreateGlossaryTerm`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, createGlossaryTermRef, CreateGlossaryTermVariables } from '@impact26/dataconnect-sdk';
+
+// The `CreateGlossaryTerm` mutation requires an argument of type `CreateGlossaryTermVariables`:
+const createGlossaryTermVars: CreateGlossaryTermVariables = {
+  id: ..., 
+  term: ..., 
+  definition: ..., 
+  fullDefinition: ..., // optional
+  domain: ..., // optional
+  category: ..., // optional
+  example: ..., // optional
+  relatedTerms: ..., // optional
+  isPublished: ..., 
+  sourceDocument: ..., // optional
+  createdById: ..., // optional
+  updatedAt: ..., 
+};
+
+// Call the `createGlossaryTermRef()` function to get a reference to the mutation.
+const ref = createGlossaryTermRef(createGlossaryTermVars);
+// Variables can be defined inline as well.
+const ref = createGlossaryTermRef({ id: ..., term: ..., definition: ..., fullDefinition: ..., domain: ..., category: ..., example: ..., relatedTerms: ..., isPublished: ..., sourceDocument: ..., createdById: ..., updatedAt: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = createGlossaryTermRef(dataConnect, createGlossaryTermVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.glossaryTerm_insert);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.glossaryTerm_insert);
+});
+```
+
+## UpdateGlossaryTerm
+You can execute the `UpdateGlossaryTerm` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+updateGlossaryTerm(vars: UpdateGlossaryTermVariables): MutationPromise<UpdateGlossaryTermData, UpdateGlossaryTermVariables>;
+
+interface UpdateGlossaryTermRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateGlossaryTermVariables): MutationRef<UpdateGlossaryTermData, UpdateGlossaryTermVariables>;
+}
+export const updateGlossaryTermRef: UpdateGlossaryTermRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+updateGlossaryTerm(dc: DataConnect, vars: UpdateGlossaryTermVariables): MutationPromise<UpdateGlossaryTermData, UpdateGlossaryTermVariables>;
+
+interface UpdateGlossaryTermRef {
+  ...
+  (dc: DataConnect, vars: UpdateGlossaryTermVariables): MutationRef<UpdateGlossaryTermData, UpdateGlossaryTermVariables>;
+}
+export const updateGlossaryTermRef: UpdateGlossaryTermRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the updateGlossaryTermRef:
+```typescript
+const name = updateGlossaryTermRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `UpdateGlossaryTerm` mutation requires an argument of type `UpdateGlossaryTermVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface UpdateGlossaryTermVariables {
+  id: UUIDString;
+  term?: string | null;
+  definition?: string | null;
+  fullDefinition?: string | null;
+  domain?: string | null;
+  category?: string | null;
+  example?: string | null;
+  relatedTerms?: string | null;
+  isPublished?: boolean | null;
+  sourceDocument?: string | null;
+  updatedAt: DateString;
+}
+```
+### Return Type
+Recall that executing the `UpdateGlossaryTerm` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `UpdateGlossaryTermData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface UpdateGlossaryTermData {
+  glossaryTerm_update?: GlossaryTerm_Key | null;
+}
+```
+### Using `UpdateGlossaryTerm`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, updateGlossaryTerm, UpdateGlossaryTermVariables } from '@impact26/dataconnect-sdk';
+
+// The `UpdateGlossaryTerm` mutation requires an argument of type `UpdateGlossaryTermVariables`:
+const updateGlossaryTermVars: UpdateGlossaryTermVariables = {
+  id: ..., 
+  term: ..., // optional
+  definition: ..., // optional
+  fullDefinition: ..., // optional
+  domain: ..., // optional
+  category: ..., // optional
+  example: ..., // optional
+  relatedTerms: ..., // optional
+  isPublished: ..., // optional
+  sourceDocument: ..., // optional
+  updatedAt: ..., 
+};
+
+// Call the `updateGlossaryTerm()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await updateGlossaryTerm(updateGlossaryTermVars);
+// Variables can be defined inline as well.
+const { data } = await updateGlossaryTerm({ id: ..., term: ..., definition: ..., fullDefinition: ..., domain: ..., category: ..., example: ..., relatedTerms: ..., isPublished: ..., sourceDocument: ..., updatedAt: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await updateGlossaryTerm(dataConnect, updateGlossaryTermVars);
+
+console.log(data.glossaryTerm_update);
+
+// Or, you can use the `Promise` API.
+updateGlossaryTerm(updateGlossaryTermVars).then((response) => {
+  const data = response.data;
+  console.log(data.glossaryTerm_update);
+});
+```
+
+### Using `UpdateGlossaryTerm`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, updateGlossaryTermRef, UpdateGlossaryTermVariables } from '@impact26/dataconnect-sdk';
+
+// The `UpdateGlossaryTerm` mutation requires an argument of type `UpdateGlossaryTermVariables`:
+const updateGlossaryTermVars: UpdateGlossaryTermVariables = {
+  id: ..., 
+  term: ..., // optional
+  definition: ..., // optional
+  fullDefinition: ..., // optional
+  domain: ..., // optional
+  category: ..., // optional
+  example: ..., // optional
+  relatedTerms: ..., // optional
+  isPublished: ..., // optional
+  sourceDocument: ..., // optional
+  updatedAt: ..., 
+};
+
+// Call the `updateGlossaryTermRef()` function to get a reference to the mutation.
+const ref = updateGlossaryTermRef(updateGlossaryTermVars);
+// Variables can be defined inline as well.
+const ref = updateGlossaryTermRef({ id: ..., term: ..., definition: ..., fullDefinition: ..., domain: ..., category: ..., example: ..., relatedTerms: ..., isPublished: ..., sourceDocument: ..., updatedAt: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = updateGlossaryTermRef(dataConnect, updateGlossaryTermVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.glossaryTerm_update);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.glossaryTerm_update);
+});
+```
+
+## DeleteGlossaryTerm
+You can execute the `DeleteGlossaryTerm` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+deleteGlossaryTerm(vars: DeleteGlossaryTermVariables): MutationPromise<DeleteGlossaryTermData, DeleteGlossaryTermVariables>;
+
+interface DeleteGlossaryTermRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteGlossaryTermVariables): MutationRef<DeleteGlossaryTermData, DeleteGlossaryTermVariables>;
+}
+export const deleteGlossaryTermRef: DeleteGlossaryTermRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+deleteGlossaryTerm(dc: DataConnect, vars: DeleteGlossaryTermVariables): MutationPromise<DeleteGlossaryTermData, DeleteGlossaryTermVariables>;
+
+interface DeleteGlossaryTermRef {
+  ...
+  (dc: DataConnect, vars: DeleteGlossaryTermVariables): MutationRef<DeleteGlossaryTermData, DeleteGlossaryTermVariables>;
+}
+export const deleteGlossaryTermRef: DeleteGlossaryTermRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the deleteGlossaryTermRef:
+```typescript
+const name = deleteGlossaryTermRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `DeleteGlossaryTerm` mutation requires an argument of type `DeleteGlossaryTermVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface DeleteGlossaryTermVariables {
+  id: UUIDString;
+}
+```
+### Return Type
+Recall that executing the `DeleteGlossaryTerm` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `DeleteGlossaryTermData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface DeleteGlossaryTermData {
+  glossaryTerm_delete?: GlossaryTerm_Key | null;
+}
+```
+### Using `DeleteGlossaryTerm`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, deleteGlossaryTerm, DeleteGlossaryTermVariables } from '@impact26/dataconnect-sdk';
+
+// The `DeleteGlossaryTerm` mutation requires an argument of type `DeleteGlossaryTermVariables`:
+const deleteGlossaryTermVars: DeleteGlossaryTermVariables = {
+  id: ..., 
+};
+
+// Call the `deleteGlossaryTerm()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await deleteGlossaryTerm(deleteGlossaryTermVars);
+// Variables can be defined inline as well.
+const { data } = await deleteGlossaryTerm({ id: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await deleteGlossaryTerm(dataConnect, deleteGlossaryTermVars);
+
+console.log(data.glossaryTerm_delete);
+
+// Or, you can use the `Promise` API.
+deleteGlossaryTerm(deleteGlossaryTermVars).then((response) => {
+  const data = response.data;
+  console.log(data.glossaryTerm_delete);
+});
+```
+
+### Using `DeleteGlossaryTerm`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, deleteGlossaryTermRef, DeleteGlossaryTermVariables } from '@impact26/dataconnect-sdk';
+
+// The `DeleteGlossaryTerm` mutation requires an argument of type `DeleteGlossaryTermVariables`:
+const deleteGlossaryTermVars: DeleteGlossaryTermVariables = {
+  id: ..., 
+};
+
+// Call the `deleteGlossaryTermRef()` function to get a reference to the mutation.
+const ref = deleteGlossaryTermRef(deleteGlossaryTermVars);
+// Variables can be defined inline as well.
+const ref = deleteGlossaryTermRef({ id: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = deleteGlossaryTermRef(dataConnect, deleteGlossaryTermVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.glossaryTerm_delete);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.glossaryTerm_delete);
+});
+```
+
+## DeleteGlossaryNotesForTerm
+You can execute the `DeleteGlossaryNotesForTerm` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+deleteGlossaryNotesForTerm(vars: DeleteGlossaryNotesForTermVariables): MutationPromise<DeleteGlossaryNotesForTermData, DeleteGlossaryNotesForTermVariables>;
+
+interface DeleteGlossaryNotesForTermRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteGlossaryNotesForTermVariables): MutationRef<DeleteGlossaryNotesForTermData, DeleteGlossaryNotesForTermVariables>;
+}
+export const deleteGlossaryNotesForTermRef: DeleteGlossaryNotesForTermRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+deleteGlossaryNotesForTerm(dc: DataConnect, vars: DeleteGlossaryNotesForTermVariables): MutationPromise<DeleteGlossaryNotesForTermData, DeleteGlossaryNotesForTermVariables>;
+
+interface DeleteGlossaryNotesForTermRef {
+  ...
+  (dc: DataConnect, vars: DeleteGlossaryNotesForTermVariables): MutationRef<DeleteGlossaryNotesForTermData, DeleteGlossaryNotesForTermVariables>;
+}
+export const deleteGlossaryNotesForTermRef: DeleteGlossaryNotesForTermRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the deleteGlossaryNotesForTermRef:
+```typescript
+const name = deleteGlossaryNotesForTermRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `DeleteGlossaryNotesForTerm` mutation requires an argument of type `DeleteGlossaryNotesForTermVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface DeleteGlossaryNotesForTermVariables {
+  termId: UUIDString;
+}
+```
+### Return Type
+Recall that executing the `DeleteGlossaryNotesForTerm` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `DeleteGlossaryNotesForTermData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface DeleteGlossaryNotesForTermData {
+  glossaryNote_deleteMany: number;
+}
+```
+### Using `DeleteGlossaryNotesForTerm`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, deleteGlossaryNotesForTerm, DeleteGlossaryNotesForTermVariables } from '@impact26/dataconnect-sdk';
+
+// The `DeleteGlossaryNotesForTerm` mutation requires an argument of type `DeleteGlossaryNotesForTermVariables`:
+const deleteGlossaryNotesForTermVars: DeleteGlossaryNotesForTermVariables = {
+  termId: ..., 
+};
+
+// Call the `deleteGlossaryNotesForTerm()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await deleteGlossaryNotesForTerm(deleteGlossaryNotesForTermVars);
+// Variables can be defined inline as well.
+const { data } = await deleteGlossaryNotesForTerm({ termId: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await deleteGlossaryNotesForTerm(dataConnect, deleteGlossaryNotesForTermVars);
+
+console.log(data.glossaryNote_deleteMany);
+
+// Or, you can use the `Promise` API.
+deleteGlossaryNotesForTerm(deleteGlossaryNotesForTermVars).then((response) => {
+  const data = response.data;
+  console.log(data.glossaryNote_deleteMany);
+});
+```
+
+### Using `DeleteGlossaryNotesForTerm`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, deleteGlossaryNotesForTermRef, DeleteGlossaryNotesForTermVariables } from '@impact26/dataconnect-sdk';
+
+// The `DeleteGlossaryNotesForTerm` mutation requires an argument of type `DeleteGlossaryNotesForTermVariables`:
+const deleteGlossaryNotesForTermVars: DeleteGlossaryNotesForTermVariables = {
+  termId: ..., 
+};
+
+// Call the `deleteGlossaryNotesForTermRef()` function to get a reference to the mutation.
+const ref = deleteGlossaryNotesForTermRef(deleteGlossaryNotesForTermVars);
+// Variables can be defined inline as well.
+const ref = deleteGlossaryNotesForTermRef({ termId: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = deleteGlossaryNotesForTermRef(dataConnect, deleteGlossaryNotesForTermVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.glossaryNote_deleteMany);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.glossaryNote_deleteMany);
+});
+```
+
+## CreateGlossaryNote
+You can execute the `CreateGlossaryNote` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+createGlossaryNote(vars: CreateGlossaryNoteVariables): MutationPromise<CreateGlossaryNoteData, CreateGlossaryNoteVariables>;
+
+interface CreateGlossaryNoteRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateGlossaryNoteVariables): MutationRef<CreateGlossaryNoteData, CreateGlossaryNoteVariables>;
+}
+export const createGlossaryNoteRef: CreateGlossaryNoteRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+createGlossaryNote(dc: DataConnect, vars: CreateGlossaryNoteVariables): MutationPromise<CreateGlossaryNoteData, CreateGlossaryNoteVariables>;
+
+interface CreateGlossaryNoteRef {
+  ...
+  (dc: DataConnect, vars: CreateGlossaryNoteVariables): MutationRef<CreateGlossaryNoteData, CreateGlossaryNoteVariables>;
+}
+export const createGlossaryNoteRef: CreateGlossaryNoteRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the createGlossaryNoteRef:
+```typescript
+const name = createGlossaryNoteRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `CreateGlossaryNote` mutation requires an argument of type `CreateGlossaryNoteVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface CreateGlossaryNoteVariables {
+  id: UUIDString;
+  userId: string;
+  termId: UUIDString;
+  note: string;
+  updatedAt: DateString;
+}
+```
+### Return Type
+Recall that executing the `CreateGlossaryNote` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `CreateGlossaryNoteData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface CreateGlossaryNoteData {
+  glossaryNote_insert: GlossaryNote_Key;
+}
+```
+### Using `CreateGlossaryNote`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, createGlossaryNote, CreateGlossaryNoteVariables } from '@impact26/dataconnect-sdk';
+
+// The `CreateGlossaryNote` mutation requires an argument of type `CreateGlossaryNoteVariables`:
+const createGlossaryNoteVars: CreateGlossaryNoteVariables = {
+  id: ..., 
+  userId: ..., 
+  termId: ..., 
+  note: ..., 
+  updatedAt: ..., 
+};
+
+// Call the `createGlossaryNote()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await createGlossaryNote(createGlossaryNoteVars);
+// Variables can be defined inline as well.
+const { data } = await createGlossaryNote({ id: ..., userId: ..., termId: ..., note: ..., updatedAt: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await createGlossaryNote(dataConnect, createGlossaryNoteVars);
+
+console.log(data.glossaryNote_insert);
+
+// Or, you can use the `Promise` API.
+createGlossaryNote(createGlossaryNoteVars).then((response) => {
+  const data = response.data;
+  console.log(data.glossaryNote_insert);
+});
+```
+
+### Using `CreateGlossaryNote`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, createGlossaryNoteRef, CreateGlossaryNoteVariables } from '@impact26/dataconnect-sdk';
+
+// The `CreateGlossaryNote` mutation requires an argument of type `CreateGlossaryNoteVariables`:
+const createGlossaryNoteVars: CreateGlossaryNoteVariables = {
+  id: ..., 
+  userId: ..., 
+  termId: ..., 
+  note: ..., 
+  updatedAt: ..., 
+};
+
+// Call the `createGlossaryNoteRef()` function to get a reference to the mutation.
+const ref = createGlossaryNoteRef(createGlossaryNoteVars);
+// Variables can be defined inline as well.
+const ref = createGlossaryNoteRef({ id: ..., userId: ..., termId: ..., note: ..., updatedAt: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = createGlossaryNoteRef(dataConnect, createGlossaryNoteVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.glossaryNote_insert);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.glossaryNote_insert);
+});
+```
+
+## UpdateGlossaryNote
+You can execute the `UpdateGlossaryNote` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+updateGlossaryNote(vars: UpdateGlossaryNoteVariables): MutationPromise<UpdateGlossaryNoteData, UpdateGlossaryNoteVariables>;
+
+interface UpdateGlossaryNoteRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateGlossaryNoteVariables): MutationRef<UpdateGlossaryNoteData, UpdateGlossaryNoteVariables>;
+}
+export const updateGlossaryNoteRef: UpdateGlossaryNoteRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+updateGlossaryNote(dc: DataConnect, vars: UpdateGlossaryNoteVariables): MutationPromise<UpdateGlossaryNoteData, UpdateGlossaryNoteVariables>;
+
+interface UpdateGlossaryNoteRef {
+  ...
+  (dc: DataConnect, vars: UpdateGlossaryNoteVariables): MutationRef<UpdateGlossaryNoteData, UpdateGlossaryNoteVariables>;
+}
+export const updateGlossaryNoteRef: UpdateGlossaryNoteRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the updateGlossaryNoteRef:
+```typescript
+const name = updateGlossaryNoteRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `UpdateGlossaryNote` mutation requires an argument of type `UpdateGlossaryNoteVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface UpdateGlossaryNoteVariables {
+  id: UUIDString;
+  note: string;
+  updatedAt: DateString;
+}
+```
+### Return Type
+Recall that executing the `UpdateGlossaryNote` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `UpdateGlossaryNoteData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface UpdateGlossaryNoteData {
+  glossaryNote_update?: GlossaryNote_Key | null;
+}
+```
+### Using `UpdateGlossaryNote`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, updateGlossaryNote, UpdateGlossaryNoteVariables } from '@impact26/dataconnect-sdk';
+
+// The `UpdateGlossaryNote` mutation requires an argument of type `UpdateGlossaryNoteVariables`:
+const updateGlossaryNoteVars: UpdateGlossaryNoteVariables = {
+  id: ..., 
+  note: ..., 
+  updatedAt: ..., 
+};
+
+// Call the `updateGlossaryNote()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await updateGlossaryNote(updateGlossaryNoteVars);
+// Variables can be defined inline as well.
+const { data } = await updateGlossaryNote({ id: ..., note: ..., updatedAt: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await updateGlossaryNote(dataConnect, updateGlossaryNoteVars);
+
+console.log(data.glossaryNote_update);
+
+// Or, you can use the `Promise` API.
+updateGlossaryNote(updateGlossaryNoteVars).then((response) => {
+  const data = response.data;
+  console.log(data.glossaryNote_update);
+});
+```
+
+### Using `UpdateGlossaryNote`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, updateGlossaryNoteRef, UpdateGlossaryNoteVariables } from '@impact26/dataconnect-sdk';
+
+// The `UpdateGlossaryNote` mutation requires an argument of type `UpdateGlossaryNoteVariables`:
+const updateGlossaryNoteVars: UpdateGlossaryNoteVariables = {
+  id: ..., 
+  note: ..., 
+  updatedAt: ..., 
+};
+
+// Call the `updateGlossaryNoteRef()` function to get a reference to the mutation.
+const ref = updateGlossaryNoteRef(updateGlossaryNoteVars);
+// Variables can be defined inline as well.
+const ref = updateGlossaryNoteRef({ id: ..., note: ..., updatedAt: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = updateGlossaryNoteRef(dataConnect, updateGlossaryNoteVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.glossaryNote_update);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.glossaryNote_update);
+});
+```
+
+## DeleteGlossaryNote
+You can execute the `DeleteGlossaryNote` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+deleteGlossaryNote(vars: DeleteGlossaryNoteVariables): MutationPromise<DeleteGlossaryNoteData, DeleteGlossaryNoteVariables>;
+
+interface DeleteGlossaryNoteRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteGlossaryNoteVariables): MutationRef<DeleteGlossaryNoteData, DeleteGlossaryNoteVariables>;
+}
+export const deleteGlossaryNoteRef: DeleteGlossaryNoteRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+deleteGlossaryNote(dc: DataConnect, vars: DeleteGlossaryNoteVariables): MutationPromise<DeleteGlossaryNoteData, DeleteGlossaryNoteVariables>;
+
+interface DeleteGlossaryNoteRef {
+  ...
+  (dc: DataConnect, vars: DeleteGlossaryNoteVariables): MutationRef<DeleteGlossaryNoteData, DeleteGlossaryNoteVariables>;
+}
+export const deleteGlossaryNoteRef: DeleteGlossaryNoteRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the deleteGlossaryNoteRef:
+```typescript
+const name = deleteGlossaryNoteRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `DeleteGlossaryNote` mutation requires an argument of type `DeleteGlossaryNoteVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface DeleteGlossaryNoteVariables {
+  id: UUIDString;
+}
+```
+### Return Type
+Recall that executing the `DeleteGlossaryNote` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `DeleteGlossaryNoteData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface DeleteGlossaryNoteData {
+  glossaryNote_delete?: GlossaryNote_Key | null;
+}
+```
+### Using `DeleteGlossaryNote`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, deleteGlossaryNote, DeleteGlossaryNoteVariables } from '@impact26/dataconnect-sdk';
+
+// The `DeleteGlossaryNote` mutation requires an argument of type `DeleteGlossaryNoteVariables`:
+const deleteGlossaryNoteVars: DeleteGlossaryNoteVariables = {
+  id: ..., 
+};
+
+// Call the `deleteGlossaryNote()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await deleteGlossaryNote(deleteGlossaryNoteVars);
+// Variables can be defined inline as well.
+const { data } = await deleteGlossaryNote({ id: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await deleteGlossaryNote(dataConnect, deleteGlossaryNoteVars);
+
+console.log(data.glossaryNote_delete);
+
+// Or, you can use the `Promise` API.
+deleteGlossaryNote(deleteGlossaryNoteVars).then((response) => {
+  const data = response.data;
+  console.log(data.glossaryNote_delete);
+});
+```
+
+### Using `DeleteGlossaryNote`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, deleteGlossaryNoteRef, DeleteGlossaryNoteVariables } from '@impact26/dataconnect-sdk';
+
+// The `DeleteGlossaryNote` mutation requires an argument of type `DeleteGlossaryNoteVariables`:
+const deleteGlossaryNoteVars: DeleteGlossaryNoteVariables = {
+  id: ..., 
+};
+
+// Call the `deleteGlossaryNoteRef()` function to get a reference to the mutation.
+const ref = deleteGlossaryNoteRef(deleteGlossaryNoteVars);
+// Variables can be defined inline as well.
+const ref = deleteGlossaryNoteRef({ id: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = deleteGlossaryNoteRef(dataConnect, deleteGlossaryNoteVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.glossaryNote_delete);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.glossaryNote_delete);
 });
 ```
 

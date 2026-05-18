@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAdminRequest } from "@/lib/admin/auth";
-import { getAdminFirestore, FieldValue } from "@/lib/firebase/admin-firestore";
+import { adminDcMutate } from "@/lib/firebase/admin-dc";
 import { z } from "zod";
 
 const updateSchema = z.object({
@@ -29,16 +29,20 @@ export async function PUT(
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
+  const { relatedTerms, ...rest } = parsed.data;
+  const now = new Date().toISOString();
+
   try {
-    const db = getAdminFirestore();
-    await db.collection("glossaryTerms").doc(id).update({
-      ...parsed.data,
-      updatedAt: FieldValue.serverTimestamp(),
+    await adminDcMutate("UpdateGlossaryTerm", {
+      id,
+      ...rest,
+      relatedTerms: relatedTerms !== undefined ? JSON.stringify(relatedTerms) : undefined,
+      updatedAt: now,
     });
     return NextResponse.json({ ok: true });
   } catch (err: any) {
-    console.error("[admin/glossary/[id]:PUT] Failed to update term:", err.message);
-    return NextResponse.json({ error: "Failed to update term. Ensure Firestore is initialized." }, { status: 500 });
+    console.error("[admin/glossary/[id]:PUT]", err.message);
+    return NextResponse.json({ error: "Failed to update term." }, { status: 500 });
   }
 }
 
@@ -51,16 +55,12 @@ export async function DELETE(
 
   const { id } = await params;
   try {
-    const db = getAdminFirestore();
-    // Delete the term and all student notes for it
-    const notesSnap = await db.collection("glossaryNotes").where("termId", "==", id).get();
-    const batch = db.batch();
-    notesSnap.docs.forEach((doc: any) => batch.delete(doc.ref));
-    batch.delete(db.collection("glossaryTerms").doc(id));
-    await batch.commit();
+    // Cascade: remove all learner notes for this term first
+    await adminDcMutate("DeleteGlossaryNotesForTerm", { termId: id });
+    await adminDcMutate("DeleteGlossaryTerm", { id });
     return NextResponse.json({ ok: true });
   } catch (err: any) {
-    console.error("[admin/glossary/[id]:DELETE] Failed to delete term:", err.message);
-    return NextResponse.json({ error: "Failed to delete term. Ensure Firestore is initialized." }, { status: 500 });
+    console.error("[admin/glossary/[id]:DELETE]", err.message);
+    return NextResponse.json({ error: "Failed to delete term." }, { status: 500 });
   }
 }

@@ -1,11 +1,11 @@
 import { randomUUID } from "crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { verifyIdToken } from "@/lib/firebase/auth-server";
-import { getAdminFirestore, tryGetAdminFirestore, FieldValue } from "@/lib/firebase/admin-firestore";
+import { adminDcQuery, adminDcMutate } from "@/lib/firebase/admin-dc";
 import { z } from "zod";
 
 const noteSchema = z.object({
-  termId: z.string().min(1),
+  termId: z.string().uuid(),
   note: z.string().trim().min(1),
 });
 
@@ -15,17 +15,24 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const termId = searchParams.get("termId");
 
-    const db = tryGetAdminFirestore();
-    if (!db) return NextResponse.json({ notes: [] });
-    let notes: any[] = [];
-    try {
-      let query = db.collection("glossaryNotes").where("userId", "==", uid);
-      if (termId) query = query.where("termId", "==", termId);
-      const snap = await query.orderBy("updatedAt", "desc").get();
-      notes = snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
-    } catch (error) {
-      console.warn("[api/glossary/notes:GET] Falling back to empty notes", error);
+    const data = await adminDcQuery<{ glossaryNotes: Array<{ id: string; note: string; term: { id: string }; createdAt: string; updatedAt: string }> }>(
+      "GetGlossaryNotesForUser",
+      { userId: uid }
+    );
+
+    let notes = (data.glossaryNotes ?? []).map((n) => ({
+      id: n.id,
+      note: n.note,
+      termId: n.term.id,
+      createdAt: n.createdAt,
+      updatedAt: n.updatedAt,
+    }));
+
+    // Optional client-side filter by termId (avoids a separate query)
+    if (termId) {
+      notes = notes.filter((n) => n.termId === termId);
     }
+
     return NextResponse.json({ notes });
   } catch (err: any) {
     if (err.message?.includes("Unauthorized")) {
@@ -45,29 +52,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
 
-    const db = getAdminFirestore();
-    // Upsert: one note per user per term
-    const existing = await db
-      .collection("glossaryNotes")
-      .where("userId", "==", uid)
-      .where("termId", "==", parsed.data.termId)
-      .limit(1)
-      .get();
+    const { termId, note } = parsed.data;
+    const now = new Date().toISOString();
 
-    if (!existing.empty) {
-      const doc = existing.docs[0];
-      await doc.ref.update({ note: parsed.data.note, updatedAt: FieldValue.serverTimestamp() });
-      return NextResponse.json({ id: doc.id });
+    // Upsert: one note per user per term
+    const existing = await adminDcQuery<{ glossaryNotes: Array<{ id: string }> }>(
+      "GetGlossaryNoteForUserTerm",
+      { userId: uid, termId }
+    );
+
+    const existingNote = existing.glossaryNotes?.[0];
+    if (existingNote) {
+      await adminDcMutate("UpdateGlossaryNote", { id: existingNote.id, note, updatedAt: now });
+      return NextResponse.json({ id: existingNote.id });
     }
 
     const id = randomUUID();
-    await db.collection("glossaryNotes").doc(id).set({
-      userId: uid,
-      termId: parsed.data.termId,
-      note: parsed.data.note,
-      createdAt: FieldValue.serverTimestamp(),
-      updatedAt: FieldValue.serverTimestamp(),
-    });
+    await adminDcMutate("CreateGlossaryNote", { id, userId: uid, termId, note, updatedAt: now });
     return NextResponse.json({ id }, { status: 201 });
   } catch (err: any) {
     if (err.message?.includes("Unauthorized")) {

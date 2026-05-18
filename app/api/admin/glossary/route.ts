@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAdminRequest } from "@/lib/admin/auth";
-import { getAdminFirestore, FieldValue } from "@/lib/firebase/admin-firestore";
+import { adminDcMutate, adminDcQuery } from "@/lib/firebase/admin-dc";
 import { z } from "zod";
 
 const termSchema = z.object({
@@ -16,17 +16,22 @@ const termSchema = z.object({
   sourceDocument: z.string().trim().optional().nullable(),
 });
 
+function deserialiseTerms(terms: any[]): any[] {
+  return terms.map((t) => ({
+    ...t,
+    relatedTerms: t.relatedTerms ? JSON.parse(t.relatedTerms) : [],
+  }));
+}
+
 export async function GET(request: NextRequest) {
   const auth = await requireAdminRequest(request, "viewer");
   if (!auth.ok) return auth.response;
 
   try {
-    const db = getAdminFirestore();
-    const snap = await db.collection("glossaryTerms").orderBy("term").get();
-    const terms = snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
-    return NextResponse.json({ terms });
+    const data = await adminDcQuery<{ glossaryTerms: any[] }>("AdminListGlossaryTerms");
+    return NextResponse.json({ terms: deserialiseTerms(data.glossaryTerms ?? []) });
   } catch (err: any) {
-    console.warn("[admin/glossary:GET] Failed to load glossary, database might not exist:", err.message);
+    console.error("[admin/glossary:GET]", err.message);
     return NextResponse.json({ terms: [] });
   }
 }
@@ -41,18 +46,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
+  const { relatedTerms, ...rest } = parsed.data;
+  const id = randomUUID();
+  const now = new Date().toISOString();
+
   try {
-    const db = getAdminFirestore();
-    const id = randomUUID();
-    await db.collection("glossaryTerms").doc(id).set({
-      ...parsed.data,
-      createdAt: FieldValue.serverTimestamp(),
-      updatedAt: FieldValue.serverTimestamp(),
-      createdBy: auth.session.uid,
+    await adminDcMutate("CreateGlossaryTerm", {
+      id,
+      ...rest,
+      relatedTerms: JSON.stringify(relatedTerms),
+      createdById: auth.session.uid,
+      updatedAt: now,
     });
     return NextResponse.json({ id }, { status: 201 });
   } catch (err: any) {
-    console.error("[admin/glossary:POST] Failed to create term:", err.message);
-    return NextResponse.json({ error: "Failed to create term. Ensure Firestore is initialized." }, { status: 500 });
+    console.error("[admin/glossary:POST]", err.message);
+    return NextResponse.json({ error: "Failed to create term." }, { status: 500 });
   }
 }

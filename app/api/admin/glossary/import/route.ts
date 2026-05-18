@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAdminRequest } from "@/lib/admin/auth";
-import { getAdminFirestore, FieldValue } from "@/lib/firebase/admin-firestore";
+import { adminDcMutate } from "@/lib/firebase/admin-dc";
 import { z } from "zod";
 
 const rowSchema = z.object({
@@ -19,7 +19,7 @@ const rowSchema = z.object({
 const importSchema = z.object({
   rows: z.array(rowSchema),
   resolutions: z.record(z.enum(["skip", "overwrite", "keep_both"])),
-  // map of row index → existing Firestore doc ID (needed for overwrite)
+  // map of row index → existing SQL glossaryTerm ID (needed for overwrite)
   existingIds: z.record(z.string()).default({}),
 });
 
@@ -34,26 +34,12 @@ export async function POST(request: NextRequest) {
   }
 
   const { rows, resolutions, existingIds } = parsed.data;
-  const db = getAdminFirestore();
-  const now = FieldValue.serverTimestamp();
+  const now = new Date().toISOString();
 
   try {
     let imported = 0;
     let updated = 0;
     let skipped = 0;
-
-    // Firestore batch — max 500 ops; split into chunks if needed
-    const BATCH_LIMIT = 400;
-    let batch = db.batch();
-    let opsInBatch = 0;
-
-    async function commitIfNeeded() {
-      if (opsInBatch >= BATCH_LIMIT) {
-        await batch.commit();
-        batch = db.batch();
-        opsInBatch = 0;
-      }
-    }
 
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
@@ -65,41 +51,36 @@ export async function POST(request: NextRequest) {
         continue;
       }
 
-      const data = {
+      const shared = {
         term: row.term,
         definition: row.definition,
         fullDefinition: row.fullDefinition ?? null,
         domain: row.domain ?? null,
         category: row.category ?? null,
         example: row.example ?? null,
-        relatedTerms: row.relatedTerms,
+        relatedTerms: JSON.stringify(row.relatedTerms),
         isPublished: row.isPublished,
         sourceDocument: row.sourceDocument ?? null,
+        updatedAt: now,
       };
 
       if (resolution === "overwrite" && existingId) {
-        const ref = db.collection("glossaryTerms").doc(existingId);
-        batch.update(ref, { ...data, updatedAt: now });
+        await adminDcMutate("UpdateGlossaryTerm", { id: existingId, ...shared });
         updated++;
       } else {
-        // "keep_both" or no resolution (brand-new term)
-        const ref = db.collection("glossaryTerms").doc(randomUUID());
-        batch.set(ref, { ...data, createdAt: now, updatedAt: now, createdBy: auth.session.uid });
+        // "keep_both" or brand-new term
+        await adminDcMutate("CreateGlossaryTerm", {
+          id: randomUUID(),
+          ...shared,
+          createdById: auth.session.uid,
+        });
         imported++;
       }
-
-      opsInBatch++;
-      await commitIfNeeded();
     }
-
-    if (opsInBatch > 0) await batch.commit();
 
     return NextResponse.json({ imported, updated, skipped });
   } catch (err: any) {
-    console.error("[admin/glossary/import:POST] Failed to import terms:", err.message);
-    if (err.message?.includes("5 NOT_FOUND")) {
-      return NextResponse.json({ error: "Firestore database is not initialized. Please create the default Firestore database in the Google Cloud Console or Firebase Console to enable Glossary features." }, { status: 500 });
-    }
+    console.error("[admin/glossary/import:POST]", err.message);
     return NextResponse.json({ error: `Import failed: ${err.message}` }, { status: 500 });
   }
 }

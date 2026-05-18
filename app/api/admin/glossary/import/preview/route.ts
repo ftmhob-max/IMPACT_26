@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAdminRequest } from "@/lib/admin/auth";
-import { getAdminFirestore } from "@/lib/firebase/admin-firestore";
+import { adminDcQuery } from "@/lib/firebase/admin-dc";
 import { parseGlossaryCsv, type GlossaryImportRow } from "@/lib/admin/csv-glossary";
 import { parseGlossaryDocx } from "@/lib/admin/docx-glossary";
 
@@ -74,20 +74,17 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // ── Cross-check against existing Firestore terms ──────────────────────────
-  const db = getAdminFirestore();
+  // ── Cross-check against existing SQL terms ────────────────────────────────
   const existingMap = new Map<string, { id: string; definition: string }>();
   try {
-    const existingSnap = await db.collection("glossaryTerms").get();
-    existingSnap.docs.forEach((doc: any) => {
-      const data = doc.data();
-      existingMap.set((data.term as string).toLowerCase().trim(), {
-        id: doc.id,
-        definition: data.definition as string,
-      });
+    const data = await adminDcQuery<{ glossaryTerms: Array<{ id: string; term: string; definition: string }> }>(
+      "AdminListGlossaryTerms"
+    );
+    (data.glossaryTerms ?? []).forEach((t) => {
+      existingMap.set(t.term.toLowerCase().trim(), { id: t.id, definition: t.definition });
     });
   } catch (err: any) {
-    console.warn("Firestore collection 'glossaryTerms' could not be read (database might not exist):", err.message);
+    console.warn("[glossary/import/preview] Could not load existing terms:", err.message);
   }
 
   const duplicates: DuplicateEntry[] = [];

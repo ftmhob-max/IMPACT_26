@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { verifyIdToken } from "@/lib/firebase/auth-server";
-import { getAdminFirestore, FieldValue } from "@/lib/firebase/admin-firestore";
+import { adminDcQuery, adminDcMutate } from "@/lib/firebase/admin-dc";
 import { z } from "zod";
 
 const updateSchema = z.object({ note: z.string().trim().min(1) });
@@ -18,12 +18,21 @@ export async function PUT(
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
 
-    const db = getAdminFirestore();
-    const doc = await db.collection("glossaryNotes").doc(noteId).get();
-    if (!doc.exists || doc.data()?.userId !== uid) {
+    // Verify ownership: fetch notes for this user and check the note belongs to them
+    const data = await adminDcQuery<{ glossaryNotes: Array<{ id: string }> }>(
+      "GetGlossaryNotesForUser",
+      { userId: uid }
+    );
+    const owned = (data.glossaryNotes ?? []).some((n) => n.id === noteId);
+    if (!owned) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
-    await doc.ref.update({ note: parsed.data.note, updatedAt: FieldValue.serverTimestamp() });
+
+    await adminDcMutate("UpdateGlossaryNote", {
+      id: noteId,
+      note: parsed.data.note,
+      updatedAt: new Date().toISOString(),
+    });
     return NextResponse.json({ ok: true });
   } catch (err: any) {
     if (err.message?.includes("Unauthorized")) {
@@ -41,12 +50,18 @@ export async function DELETE(
   try {
     const { uid } = await verifyIdToken(request.headers.get("Authorization"));
     const { noteId } = await params;
-    const db = getAdminFirestore();
-    const doc = await db.collection("glossaryNotes").doc(noteId).get();
-    if (!doc.exists || doc.data()?.userId !== uid) {
+
+    // Verify ownership
+    const data = await adminDcQuery<{ glossaryNotes: Array<{ id: string }> }>(
+      "GetGlossaryNotesForUser",
+      { userId: uid }
+    );
+    const owned = (data.glossaryNotes ?? []).some((n) => n.id === noteId);
+    if (!owned) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
-    await doc.ref.delete();
+
+    await adminDcMutate("DeleteGlossaryNote", { id: noteId });
     return NextResponse.json({ ok: true });
   } catch (err: any) {
     if (err.message?.includes("Unauthorized")) {

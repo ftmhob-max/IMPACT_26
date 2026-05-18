@@ -102,6 +102,27 @@ export interface AdminListCoursesData {
   } & Course_Key)[];
 }
 
+export interface AdminListGlossaryTermsData {
+  glossaryTerms: ({
+    id: UUIDString;
+    term: string;
+    definition: string;
+    fullDefinition?: string | null;
+    domain?: string | null;
+    category?: string | null;
+    example?: string | null;
+    relatedTerms?: string | null;
+    isPublished: boolean;
+    sourceDocument?: string | null;
+    createdBy?: {
+      id: string;
+      fullName?: string | null;
+    } & User_Key;
+      createdAt: DateString;
+      updatedAt: DateString;
+  } & GlossaryTerm_Key)[];
+}
+
 export interface AdminListQuestionsData {
   questions: ({
     id: UUIDString;
@@ -486,6 +507,37 @@ export interface CreateFormulaVariables {
   calcMetaJson?: string | null;
 }
 
+export interface CreateGlossaryNoteData {
+  glossaryNote_insert: GlossaryNote_Key;
+}
+
+export interface CreateGlossaryNoteVariables {
+  id: UUIDString;
+  userId: string;
+  termId: UUIDString;
+  note: string;
+  updatedAt: DateString;
+}
+
+export interface CreateGlossaryTermData {
+  glossaryTerm_insert: GlossaryTerm_Key;
+}
+
+export interface CreateGlossaryTermVariables {
+  id: UUIDString;
+  term: string;
+  definition: string;
+  fullDefinition?: string | null;
+  domain?: string | null;
+  category?: string | null;
+  example?: string | null;
+  relatedTerms?: string | null;
+  isPublished: boolean;
+  sourceDocument?: string | null;
+  createdById?: string | null;
+  updatedAt: DateString;
+}
+
 export interface CreateIngestionJobData {
   ingestionJob_insert: IngestionJob_Key;
 }
@@ -689,6 +741,30 @@ export interface DeleteFormulasForSectionData {
 
 export interface DeleteFormulasForSectionVariables {
   sectionId: UUIDString;
+}
+
+export interface DeleteGlossaryNoteData {
+  glossaryNote_delete?: GlossaryNote_Key | null;
+}
+
+export interface DeleteGlossaryNoteVariables {
+  id: UUIDString;
+}
+
+export interface DeleteGlossaryNotesForTermData {
+  glossaryNote_deleteMany: number;
+}
+
+export interface DeleteGlossaryNotesForTermVariables {
+  termId: UUIDString;
+}
+
+export interface DeleteGlossaryTermData {
+  glossaryTerm_delete?: GlossaryTerm_Key | null;
+}
+
+export interface DeleteGlossaryTermVariables {
+  id: UUIDString;
 }
 
 export interface DeleteIngestionJobsForMaterialData {
@@ -994,6 +1070,35 @@ export interface GetFormulaSectionsData {
   } & FormulaSection_Key)[];
 }
 
+export interface GetGlossaryNoteForUserTermData {
+  glossaryNotes: ({
+    id: UUIDString;
+    note: string;
+    updatedAt: DateString;
+  } & GlossaryNote_Key)[];
+}
+
+export interface GetGlossaryNoteForUserTermVariables {
+  userId: string;
+  termId: UUIDString;
+}
+
+export interface GetGlossaryNotesForUserData {
+  glossaryNotes: ({
+    id: UUIDString;
+    note: string;
+    term: {
+      id: UUIDString;
+    } & GlossaryTerm_Key;
+      createdAt: DateString;
+      updatedAt: DateString;
+  } & GlossaryNote_Key)[];
+}
+
+export interface GetGlossaryNotesForUserVariables {
+  userId: string;
+}
+
 export interface GetInProgressAttemptData {
   quizAttempts: ({
     id: UUIDString;
@@ -1279,6 +1384,16 @@ export interface GetUserProgressDetailsVariables {
   userId: string;
 }
 
+export interface GlossaryNote_Key {
+  id: UUIDString;
+  __typename?: 'GlossaryNote_Key';
+}
+
+export interface GlossaryTerm_Key {
+  id: UUIDString;
+  __typename?: 'GlossaryTerm_Key';
+}
+
 export interface IngestionJob_Key {
   id: UUIDString;
   __typename?: 'IngestionJob_Key';
@@ -1320,6 +1435,22 @@ export interface ListPublishedCoursesData {
       fullName?: string | null;
     };
   } & Course_Key)[];
+}
+
+export interface ListPublishedGlossaryTermsData {
+  glossaryTerms: ({
+    id: UUIDString;
+    term: string;
+    definition: string;
+    fullDefinition?: string | null;
+    domain?: string | null;
+    category?: string | null;
+    example?: string | null;
+    relatedTerms?: string | null;
+    sourceDocument?: string | null;
+    createdAt: DateString;
+    updatedAt: DateString;
+  } & GlossaryTerm_Key)[];
 }
 
 export interface MarkAnsweredAtData {
@@ -1438,6 +1569,34 @@ export interface UpdateFormulaVariables {
   notes?: string | null;
   calcMetaJson?: string | null;
   position?: number | null;
+}
+
+export interface UpdateGlossaryNoteData {
+  glossaryNote_update?: GlossaryNote_Key | null;
+}
+
+export interface UpdateGlossaryNoteVariables {
+  id: UUIDString;
+  note: string;
+  updatedAt: DateString;
+}
+
+export interface UpdateGlossaryTermData {
+  glossaryTerm_update?: GlossaryTerm_Key | null;
+}
+
+export interface UpdateGlossaryTermVariables {
+  id: UUIDString;
+  term?: string | null;
+  definition?: string | null;
+  fullDefinition?: string | null;
+  domain?: string | null;
+  category?: string | null;
+  example?: string | null;
+  relatedTerms?: string | null;
+  isPublished?: boolean | null;
+  sourceDocument?: string | null;
+  updatedAt: DateString;
 }
 
 export interface UpdateLessonData {
@@ -2318,6 +2477,90 @@ export const createContentSourceLinkRef: CreateContentSourceLinkRef;
 export function createContentSourceLink(vars: CreateContentSourceLinkVariables): MutationPromise<CreateContentSourceLinkData, CreateContentSourceLinkVariables>;
 export function createContentSourceLink(dc: DataConnect, vars: CreateContentSourceLinkVariables): MutationPromise<CreateContentSourceLinkData, CreateContentSourceLinkVariables>;
 
+interface CreateGlossaryTermRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateGlossaryTermVariables): MutationRef<CreateGlossaryTermData, CreateGlossaryTermVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: CreateGlossaryTermVariables): MutationRef<CreateGlossaryTermData, CreateGlossaryTermVariables>;
+  operationName: string;
+}
+export const createGlossaryTermRef: CreateGlossaryTermRef;
+
+export function createGlossaryTerm(vars: CreateGlossaryTermVariables): MutationPromise<CreateGlossaryTermData, CreateGlossaryTermVariables>;
+export function createGlossaryTerm(dc: DataConnect, vars: CreateGlossaryTermVariables): MutationPromise<CreateGlossaryTermData, CreateGlossaryTermVariables>;
+
+interface UpdateGlossaryTermRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateGlossaryTermVariables): MutationRef<UpdateGlossaryTermData, UpdateGlossaryTermVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: UpdateGlossaryTermVariables): MutationRef<UpdateGlossaryTermData, UpdateGlossaryTermVariables>;
+  operationName: string;
+}
+export const updateGlossaryTermRef: UpdateGlossaryTermRef;
+
+export function updateGlossaryTerm(vars: UpdateGlossaryTermVariables): MutationPromise<UpdateGlossaryTermData, UpdateGlossaryTermVariables>;
+export function updateGlossaryTerm(dc: DataConnect, vars: UpdateGlossaryTermVariables): MutationPromise<UpdateGlossaryTermData, UpdateGlossaryTermVariables>;
+
+interface DeleteGlossaryTermRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteGlossaryTermVariables): MutationRef<DeleteGlossaryTermData, DeleteGlossaryTermVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteGlossaryTermVariables): MutationRef<DeleteGlossaryTermData, DeleteGlossaryTermVariables>;
+  operationName: string;
+}
+export const deleteGlossaryTermRef: DeleteGlossaryTermRef;
+
+export function deleteGlossaryTerm(vars: DeleteGlossaryTermVariables): MutationPromise<DeleteGlossaryTermData, DeleteGlossaryTermVariables>;
+export function deleteGlossaryTerm(dc: DataConnect, vars: DeleteGlossaryTermVariables): MutationPromise<DeleteGlossaryTermData, DeleteGlossaryTermVariables>;
+
+interface DeleteGlossaryNotesForTermRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteGlossaryNotesForTermVariables): MutationRef<DeleteGlossaryNotesForTermData, DeleteGlossaryNotesForTermVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteGlossaryNotesForTermVariables): MutationRef<DeleteGlossaryNotesForTermData, DeleteGlossaryNotesForTermVariables>;
+  operationName: string;
+}
+export const deleteGlossaryNotesForTermRef: DeleteGlossaryNotesForTermRef;
+
+export function deleteGlossaryNotesForTerm(vars: DeleteGlossaryNotesForTermVariables): MutationPromise<DeleteGlossaryNotesForTermData, DeleteGlossaryNotesForTermVariables>;
+export function deleteGlossaryNotesForTerm(dc: DataConnect, vars: DeleteGlossaryNotesForTermVariables): MutationPromise<DeleteGlossaryNotesForTermData, DeleteGlossaryNotesForTermVariables>;
+
+interface CreateGlossaryNoteRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateGlossaryNoteVariables): MutationRef<CreateGlossaryNoteData, CreateGlossaryNoteVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: CreateGlossaryNoteVariables): MutationRef<CreateGlossaryNoteData, CreateGlossaryNoteVariables>;
+  operationName: string;
+}
+export const createGlossaryNoteRef: CreateGlossaryNoteRef;
+
+export function createGlossaryNote(vars: CreateGlossaryNoteVariables): MutationPromise<CreateGlossaryNoteData, CreateGlossaryNoteVariables>;
+export function createGlossaryNote(dc: DataConnect, vars: CreateGlossaryNoteVariables): MutationPromise<CreateGlossaryNoteData, CreateGlossaryNoteVariables>;
+
+interface UpdateGlossaryNoteRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateGlossaryNoteVariables): MutationRef<UpdateGlossaryNoteData, UpdateGlossaryNoteVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: UpdateGlossaryNoteVariables): MutationRef<UpdateGlossaryNoteData, UpdateGlossaryNoteVariables>;
+  operationName: string;
+}
+export const updateGlossaryNoteRef: UpdateGlossaryNoteRef;
+
+export function updateGlossaryNote(vars: UpdateGlossaryNoteVariables): MutationPromise<UpdateGlossaryNoteData, UpdateGlossaryNoteVariables>;
+export function updateGlossaryNote(dc: DataConnect, vars: UpdateGlossaryNoteVariables): MutationPromise<UpdateGlossaryNoteData, UpdateGlossaryNoteVariables>;
+
+interface DeleteGlossaryNoteRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteGlossaryNoteVariables): MutationRef<DeleteGlossaryNoteData, DeleteGlossaryNoteVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteGlossaryNoteVariables): MutationRef<DeleteGlossaryNoteData, DeleteGlossaryNoteVariables>;
+  operationName: string;
+}
+export const deleteGlossaryNoteRef: DeleteGlossaryNoteRef;
+
+export function deleteGlossaryNote(vars: DeleteGlossaryNoteVariables): MutationPromise<DeleteGlossaryNoteData, DeleteGlossaryNoteVariables>;
+export function deleteGlossaryNote(dc: DataConnect, vars: DeleteGlossaryNoteVariables): MutationPromise<DeleteGlossaryNoteData, DeleteGlossaryNoteVariables>;
+
 interface ListPublishedCoursesRef {
   /* Allow users to create refs without passing in DataConnect */
   (): QueryRef<ListPublishedCoursesData, undefined>;
@@ -2713,4 +2956,52 @@ export const adminCohortStatsRef: AdminCohortStatsRef;
 
 export function adminCohortStats(options?: ExecuteQueryOptions): QueryPromise<AdminCohortStatsData, undefined>;
 export function adminCohortStats(dc: DataConnect, options?: ExecuteQueryOptions): QueryPromise<AdminCohortStatsData, undefined>;
+
+interface AdminListGlossaryTermsRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (): QueryRef<AdminListGlossaryTermsData, undefined>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect): QueryRef<AdminListGlossaryTermsData, undefined>;
+  operationName: string;
+}
+export const adminListGlossaryTermsRef: AdminListGlossaryTermsRef;
+
+export function adminListGlossaryTerms(options?: ExecuteQueryOptions): QueryPromise<AdminListGlossaryTermsData, undefined>;
+export function adminListGlossaryTerms(dc: DataConnect, options?: ExecuteQueryOptions): QueryPromise<AdminListGlossaryTermsData, undefined>;
+
+interface ListPublishedGlossaryTermsRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (): QueryRef<ListPublishedGlossaryTermsData, undefined>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect): QueryRef<ListPublishedGlossaryTermsData, undefined>;
+  operationName: string;
+}
+export const listPublishedGlossaryTermsRef: ListPublishedGlossaryTermsRef;
+
+export function listPublishedGlossaryTerms(options?: ExecuteQueryOptions): QueryPromise<ListPublishedGlossaryTermsData, undefined>;
+export function listPublishedGlossaryTerms(dc: DataConnect, options?: ExecuteQueryOptions): QueryPromise<ListPublishedGlossaryTermsData, undefined>;
+
+interface GetGlossaryNotesForUserRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetGlossaryNotesForUserVariables): QueryRef<GetGlossaryNotesForUserData, GetGlossaryNotesForUserVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: GetGlossaryNotesForUserVariables): QueryRef<GetGlossaryNotesForUserData, GetGlossaryNotesForUserVariables>;
+  operationName: string;
+}
+export const getGlossaryNotesForUserRef: GetGlossaryNotesForUserRef;
+
+export function getGlossaryNotesForUser(vars: GetGlossaryNotesForUserVariables, options?: ExecuteQueryOptions): QueryPromise<GetGlossaryNotesForUserData, GetGlossaryNotesForUserVariables>;
+export function getGlossaryNotesForUser(dc: DataConnect, vars: GetGlossaryNotesForUserVariables, options?: ExecuteQueryOptions): QueryPromise<GetGlossaryNotesForUserData, GetGlossaryNotesForUserVariables>;
+
+interface GetGlossaryNoteForUserTermRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetGlossaryNoteForUserTermVariables): QueryRef<GetGlossaryNoteForUserTermData, GetGlossaryNoteForUserTermVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: GetGlossaryNoteForUserTermVariables): QueryRef<GetGlossaryNoteForUserTermData, GetGlossaryNoteForUserTermVariables>;
+  operationName: string;
+}
+export const getGlossaryNoteForUserTermRef: GetGlossaryNoteForUserTermRef;
+
+export function getGlossaryNoteForUserTerm(vars: GetGlossaryNoteForUserTermVariables, options?: ExecuteQueryOptions): QueryPromise<GetGlossaryNoteForUserTermData, GetGlossaryNoteForUserTermVariables>;
+export function getGlossaryNoteForUserTerm(dc: DataConnect, vars: GetGlossaryNoteForUserTermVariables, options?: ExecuteQueryOptions): QueryPromise<GetGlossaryNoteForUserTermData, GetGlossaryNoteForUserTermVariables>;
 
