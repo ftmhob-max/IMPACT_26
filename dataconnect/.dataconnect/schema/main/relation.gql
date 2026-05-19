@@ -4808,6 +4808,40 @@ extend type User {
     having: UserCourseProgress_Having
   ): [UserCourseProgress!]! @fdc_generated(from: "UserCourseProgress.user", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
   """
+  ✨ List `UserFavorite` objects in a one-to-many relationship (where `UserFavorite`.`user` is this object).
+  """
+  userFavorites_on_user(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: UserFavorite_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [UserFavorite_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: UserFavorite_Having
+  ): [UserFavorite!]! @fdc_generated(from: "UserFavorite.user", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
   ✨ List `UserLessonProgress` objects in a one-to-many relationship (where `UserLessonProgress`.`user` is this object).
   """
   userLessonProgresses_on_user(
@@ -5057,6 +5091,64 @@ extend type UserCourseProgress {
   A generated field that is used for caching results in SDKs.
   """
   _id: ID! @fdc_generated(from: "UserCourseProgress.userId,courseId", purpose: ENTITY_ID)
+}
+extend type UserFavorite {
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "UserFavorite", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `UserFavorite` table.
+  """
+  _count: Int! @fdc_generated(from: "UserFavorite.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `UserFavorite` table where the `createdAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "UserFavorite.createdAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `UserFavorite` table where the `itemId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  itemId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "UserFavorite.itemId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `UserFavorite` table where the `itemType` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  itemType_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "UserFavorite.itemType", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `UserFavorite` table where the `userId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  userId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "UserFavorite.userId", purpose: QUERY_COUNT)
+  """
+  ✨ Minimum of the `createdAt` field in the `UserFavorite` table.
+  """
+  createdAt_min: Date @fdc_generated(from: "UserFavorite.createdAt", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `createdAt` field in the `UserFavorite` table.
+  """
+  createdAt_max: Date @fdc_generated(from: "UserFavorite.createdAt", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "UserFavorite.userId,itemType,itemId", purpose: ENTITY_ID)
 }
 extend type UserLessonProgress {
   """

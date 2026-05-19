@@ -916,6 +916,16 @@ export interface DeleteTagAssignmentsForMaterialVariables {
   sourceMaterialId: UUIDString;
 }
 
+export interface DeleteUserFavoriteData {
+  userFavorite_delete?: UserFavorite_Key | null;
+}
+
+export interface DeleteUserFavoriteVariables {
+  userId: string;
+  itemType: string;
+  itemId: string;
+}
+
 export interface DeleteUserLessonProgressForLessonData {
   userLessonProgress_deleteMany: number;
 }
@@ -1394,6 +1404,31 @@ export interface GetUserCourseProgressVariables {
   courseId: UUIDString;
 }
 
+export interface GetUserFavoritesByTypeData {
+  userFavorites: ({
+    itemType: string;
+    itemId: string;
+    createdAt: DateString;
+  })[];
+}
+
+export interface GetUserFavoritesByTypeVariables {
+  userId: string;
+  itemType: string;
+}
+
+export interface GetUserFavoritesData {
+  userFavorites: ({
+    itemType: string;
+    itemId: string;
+    createdAt: DateString;
+  })[];
+}
+
+export interface GetUserFavoritesVariables {
+  userId: string;
+}
+
 export interface GetUserLessonProgressSummaryData {
   userLessonProgresses: ({
     status: string;
@@ -1817,10 +1852,27 @@ export interface UpsertQuizResponseVariables {
   answeredAt?: DateString | null;
 }
 
+export interface UpsertUserFavoriteData {
+  userFavorite_upsert: UserFavorite_Key;
+}
+
+export interface UpsertUserFavoriteVariables {
+  userId: string;
+  itemType: string;
+  itemId: string;
+}
+
 export interface UserCourseProgress_Key {
   userId: string;
   courseId: UUIDString;
   __typename?: 'UserCourseProgress_Key';
+}
+
+export interface UserFavorite_Key {
+  userId: string;
+  itemType: string;
+  itemId: string;
+  __typename?: 'UserFavorite_Key';
 }
 
 export interface UserLessonProgress_Key {
@@ -2662,6 +2714,30 @@ export const deleteLessonNoteRef: DeleteLessonNoteRef;
 export function deleteLessonNote(vars: DeleteLessonNoteVariables): MutationPromise<DeleteLessonNoteData, DeleteLessonNoteVariables>;
 export function deleteLessonNote(dc: DataConnect, vars: DeleteLessonNoteVariables): MutationPromise<DeleteLessonNoteData, DeleteLessonNoteVariables>;
 
+interface UpsertUserFavoriteRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpsertUserFavoriteVariables): MutationRef<UpsertUserFavoriteData, UpsertUserFavoriteVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: UpsertUserFavoriteVariables): MutationRef<UpsertUserFavoriteData, UpsertUserFavoriteVariables>;
+  operationName: string;
+}
+export const upsertUserFavoriteRef: UpsertUserFavoriteRef;
+
+export function upsertUserFavorite(vars: UpsertUserFavoriteVariables): MutationPromise<UpsertUserFavoriteData, UpsertUserFavoriteVariables>;
+export function upsertUserFavorite(dc: DataConnect, vars: UpsertUserFavoriteVariables): MutationPromise<UpsertUserFavoriteData, UpsertUserFavoriteVariables>;
+
+interface DeleteUserFavoriteRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteUserFavoriteVariables): MutationRef<DeleteUserFavoriteData, DeleteUserFavoriteVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteUserFavoriteVariables): MutationRef<DeleteUserFavoriteData, DeleteUserFavoriteVariables>;
+  operationName: string;
+}
+export const deleteUserFavoriteRef: DeleteUserFavoriteRef;
+
+export function deleteUserFavorite(vars: DeleteUserFavoriteVariables): MutationPromise<DeleteUserFavoriteData, DeleteUserFavoriteVariables>;
+export function deleteUserFavorite(dc: DataConnect, vars: DeleteUserFavoriteVariables): MutationPromise<DeleteUserFavoriteData, DeleteUserFavoriteVariables>;
+
 interface ListPublishedCoursesRef {
   /* Allow users to create refs without passing in DataConnect */
   (): QueryRef<ListPublishedCoursesData, undefined>;
@@ -3129,4 +3205,28 @@ export const getLessonNoteForUserLessonRef: GetLessonNoteForUserLessonRef;
 
 export function getLessonNoteForUserLesson(vars: GetLessonNoteForUserLessonVariables, options?: ExecuteQueryOptions): QueryPromise<GetLessonNoteForUserLessonData, GetLessonNoteForUserLessonVariables>;
 export function getLessonNoteForUserLesson(dc: DataConnect, vars: GetLessonNoteForUserLessonVariables, options?: ExecuteQueryOptions): QueryPromise<GetLessonNoteForUserLessonData, GetLessonNoteForUserLessonVariables>;
+
+interface GetUserFavoritesRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetUserFavoritesVariables): QueryRef<GetUserFavoritesData, GetUserFavoritesVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: GetUserFavoritesVariables): QueryRef<GetUserFavoritesData, GetUserFavoritesVariables>;
+  operationName: string;
+}
+export const getUserFavoritesRef: GetUserFavoritesRef;
+
+export function getUserFavorites(vars: GetUserFavoritesVariables, options?: ExecuteQueryOptions): QueryPromise<GetUserFavoritesData, GetUserFavoritesVariables>;
+export function getUserFavorites(dc: DataConnect, vars: GetUserFavoritesVariables, options?: ExecuteQueryOptions): QueryPromise<GetUserFavoritesData, GetUserFavoritesVariables>;
+
+interface GetUserFavoritesByTypeRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetUserFavoritesByTypeVariables): QueryRef<GetUserFavoritesByTypeData, GetUserFavoritesByTypeVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: GetUserFavoritesByTypeVariables): QueryRef<GetUserFavoritesByTypeData, GetUserFavoritesByTypeVariables>;
+  operationName: string;
+}
+export const getUserFavoritesByTypeRef: GetUserFavoritesByTypeRef;
+
+export function getUserFavoritesByType(vars: GetUserFavoritesByTypeVariables, options?: ExecuteQueryOptions): QueryPromise<GetUserFavoritesByTypeData, GetUserFavoritesByTypeVariables>;
+export function getUserFavoritesByType(dc: DataConnect, vars: GetUserFavoritesByTypeVariables, options?: ExecuteQueryOptions): QueryPromise<GetUserFavoritesByTypeData, GetUserFavoritesByTypeVariables>;
 

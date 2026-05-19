@@ -47,6 +47,8 @@ This README will guide you through the process of using the generated JavaScript
   - [*GetGlossaryNoteForUserTerm*](#getglossarynoteforuserterm)
   - [*GetLessonNotesForUser*](#getlessonnotesforuser)
   - [*GetLessonNoteForUserLesson*](#getlessonnoteforuserlesson)
+  - [*GetUserFavorites*](#getuserfavorites)
+  - [*GetUserFavoritesByType*](#getuserfavoritesbytype)
 - [**Mutations**](#mutations)
   - [*CreateUser*](#createuser)
   - [*UpdateUserRole*](#updateuserrole)
@@ -117,6 +119,8 @@ This README will guide you through the process of using the generated JavaScript
   - [*CreateLessonNote*](#createlessonnote)
   - [*UpdateLessonNote*](#updatelessonnote)
   - [*DeleteLessonNote*](#deletelessonnote)
+  - [*UpsertUserFavorite*](#upsertuserfavorite)
+  - [*DeleteUserFavorite*](#deleteuserfavorite)
 
 # Accessing the connector
 A connector is a collection of Queries and Mutations. One SDK is generated for each connector - this SDK is generated for the connector `impact26-connector`. You can find more information about connectors in the [Data Connect documentation](https://firebase.google.com/docs/data-connect#how-does).
@@ -4846,6 +4850,235 @@ console.log(data.lessonNotes);
 executeQuery(ref).then((response) => {
   const data = response.data;
   console.log(data.lessonNotes);
+});
+```
+
+## GetUserFavorites
+You can execute the `GetUserFavorites` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+getUserFavorites(vars: GetUserFavoritesVariables, options?: ExecuteQueryOptions): QueryPromise<GetUserFavoritesData, GetUserFavoritesVariables>;
+
+interface GetUserFavoritesRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetUserFavoritesVariables): QueryRef<GetUserFavoritesData, GetUserFavoritesVariables>;
+}
+export const getUserFavoritesRef: GetUserFavoritesRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `QueryRef` function.
+```typescript
+getUserFavorites(dc: DataConnect, vars: GetUserFavoritesVariables, options?: ExecuteQueryOptions): QueryPromise<GetUserFavoritesData, GetUserFavoritesVariables>;
+
+interface GetUserFavoritesRef {
+  ...
+  (dc: DataConnect, vars: GetUserFavoritesVariables): QueryRef<GetUserFavoritesData, GetUserFavoritesVariables>;
+}
+export const getUserFavoritesRef: GetUserFavoritesRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the getUserFavoritesRef:
+```typescript
+const name = getUserFavoritesRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `GetUserFavorites` query requires an argument of type `GetUserFavoritesVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface GetUserFavoritesVariables {
+  userId: string;
+}
+```
+### Return Type
+Recall that executing the `GetUserFavorites` query returns a `QueryPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `GetUserFavoritesData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface GetUserFavoritesData {
+  userFavorites: ({
+    itemType: string;
+    itemId: string;
+    createdAt: DateString;
+  })[];
+}
+```
+### Using `GetUserFavorites`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, getUserFavorites, GetUserFavoritesVariables } from '@impact26/dataconnect-sdk';
+
+// The `GetUserFavorites` query requires an argument of type `GetUserFavoritesVariables`:
+const getUserFavoritesVars: GetUserFavoritesVariables = {
+  userId: ..., 
+};
+
+// Call the `getUserFavorites()` function to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await getUserFavorites(getUserFavoritesVars);
+// Variables can be defined inline as well.
+const { data } = await getUserFavorites({ userId: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await getUserFavorites(dataConnect, getUserFavoritesVars);
+
+console.log(data.userFavorites);
+
+// Or, you can use the `Promise` API.
+getUserFavorites(getUserFavoritesVars).then((response) => {
+  const data = response.data;
+  console.log(data.userFavorites);
+});
+```
+
+### Using `GetUserFavorites`'s `QueryRef` function
+
+```typescript
+import { getDataConnect, executeQuery } from 'firebase/data-connect';
+import { connectorConfig, getUserFavoritesRef, GetUserFavoritesVariables } from '@impact26/dataconnect-sdk';
+
+// The `GetUserFavorites` query requires an argument of type `GetUserFavoritesVariables`:
+const getUserFavoritesVars: GetUserFavoritesVariables = {
+  userId: ..., 
+};
+
+// Call the `getUserFavoritesRef()` function to get a reference to the query.
+const ref = getUserFavoritesRef(getUserFavoritesVars);
+// Variables can be defined inline as well.
+const ref = getUserFavoritesRef({ userId: ..., });
+
+// You can also pass in a `DataConnect` instance to the `QueryRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = getUserFavoritesRef(dataConnect, getUserFavoritesVars);
+
+// Call `executeQuery()` on the reference to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeQuery(ref);
+
+console.log(data.userFavorites);
+
+// Or, you can use the `Promise` API.
+executeQuery(ref).then((response) => {
+  const data = response.data;
+  console.log(data.userFavorites);
+});
+```
+
+## GetUserFavoritesByType
+You can execute the `GetUserFavoritesByType` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+getUserFavoritesByType(vars: GetUserFavoritesByTypeVariables, options?: ExecuteQueryOptions): QueryPromise<GetUserFavoritesByTypeData, GetUserFavoritesByTypeVariables>;
+
+interface GetUserFavoritesByTypeRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetUserFavoritesByTypeVariables): QueryRef<GetUserFavoritesByTypeData, GetUserFavoritesByTypeVariables>;
+}
+export const getUserFavoritesByTypeRef: GetUserFavoritesByTypeRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `QueryRef` function.
+```typescript
+getUserFavoritesByType(dc: DataConnect, vars: GetUserFavoritesByTypeVariables, options?: ExecuteQueryOptions): QueryPromise<GetUserFavoritesByTypeData, GetUserFavoritesByTypeVariables>;
+
+interface GetUserFavoritesByTypeRef {
+  ...
+  (dc: DataConnect, vars: GetUserFavoritesByTypeVariables): QueryRef<GetUserFavoritesByTypeData, GetUserFavoritesByTypeVariables>;
+}
+export const getUserFavoritesByTypeRef: GetUserFavoritesByTypeRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the getUserFavoritesByTypeRef:
+```typescript
+const name = getUserFavoritesByTypeRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `GetUserFavoritesByType` query requires an argument of type `GetUserFavoritesByTypeVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface GetUserFavoritesByTypeVariables {
+  userId: string;
+  itemType: string;
+}
+```
+### Return Type
+Recall that executing the `GetUserFavoritesByType` query returns a `QueryPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `GetUserFavoritesByTypeData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface GetUserFavoritesByTypeData {
+  userFavorites: ({
+    itemType: string;
+    itemId: string;
+    createdAt: DateString;
+  })[];
+}
+```
+### Using `GetUserFavoritesByType`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, getUserFavoritesByType, GetUserFavoritesByTypeVariables } from '@impact26/dataconnect-sdk';
+
+// The `GetUserFavoritesByType` query requires an argument of type `GetUserFavoritesByTypeVariables`:
+const getUserFavoritesByTypeVars: GetUserFavoritesByTypeVariables = {
+  userId: ..., 
+  itemType: ..., 
+};
+
+// Call the `getUserFavoritesByType()` function to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await getUserFavoritesByType(getUserFavoritesByTypeVars);
+// Variables can be defined inline as well.
+const { data } = await getUserFavoritesByType({ userId: ..., itemType: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await getUserFavoritesByType(dataConnect, getUserFavoritesByTypeVars);
+
+console.log(data.userFavorites);
+
+// Or, you can use the `Promise` API.
+getUserFavoritesByType(getUserFavoritesByTypeVars).then((response) => {
+  const data = response.data;
+  console.log(data.userFavorites);
+});
+```
+
+### Using `GetUserFavoritesByType`'s `QueryRef` function
+
+```typescript
+import { getDataConnect, executeQuery } from 'firebase/data-connect';
+import { connectorConfig, getUserFavoritesByTypeRef, GetUserFavoritesByTypeVariables } from '@impact26/dataconnect-sdk';
+
+// The `GetUserFavoritesByType` query requires an argument of type `GetUserFavoritesByTypeVariables`:
+const getUserFavoritesByTypeVars: GetUserFavoritesByTypeVariables = {
+  userId: ..., 
+  itemType: ..., 
+};
+
+// Call the `getUserFavoritesByTypeRef()` function to get a reference to the query.
+const ref = getUserFavoritesByTypeRef(getUserFavoritesByTypeVars);
+// Variables can be defined inline as well.
+const ref = getUserFavoritesByTypeRef({ userId: ..., itemType: ..., });
+
+// You can also pass in a `DataConnect` instance to the `QueryRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = getUserFavoritesByTypeRef(dataConnect, getUserFavoritesByTypeVars);
+
+// Call `executeQuery()` on the reference to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeQuery(ref);
+
+console.log(data.userFavorites);
+
+// Or, you can use the `Promise` API.
+executeQuery(ref).then((response) => {
+  const data = response.data;
+  console.log(data.userFavorites);
 });
 ```
 
@@ -13024,6 +13257,236 @@ console.log(data.lessonNote_delete);
 executeMutation(ref).then((response) => {
   const data = response.data;
   console.log(data.lessonNote_delete);
+});
+```
+
+## UpsertUserFavorite
+You can execute the `UpsertUserFavorite` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+upsertUserFavorite(vars: UpsertUserFavoriteVariables): MutationPromise<UpsertUserFavoriteData, UpsertUserFavoriteVariables>;
+
+interface UpsertUserFavoriteRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpsertUserFavoriteVariables): MutationRef<UpsertUserFavoriteData, UpsertUserFavoriteVariables>;
+}
+export const upsertUserFavoriteRef: UpsertUserFavoriteRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+upsertUserFavorite(dc: DataConnect, vars: UpsertUserFavoriteVariables): MutationPromise<UpsertUserFavoriteData, UpsertUserFavoriteVariables>;
+
+interface UpsertUserFavoriteRef {
+  ...
+  (dc: DataConnect, vars: UpsertUserFavoriteVariables): MutationRef<UpsertUserFavoriteData, UpsertUserFavoriteVariables>;
+}
+export const upsertUserFavoriteRef: UpsertUserFavoriteRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the upsertUserFavoriteRef:
+```typescript
+const name = upsertUserFavoriteRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `UpsertUserFavorite` mutation requires an argument of type `UpsertUserFavoriteVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface UpsertUserFavoriteVariables {
+  userId: string;
+  itemType: string;
+  itemId: string;
+}
+```
+### Return Type
+Recall that executing the `UpsertUserFavorite` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `UpsertUserFavoriteData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface UpsertUserFavoriteData {
+  userFavorite_upsert: UserFavorite_Key;
+}
+```
+### Using `UpsertUserFavorite`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, upsertUserFavorite, UpsertUserFavoriteVariables } from '@impact26/dataconnect-sdk';
+
+// The `UpsertUserFavorite` mutation requires an argument of type `UpsertUserFavoriteVariables`:
+const upsertUserFavoriteVars: UpsertUserFavoriteVariables = {
+  userId: ..., 
+  itemType: ..., 
+  itemId: ..., 
+};
+
+// Call the `upsertUserFavorite()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await upsertUserFavorite(upsertUserFavoriteVars);
+// Variables can be defined inline as well.
+const { data } = await upsertUserFavorite({ userId: ..., itemType: ..., itemId: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await upsertUserFavorite(dataConnect, upsertUserFavoriteVars);
+
+console.log(data.userFavorite_upsert);
+
+// Or, you can use the `Promise` API.
+upsertUserFavorite(upsertUserFavoriteVars).then((response) => {
+  const data = response.data;
+  console.log(data.userFavorite_upsert);
+});
+```
+
+### Using `UpsertUserFavorite`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, upsertUserFavoriteRef, UpsertUserFavoriteVariables } from '@impact26/dataconnect-sdk';
+
+// The `UpsertUserFavorite` mutation requires an argument of type `UpsertUserFavoriteVariables`:
+const upsertUserFavoriteVars: UpsertUserFavoriteVariables = {
+  userId: ..., 
+  itemType: ..., 
+  itemId: ..., 
+};
+
+// Call the `upsertUserFavoriteRef()` function to get a reference to the mutation.
+const ref = upsertUserFavoriteRef(upsertUserFavoriteVars);
+// Variables can be defined inline as well.
+const ref = upsertUserFavoriteRef({ userId: ..., itemType: ..., itemId: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = upsertUserFavoriteRef(dataConnect, upsertUserFavoriteVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.userFavorite_upsert);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.userFavorite_upsert);
+});
+```
+
+## DeleteUserFavorite
+You can execute the `DeleteUserFavorite` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+deleteUserFavorite(vars: DeleteUserFavoriteVariables): MutationPromise<DeleteUserFavoriteData, DeleteUserFavoriteVariables>;
+
+interface DeleteUserFavoriteRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteUserFavoriteVariables): MutationRef<DeleteUserFavoriteData, DeleteUserFavoriteVariables>;
+}
+export const deleteUserFavoriteRef: DeleteUserFavoriteRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+deleteUserFavorite(dc: DataConnect, vars: DeleteUserFavoriteVariables): MutationPromise<DeleteUserFavoriteData, DeleteUserFavoriteVariables>;
+
+interface DeleteUserFavoriteRef {
+  ...
+  (dc: DataConnect, vars: DeleteUserFavoriteVariables): MutationRef<DeleteUserFavoriteData, DeleteUserFavoriteVariables>;
+}
+export const deleteUserFavoriteRef: DeleteUserFavoriteRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the deleteUserFavoriteRef:
+```typescript
+const name = deleteUserFavoriteRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `DeleteUserFavorite` mutation requires an argument of type `DeleteUserFavoriteVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface DeleteUserFavoriteVariables {
+  userId: string;
+  itemType: string;
+  itemId: string;
+}
+```
+### Return Type
+Recall that executing the `DeleteUserFavorite` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `DeleteUserFavoriteData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface DeleteUserFavoriteData {
+  userFavorite_delete?: UserFavorite_Key | null;
+}
+```
+### Using `DeleteUserFavorite`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, deleteUserFavorite, DeleteUserFavoriteVariables } from '@impact26/dataconnect-sdk';
+
+// The `DeleteUserFavorite` mutation requires an argument of type `DeleteUserFavoriteVariables`:
+const deleteUserFavoriteVars: DeleteUserFavoriteVariables = {
+  userId: ..., 
+  itemType: ..., 
+  itemId: ..., 
+};
+
+// Call the `deleteUserFavorite()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await deleteUserFavorite(deleteUserFavoriteVars);
+// Variables can be defined inline as well.
+const { data } = await deleteUserFavorite({ userId: ..., itemType: ..., itemId: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await deleteUserFavorite(dataConnect, deleteUserFavoriteVars);
+
+console.log(data.userFavorite_delete);
+
+// Or, you can use the `Promise` API.
+deleteUserFavorite(deleteUserFavoriteVars).then((response) => {
+  const data = response.data;
+  console.log(data.userFavorite_delete);
+});
+```
+
+### Using `DeleteUserFavorite`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, deleteUserFavoriteRef, DeleteUserFavoriteVariables } from '@impact26/dataconnect-sdk';
+
+// The `DeleteUserFavorite` mutation requires an argument of type `DeleteUserFavoriteVariables`:
+const deleteUserFavoriteVars: DeleteUserFavoriteVariables = {
+  userId: ..., 
+  itemType: ..., 
+  itemId: ..., 
+};
+
+// Call the `deleteUserFavoriteRef()` function to get a reference to the mutation.
+const ref = deleteUserFavoriteRef(deleteUserFavoriteVars);
+// Variables can be defined inline as well.
+const ref = deleteUserFavoriteRef({ userId: ..., itemType: ..., itemId: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = deleteUserFavoriteRef(dataConnect, deleteUserFavoriteVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.userFavorite_delete);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.userFavorite_delete);
 });
 ```
 

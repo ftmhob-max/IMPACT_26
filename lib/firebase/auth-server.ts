@@ -25,7 +25,7 @@ export async function requireLearnerRequest(request: Request) {
     const decoded = bearer
       ? await adminAuth.verifyIdToken(bearer)
       : sessionCookie
-        ? await adminAuth.verifySessionCookie(decodeURIComponent(sessionCookie), true)
+        ? await adminAuth.verifySessionCookie(decodeURIComponent(sessionCookie), false)
         : null;
 
     if (!decoded) throw new Error("Unauthorized");

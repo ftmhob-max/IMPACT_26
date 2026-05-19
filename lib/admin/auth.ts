@@ -34,7 +34,7 @@ function resolveAdminRole(role: unknown): AdminRole | null {
 }
 
 async function decodeSessionCookieValue(sessionCookie: string) {
-  return adminAuth.verifySessionCookie(sessionCookie, true);
+  return adminAuth.verifySessionCookie(sessionCookie, false);
 }
 
 export async function getSessionFromCookie(): Promise<AdminSession | null> {
@@ -91,7 +91,7 @@ export async function requireAdminRequest(request: Request, minimumRole: AdminRo
     const decoded = bearer
       ? await adminAuth.verifyIdToken(bearer)
       : sessionCookie
-        ? await adminAuth.verifySessionCookie(decodeURIComponent(sessionCookie), true)
+        ? await adminAuth.verifySessionCookie(decodeURIComponent(sessionCookie), false)
         : null;
 
     if (!decoded) throw new Error("Missing admin session");

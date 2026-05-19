@@ -615,3 +615,18 @@ mutation DeleteLessonNote($id: UUID!) @auth(level: NO_ACCESS) {
   lessonNote_delete(id: $id)
 }
 
+# ─── Favorites ────────────────────────────────────────────────────────────────
+
+mutation UpsertUserFavorite($userId: String!, $itemType: String!, $itemId: String!) @auth(level: NO_ACCESS) {
+  userFavorite_upsert(data: {
+    user: { id: $userId }
+    itemType: $itemType
+    itemId: $itemId
+  })
+}
+
+mutation DeleteUserFavorite($userId: String!, $itemType: String!, $itemId: String!) @auth(level: NO_ACCESS) {
+  userFavorite_delete(key: { userId: $userId, itemType: $itemType, itemId: $itemId })
+}
+
+

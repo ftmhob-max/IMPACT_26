@@ -773,3 +773,25 @@ query GetLessonNoteForUserLesson($userId: String!, $lessonId: UUID!) @auth(level
     updatedAt
   }
 }
+
+# ─── Favorites ────────────────────────────────────────────────────────────────
+
+query GetUserFavorites($userId: String!) @auth(level: NO_ACCESS) {
+  userFavorites(where: { user: { id: { eq: $userId } } }, orderBy: { createdAt: DESC }) {
+    itemType
+    itemId
+    createdAt
+  }
+}
+
+query GetUserFavoritesByType($userId: String!, $itemType: String!) @auth(level: NO_ACCESS) {
+  userFavorites(
+    where: { user: { id: { eq: $userId } }, itemType: { eq: $itemType } }
+    orderBy: { createdAt: DESC }
+  ) {
+    itemType
+    itemId
+    createdAt
+  }
+}
+

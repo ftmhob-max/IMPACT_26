@@ -15,7 +15,6 @@ import * as Icons from "@/components/ui/Icons";
 import { getLearnerSession } from "@/lib/firebase/learner-session";
 import { adminDcQuery } from "@/lib/firebase/admin-dc";
 import { DEV_FORMULA_SECTIONS } from "@/lib/dev-content";
-import { getAdminFirestore } from "@/lib/firebase/admin-firestore";
 import { listUserFavorites } from "@/lib/firebase/favorites";
 import { dedupeFormulaSections } from "@/lib/formula-sections";
 import { DOMAINS, type Domain } from "@/lib/utils";
@@ -136,22 +135,25 @@ async function getFavoriteGlossaryTerms(userId: string): Promise<FavoriteGlossar
   if (favorites.length === 0) return [];
 
   try {
-    const db = getAdminFirestore();
-    const docs = await Promise.all(
-      favorites.map((favorite) => db.collection("glossaryTerms").doc(favorite.itemId).get())
-    );
+    const data = await adminDcQuery<{
+      glossaryTerms: Array<{
+        id: string;
+        term: string;
+        definition: string;
+        domain?: string | null;
+      }>;
+    }>("ListPublishedGlossaryTerms");
 
-    return docs
-      .filter((doc: any) => doc.exists && doc.data()?.isPublished)
-      .map((doc: any) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          term: data.term,
-          definition: data.definition,
-          domain: data.domain ?? null,
-        };
-      });
+    const favoriteIds = new Set(favorites.map((favorite) => favorite.itemId));
+
+    return (data.glossaryTerms ?? [])
+      .filter((term) => favoriteIds.has(term.id))
+      .map((term) => ({
+        id: term.id,
+        term: term.term,
+        definition: term.definition,
+        domain: term.domain ?? null,
+      }));
   } catch {
     return [];
   }

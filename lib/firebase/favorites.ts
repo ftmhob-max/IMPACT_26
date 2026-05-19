@@ -1,4 +1,4 @@
-import { getAdminFirestore, tryGetAdminFirestore, FieldValue } from "@/lib/firebase/admin-firestore";
+import { adminDcQuery, adminDcMutate } from "@/lib/firebase/admin-dc";
 
 export type FavoriteItemType = "formula" | "glossary";
 
@@ -13,43 +13,46 @@ export function favoriteDocId(userId: string, itemType: FavoriteItemType, itemId
   return `${userId}_${itemType}_${itemId}`;
 }
 
-export async function listUserFavorites(userId: string, itemType?: FavoriteItemType) {
-  const db = tryGetAdminFirestore();
-  if (!db) return [];
+export async function listUserFavorites(userId: string, itemType?: FavoriteItemType): Promise<FavoriteRecord[]> {
   try {
-    let query = db.collection("userFavorites").where("userId", "==", userId);
-    if (itemType) query = query.where("itemType", "==", itemType);
-    const snap = await query.get();
-    return snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() })) as FavoriteRecord[];
+    if (itemType) {
+      const data = await adminDcQuery<{ userFavorites: Array<{ itemType: string; itemId: string }> }>(
+        "GetUserFavoritesByType",
+        { userId, itemType }
+      );
+      return (data?.userFavorites || []).map((fav) => ({
+        id: favoriteDocId(userId, fav.itemType as FavoriteItemType, fav.itemId),
+        userId,
+        itemType: fav.itemType as FavoriteItemType,
+        itemId: fav.itemId,
+      }));
+    } else {
+      const data = await adminDcQuery<{ userFavorites: Array<{ itemType: string; itemId: string }> }>(
+        "GetUserFavorites",
+        { userId }
+      );
+      return (data?.userFavorites || []).map((fav) => ({
+        id: favoriteDocId(userId, fav.itemType as FavoriteItemType, fav.itemId),
+        userId,
+        itemType: fav.itemType as FavoriteItemType,
+        itemId: fav.itemId,
+      }));
+    }
   } catch (error) {
     console.warn("[favorites] Failed to list favorites", error);
     return [];
   }
 }
 
-export async function upsertUserFavorite(userId: string, itemType: FavoriteItemType, itemId: string) {
-  const db = getAdminFirestore();
+export async function upsertUserFavorite(userId: string, itemType: FavoriteItemType, itemId: string): Promise<string> {
   const id = favoriteDocId(userId, itemType, itemId);
-  const ref = db.collection("userFavorites").doc(id);
-  const existing = await ref.get();
-
-  await ref.set(
-    {
-      userId,
-      itemType,
-      itemId,
-      createdAt: existing.exists ? existing.data()?.createdAt ?? FieldValue.serverTimestamp() : FieldValue.serverTimestamp(),
-      updatedAt: FieldValue.serverTimestamp(),
-    },
-    { merge: true }
-  );
-
+  await adminDcMutate("UpsertUserFavorite", { userId, itemType, itemId });
   return id;
 }
 
-export async function deleteUserFavorite(userId: string, itemType: FavoriteItemType, itemId: string) {
-  const db = getAdminFirestore();
+export async function deleteUserFavorite(userId: string, itemType: FavoriteItemType, itemId: string): Promise<string> {
   const id = favoriteDocId(userId, itemType, itemId);
-  await db.collection("userFavorites").doc(id).delete();
+  await adminDcMutate("DeleteUserFavorite", { userId, itemType, itemId });
   return id;
 }
+

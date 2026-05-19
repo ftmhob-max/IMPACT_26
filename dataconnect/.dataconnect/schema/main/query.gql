@@ -446,6 +446,20 @@ extend type Query {
     first: UserCourseProgress_FirstRow
   ): UserCourseProgress @fdc_generated(from: "UserCourseProgress", purpose: QUERY_SINGLE)
   """
+  ✨ Look up a single `UserFavorite` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  userFavorite(
+    """
+    The key used to identify the object.
+    """
+    key: UserFavorite_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: UserFavorite_FirstRow
+  ): UserFavorite @fdc_generated(from: "UserFavorite", purpose: QUERY_SINGLE)
+  """
   ✨ Look up a single `UserLessonProgress` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
   userLessonProgress(
@@ -1275,6 +1289,40 @@ extend type Query {
     """
     having: UserCourseProgress_Having
   ): [UserCourseProgress!]! @fdc_generated(from: "UserCourseProgress", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `UserFavorite` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  userFavorites(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: UserFavorite_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [UserFavorite_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: UserFavorite_Having
+  ): [UserFavorite!]! @fdc_generated(from: "UserFavorite", purpose: QUERY_MULTIPLE)
   """
   ✨ List `UserLessonProgress` objects in the table and return selected fields, optionally filtered by `where` conditions
   """

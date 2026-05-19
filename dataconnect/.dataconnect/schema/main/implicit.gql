@@ -222,6 +222,12 @@ extend type UserCourseProgress {
   """
   courseId: UUID! @fdc_generated(from: "UserCourseProgress.course", purpose: IMPLICIT_REF_FIELD)
 }
+extend type UserFavorite {
+  """
+  ✨ Implicit foreign key field based on `UserFavorite`.`user`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  userId: String! @fdc_generated(from: "UserFavorite.user", purpose: IMPLICIT_REF_FIELD)
+}
 extend type UserLessonProgress {
   """
   ✨ Implicit foreign key field based on `UserLessonProgress`.`user`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
