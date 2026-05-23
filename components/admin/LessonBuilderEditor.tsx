@@ -38,6 +38,7 @@ interface Props {
   lessonId: string;
   initialContent: string | null;
   onContentChange?: (json: string) => void;
+  hideAuthorTools?: boolean;
 }
 
 interface FormulaLibraryItem extends LessonFormulaSnapshot {}
@@ -53,7 +54,11 @@ interface MaterialLibraryItem {
   status?: string;
   pages?: number | null;
   previewSnippet?: string;
+  hasAsset?: boolean;
+  hasExtractedText?: boolean;
+  characters?: number;
 }
+
 
 interface QuizLibraryItem {
   id: string;
@@ -91,7 +96,7 @@ const BLOCK_LIBRARY: Array<{
 ];
 
 export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(function LessonBuilderEditor(
-  { lessonId, initialContent, onContentChange }: Props,
+  { lessonId, initialContent, onContentChange, hideAuthorTools = false }: Props,
   ref
 ) {
   const [documentState, setDocumentState] = useState<StructuredLessonDocument>(() =>
@@ -105,9 +110,12 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
   const [librariesLoaded, setLibrariesLoaded] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [collapsedBlockIds, setCollapsedBlockIds] = useState<Set<string>>(new Set());
-  const [sidebarTab, setSidebarTab] = useState<"blocks" | "materials">("blocks");
+  const [sidebarTab, setSidebarTab] = useState<"blocks" | "materials" | "readiness">("blocks");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const latestSerialized = useRef(stringifyStructuredLessonContent(parseStructuredLessonContent(initialContent)));
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [insertingMaterialId, setInsertingMaterialId] = useState<string | null>(null);
+  const [justInsertedBlockId, setJustInsertedBlockId] = useState<string | null>(null);
 
   useEffect(() => {
     const next = parseStructuredLessonContent(initialContent);
@@ -142,6 +150,9 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
             status: material.status,
             pages: material.pages ?? null,
             previewSnippet: material.previewSnippet ?? "",
+            hasAsset: material.hasAsset,
+            hasExtractedText: material.hasExtractedText,
+            characters: material.characters,
           }))
         );
         setQuizzes((overviewData.quizzes ?? []) as QuizLibraryItem[]);
@@ -215,14 +226,17 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
 
   const updateDocument = useCallback(
     (updater: (draft: StructuredLessonDocument) => StructuredLessonDocument) => {
-      setDocumentState((current) => {
-        const next = updater(current);
-        queueSave(next);
-        return next;
-      });
+      setDocumentState(updater);
     },
-    [queueSave]
+    []
   );
+
+  useEffect(() => {
+    const serialized = stringifyStructuredLessonContent(documentState);
+    if (serialized !== latestSerialized.current) {
+      queueSave(documentState);
+    }
+  }, [documentState, queueSave]);
 
   const readinessIssues = useMemo(() => getLessonReadinessReport(documentState), [documentState]);
   const blockCounts = useMemo(
@@ -247,6 +261,62 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
       blocks: [...current.blocks, createDefaultLessonBlock(type)],
     }));
   }
+
+  const handleInsertMaterialBlock = useCallback(
+    async (material: MaterialLibraryItem, blockType: LessonBlockType) => {
+      setInsertingMaterialId(material.id);
+      let customFields: Partial<LessonBlock> = {};
+
+      if (blockType === "sourceReference") {
+        customFields = { materialId: material.id, title: material.title };
+      } else if (blockType === "document" || blockType === "download") {
+        customFields = { url: `/api/admin/materials/${material.id}/asset`, title: material.title };
+      } else if (blockType === "video") {
+        customFields = { videoUrl: `/api/admin/materials/${material.id}/asset`, title: material.title };
+      } else if (blockType === "audio") {
+        customFields = { audioUrl: `/api/admin/materials/${material.id}/asset`, title: material.title };
+      }
+
+      if (blockType === "richText" || blockType === "transcript" || blockType === "video" || blockType === "audio") {
+        try {
+          const res = await fetch(`/api/admin/materials/${material.id}/preview`);
+          if (res.ok) {
+            const data = await res.json();
+            const text = data?.preview?.extractedText || "";
+            if (blockType === "richText") {
+              const paragraphs = text.split("\n").map((p: string) => p.trim()).filter(Boolean);
+              const contentJson = paragraphs.length > 0
+                ? JSON.stringify({
+                    type: "doc",
+                    content: paragraphs.map((p: string) => ({
+                      type: "paragraph",
+                      content: [{ type: "text", text: p }]
+                    }))
+                  })
+                : JSON.stringify({ type: "doc", content: [{ type: "paragraph" }] });
+              customFields = { ...customFields, content: contentJson };
+            } else if (blockType === "transcript" || blockType === "video" || blockType === "audio") {
+              customFields = { ...customFields, transcript: text };
+            }
+          }
+        } catch (e) {
+          console.error("Failed to fetch material preview for transcript/text", e);
+        }
+      }
+
+      const blockId = `block-imported-${Date.now()}`;
+      updateDocument((current) => {
+        const base = createDefaultLessonBlock(blockType);
+        const block = { ...base, id: blockId, materialId: material.id, ...customFields } as LessonBlock;
+        return { ...current, blocks: [...current.blocks, block] };
+      });
+
+      setInsertingMaterialId(null);
+      setJustInsertedBlockId(blockId);
+      setTimeout(() => setJustInsertedBlockId(null), 2500);
+    },
+    [updateDocument]
+  );
 
   function insertBlockAt(index: number, type: LessonBlockType) {
     updateDocument((current) => {
@@ -322,7 +392,7 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
   }
 
   return (
-    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+    <div className={cn("lesson-builder-editor grid gap-5", (!hideAuthorTools && !sidebarCollapsed) ? "xl:grid-cols-[minmax(0,1fr)_360px]" : "grid-cols-1")}>
       <div className="space-y-5">
         <div className="rounded-2xl border border-black/10 bg-white shadow-sm">
           <div className="border-b border-slate-100 px-5 py-4">
@@ -338,7 +408,20 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
                   {blockCounts.required} required
                 </span>
               </div>
-              <AuthorConfidencePanel status={saveStatus} lastSavedAt={lastSavedAt} />
+              <div className="flex items-center gap-3">
+                <AuthorConfidencePanel status={saveStatus} lastSavedAt={lastSavedAt} />
+                {sidebarCollapsed && !hideAuthorTools && (
+                  <button
+                    type="button"
+                    onClick={() => setSidebarCollapsed(false)}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-[#185FA5] hover:text-[#185FA5]"
+                    title="Show side panel"
+                  >
+                    <Icons.PanelLeft size={13} />
+                    <span>Show tools</span>
+                  </button>
+                )}
+              </div>
             </div>
             <h3 className="mt-3 text-lg font-extrabold text-slate-950">Build the student experience from structured blocks</h3>
             <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">
@@ -346,8 +429,8 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
             </p>
           </div>
 
-          <div className="grid gap-4 px-5 py-5 lg:grid-cols-[minmax(0,1fr)_260px]">
-            <div className="space-y-4" id="lesson-summary-field">
+          <div className="space-y-5 px-5 py-5">
+            <div className="space-y-3" id="lesson-summary-field">
               <FieldLabel>Lesson summary</FieldLabel>
               <p className="text-xs leading-5 text-slate-500">
                 Answer three things up front: what students will learn, why it matters, and how they should use this lesson.
@@ -363,8 +446,8 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
               />
             </div>
 
-            <div className="space-y-4">
-              <div id="lesson-duration-field">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2" id="lesson-duration-field">
                 <FieldLabel>Estimated time (minutes)</FieldLabel>
                 <p className="mt-1 text-xs leading-5 text-slate-500">Keep this human-friendly so learners can budget their study time.</p>
                 <input
@@ -381,7 +464,7 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
                   placeholder="e.g. 18"
                 />
               </div>
-              <div id="lesson-completion-mode-field">
+              <div className="space-y-2" id="lesson-completion-mode-field">
                 <FieldLabel>Completion mode</FieldLabel>
                 <p className="mt-1 text-xs leading-5 text-slate-500">Choose whether learners can mark complete manually or only after reviewing every block.</p>
                 <select
@@ -492,109 +575,137 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
         </div>
       </div>
 
-      <aside className="space-y-5">
-        <div className="rounded-2xl border border-black/10 bg-white shadow-sm xl:sticky xl:top-5">
-          {/* Sidebar tab switcher */}
-          <div className="flex border-b border-slate-100">
-            <button
-              type="button"
-              onClick={() => setSidebarTab("blocks")}
-              className={cn(
-                "flex-1 py-3 text-[11px] font-extrabold uppercase tracking-[0.1em] transition-colors",
-                sidebarTab === "blocks" ? "border-b-2 border-[#185FA5] text-[#185FA5]" : "text-slate-400 hover:text-slate-700"
-              )}
-            >
-              Blocks
-            </button>
-            <button
-              type="button"
-              onClick={() => setSidebarTab("materials")}
-              className={cn(
-                "flex-1 py-3 text-[11px] font-extrabold uppercase tracking-[0.1em] transition-colors",
-                sidebarTab === "materials" ? "border-b-2 border-[#185FA5] text-[#185FA5]" : "text-slate-400 hover:text-slate-700"
-              )}
-            >
-              Materials
-            </button>
-          </div>
-
-          {sidebarTab === "blocks" && (
-            <>
-              <div className="border-b border-slate-100 px-5 py-4">
-                <p className="text-sm leading-6 text-slate-600">
-                  Add blocks by teaching intent instead of one long flat list.
-                </p>
-              </div>
-              <div className="space-y-4 px-4 py-4">
-                <BlockLibraryGroup title="Core learning" description="Teach, explain, and model." items={groupedLibrary.core} onAdd={addBlock} />
-                <BlockLibraryGroup title="Practice" description="Check understanding and create reflection moments." items={groupedLibrary.practice} onAdd={addBlock} />
-                <BlockLibraryGroup title="Support" description="Add references, downloads, and learning aids." items={groupedLibrary.support} onAdd={addBlock} />
-              </div>
-            </>
-          )}
-
-          {sidebarTab === "materials" && (
-            <MaterialsBrowserPanel
-              materials={materials}
-              loaded={librariesLoaded}
-              onInsert={(material) => {
-                updateDocument((current) => {
-                  const base = createDefaultLessonBlock("sourceReference");
-                  const block = { ...base, materialId: material.id, title: material.title } as typeof base;
-                  return { ...current, blocks: [...current.blocks, block] };
-                });
-              }}
-            />
-          )}
-        </div>
-
-        <div className="rounded-2xl border border-black/10 bg-white shadow-sm">
-          <div className="border-b border-slate-100 px-5 py-4">
-            <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#185FA5]">Publish readiness</p>
-            <p className="mt-1 text-sm leading-6 text-slate-600">
-              Resolve these issues before publishing to students.
-            </p>
-          </div>
-          <div className="space-y-3 px-5 py-5">
-            {readinessIssues.length === 0 ? (
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
-                This lesson is ready for preview and publish.
-              </div>
-            ) : (
-              readinessIssues.map((issue) => (
+      {!hideAuthorTools && !sidebarCollapsed && (
+        <aside className="space-y-5">
+          <div className="rounded-2xl border border-black/10 bg-white shadow-sm xl:sticky xl:top-5">
+            {/* Sidebar tab switcher */}
+            <div className="flex border-b border-slate-100 pr-1.5 items-center justify-between">
+              <div className="flex flex-1">
                 <button
-                  key={issue.id}
                   type="button"
-                  onClick={() => focusIssue(issue)}
+                  onClick={() => setSidebarTab("blocks")}
                   className={cn(
-                    "block w-full rounded-xl border px-4 py-3 text-left text-sm transition hover:shadow-sm",
-                    issue.severity === "required" && "border-amber-200 bg-amber-50 text-amber-900",
-                    issue.severity === "recommended" && "border-sky-200 bg-sky-50 text-sky-900",
-                    issue.severity === "polish" && "border-slate-200 bg-slate-50 text-slate-700"
+                    "flex-1 py-3 text-[11px] font-extrabold uppercase tracking-[0.1em] transition-colors",
+                    sidebarTab === "blocks" ? "border-b-2 border-[#185FA5] text-[#185FA5]" : "text-slate-400 hover:text-slate-700"
                   )}
                 >
-                  <div className="flex items-center gap-2">
-                    <SeverityBadge severity={issue.severity} />
-                    <span className="font-semibold">{issue.message}</span>
-                  </div>
-                  <p className="mt-2 text-xs opacity-80">
-                    {issue.blockId ? "Jump to this block" : "Jump to this lesson setup field"}
-                  </p>
+                  Blocks
                 </button>
-              ))
+                <button
+                  type="button"
+                  onClick={() => setSidebarTab("materials")}
+                  className={cn(
+                    "flex-1 py-3 text-[11px] font-extrabold uppercase tracking-[0.1em] transition-colors",
+                    sidebarTab === "materials" ? "border-b-2 border-[#185FA5] text-[#185FA5]" : "text-slate-400 hover:text-slate-700"
+                  )}
+                >
+                  Source
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSidebarTab("readiness")}
+                  className={cn(
+                    "flex-1 py-3 text-[11px] font-extrabold uppercase tracking-[0.1em] transition-colors flex items-center justify-center gap-1.5",
+                    sidebarTab === "readiness" ? "border-b-2 border-[#185FA5] text-[#185FA5]" : "text-slate-400 hover:text-slate-700"
+                  )}
+                >
+                  <span>Readiness</span>
+                  {readinessIssues.length > 0 && (
+                    <span className={cn(
+                      "rounded-full px-1.5 py-0.5 text-[9px] font-extrabold",
+                      sidebarTab === "readiness" ? "bg-[#185FA5] text-white" : "bg-slate-100 text-slate-500"
+                    )}>
+                      {readinessIssues.length}
+                    </span>
+                  )}
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSidebarCollapsed(true)}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition shrink-0 ml-1"
+                title="Collapse tools"
+                aria-label="Collapse tools"
+              >
+                <Icons.PanelRight size={15} />
+              </button>
+            </div>
+
+            {sidebarTab === "blocks" && (
+              <>
+                <div className="border-b border-slate-100 px-5 py-4">
+                  <p className="text-sm leading-6 text-slate-600">
+                    Add blocks by teaching intent instead of one long flat list.
+                  </p>
+                </div>
+                <div className="space-y-4 px-4 py-4">
+                  <BlockLibraryGroup title="Core learning" description="Teach, explain, and model." items={groupedLibrary.core} onAdd={addBlock} />
+                  <BlockLibraryGroup title="Practice" description="Check understanding and create reflection moments." items={groupedLibrary.practice} onAdd={addBlock} />
+                  <BlockLibraryGroup title="Support" description="Add references, downloads, and learning aids." items={groupedLibrary.support} onAdd={addBlock} />
+                </div>
+              </>
             )}
-            <button
-              type="button"
-              onClick={manualSave}
-              disabled={saveStatus === "saving"}
-              className="admin-action w-full flex items-center justify-center gap-2"
-            >
-              {saveStatus === "saving" ? <Icons.Loader size={13} className="animate-spin" /> : <Icons.Check size={13} />}
-              Save lesson canvas
-            </button>
+
+            {sidebarTab === "materials" && (
+              <MaterialsBrowserPanel
+                materials={materials}
+                loaded={librariesLoaded}
+                insertingMaterialId={insertingMaterialId}
+                onInsert={handleInsertMaterialBlock}
+              />
+            )}
+
+            {sidebarTab === "readiness" && (
+              <>
+                <div className="border-b border-slate-100 px-5 py-4">
+                  <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#185FA5]">Publish readiness</p>
+                  <p className="mt-1 text-sm leading-6 text-slate-600">
+                    Resolve these issues before publishing to students.
+                  </p>
+                </div>
+                <div className="space-y-3 px-5 py-5">
+                  {readinessIssues.length === 0 ? (
+                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+                      This lesson is ready for preview and publish.
+                    </div>
+                  ) : (
+                    readinessIssues.map((issue) => (
+                      <button
+                        key={issue.id}
+                        type="button"
+                        onClick={() => focusIssue(issue)}
+                        className={cn(
+                          "block w-full rounded-xl border px-4 py-3 text-left text-sm transition hover:shadow-sm",
+                          issue.severity === "required" && "border-amber-200 bg-amber-50 text-amber-900",
+                          issue.severity === "recommended" && "border-sky-200 bg-sky-50 text-sky-900",
+                          issue.severity === "polish" && "border-slate-200 bg-slate-50 text-slate-700"
+                        )}
+                      >
+                        <div className="flex items-center gap-2 animate-pulse">
+                          <SeverityBadge severity={issue.severity} />
+                          <span className="font-semibold">{issue.message}</span>
+                        </div>
+                        <p className="mt-2 text-xs opacity-80">
+                          {issue.blockId ? "Jump to this block" : "Jump to this lesson setup field"}
+                        </p>
+                      </button>
+                    ))
+                  )}
+                  <button
+                    type="button"
+                    onClick={manualSave}
+                    disabled={saveStatus === "saving"}
+                    className="admin-action w-full flex items-center justify-center gap-2"
+                  >
+                    {saveStatus === "saving" ? <Icons.Loader size={13} className="animate-spin" /> : <Icons.Check size={13} />}
+                    Save lesson canvas
+                  </button>
+                </div>
+              </>
+            )}
           </div>
-        </div>
-      </aside>
+        </aside>
+      )}
     </div>
   );
 });
@@ -697,6 +808,27 @@ function BlockEditorCard({
               </div>
             </div>
           </div>
+
+          {blockCategoryForType(block.type) !== "practice" && block.type !== "sourceReference" && (
+            <div className="border-t border-slate-100 pt-4">
+              <FieldLabel>Linked source material</FieldLabel>
+              <div className="mt-2">
+                <MaterialPickerField
+                  materials={getFilteredMaterialsForBlock(materials, block.type, block.materialId)}
+                  value={block.materialId ?? ""}
+                  onChange={(id) => onChange({ ...block, materialId: id })}
+                />
+              </div>
+              {block.materialId && materials.find((m) => m.id === block.materialId)?.previewSnippet && (
+                <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-1">Material preview</p>
+                  <p className="text-xs leading-5 text-slate-600 line-clamp-3">
+                    {materials.find((m) => m.id === block.materialId)?.previewSnippet}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           <BlockSpecificFields
             block={block}
@@ -847,13 +979,17 @@ function MaterialPickerField({
 function MaterialsBrowserPanel({
   materials,
   loaded,
+  insertingMaterialId,
   onInsert,
 }: {
   materials: MaterialLibraryItem[];
   loaded: boolean;
-  onInsert: (material: MaterialLibraryItem) => void;
+  insertingMaterialId: string | null;
+  onInsert: (material: MaterialLibraryItem, type: LessonBlockType) => void;
 }) {
   const [query, setQuery] = useState("");
+  const [expandedMaterialId, setExpandedMaterialId] = useState<string | null>(null);
+
   const filtered = query.trim()
     ? materials.filter((m) => m.title.toLowerCase().includes(query.toLowerCase()))
     : materials;
@@ -873,8 +1009,8 @@ function MaterialsBrowserPanel({
   return (
     <>
       <div className="border-b border-slate-100 px-4 py-3">
-        <p className="text-sm leading-6 text-slate-600">
-          Browse source materials and add them directly as blocks.
+        <p className="text-xs leading-6 text-slate-500">
+          Insert items from your source materials into the lesson.
         </p>
         <input
           type="search"
@@ -898,6 +1034,7 @@ function MaterialsBrowserPanel({
           <div className="space-y-2">
             {filtered.map((material) => {
               const Icon = kindIcon(material.kind);
+              const isExpanded = expandedMaterialId === material.id;
               return (
                 <div
                   key={material.id}
@@ -916,6 +1053,9 @@ function MaterialsBrowserPanel({
                         {material.pages ? (
                           <span className="text-[10px] text-slate-400">{material.pages}p</span>
                         ) : null}
+                        {material.characters ? (
+                          <span className="text-[10px] text-slate-400">{(material.characters).toLocaleString()} chars</span>
+                        ) : null}
                       </div>
                       {material.previewSnippet && (
                         <p className="mt-1 text-[10px] leading-4 text-slate-400 line-clamp-2">
@@ -924,13 +1064,124 @@ function MaterialsBrowserPanel({
                       )}
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => onInsert(material)}
-                    className="mt-2.5 w-full rounded-lg border border-[#185FA5]/30 bg-[#E6F1FB]/60 py-1.5 text-[11px] font-semibold text-[#185FA5] transition hover:bg-[#E6F1FB]"
-                  >
-                    + Add to lesson
-                  </button>
+
+                  {isExpanded ? (
+                    <div className="space-y-2 mt-3 pt-3 border-t border-slate-100">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold uppercase text-slate-400">Insert Options</span>
+                        <button
+                          type="button"
+                          onClick={() => setExpandedMaterialId(null)}
+                          className="text-[10px] font-semibold text-[#185FA5] hover:underline"
+                        >
+                          Collapse
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => onInsert(material, "sourceReference")}
+                          className="flex flex-col items-center gap-1.5 rounded-lg border border-slate-200 bg-white p-2.5 text-center text-[10px] font-bold text-slate-700 transition hover:border-[#185FA5] hover:bg-slate-50"
+                        >
+                          <Icons.Database size={14} className="text-slate-500" />
+                          <span>Citation</span>
+                        </button>
+                        
+                        {material.kind === "video" && (
+                          <button
+                            type="button"
+                            disabled={insertingMaterialId === material.id}
+                            onClick={() => onInsert(material, "video")}
+                            className="flex flex-col items-center gap-1.5 rounded-lg border border-slate-200 bg-white p-2.5 text-center text-[10px] font-bold text-slate-700 transition hover:border-[#185FA5] hover:bg-slate-50 disabled:opacity-50"
+                          >
+                            {insertingMaterialId === material.id ? (
+                              <Icons.Loader size={14} className="animate-spin text-[#185FA5]" />
+                            ) : (
+                              <Icons.Video size={14} className="text-slate-500" />
+                            )}
+                            <span>Video Block</span>
+                          </button>
+                        )}
+
+                        {material.kind === "audio" && (
+                          <button
+                            type="button"
+                            disabled={insertingMaterialId === material.id}
+                            onClick={() => onInsert(material, "audio")}
+                            className="flex flex-col items-center gap-1.5 rounded-lg border border-slate-200 bg-white p-2.5 text-center text-[10px] font-bold text-slate-700 transition hover:border-[#185FA5] hover:bg-slate-50 disabled:opacity-50"
+                          >
+                            {insertingMaterialId === material.id ? (
+                              <Icons.Loader size={14} className="animate-spin text-[#185FA5]" />
+                            ) : (
+                              <Icons.List size={14} className="text-slate-500" />
+                            )}
+                            <span>Audio Block</span>
+                          </button>
+                        )}
+
+                        {(material.hasExtractedText || (material.characters ?? 0) > 0) && (
+                          <>
+                            <button
+                              type="button"
+                              disabled={insertingMaterialId === material.id}
+                              onClick={() => onInsert(material, "richText")}
+                              className="flex flex-col items-center gap-1.5 rounded-lg border border-slate-200 bg-white p-2.5 text-center text-[10px] font-bold text-slate-700 transition hover:border-[#185FA5] hover:bg-slate-50 disabled:opacity-50"
+                            >
+                              {insertingMaterialId === material.id ? (
+                                <Icons.Loader size={14} className="animate-spin text-[#185FA5]" />
+                              ) : (
+                                <Icons.FileText size={14} className="text-slate-500" />
+                              )}
+                              <span>Text Block</span>
+                            </button>
+                            <button
+                              type="button"
+                              disabled={insertingMaterialId === material.id}
+                              onClick={() => onInsert(material, "transcript")}
+                              className="flex flex-col items-center gap-1.5 rounded-lg border border-slate-200 bg-white p-2.5 text-center text-[10px] font-bold text-slate-700 transition hover:border-[#185FA5] hover:bg-slate-50 disabled:opacity-50"
+                            >
+                              {insertingMaterialId === material.id ? (
+                                <Icons.Loader size={14} className="animate-spin text-[#185FA5]" />
+                              ) : (
+                                <Icons.FileCode size={14} className="text-slate-500" />
+                              )}
+                              <span>Transcript</span>
+                            </button>
+                          </>
+                        )}
+
+                        {material.hasAsset && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => onInsert(material, "document")}
+                              className="flex flex-col items-center gap-1.5 rounded-lg border border-slate-200 bg-white p-2.5 text-center text-[10px] font-bold text-slate-700 transition hover:border-[#185FA5] hover:bg-slate-50"
+                            >
+                              <Icons.Eye size={14} className="text-slate-500" />
+                              <span>Doc Viewer</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => onInsert(material, "download")}
+                              className="flex flex-col items-center gap-1.5 rounded-lg border border-slate-200 bg-white p-2.5 text-center text-[10px] font-bold text-slate-700 transition hover:border-[#185FA5] hover:bg-slate-50"
+                            >
+                              <Icons.Upload size={14} className="text-slate-500 rotate-180" />
+                              <span>Download</span>
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setExpandedMaterialId(material.id)}
+                      className="mt-2.5 flex items-center justify-center gap-1 w-full rounded-lg border border-[#185FA5]/30 bg-[#E6F1FB]/60 py-1.5 text-[11px] font-semibold text-[#185FA5] transition hover:bg-[#E6F1FB]"
+                    >
+                      <span>Insert as block…</span>
+                      <Icons.ChevronDown size={12} />
+                    </button>
+                  )}
                 </div>
               );
             })}
@@ -1456,4 +1707,38 @@ function SaveIndicator({ status }: { status: SaveStatus }) {
   if (status === "saving") return <span className="text-[11px] font-bold text-slate-400">Saving…</span>;
   if (status === "unsaved") return <span className="text-[11px] font-bold text-amber-500">Unsaved changes</span>;
   return <span className="text-[11px] font-bold text-red-500">Save failed</span>;
+}
+
+function getFilteredMaterialsForBlock(
+  materials: MaterialLibraryItem[],
+  blockType: LessonBlockType,
+  selectedId?: string
+): MaterialLibraryItem[] {
+  const filtered = (() => {
+    switch (blockType) {
+      case "audio":
+        return materials.filter((m) => m.kind === "audio");
+      case "video":
+        return materials.filter((m) => m.kind === "video");
+      case "image":
+        return materials.filter((m) => m.kind === "image");
+      case "document":
+      case "download":
+        return materials.filter((m) => m.kind === "document");
+      case "richText":
+      case "transcript":
+        return materials.filter((m) => m.kind === "document" || m.hasExtractedText);
+      default:
+        return materials;
+    }
+  })();
+
+  if (selectedId && !filtered.some((m) => m.id === selectedId)) {
+    const selectedMaterial = materials.find((m) => m.id === selectedId);
+    if (selectedMaterial) {
+      return [selectedMaterial, ...filtered];
+    }
+  }
+
+  return filtered;
 }

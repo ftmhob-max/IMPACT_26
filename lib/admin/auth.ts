@@ -52,7 +52,7 @@ export async function getSessionFromCookie(): Promise<AdminSession | null> {
       fullName: decoded.name,
       role,
     };
-  } catch {
+  } catch (e) {
     return null;
   }
 }
@@ -65,7 +65,7 @@ export async function requireAdminPage(minimumRole: AdminRole = "viewer") {
   let decoded: Awaited<ReturnType<typeof decodeSessionCookieValue>>;
   try {
     decoded = await decodeSessionCookieValue(sessionCookie);
-  } catch {
+  } catch (e) {
     redirect("/sign-in?redirect=/admin");
   }
 
@@ -87,9 +87,13 @@ export async function requireAdminRequest(request: Request, minimumRole: AdminRo
   const bearer = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
   const sessionCookie = request.headers.get("Cookie")?.match(/(?:^|;\s*)__session=([^;]+)/)?.[1];
 
+  const url = new URL(request.url);
+  const queryToken = url.searchParams.get("token") || url.searchParams.get("idToken");
+  const tokenToVerify = bearer || queryToken;
+
   try {
-    const decoded = bearer
-      ? await adminAuth.verifyIdToken(bearer)
+    const decoded = tokenToVerify
+      ? await adminAuth.verifyIdToken(tokenToVerify)
       : sessionCookie
         ? await adminAuth.verifySessionCookie(decodeURIComponent(sessionCookie), false)
         : null;
@@ -111,7 +115,7 @@ export async function requireAdminRequest(request: Request, minimumRole: AdminRo
     }
     await ensureDataConnectUser(session);
     return { ok: true as const, session };
-  } catch {
+  } catch (e) {
     return { ok: false as const, response: Response.json({ error: "Unauthorized" }, { status: 401 }) };
   }
 }
@@ -123,7 +127,7 @@ export async function ensureDataConnectUser(session: Pick<AdminSession, "uid" | 
       email: session.email || `${session.uid}@impact26.local`,
       fullName: session.fullName ?? null,
     });
-  } catch {
+  } catch (e) {
     // Idempotent helper: duplicate inserts are expected after first login.
   }
 }

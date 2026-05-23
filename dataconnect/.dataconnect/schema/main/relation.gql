@@ -537,6 +537,64 @@ extend type Course {
   """
   _id: ID! @fdc_generated(from: "Course.id", purpose: ENTITY_ID)
 }
+extend type CustomDomain {
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "CustomDomain", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `CustomDomain` table.
+  """
+  _count: Int! @fdc_generated(from: "CustomDomain.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `CustomDomain` table where the `createdAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "CustomDomain.createdAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `CustomDomain` table where the `createdById` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdById_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "CustomDomain.createdById", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `CustomDomain` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "CustomDomain.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `CustomDomain` table where the `name` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  name_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "CustomDomain.name", purpose: QUERY_COUNT)
+  """
+  ✨ Minimum of the `createdAt` field in the `CustomDomain` table.
+  """
+  createdAt_min: Date @fdc_generated(from: "CustomDomain.createdAt", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `createdAt` field in the `CustomDomain` table.
+  """
+  createdAt_max: Date @fdc_generated(from: "CustomDomain.createdAt", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "CustomDomain.id", purpose: ENTITY_ID)
+}
 extend type Formula {
   """
   Implicit metadata field that cannot be written. It provides extra information about query results.
@@ -564,6 +622,15 @@ extend type Formula {
     """
     distinct: Boolean = false
   ): Int! @fdc_generated(from: "Formula.code", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Formula` table where the `examplesJson` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  examplesJson_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Formula.examplesJson", purpose: QUERY_COUNT)
   """
   ✨ Count the number of rows in the `Formula` table where the `expression` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
   """
@@ -4297,6 +4364,40 @@ extend type User {
     """
     having: Course_Having
   ): [Course!]! @fdc_generated(from: "Course.updatedBy", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `CustomDomain` objects in a one-to-many relationship (where `CustomDomain`.`createdBy` is this object).
+  """
+  customDomains_on_createdBy(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: CustomDomain_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [CustomDomain_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: CustomDomain_Having
+  ): [CustomDomain!]! @fdc_generated(from: "CustomDomain.createdBy", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
   """
   ✨ List `GlossaryNote` objects in a one-to-many relationship (where `GlossaryNote`.`user` is this object).
   """

@@ -4,6 +4,7 @@ import { type DragEvent, type ReactNode, useCallback, useEffect, useMemo, useSta
 import * as Icons from "@/components/ui/Icons";
 import { adminFetch } from "@/lib/admin/client-fetch";
 import { cn } from "@/lib/utils";
+import { DomainCombobox } from "@/components/admin/DomainCombobox";
 import { QuestionBankPicker } from "@/components/admin/QuestionBankPicker";
 import { CalculatorAccessSettings } from "@/components/admin/CalculatorAccessSettings";
 import { QuizQuickImportPanel } from "@/components/admin/QuizQuickImportPanel";
@@ -1028,7 +1029,7 @@ function QuizQuestionCard({
                 </div>
                 <div>
                   <label className="admin-label">Domain</label>
-                  <input className="admin-input" value={draft.domain} onChange={(e) => setDraft((p) => ({ ...p, domain: e.target.value }))} />
+                  <DomainCombobox value={draft.domain} onChange={(val) => setDraft((p) => ({ ...p, domain: val }))} />
                 </div>
               </div>
               <div>

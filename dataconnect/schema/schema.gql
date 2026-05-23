@@ -300,6 +300,7 @@ type Formula @table(name: "formulas", singular: "formula", plural: "formulas") {
   notes: String @col(dataType: "text")
   position: Int!
   calcMetaJson: String @col(dataType: "text")
+  examplesJson: String @col(dataType: "text")
 }
 
 # ─── Glossary ─────────────────────────────────────────────────────────────────
@@ -346,6 +347,15 @@ type UserFavorite @table(name: "user_favorites", singular: "userFavorite", plura
   user: User!
   itemType: String! @col(dataType: "text") # "formula" | "glossary"
   itemId: String! @col(dataType: "text")
+  createdAt: Date! @default(expr: "request.time")
+}
+
+# ─── Custom Domains ───────────────────────────────────────────────────────────
+
+type CustomDomain @table(name: "custom_domains", singular: "customDomain", plural: "customDomains") {
+  id: UUID! @col(name: "id") @default(expr: "uuidV4()")
+  name: String! @col(dataType: "text")
+  createdBy: User @ref
   createdAt: Date! @default(expr: "request.time")
 }
 

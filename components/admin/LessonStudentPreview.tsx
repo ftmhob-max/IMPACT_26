@@ -1,7 +1,13 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import * as Icons from "@/components/ui/Icons";
+import { getIdToken } from "@/lib/firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/lib/firebase/client";
 import { StructuredLessonExperience } from "@/components/lessons/StructuredLessonExperience";
+import { LessonMuxPlayer } from "@/components/platform/LessonMuxPlayer";
+import { parseVideoUrl } from "@/lib/video-url";
 
 interface QuizInfo {
   id: string;
@@ -21,6 +27,7 @@ interface LessonData {
   videoPlaybackId?: string | null;
   videoUrl?: string | null;
   quiz?: QuizInfo | null;
+  sourceMaterial?: { id: string; title: string } | null;
 }
 
 interface Props {
@@ -28,7 +35,28 @@ interface Props {
 }
 
 export function LessonStudentPreview({ lesson }: Props) {
+  const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    return onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          const t = await user.getIdToken();
+          setToken(t);
+        } catch {
+          setToken(null);
+        }
+      } else {
+        setToken(null);
+      }
+    });
+  }, []);
+
   if (!lesson.contentJson && lesson.lessonType === "video") {
+    let resolvedVideoUrl = lesson.videoUrl || (lesson.sourceMaterial ? `/api/admin/materials/${lesson.sourceMaterial.id}/asset` : "");
+    if (resolvedVideoUrl && resolvedVideoUrl.startsWith("/api/") && token) {
+      resolvedVideoUrl = `${resolvedVideoUrl}${resolvedVideoUrl.includes("?") ? "&" : "?"}token=${encodeURIComponent(token)}`;
+    }
     return (
       <div className="space-y-4">
         <PreviewBanner />
@@ -38,15 +66,20 @@ export function LessonStudentPreview({ lesson }: Props) {
             <h2 className="mt-1 text-xl font-extrabold text-slate-950">{lesson.title}</h2>
           </div>
           <div className="p-6">
-            {lesson.videoPlaybackId || lesson.videoUrl ? (
+            {lesson.videoPlaybackId ? (
               <div className="relative aspect-video overflow-hidden rounded-xl bg-slate-950">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Icons.Video size={40} className="text-slate-600" />
-                </div>
-                <div className="absolute bottom-3 left-3 rounded bg-black/70 px-2 py-1 text-[10px] font-semibold text-white">
-                  Preview mode
-                </div>
+                <LessonMuxPlayer lessonId={lesson.id} playbackId={lesson.videoPlaybackId} title={lesson.title} />
               </div>
+            ) : resolvedVideoUrl ? (
+              resolvedVideoUrl.startsWith("/") || resolvedVideoUrl.includes("materials") ? (
+                <div className="relative aspect-video overflow-hidden rounded-xl bg-slate-950">
+                  <video controls src={resolvedVideoUrl} className="h-full w-full object-contain" />
+                </div>
+              ) : (
+                <div className="relative aspect-video overflow-hidden rounded-xl bg-slate-950">
+                  <iframe src={parseVideoUrl(resolvedVideoUrl)?.embedUrl || ""} className="h-full w-full" allow="autoplay; fullscreen" allowFullScreen title="Video preview" />
+                </div>
+              )
             ) : (
               <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-6 py-12 text-center text-sm text-slate-400">
                 No video attached yet.

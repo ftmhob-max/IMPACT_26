@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { DOMAINS, DIFFICULTIES } from "@/lib/utils";
 import * as Icons from "@/components/ui/Icons";
+import { DomainCombobox } from "@/components/admin/DomainCombobox";
 
 interface Quiz {
   id: string;
@@ -148,11 +149,7 @@ export function ManualQuestionPanel({ quizzes, onSaved }: ManualQuestionPanelPro
         </div>
         <div>
           <label className="admin-label">Domain</label>
-          <select className="admin-input" value={form.domain} onChange={(e) => setField("domain", e.target.value)}>
-            {Object.entries(DOMAINS).map(([key, item]) => (
-              <option key={key} value={key}>{item.label}</option>
-            ))}
-          </select>
+          <DomainCombobox value={form.domain} onChange={(val) => setField("domain", val)} />
         </div>
       </div>
 

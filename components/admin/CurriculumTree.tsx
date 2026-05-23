@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import * as Icons from "@/components/ui/Icons";
 import { adminFetch } from "@/lib/admin/client-fetch";
 import { cn } from "@/lib/utils";
@@ -313,7 +314,7 @@ export function CurriculumTree({
   }
 
   return (
-    <div className="flex gap-6">
+    <div className="course-editor flex gap-6">
       {/* Tree */}
       <div className="flex-1 min-w-0 space-y-4">
         {notice && (
@@ -451,10 +452,10 @@ function CourseNode({
   const publishedLessons = course.modules_on_course.reduce((s, m) => s + m.lessons_on_module.filter((l) => l.isPublished).length, 0);
 
   return (
-    <div className="rounded-xl border border-black/10 bg-white shadow-sm overflow-hidden">
+    <div className="course-tree-card rounded-xl border border-black/10 bg-white shadow-sm overflow-hidden">
       {/* Course header */}
-      <div className="flex items-center gap-2 px-4 py-3 bg-[#E6F1FB]/30 border-b border-slate-100">
-        <button type="button" onClick={onToggle} className="flex items-center gap-1.5 shrink-0">
+      <div className="course-tree-course-row flex items-center gap-2 px-4 py-3 bg-[#E6F1FB]/30 border-b border-slate-100">
+        <button type="button" onClick={onToggle} className="course-tree-icon-button flex items-center gap-1.5 shrink-0">
           {expanded ? <Icons.ChevronDown size={15} className="text-slate-400" /> : <Icons.ChevronRight size={15} className="text-slate-400" />}
         </button>
         <Icons.GraduationCap size={16} className="text-[#185FA5] shrink-0" />
@@ -487,10 +488,10 @@ function CourseNode({
           >
             {course.isPublished ? "Published" : "Publish"}
           </button>
-          <button type="button" onClick={() => onEdit({ type: "course", item: course })} className="p-1.5 text-slate-400 hover:text-[#185FA5] transition-colors rounded">
+          <button type="button" onClick={() => onEdit({ type: "course", item: course })} className="course-tree-icon-button p-1.5 text-slate-400 hover:text-[#185FA5] transition-colors rounded">
             <Icons.Pencil size={13} />
           </button>
-          <button type="button" onClick={onAddModule} className="p-1.5 text-slate-400 hover:text-[#185FA5] transition-colors rounded" title="Add module">
+          <button type="button" onClick={onAddModule} className="course-tree-icon-button p-1.5 text-slate-400 hover:text-[#185FA5] transition-colors rounded" title="Add module">
             <Icons.Plus size={13} />
           </button>
         </div>
@@ -570,9 +571,9 @@ function ModuleNode({
   const allPublished = lessonIds.length > 0 && publishedCount === lessonIds.length;
 
   return (
-    <div className="pl-4">
-      <div className="flex items-center gap-2 px-3 py-2.5 bg-slate-50/50">
-        <button type="button" onClick={onToggle} className="flex items-center gap-2 flex-1 min-w-0 text-left">
+    <div className="course-tree-module pl-4">
+      <div className="course-tree-module-row flex items-center gap-2 px-3 py-2.5 bg-slate-50/50">
+        <button type="button" onClick={onToggle} className="course-tree-icon-button flex items-center gap-2 flex-1 min-w-0 text-left">
           {expanded ? <Icons.ChevronDown size={13} className="text-slate-300 shrink-0" /> : <Icons.ChevronRight size={13} className="text-slate-300 shrink-0" />}
           <Icons.BookMarked size={14} className="text-slate-400 shrink-0" />
           <span className="text-sm font-medium text-slate-700 truncate">{module.title}</span>
@@ -630,25 +631,25 @@ function ModuleNode({
               </button>
             </>
           )}
-          <button type="button" onClick={() => onEdit({ type: "module", item: module, courseId })} className="p-1 text-slate-300 hover:text-slate-600 transition-colors rounded">
+          <button type="button" onClick={() => onEdit({ type: "module", item: module, courseId })} className="course-tree-icon-button p-1 text-slate-300 hover:text-slate-600 transition-colors rounded">
             <Icons.Pencil size={12} />
           </button>
           <button
             type="button"
             onClick={() => onDeleteModule(module.id, module.title)}
-            className="p-1 text-slate-300 hover:text-red-600 transition-colors rounded"
+            className="course-tree-icon-button p-1 text-slate-300 hover:text-red-600 transition-colors rounded"
             title="Delete module"
           >
             <Icons.Trash2 size={12} />
           </button>
-          <button type="button" onClick={onAddLesson} className="p-1 text-slate-300 hover:text-slate-600 transition-colors rounded" title="Add lesson">
+          <button type="button" onClick={onAddLesson} className="course-tree-icon-button p-1 text-slate-300 hover:text-slate-600 transition-colors rounded" title="Add lesson">
             <Icons.Plus size={12} />
           </button>
         </div>
       </div>
 
       {expanded && (
-        <div className="pl-4 divide-y divide-slate-50/80">
+        <div className="course-tree-lessons pl-4 divide-y divide-slate-50/80">
           {module.lessons_on_module.map((lesson) => (
             <LessonRow
               key={lesson.id}
@@ -705,7 +706,7 @@ function LessonRow({
   const TypeIcon = typeIcons[lesson.lessonType] ?? Icons.FileText;
 
   return (
-    <div className="flex items-center gap-2 px-3 py-2 group hover:bg-slate-50 transition-colors">
+    <div className="course-tree-lesson-row flex items-center gap-2 px-3 py-2 group hover:bg-slate-50 transition-colors">
       <input
         type="checkbox"
         checked={selected}
@@ -715,7 +716,13 @@ function LessonRow({
       />
       <Icons.GripVertical size={12} className="text-slate-200 shrink-0" />
       <TypeIcon size={13} className="text-slate-400 shrink-0" />
-      <span className="flex-1 min-w-0 text-xs text-slate-600 truncate">{lesson.title}</span>
+      <Link
+        href={`/admin/courses/${courseId}?lesson=${lesson.id}`}
+        className="flex-1 min-w-0 text-xs text-slate-600 truncate hover:text-[#185FA5] transition-colors"
+        title="Open in lesson editor"
+      >
+        {lesson.title}
+      </Link>
       <div className="flex items-center gap-1.5 shrink-0">
         <LessonTypeBadge type={lesson.lessonType} />
         {/* Quick publish toggle */}
@@ -735,17 +742,25 @@ function LessonRow({
         {lesson.durationSeconds && (
           <span className="text-[10px] text-slate-400">{Math.ceil(lesson.durationSeconds / 60)}m</span>
         )}
+        <Link
+          href={`/admin/courses/${courseId}?lesson=${lesson.id}`}
+          className="course-tree-icon-button p-1 text-slate-200 hover:text-[#185FA5] transition-colors rounded opacity-0 group-hover:opacity-100"
+          title="Open in lesson editor"
+        >
+          <Icons.ArrowRight size={12} />
+        </Link>
         <button
           type="button"
           onClick={() => onEdit({ type: "lesson", item: lesson, moduleId, courseId })}
-          className="p-1 text-slate-200 hover:text-slate-600 transition-colors rounded opacity-0 group-hover:opacity-100"
+          className="course-tree-icon-button p-1 text-slate-200 hover:text-slate-600 transition-colors rounded opacity-0 group-hover:opacity-100"
+          title="Edit metadata"
         >
           <Icons.Pencil size={12} />
         </button>
         <button
           type="button"
           onClick={onDelete}
-          className="p-1 text-slate-200 hover:text-red-600 transition-colors rounded opacity-0 group-hover:opacity-100"
+          className="course-tree-icon-button p-1 text-slate-200 hover:text-red-600 transition-colors rounded opacity-0 group-hover:opacity-100"
           title="Delete lesson"
         >
           <Icons.Trash2 size={12} />

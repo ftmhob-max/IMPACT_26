@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { adminFetch } from "@/lib/admin/client-fetch";
 import { DOMAINS, DIFFICULTIES } from "@/lib/utils";
 import * as Icons from "@/components/ui/Icons";
+import { DomainCombobox } from "@/components/admin/DomainCombobox";
 import { FormulasPanel } from "@/components/admin/FormulasPanel";
 
 type Overview = {
@@ -106,7 +107,7 @@ export function AdminPortal({ initialOverview = emptyOverview }: { initialOvervi
     <div className="min-h-screen bg-[#f0efe9] px-4 py-5 text-slate-900 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-5">
         <section className="overflow-hidden rounded-[28px] border border-black/10 bg-white shadow-sm">
-          <div className="border-b border-slate-100 bg-[radial-gradient(circle_at_top_left,_rgba(24,95,165,0.14),_transparent_34%),linear-gradient(135deg,#f8fbff_0%,#ffffff_44%,#f7f4ec_100%)] px-5 py-6 sm:px-6 lg:px-7">
+          <div className="admin-dashboard-hero border-b border-slate-100 bg-[radial-gradient(circle_at_top_left,_rgba(24,95,165,0.14),_transparent_34%),linear-gradient(135deg,#f8fbff_0%,#ffffff_44%,#f7f4ec_100%)] px-5 py-6 sm:px-6 lg:px-7">
             <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr] xl:items-end">
               <div className="space-y-5">
                 <div className="flex items-start gap-4">
@@ -529,7 +530,7 @@ function HeroCallout({
     amber: "border-amber-200 bg-amber-50 text-amber-800",
   }[tone];
 
-  const classes = `rounded-2xl border p-4 transition-all hover:-translate-y-0.5 hover:shadow-sm ${toneClasses}`;
+  const classes = `admin-hero-callout rounded-2xl border p-4 transition-all hover:-translate-y-0.5 hover:shadow-sm ${toneClasses}`;
   const content = (
     <>
       <div className="flex items-start gap-3">
@@ -564,7 +565,7 @@ function QuickActionCard({
   return (
     <a
       href={href}
-      className="group rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 transition-all hover:-translate-y-0.5 hover:border-[#b8d7f0] hover:bg-white hover:shadow-sm"
+      className="group admin-quick-action rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 transition-all hover:-translate-y-0.5 hover:border-[#b8d7f0] hover:bg-white hover:shadow-sm"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-[#185FA5] shadow-sm ring-1 ring-slate-100">
@@ -810,9 +811,7 @@ function ManualQuestionForm({ quizzes, onSaved }: { quizzes: any[]; onSaved: () 
         <select className="admin-input" value={form.difficulty} onChange={(event) => setForm({ ...form, difficulty: event.target.value })}>
           {Object.entries(DIFFICULTIES).map(([key, item]) => <option key={key} value={key}>{item.label}</option>)}
         </select>
-        <select className="admin-input" value={form.domain} onChange={(event) => setForm({ ...form, domain: event.target.value })}>
-          {Object.entries(DOMAINS).map(([key, item]) => <option key={key} value={key}>{item.label}</option>)}
-        </select>
+        <DomainCombobox value={form.domain} onChange={(val) => setForm({ ...form, domain: val })} />
       </div>
       {form.choices.map((choice, index) => (
         <div key={index} className="grid grid-cols-[32px_1fr] items-center gap-2">

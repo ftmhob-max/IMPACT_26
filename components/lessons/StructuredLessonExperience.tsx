@@ -17,6 +17,8 @@ import { parseVideoUrl } from "@/lib/video-url";
 import { StartQuizButton } from "@/components/quiz/StartQuizButton";
 import { LessonMarkComplete } from "@/components/platform/LessonMarkComplete";
 import { getIdToken } from "@/lib/firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/lib/firebase/client";
 
 export function StructuredLessonExperience({
   lessonId,
@@ -35,6 +37,25 @@ export function StructuredLessonExperience({
   nextLesson?: { title: string; href: string } | null;
   glossaryTerms?: GlossaryTermData[];
 }) {
+  const [token, setToken] = useState<string | null>(null);
+  const [authInitialized, setAuthInitialized] = useState(false);
+
+  useEffect(() => {
+    return onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          const t = await user.getIdToken();
+          setToken(t);
+        } catch {
+          setToken(null);
+        }
+      } else {
+        setToken(null);
+      }
+      setAuthInitialized(true);
+    });
+  }, []);
+
   const document = useMemo(() => parseStructuredLessonContent(contentJson), [contentJson]);
   const visibleBlocks = useMemo(
     () => document.blocks.filter((block) => block.isStudentVisible),
@@ -64,14 +85,13 @@ export function StructuredLessonExperience({
 
   // Load note: prefer server, fall back to localStorage
   useEffect(() => {
-    if (previewMode || typeof window === "undefined") return;
+    if (previewMode || typeof window === "undefined" || !authInitialized) return;
     const localFallback = window.localStorage.getItem(`lesson-notes:${lessonId}`) ?? "";
-    getIdToken()
-      .then((token) =>
-        fetch(`/api/lessons/notes?lessonId=${lessonId}`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        })
-      )
+
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+
+    fetch(`/api/lessons/notes?lessonId=${lessonId}`, { headers })
       .then((r) => (r.ok ? r.json() : null))
       .then((data: { note: { id: string; content: string } | null } | null) => {
         if (data?.note) {
@@ -86,7 +106,7 @@ export function StructuredLessonExperience({
         if (localFallback) setNotes(localFallback);
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lessonId, previewMode]);
+  }, [lessonId, previewMode, authInitialized, token]);
 
   // Persist note: localStorage immediately, server debounced
   useEffect(() => {
@@ -186,7 +206,7 @@ export function StructuredLessonExperience({
             <JourneyStat label="Do first" value={visibleBlocks[0] ? titleForBlock(visibleBlocks[0]) : "Add blocks"} />
           </div>
           {document.objectives.some((objective) => objective.trim()) && (
-            <div className="mt-4 rounded-xl border border-[#d8e6f4] bg-[#f7fbff] p-4">
+            <div className="mt-4 rounded-xl border border-[#d8e6f4] dark:border-slate-800 bg-[#f7fbff] dark:bg-slate-900 p-4">
               <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#185FA5]">
                 Learning objectives
               </p>
@@ -207,7 +227,7 @@ export function StructuredLessonExperience({
         <div className="grid gap-6 px-5 py-5 xl:grid-cols-[280px_minmax(0,1fr)] lg:px-6">
           <aside className="space-y-4">
             <div className="space-y-4 xl:sticky xl:top-5">
-              <div className="rounded-xl border border-[#d8e6f4] bg-[linear-gradient(180deg,#f8fbff_0%,#eef6ff_100%)] p-4">
+              <div className="rounded-xl border border-[#d8e6f4] dark:border-slate-800 bg-[linear-gradient(180deg,#f8fbff_0%,#eef6ff_100%)] dark:bg-none dark:bg-slate-900 p-4">
                 <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#185FA5]">Next action</p>
                 <p className="mt-2 text-sm font-bold text-slate-900">
                   {activeBlock ? `You’re in ${titleForBlock(activeBlock)}.` : "Start with the first learning block."}
@@ -320,6 +340,7 @@ export function StructuredLessonExperience({
                   previewMode={previewMode}
                   glossaryTerms={glossaryTerms}
                   bookmarked={bookmarkedBlockIds.has(block.id)}
+                  token={token}
                   stepLabel={`${index + 1} of ${visibleBlocks.length}`}
                   nextLabel={visibleBlocks[index + 1] ? titleForBlock(visibleBlocks[index + 1]) : null}
                   onContinue={
@@ -364,6 +385,7 @@ function LessonBlockCard({
   nextLabel,
   onContinue,
   onToggleBookmark,
+  token,
 }: {
   block: LessonBlock;
   lessonId: string;
@@ -374,6 +396,7 @@ function LessonBlockCard({
   nextLabel: string | null;
   onContinue: (() => void) | null;
   onToggleBookmark: () => void;
+  token: string | null;
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -427,7 +450,7 @@ function LessonBlockCard({
       </div>
 
       <div className="px-5 py-5 sm:px-6">
-        <LessonBlockRenderer block={block} lessonId={lessonId} previewMode={previewMode} glossaryTerms={glossaryTerms} />
+        <LessonBlockRenderer block={block} lessonId={lessonId} previewMode={previewMode} glossaryTerms={glossaryTerms} token={token} />
         {onContinue && (
           <div className="mt-5 flex justify-end border-t border-slate-100 pt-4">
             <button
@@ -450,60 +473,71 @@ function LessonBlockRenderer({
   lessonId,
   previewMode,
   glossaryTerms,
+  token,
 }: {
   block: LessonBlock;
   lessonId: string;
   previewMode: boolean;
   glossaryTerms?: GlossaryTermData[];
+  token: string | null;
 }) {
   switch (block.type) {
     case "richText":
       return <RichTextRenderer content={block.content} glossaryTerms={glossaryTerms} />;
-    case "audio":
+    case "audio": {
+      const resolvedAudioUrl = getAssetUrl(block.audioUrl, block.materialId, token);
       return (
         <div className="space-y-4">
           {block.description && <p className="text-sm text-slate-600">{block.description}</p>}
-          {block.audioUrl ? (
-            <audio controls preload="metadata" src={block.audioUrl} className="w-full" />
+          {resolvedAudioUrl ? (
+            <audio controls preload="metadata" src={resolvedAudioUrl} className="w-full" />
           ) : (
-            <EmptyBlockMessage message="Add an audio URL to render this explanation." />
+            <EmptyBlockMessage message="Add an audio URL or link a source material to render this explanation." />
           )}
           <TranscriptPanel transcript={block.transcript} />
         </div>
       );
-    case "video":
-      if (!block.playbackId?.trim() && !block.videoUrl?.trim()) {
-        return <EmptyBlockMessage message="Add a Mux playback ID or external video URL to render this lesson." />;
+    }
+    case "video": {
+      const resolvedPlaybackId = block.playbackId || null;
+      const resolvedVideoUrl = getAssetUrl(block.videoUrl, block.materialId, token);
+      if (!resolvedPlaybackId?.trim() && !resolvedVideoUrl?.trim()) {
+        return <EmptyBlockMessage message="Add a Mux playback ID, external video URL, or link a source material to render this lesson." />;
       }
       return (
         <div className="space-y-4">
           {block.description && <p className="text-sm text-slate-600">{block.description}</p>}
           {previewMode ? (
-            <PreviewVideo playbackId={block.playbackId || null} videoUrl={block.videoUrl || null} />
-          ) : block.playbackId?.trim() ? (
-            <LessonMuxPlayer lessonId={lessonId} playbackId={block.playbackId} title={block.title} />
+            <PreviewVideo playbackId={resolvedPlaybackId} videoUrl={resolvedVideoUrl} />
+          ) : resolvedPlaybackId?.trim() ? (
+            <LessonMuxPlayer lessonId={lessonId} playbackId={resolvedPlaybackId} title={block.title} />
           ) : (
-            <ExternalVideoFromUrl lessonId={lessonId} videoUrl={block.videoUrl || ""} title={block.title} />
+            <ExternalVideoFromUrl lessonId={lessonId} videoUrl={resolvedVideoUrl || ""} title={block.title} />
           )}
           <TranscriptPanel transcript={block.transcript} />
         </div>
       );
+    }
     case "transcript":
       return <TranscriptPanel transcript={block.transcript} />;
-    case "image":
-      return block.imageUrl ? (
+    case "image": {
+      const resolvedImageUrl = getAssetUrl(block.imageUrl, block.materialId, token);
+      return resolvedImageUrl ? (
         <figure className="space-y-3">
-          <img src={block.imageUrl} alt={block.altText} className="w-full rounded-xl border border-slate-200 object-cover" />
+          <img src={resolvedImageUrl} alt={block.altText || block.title || "Visual content"} className="w-full rounded-xl border border-slate-200 object-cover" />
           {(block.caption || block.altText) && <figcaption className="text-xs leading-5 text-slate-500">{block.caption || block.altText}</figcaption>}
         </figure>
       ) : (
-        <EmptyBlockMessage message="Add an image URL to render this visual." />
+        <EmptyBlockMessage message="Add an image URL or link a source material to render this visual." />
       );
-    case "document":
-      return <LinkCard title={block.title || "Reference document"} description={block.description} url={block.url} icon={<Icons.FileText size={18} className="text-[#185FA5]" />} cta="Open document" />;
+    }
+    case "document": {
+      const resolvedDocUrl = getAssetUrl(block.url, block.materialId, token);
+      return <LinkCard title={block.title || "Reference document"} description={block.description} url={resolvedDocUrl} icon={<Icons.FileText size={18} className="text-[#185FA5]" />} cta="Open document" />;
+    }
     case "sourceReference":
       return (
-        <div className="rounded-xl border border-[#d8e6f4] bg-[#f7fbff] p-4">
+        <div className="rounded-xl border border-[#d8e6f4] dark:border-slate-800 bg-[#f7fbff] dark:bg-slate-900 p-4">
           <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#185FA5]">
             {block.referenceLabel?.trim() || "Source reference"}
           </p>
@@ -524,7 +558,7 @@ function LessonBlockRenderer({
       );
     case "formula":
       return (
-        <div className="rounded-xl border border-[#d8d5fb] bg-[#f8f7ff] p-4">
+        <div className="rounded-xl border border-[#d8d5fb] dark:border-slate-800 bg-[#f8f7ff] dark:bg-slate-900 p-4">
           <div className="flex items-start gap-3">
             <Icons.Calculator size={18} className="mt-0.5 text-[#534AB7]" />
             <div className="min-w-0 flex-1">
@@ -559,7 +593,7 @@ function LessonBlockRenderer({
       return <GlossaryBlock terms={block.terms} displayMode={block.displayMode} />;
     case "quizCheckpoint":
       return (
-        <div className="space-y-4 rounded-xl border border-[#d8e6f4] bg-[#f7fbff] p-4">
+        <div className="space-y-4 rounded-xl border border-[#d8e6f4] dark:border-slate-800 bg-[#f7fbff] dark:bg-slate-900 p-4">
           <div>
             <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#185FA5]">Checkpoint</p>
             <p className="mt-1 text-sm font-bold text-slate-900">Check your understanding before moving on.</p>
@@ -593,15 +627,19 @@ function LessonBlockRenderer({
       );
     case "reflectionPrompt":
       return (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-          <p className="text-sm font-bold text-amber-900">{block.prompt || "Add a reflection prompt."}</p>
-          {block.guidance && <p className="mt-2 text-sm leading-6 text-amber-800">{block.guidance}</p>}
+        <div className="rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/20 p-4">
+          <p className="text-sm font-bold text-amber-900 dark:text-amber-200">{block.prompt || "Add a reflection prompt."}</p>
+          {block.guidance && <p className="mt-2 text-sm leading-6 text-amber-800 dark:text-amber-300">{block.guidance}</p>}
         </div>
       );
-    case "download":
-      return <LinkCard title={block.title || "Downloadable resource"} description={block.description} url={block.url} icon={<Icons.Upload size={18} className="text-[#185FA5]" />} cta="Download resource" />;
-    case "externalResource":
-      return <LinkCard title={block.title || "External resource"} description={block.description} url={block.url} icon={<Icons.Link2 size={18} className="text-[#185FA5]" />} cta="Open resource" />;
+    case "download": {
+      const resolvedDownloadUrl = getAssetUrl(block.url, block.materialId, token);
+      return <LinkCard title={block.title || "Downloadable resource"} description={block.description} url={resolvedDownloadUrl} icon={<Icons.Upload size={18} className="text-[#185FA5]" />} cta="Download resource" />;
+    }
+    case "externalResource": {
+      const resolvedExternalUrl = getAssetUrl(block.url, block.materialId, token);
+      return <LinkCard title={block.title || "External resource"} description={block.description} url={resolvedExternalUrl} icon={<Icons.Link2 size={18} className="text-[#185FA5]" />} cta="Open resource" />;
+    }
     case "callout":
       return (
         <div
@@ -616,6 +654,23 @@ function LessonBlockRenderer({
         </div>
       );
   }
+}
+
+function getAssetUrl(
+  url: string | undefined | null,
+  materialId: string | undefined | null,
+  token: string | null
+): string {
+  if (url) {
+    if (url.startsWith("/api/")) {
+      return token ? `${url}${url.includes("?") ? "&" : "?"}token=${encodeURIComponent(token)}` : url;
+    }
+    return url;
+  }
+  if (materialId) {
+    return `/api/admin/materials/${materialId}/asset${token ? `?token=${encodeURIComponent(token)}` : ""}`;
+  }
+  return "";
 }
 
 function LinkCard({
@@ -678,7 +733,7 @@ function LessonRecapCard({
   previewMode: boolean;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)] p-5 shadow-sm">
+    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)] dark:bg-none dark:bg-slate-900 p-5 shadow-sm">
       <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#185FA5]">Lesson recap</p>
       <h3 className="mt-2 text-lg font-extrabold text-slate-950">Pause and lock in the main ideas.</h3>
       <p className="mt-2 text-sm leading-6 text-slate-600">
@@ -785,6 +840,14 @@ function ExternalVideoFromUrl({
   videoUrl: string;
   title?: string;
 }) {
+  if (videoUrl && (videoUrl.startsWith("/") || videoUrl.includes("materials") || videoUrl.endsWith(".mp4") || videoUrl.endsWith(".webm"))) {
+    return (
+      <div className="relative aspect-video overflow-hidden rounded-xl bg-slate-950">
+        <video controls src={videoUrl} className="h-full w-full object-contain" />
+      </div>
+    );
+  }
+
   const meta = parseVideoUrl(videoUrl);
   if (!meta || !meta.embedUrl) {
     return <EmptyBlockMessage message="This external video URL could not be embedded." />;
@@ -809,6 +872,14 @@ function PreviewVideo({
         <div className="absolute bottom-3 left-3 rounded bg-black/70 px-2 py-1 text-[10px] font-semibold text-white">
           Mux preview · {playbackId.slice(0, 12)}…
         </div>
+      </div>
+    );
+  }
+
+  if (videoUrl && (videoUrl.startsWith("/") || videoUrl.includes("materials") || videoUrl.endsWith(".mp4") || videoUrl.endsWith(".webm"))) {
+    return (
+      <div className="relative aspect-video overflow-hidden rounded-xl bg-slate-950">
+        <video controls src={videoUrl} className="h-full w-full object-contain" />
       </div>
     );
   }

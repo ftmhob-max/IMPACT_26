@@ -1,6 +1,6 @@
-"use client";
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/lib/firebase/client";
 import { isPreviewableMediaKind, type SourceMaterialKind } from "@/lib/admin/source-materials";
 import * as Icons from "@/components/ui/Icons";
 
@@ -45,6 +45,23 @@ const PARSER_LABELS: Record<string, string> = {
 export function MaterialPreview({ material, courses, onLinked }: MaterialPreviewProps) {
   const [showFull, setShowFull] = useState(false);
   const [showLinkModal, setShowLinkModal] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    return onAuthStateChanged(auth, async (u) => {
+      if (u) {
+        try {
+          const t = await u.getIdToken();
+          setToken(t);
+        } catch {
+          setToken(null);
+        }
+      } else {
+        setToken(null);
+      }
+    });
+  }, []);
+
   const { ingestion } = material;
   const preview = ingestion.extractedText.slice(0, 800);
   const isTruncated = ingestion.extractedText.length > 800;
@@ -54,8 +71,8 @@ export function MaterialPreview({ material, courses, onLinked }: MaterialPreview
 
   const pages = ingestion.metadata.pages as number | undefined;
   const chars = ingestion.extractedText.length;
-  const assetHref = `/api/admin/materials/${material.id}/asset`;
-  const downloadHref = `${assetHref}?download=1`;
+  const assetHref = `/api/admin/materials/${material.id}/asset${token ? `?token=${encodeURIComponent(token)}` : ""}`;
+  const downloadHref = `/api/admin/materials/${material.id}/asset?download=1${token ? `&token=${encodeURIComponent(token)}` : ""}`;
 
   return (
     <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 space-y-3">

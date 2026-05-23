@@ -235,6 +235,7 @@ query GetFormulaSections @auth(level: NO_ACCESS) {
       expression
       notes
       calcMetaJson
+      examplesJson
     }
   }
 }
@@ -792,6 +793,15 @@ query GetUserFavoritesByType($userId: String!, $itemType: String!) @auth(level: 
     itemType
     itemId
     createdAt
+  }
+}
+
+# ─── Custom Domains ───────────────────────────────────────────────────────────
+
+query ListCustomDomains @auth(level: NO_ACCESS) {
+  customDomains(orderBy: { createdAt: ASC }) {
+    id
+    name
   }
 }
 

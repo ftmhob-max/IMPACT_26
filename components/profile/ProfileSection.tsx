@@ -28,7 +28,7 @@ export function ProfileSection({
 }) {
   return (
     <SectionPanel className="mb-6 overflow-hidden">
-      <div className="border-b border-slate-100 bg-[radial-gradient(circle_at_top_left,_rgba(24,95,165,0.12),_transparent_32%),linear-gradient(135deg,#ffffff_0%,#f8fbff_48%,#f8f6f0_100%)] p-5 sm:p-6">
+      <div className="progress-profile-hero border-b border-slate-100 bg-[radial-gradient(circle_at_top_left,_rgba(24,95,165,0.12),_transparent_32%),linear-gradient(135deg,#ffffff_0%,#f8fbff_48%,#f8f6f0_100%)] p-5 sm:p-6">
         <div className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
           <div className="flex items-start gap-4">
             <UserAvatar
@@ -74,7 +74,7 @@ export function ProfileSection({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm backdrop-blur">
+          <div className="progress-action-card rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm backdrop-blur">
             <div className="flex items-start gap-3">
               <IconTile icon={Icons.Compass} tone="blue" size={18} className="h-10 w-10" />
               <div className="min-w-0">

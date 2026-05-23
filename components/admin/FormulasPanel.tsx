@@ -28,6 +28,20 @@ interface CalcMeta {
   explanation?: string;
 }
 
+type ExampleDifficulty = "easy" | "proficient" | "expert";
+
+interface FormulaExample {
+  difficulty: ExampleDifficulty;
+  steps: string[];
+  summary?: string;
+}
+
+interface FormulaExamplesData {
+  easy?: FormulaExample;
+  proficient?: FormulaExample;
+  expert?: FormulaExample;
+}
+
 interface AdminFormula {
   id: string;
   code: string;
@@ -35,6 +49,7 @@ interface AdminFormula {
   expression: string;
   notes?: string | null;
   calcMetaJson?: string | null;
+  examplesJson?: string | null;
   position: number;
 }
 
@@ -59,6 +74,7 @@ interface ParsedFormulaRow {
   calcOutputType?: string;
   calcVariables?: string;
   calcExplanation?: string;
+  examplesJson?: string;
 }
 
 interface ImportBatch {
@@ -66,7 +82,7 @@ interface ImportBatch {
     code: string; title: string; position: number;
     formulas: Array<{
       code: string; name: string; expression: string;
-      notes?: string; calcMetaJson?: string; position: number;
+      notes?: string; calcMetaJson?: string; examplesJson?: string; position: number;
     }>;
   }>;
   errors: string[];
@@ -121,7 +137,7 @@ function ActionBtn({ onClick, children, tone = "primary", disabled, small }: {
 
 // ─── Panel tabs ───────────────────────────────────────────────────────────────
 
-type EditorTab = "fields" | "calc" | "verify" | "preview";
+type EditorTab = "fields" | "calc" | "verify" | "preview" | "examples";
 type PanelTab = "manage" | "import" | "templates";
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -191,7 +207,7 @@ export function FormulasPanel({ onSaved }: { onSaved?: () => void }) {
     const section = sections.find((s) => s.id === sectionId);
     const nextPos = (section?.formulas.length ?? 0);
     setSelectedFormula({
-      id: "__new__", code: "", name: "", expression: "", notes: "", calcMetaJson: null, position: nextPos,
+      id: "__new__", code: "", name: "", expression: "", notes: "", calcMetaJson: null, examplesJson: null, position: nextPos,
     });
     setSelectedSectionId(sectionId);
     setEditorTab("fields");
@@ -212,6 +228,7 @@ export function FormulasPanel({ onSaved }: { onSaved?: () => void }) {
       expression: formula.expression,
       notes: formula.notes ?? "",
       calcMetaJson: formula.calcMetaJson ?? null,
+      examplesJson: formula.examplesJson ?? null,
       position: nextPos,
     });
     setSelectedSectionId(sectionId);
@@ -240,6 +257,7 @@ export function FormulasPanel({ onSaved }: { onSaved?: () => void }) {
             notes: formula.notes || null,
             position: formula.position,
             calcMetaJson: formula.calcMetaJson ?? null,
+            examplesJson: formula.examplesJson ?? null,
           }),
         });
         if (res.ok) {
@@ -262,6 +280,7 @@ export function FormulasPanel({ onSaved }: { onSaved?: () => void }) {
             expression: formula.expression,
             notes: formula.notes || null,
             calcMetaJson: formula.calcMetaJson,
+            examplesJson: formula.examplesJson,
             position: formula.position,
             // #5 Section move support
             sectionId: selectedSectionId ?? undefined,
@@ -715,6 +734,7 @@ function ManageTab({
               {([
                 ["fields", "Formula"],
                 ["calc", "Calculator"],
+                ["examples", "Examples"],
                 ["verify", "Verify"],
                 ["preview", "Preview"],
               ] as [EditorTab, string][]).map(([tab, label]) => (
@@ -766,6 +786,18 @@ function ManageTab({
 
             {editorTab === "verify" && (
               <VerifyPanel key={selectedFormula.id} formula={selectedFormula} />
+            )}
+
+            {editorTab === "examples" && (
+              <ExamplesEditor
+                key={selectedFormula.id}
+                formula={selectedFormula}
+                savingBusy={savingBusy}
+                onSaveWithExamples={(examplesJson) => {
+                  const updated: AdminFormula = { ...selectedFormula, examplesJson };
+                  saveFormula(updated);
+                }}
+              />
             )}
 
             {/* #7 Live student-portal preview */}
@@ -1326,7 +1358,7 @@ function ImportTab({ onDone }: { onDone: () => void }) {
   const [dragOver, setDragOver] = useState(false);
   const [preview, setPreview] = useState<ImportBatch | null>(null);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ imported: number; skipped?: number; errors: string[]; sections: string[]; rolledBack?: boolean } | null>(null);
+  const [result, setResult] = useState<{ imported: number; updated?: number; skipped?: number; errors: string[]; sections: string[]; rolledBack?: boolean } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   function onDrop(e: React.DragEvent) {
@@ -1358,7 +1390,7 @@ function ImportTab({ onDone }: { onDone: () => void }) {
     const data = await res.json().catch(() => ({}));
     setResult(data);
     setPreview(null);
-    if (res.ok && data.imported > 0) onDone();
+    if (res.ok && (data.imported > 0 || data.updated > 0)) onDone();
     setLoading(false);
   }
 
@@ -1380,7 +1412,7 @@ function ImportTab({ onDone }: { onDone: () => void }) {
         <input
           ref={fileRef}
           type="file"
-          accept=".csv,.txt"
+          accept=".csv,.txt,.docx"
           className="hidden"
           onChange={(e) => { const f = e.target.files?.[0]; if (f) { setFile(f); setPreview(null); setResult(null); } }}
         />
@@ -1389,7 +1421,7 @@ function ImportTab({ onDone }: { onDone: () => void }) {
           <p className="text-sm font-semibold text-[#185FA5]">{file.name}</p>
         ) : (
           <>
-            <p className="text-sm font-semibold text-slate-600">Drop a .csv or .txt file</p>
+            <p className="text-sm font-semibold text-slate-600">Drop a .csv, .txt, or .docx file</p>
             <p className="mt-1 text-xs text-slate-400">or click to browse</p>
           </>
         )}
@@ -1421,7 +1453,7 @@ function ImportTab({ onDone }: { onDone: () => void }) {
             <table className="w-full text-xs">
               <thead className="sticky top-0 bg-slate-50">
                 <tr>
-                  {["Section", "Code", "Name", "Expression", "Calc?"].map((h) => (
+                  {["Section", "Code", "Name", "Expression", "Calc?", "Examples?"].map((h) => (
                     <th key={h} className="px-2 py-1.5 text-left font-semibold text-slate-500">{h}</th>
                   ))}
                 </tr>
@@ -1435,6 +1467,7 @@ function ImportTab({ onDone }: { onDone: () => void }) {
                       <td className="px-2 py-1.5 max-w-[140px] truncate">{f.name}</td>
                       <td className="px-2 py-1.5 font-mono text-[10px] max-w-[200px] truncate text-slate-500">{f.expression}</td>
                       <td className="px-2 py-1.5">{f.calcMetaJson ? "✓" : "—"}</td>
+                      <td className="px-2 py-1.5">{f.examplesJson ? "✓" : "—"}</td>
                     </tr>
                   ))
                 )}
@@ -1465,16 +1498,24 @@ function ImportTab({ onDone }: { onDone: () => void }) {
         <div className={cn(
           "rounded-xl border p-4 text-sm space-y-2",
           result.rolledBack ? "border-red-200 bg-red-50 text-red-800" :
-          result.imported > 0 ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-800"
+          (result.imported > 0 || (result.updated ?? 0) > 0) ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-800"
         )}>
           {result.rolledBack ? (
             <p className="font-semibold">Import failed — all changes were rolled back.</p>
           ) : (
             <p className="font-semibold">
               {result.imported > 0
-                ? `${result.imported} formula${result.imported !== 1 ? "s" : ""} imported across ${result.sections.length} section${result.sections.length !== 1 ? "s" : ""}.`
-                : "No formulas were imported."}
-              {result.skipped ? ` ${result.skipped} skipped (already exist).` : ""}
+                ? `${result.imported} formula${result.imported !== 1 ? "s" : ""} imported`
+                : ""}
+              {result.imported > 0 && (result.updated ?? 0) > 0 ? ", " : ""}
+              {(result.updated ?? 0) > 0
+                ? `${result.updated} formula${result.updated !== 1 ? "s" : ""} updated with examples`
+                : ""}
+              {result.imported === 0 && (result.updated ?? 0) === 0 ? "No formulas were imported." : ""}
+              {result.imported > 0 && result.sections.length > 0
+                ? ` across ${result.sections.length} section${result.sections.length !== 1 ? "s" : ""}.`
+                : (result.updated ?? 0) > 0 ? "." : ""}
+              {(result.skipped ?? 0) > 0 ? ` ${result.skipped} skipped.` : ""}
             </p>
           )}
           {result.errors.length > 0 && (
@@ -1495,6 +1536,214 @@ function ImportTab({ onDone }: { onDone: () => void }) {
   );
 }
 
+// ─── Examples Editor ──────────────────────────────────────────────────────────
+
+const DIFFICULTY_CONFIG: Array<{ key: ExampleDifficulty; label: string; color: string; bg: string; border: string }> = [
+  { key: "easy", label: "Easy", color: "text-emerald-700", bg: "bg-emerald-50", border: "border-emerald-200" },
+  { key: "proficient", label: "Proficient", color: "text-amber-700", bg: "bg-amber-50", border: "border-amber-200" },
+  { key: "expert", label: "Expert", color: "text-purple-700", bg: "bg-purple-50", border: "border-purple-200" },
+];
+
+function parseExamples(json: string | null | undefined): FormulaExamplesData {
+  if (!json) return {};
+  try { return JSON.parse(json) as FormulaExamplesData; } catch { return {}; }
+}
+
+function ExamplesEditor({
+  formula, savingBusy, onSaveWithExamples,
+}: {
+  formula: AdminFormula;
+  savingBusy: boolean;
+  onSaveWithExamples: (examplesJson: string | null) => void;
+}) {
+  const initial = parseExamples(formula.examplesJson);
+  const [data, setData] = useState<FormulaExamplesData>(initial);
+  const [parseText, setParseText] = useState("");
+  const [showParse, setShowParse] = useState(false);
+
+  function updateExample(difficulty: ExampleDifficulty, patch: Partial<FormulaExample>) {
+    setData((prev) => ({
+      ...prev,
+      [difficulty]: { difficulty, steps: [], ...prev[difficulty], ...patch },
+    }));
+  }
+
+  function addStep(difficulty: ExampleDifficulty) {
+    const ex = data[difficulty] ?? { difficulty, steps: [] };
+    updateExample(difficulty, { steps: [...ex.steps, ""] });
+  }
+
+  function updateStep(difficulty: ExampleDifficulty, idx: number, value: string) {
+    const ex = data[difficulty] ?? { difficulty, steps: [] };
+    const steps = ex.steps.map((s, i) => i === idx ? value : s);
+    updateExample(difficulty, { steps });
+  }
+
+  function removeStep(difficulty: ExampleDifficulty, idx: number) {
+    const ex = data[difficulty] ?? { difficulty, steps: [] };
+    updateExample(difficulty, { steps: ex.steps.filter((_, i) => i !== idx) });
+  }
+
+  function moveStep(difficulty: ExampleDifficulty, idx: number, dir: "up" | "down") {
+    const ex = data[difficulty] ?? { difficulty, steps: [] };
+    const steps = [...ex.steps];
+    const j = dir === "up" ? idx - 1 : idx + 1;
+    if (j < 0 || j >= steps.length) return;
+    [steps[idx], steps[j]] = [steps[j], steps[idx]];
+    updateExample(difficulty, { steps });
+  }
+
+  function clearDifficulty(difficulty: ExampleDifficulty) {
+    setData((prev) => { const next = { ...prev }; delete next[difficulty]; return next; });
+  }
+
+  function handleSave() {
+    const hasAny = data.easy || data.proficient || data.expert;
+    onSaveWithExamples(hasAny ? JSON.stringify(data) : null);
+  }
+
+  // Parse the raw ● EASY / ● PROFICIENT / ● EXPERT text format inline
+  function handleParseText() {
+    if (!parseText.trim()) return;
+    const difficultyPattern = /[●•]\s*(EASY|PROFICIENT|EXPERT)\s*\n([\s\S]*?)(?=[●•]\s*(?:EASY|PROFICIENT|EXPERT)|$)/gi;
+    const parsed: FormulaExamplesData = {};
+    let match;
+    while ((match = difficultyPattern.exec(parseText)) !== null) {
+      const diff = match[1].toLowerCase() as ExampleDifficulty;
+      const body = match[2];
+      const lines = body.split("\n").map((l) => l.trim()).filter(Boolean);
+      const steps: string[] = [];
+      let summary: string | undefined;
+      for (const line of lines) {
+        const sm = line.match(/^Step\s+\d+\s+(.+)$/i);
+        if (sm) steps.push(sm[1].trim());
+        else if (steps.length > 0 && !line.match(/^[●•]/)) summary = line;
+      }
+      if (steps.length > 0) parsed[diff] = { difficulty: diff, steps, summary };
+    }
+    if (parsed.easy || parsed.proficient || parsed.expert) {
+      setData((prev) => ({ ...prev, ...parsed }));
+      setShowParse(false);
+      setParseText("");
+    }
+  }
+
+  const totalSteps = (data.easy?.steps.length ?? 0) + (data.proficient?.steps.length ?? 0) + (data.expert?.steps.length ?? 0);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-slate-500">
+          Add up to three tiered worked examples per formula. Each example contains numbered step-by-step text visible to students.
+        </p>
+        <button
+          type="button"
+          onClick={() => setShowParse((v) => !v)}
+          className="shrink-0 rounded-lg border border-slate-200 px-2.5 py-1 text-[11px] font-semibold text-slate-500 transition hover:border-[#185FA5] hover:text-[#185FA5]"
+        >
+          Parse from text
+        </button>
+      </div>
+
+      {/* Parse from document text */}
+      {showParse && (
+        <div className="space-y-2 rounded-xl border border-[#E6F1FB] bg-[#f5f9ff] p-3">
+          <p className="text-[11px] font-semibold text-[#185FA5]">
+            Paste the ● EASY / ● PROFICIENT / ● EXPERT block from the Assessment Formula Compass document:
+          </p>
+          <textarea
+            value={parseText}
+            onChange={(e) => setParseText(e.target.value)}
+            rows={8}
+            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 font-mono text-[11px] text-slate-700 outline-none focus:border-[#185FA5] resize-y"
+            placeholder={"● EASY\nStep 1 A comparable sold for $200,000...\nStep 2 Apply the formula...\nStep 3 Adjusted Sale Price = $210,000.\n\n● PROFICIENT\nStep 1 ..."}
+          />
+          <div className="flex gap-2">
+            <ActionBtn small onClick={handleParseText} disabled={!parseText.trim()}>Parse & Apply</ActionBtn>
+            <ActionBtn small tone="ghost" onClick={() => { setShowParse(false); setParseText(""); }}>Cancel</ActionBtn>
+          </div>
+        </div>
+      )}
+
+      {/* Per-difficulty sections */}
+      {DIFFICULTY_CONFIG.map(({ key, label, color, bg, border }) => {
+        const ex = data[key];
+        const hasEx = Boolean(ex && ex.steps.length > 0);
+        return (
+          <div key={key} className={cn("rounded-xl border p-3 space-y-2", hasEx ? `${border} ${bg}` : "border-slate-200 bg-white")}>
+            <div className="flex items-center justify-between">
+              <span className={cn("text-xs font-bold", hasEx ? color : "text-slate-400")}>{label}</span>
+              <div className="flex gap-1.5">
+                {hasEx && (
+                  <button type="button" onClick={() => clearDifficulty(key)} className="text-[10px] font-semibold text-slate-400 hover:text-red-500">
+                    Clear
+                  </button>
+                )}
+                <ActionBtn small tone="ghost" onClick={() => addStep(key)}>
+                  <Icons.Plus size={10} /> Add step
+                </ActionBtn>
+              </div>
+            </div>
+
+            {ex && ex.steps.length > 0 ? (
+              <div className="space-y-1.5">
+                {ex.steps.map((step, i) => (
+                  <div key={i} className="flex items-start gap-1.5">
+                    <span className="mt-2 shrink-0 text-[10px] font-bold text-slate-400 w-5 text-right">{i + 1}.</span>
+                    <textarea
+                      value={step}
+                      onChange={(e) => updateStep(key, i, e.target.value)}
+                      rows={2}
+                      className="flex-1 resize-none rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 outline-none focus:border-[#185FA5] focus:ring-1 focus:ring-[#E6F1FB]"
+                    />
+                    <div className="flex flex-col gap-0.5 shrink-0">
+                      <button type="button" onClick={() => moveStep(key, i, "up")} disabled={i === 0} className="h-5 w-5 flex items-center justify-center rounded text-slate-300 hover:text-[#185FA5] disabled:opacity-0">
+                        <Icons.ChevronUp size={11} />
+                      </button>
+                      <button type="button" onClick={() => moveStep(key, i, "down")} disabled={i === ex.steps.length - 1} className="h-5 w-5 flex items-center justify-center rounded text-slate-300 hover:text-[#185FA5] disabled:opacity-0">
+                        <Icons.ChevronDown size={11} />
+                      </button>
+                      <button type="button" onClick={() => removeStep(key, i)} className="h-5 w-5 flex items-center justify-center rounded text-slate-300 hover:text-red-500">
+                        <Icons.Trash2 size={10} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                {/* Summary line */}
+                <SmallField label="Summary / interpretation" hint="(optional — shown after steps)">
+                  <input
+                    value={ex.summary ?? ""}
+                    onChange={(e) => updateExample(key, { summary: e.target.value || undefined })}
+                    placeholder="e.g. The comp is now trended forward to reflect today's market."
+                    className={inputClass()}
+                  />
+                </SmallField>
+              </div>
+            ) : (
+              <p className="text-[11px] text-slate-400">No steps yet — click "Add step" to begin.</p>
+            )}
+          </div>
+        );
+      })}
+
+      <div className="flex items-center gap-3 pt-1 border-t border-slate-100">
+        <ActionBtn onClick={handleSave} disabled={savingBusy}>
+          {savingBusy ? "Saving…" : totalSteps > 0 ? `Save ${totalSteps} step${totalSteps !== 1 ? "s" : ""}` : "Save (clear examples)"}
+        </ActionBtn>
+        {totalSteps > 0 && (
+          <span className="text-xs text-slate-400">
+            {data.easy?.steps.length ? `Easy: ${data.easy.steps.length}` : ""}
+            {data.easy?.steps.length && (data.proficient?.steps.length || data.expert?.steps.length) ? " · " : ""}
+            {data.proficient?.steps.length ? `Proficient: ${data.proficient.steps.length}` : ""}
+            {data.proficient?.steps.length && data.expert?.steps.length ? " · " : ""}
+            {data.expert?.steps.length ? `Expert: ${data.expert.steps.length}` : ""}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Templates Tab ─────────────────────────────────────────────────────────────
 
 function TemplatesTab() {
@@ -1511,6 +1760,12 @@ function TemplatesTab() {
     ["calc_output_type", "Optional", "currency | percentage | number | ratio | integer"],
     ["calc_variables", "Optional", "key:label:type:required:placeholder:helperText — pipe-separated"],
     ["calc_explanation", "Optional", "Explanation shown in calculator panel"],
+    ["easy_steps", "Optional", "Pipe-separated Easy example steps"],
+    ["easy_summary", "Optional", "Optional interpretation line after Easy steps"],
+    ["proficient_steps", "Optional", "Pipe-separated Proficient example steps"],
+    ["proficient_summary", "Optional", "Optional interpretation line after Proficient steps"],
+    ["expert_steps", "Optional", "Pipe-separated Expert example steps"],
+    ["expert_summary", "Optional", "Optional interpretation line after Expert steps"],
   ];
 
   return (

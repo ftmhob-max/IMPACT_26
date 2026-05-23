@@ -1,17 +1,10 @@
 /**
  * DOCX Question Parser
  *
- * Parses structured DOCX files (like the IMPACT_26 Assessment Calculations Review)
- * into structured question + curriculum data.
- *
- * Expected document layout:
- *   Section [N]: [Title]              → ParsedSection (becomes a Module)
- *     Formula [CODE]: [Name]          → ParsedFormula (becomes a Lesson)
- *       Q [n] … SKILL: EASY/…        → ParsedQuestion
- *       A. / B. / C. / D.             → answer choices
- *       "Correct Answer: [LETTER]"    → marks correct choice
- *       FORMULA: / STEP-BY-STEP: /   → metadata fields
- *       RATIONALE: …
+ * Parses structured DOCX files into section/formula/question data. It supports
+ * the original table-oriented format and the IMPACT workbook format where
+ * question tables are followed by FORMULA, STEP-BY-STEP, and RATIONALE
+ * paragraphs.
  */
 
 export interface ParsedChoice {
@@ -23,7 +16,7 @@ export interface ParsedChoice {
 export interface ParsedQuestion {
   questionNumber: number;
   questionText: string;
-  difficulty: "easy" | "intermediate" | "expert";
+  difficulty: "easy" | "proficient" | "expert";
   domain: string;
   formulaRef: string;
   topicTags: string;
@@ -48,7 +41,44 @@ export interface DocxParseResult {
   allQuestions: ParsedQuestion[];
 }
 
-// ─── HTML helpers ─────────────────────────────────────────────────────────────
+interface TableCellText {
+  text: string;
+  lines: string[];
+}
+
+type TableRowText = TableCellText[];
+
+type Segment =
+  | { type: "h1" | "h2" | "p"; text: string }
+  | { type: "table"; rows: TableRowText[] };
+
+type QMode = "question" | "choices" | "post_answer" | "rationale" | "calculation";
+
+interface QBuilder {
+  questionNumber: number;
+  questionLines: string[];
+  difficulty: "easy" | "proficient" | "expert";
+  domain: string;
+  formulaRef: string;
+  topicTags: string;
+  targetFormula: ParsedFormula;
+  choices: ParsedChoice[];
+  correctLetters: string[];
+  rationale: string;
+  calculation: string;
+  mode: QMode;
+}
+
+interface ParseContext {
+  domain: string;
+  formulaRef: string;
+  topicTags: string;
+}
+
+interface QuestionParserState {
+  qb: QBuilder | null;
+  questionCounter: number;
+}
 
 function stripTags(html: string): string {
   return html
@@ -64,18 +94,53 @@ function stripTags(html: string): string {
     .trim();
 }
 
-// ─── Heading parsers ─────────────────────────────────────────────────────────
+function normalizeText(text: string): string {
+  return text.replace(/\s+/g, " ").trim();
+}
+
+function parseCellLines(cellHtml: string): string[] {
+  const paragraphRe = /<p(\s[^>]*)?>[\s\S]*?<\/p>/gi;
+  const lines: string[] = [];
+  let match: RegExpExecArray | null;
+  while ((match = paragraphRe.exec(cellHtml)) !== null) {
+    const text = stripTags(match[0]);
+    if (text) lines.push(text);
+  }
+  if (lines.length > 0) return lines;
+
+  const text = stripTags(cellHtml);
+  return text ? [text] : [];
+}
+
+function parseTableRows(tableHtml: string): TableRowText[] {
+  const rows: TableRowText[] = [];
+  const rowRe = /<tr(\s[^>]*)?>[\s\S]*?<\/tr>/gi;
+  let rowMatch: RegExpExecArray | null;
+  while ((rowMatch = rowRe.exec(tableHtml)) !== null) {
+    const cells: TableRowText = [];
+    const cellRe = /<t[dh](\s[^>]*)?>[\s\S]*?<\/t[dh]>/gi;
+    let cellMatch: RegExpExecArray | null;
+    while ((cellMatch = cellRe.exec(rowMatch[0])) !== null) {
+      const lines = parseCellLines(cellMatch[0]);
+      const text = normalizeText(lines.join(" "));
+      cells.push({ text, lines });
+    }
+    if (cells.some((cell) => cell.text || cell.lines.length > 0)) rows.push(cells);
+  }
+  return rows;
+}
 
 function parseSectionTitle(text: string): string {
-  // "Section 1: Income Approach" → "Income Approach"
-  // "1. Income Approach" → "Income Approach"
-  const m = text.match(/^(?:Section\s+\d+\s*[:.:\-–—]\s*|\d+\.\s+)(.+)/i);
-  return m ? m[1].trim() : text.trim();
+  const match = text.match(/^(?:Section\s+\d+\s*[:.\-–—]\s*|\d+\.\s+)(.+)/i);
+  return match ? match[1].trim() : text.trim();
+}
+
+function isSectionHeader(text: string): boolean {
+  return /^Section\s+\d+\s*[:.\-–—]\s*.+/i.test(text);
 }
 
 function parseFormulaHeader(text: string): { code: string; name: string } | null {
-  // "FORMULA 1 — CLR-Implied Market Value"
-  const numbered = text.match(/^FORMULA\s+(\d+)\s*[:–—\-]\s*(.+)$/i);
+  const numbered = text.match(/^FORMULA\s+(\d+)\s*[:–—-]\s*(.+)$/i);
   if (numbered) {
     return {
       code: `FORMULA_${numbered[1]}`,
@@ -83,49 +148,27 @@ function parseFormulaHeader(text: string): { code: string; name: string } | null
     };
   }
 
-  // "Formula GRM: Gross Rent Multiplier"
-  // "GRM: Gross Rent Multiplier"
-  // "GRM – Gross Rent Multiplier"
-  const m = text.match(/(?:Formula\s+)?([A-Z][A-Z0-9\-]*)\s*[:–—\-]\s*(.+)/i);
-  if (m && m[1].length <= 10) {
-    return { code: m[1].trim().toUpperCase(), name: m[2].trim() };
+  const match = text.match(/(?:Formula\s+)?([A-Z][A-Z0-9-]*)\s*[:–—-]\s*(.+)/i);
+  if (match && match[1].length <= 10) {
+    return { code: match[1].trim().toUpperCase(), name: match[2].trim() };
   }
   return null;
 }
 
-// ─── Question-table parser ────────────────────────────────────────────────────
-
-type QMode = "question" | "choices" | "post_answer" | "rationale" | "calculation";
-
-interface QBuilder {
-  questionNumber: number;
-  questionLines: string[];
-  difficulty: "easy" | "intermediate" | "expert";
-  domain: string;
-  formulaRef: string;
-  topicTags: string;
-  targetFormula: ParsedFormula;
-  choices: ParsedChoice[];
-  correctLetters: string[];
-  rationale: string;
-  calculation: string;
-  mode: QMode;
-}
-
-function parseDifficulty(text: string): "easy" | "intermediate" | "expert" {
-  const u = text.toUpperCase();
-  if (u.includes("EXPERT")) return "expert";
-  if (u.includes("INTERMEDIATE")) return "intermediate";
+function parseDifficulty(text: string): "easy" | "proficient" | "expert" {
+  const upper = text.toUpperCase();
+  if (upper.includes("EXPERT")) return "expert";
+  if (upper.includes("INTERMEDIATE") || upper.includes("PROFICIENT")) return "proficient";
   return "easy";
 }
 
 function finalizeQuestion(qb: QBuilder): ParsedQuestion {
-  for (const c of qb.choices) {
-    c.isCorrect = qb.correctLetters.includes(c.letter);
+  for (const choice of qb.choices) {
+    choice.isCorrect = qb.correctLetters.includes(choice.letter);
   }
   return {
     questionNumber: qb.questionNumber,
-    questionText: qb.questionLines.join(" ").replace(/\s+/g, " ").trim(),
+    questionText: normalizeText(qb.questionLines.join(" ")),
     difficulty: qb.difficulty,
     domain: qb.domain,
     formulaRef: qb.formulaRef,
@@ -136,15 +179,11 @@ function finalizeQuestion(qb: QBuilder): ParsedQuestion {
   };
 }
 
-interface ParseContext {
-  domain: string;
-  formulaRef: string;
-  topicTags: string;
-}
-
-interface QuestionParserState {
-  qb: QBuilder | null;
-  questionCounter: number;
+function flushQuestion(state: QuestionParserState) {
+  if (state.qb && state.qb.choices.length > 0) {
+    state.qb.targetFormula.questions.push(finalizeQuestion(state.qb));
+  }
+  state.qb = null;
 }
 
 function startQuestion(
@@ -173,221 +212,235 @@ function startQuestion(
   };
 }
 
-function flushQuestion(state: QuestionParserState) {
-  if (state.qb && state.qb.choices.length > 0) {
-    state.qb.targetFormula.questions.push(finalizeQuestion(state.qb));
-  }
-  state.qb = null;
-}
-
-function parseQuestionHeaderCells(cells: string[], index: number): {
-  consumed: number;
+function parseQuestionHeaderCells(cells: string[]): {
   questionNumber: number | null;
   difficultySource: string;
   questionText: string;
 } | null {
-  const first = cells[index]?.trim() ?? "";
-  const qMatch = first.match(/^Q[\s.]?(\d+)/i);
-  if (!qMatch) return null;
+  const first = cells[0]?.trim() ?? "";
+  const questionMatch = first.match(/^Q[\s.]?(\d+)(?:\s+(.+))?$/i);
+  if (!questionMatch) return null;
 
-  const inlineSkill = /SKILL/i.test(first);
-  if (inlineSkill) {
+  if (/SKILL/i.test(first)) {
     const cleaned = first
       .replace(/^Q[\s.]?\d+\s*/i, "")
-      .replace(/SKILL\s*[:\-]?\s*(EASY|INTERMEDIATE|EXPERT)\s*/i, "")
+      .replace(/SKILL\s*[:\-]?\s*(EASY|INTERMEDIATE|PROFICIENT|EXPERT)\s*/i, "")
       .trim();
     return {
-      consumed: 1,
-      questionNumber: Number.parseInt(qMatch[1], 10),
+      questionNumber: Number.parseInt(questionMatch[1], 10),
       difficultySource: first,
       questionText: cleaned,
     };
   }
 
-  const second = cells[index + 1]?.trim() ?? "";
-  const third = cells[index + 2]?.trim() ?? "";
-
-  if (/^SKILL/i.test(second)) {
+  const skillCell = cells.find((cell) => /^SKILL/i.test(cell.trim()));
+  if (skillCell) {
+    const inlineText = questionMatch[2]?.trim() ?? "";
     return {
-      consumed: 2,
-      questionNumber: Number.parseInt(qMatch[1], 10),
-      difficultySource: second,
-      questionText: "",
-    };
-  }
-
-  if (/^SKILL/i.test(third)) {
-    return {
-      consumed: 3,
-      questionNumber: Number.parseInt(qMatch[1], 10),
-      difficultySource: third,
-      questionText: "",
+      questionNumber: Number.parseInt(questionMatch[1], 10),
+      difficultySource: skillCell,
+      questionText: inlineText,
     };
   }
 
   return null;
 }
 
-function consumeQuestionCells(
-  cells: string[],
+function setCorrectLetters(qb: QBuilder, letters: string[]) {
+  if (letters.length > 0) qb.correctLetters = letters;
+}
+
+function inferCorrectLetters(qb: QBuilder, text: string) {
+  if (qb.correctLetters.length > 0) return;
+  const answerMatch = text.match(/\bAnswer\s+([A-D])\s+is\s+correct\b/i);
+  if (answerMatch) {
+    setCorrectLetters(qb, [answerMatch[1].toUpperCase()]);
+    return;
+  }
+  const selectMatch = text.match(/\bSelect\s+([A-D])\b/i);
+  if (selectMatch) setCorrectLetters(qb, [selectMatch[1].toUpperCase()]);
+}
+
+function appendToMode(qb: QBuilder, text: string) {
+  switch (qb.mode) {
+    case "question":
+      qb.questionLines.push(text);
+      break;
+    case "rationale":
+      qb.rationale += (qb.rationale ? " " : "") + text;
+      break;
+    case "calculation":
+      qb.calculation += (qb.calculation ? " " : "") + text;
+      break;
+    default:
+      break;
+  }
+}
+
+function consumeQuestionText(text: string, state: QuestionParserState) {
+  const qb = state.qb;
+  if (!qb || !text) return;
+
+  const correctAnswerMatch = text.match(/Correct\s+Answer\s*[:\-]\s*([A-D](?:[,\s]+[A-D])*)/i);
+  if (correctAnswerMatch) {
+    setCorrectLetters(
+      qb,
+      correctAnswerMatch[1]
+        .split(/[,\s]+/)
+        .map((letter) => letter.trim().toUpperCase())
+        .filter((letter) => /^[A-D]$/.test(letter))
+    );
+    qb.mode = "post_answer";
+    return;
+  }
+
+  if (/^RATIONALE(?:\s*[:\-]|$)/i.test(text)) {
+    qb.mode = "rationale";
+    const rest = text.replace(/^RATIONALE\s*[:\-]?\s*/i, "").trim();
+    if (rest) {
+      inferCorrectLetters(qb, rest);
+      qb.rationale = rest;
+    }
+    return;
+  }
+
+  if (/^(?:STEP[\s-]*BY[\s-]*STEP(?:\s+CALCULATION)?|CALCULATION)(?:\s*[:\-]|$)/i.test(text)) {
+    qb.mode = "calculation";
+    const rest = text
+      .replace(/^STEP[\s-]*BY[\s-]*STEP(?:\s+CALCULATION)?\s*[:\-]?\s*/i, "")
+      .replace(/^CALCULATION\s*[:\-]?\s*/i, "")
+      .trim();
+    if (rest) qb.calculation = rest;
+    return;
+  }
+
+  if (/^FORMULA(?:\s*[:\-]|$)/i.test(text)) {
+    qb.mode = "calculation";
+    return;
+  }
+
+  const choiceMatch = text.match(/^([A-D])(?:[.)]\s*|\s*-\s+)(.+)$/);
+  if (choiceMatch) {
+    qb.mode = "choices";
+    qb.choices.push({
+      letter: choiceMatch[1].toUpperCase(),
+      choiceText: choiceMatch[2].trim(),
+      isCorrect: false,
+    });
+    return;
+  }
+
+  inferCorrectLetters(qb, text);
+  appendToMode(qb, text);
+}
+
+function consumeChoiceRow(row: TableRowText, state: QuestionParserState): boolean {
+  const qb = state.qb;
+  if (!qb || row.length < 2) return false;
+
+  const explicitLetterLines = row[0]?.lines.filter((line) => /^[A-D]$/i.test(line.trim())) ?? [];
+  const letterLines =
+    explicitLetterLines.length > 0
+      ? explicitLetterLines
+      : row[0]?.text.match(/\b[A-D]\b/g) ?? [];
+  if (letterLines.length === 0) return false;
+
+  let answerLines = row
+    .slice(1)
+    .flatMap((cell) => cell.lines)
+    .filter(Boolean);
+  if (answerLines.length <= letterLines.length && answerLines.length > 0) {
+    const split = answerLines
+      .join(" ")
+      .split(/\s+(?=(?:Yes|No|Partially|Always|Never|Only|All|None)\s+[—-]\s+)/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+    if (split.length >= letterLines.length) answerLines = split;
+  }
+  if (answerLines.length === 0) return false;
+
+  qb.mode = "choices";
+  for (let index = 0; index < letterLines.length; index += 1) {
+    const choiceText = answerLines[index] ?? answerLines[0];
+    if (!choiceText) continue;
+    qb.choices.push({
+      letter: letterLines[index].toUpperCase(),
+      choiceText,
+      isCorrect: false,
+    });
+  }
+  return true;
+}
+
+function consumeQuestionRow(
+  row: TableRowText,
   ctx: ParseContext,
   getTargetFormula: () => ParsedFormula,
   state: QuestionParserState
 ) {
-  for (let index = 0; index < cells.length; index += 1) {
-    const text = cells[index]?.trim();
-    if (!text) continue;
+  const cellTexts = row.map((cell) => cell.text).filter(Boolean);
+  const header = parseQuestionHeaderCells(cellTexts);
+  if (header) {
+    startQuestion(state, ctx, getTargetFormula(), header.questionNumber, header.difficultySource, header.questionText);
+    return;
+  }
 
-    const header = parseQuestionHeaderCells(cells, index);
-    if (header) {
-      startQuestion(
-        state,
-        ctx,
-        getTargetFormula(),
-        header.questionNumber,
-        header.difficultySource,
-        header.questionText
-      );
-      index += header.consumed - 1;
-      continue;
-    }
+  if (consumeChoiceRow(row, state)) return;
 
-    const qb = state.qb;
-    if (!qb) continue;
-
-    const caMatch = text.match(/Correct\s+Answer\s*[:\-]\s*([A-D](?:[,\s]+[A-D])*)/i);
-    if (caMatch) {
-      qb.correctLetters = caMatch[1]
-        .split(/[,\s]+/)
-        .map((l) => l.trim().toUpperCase())
-        .filter((l) => /^[A-D]$/.test(l));
-      qb.mode = "post_answer";
-      continue;
-    }
-
-    if (/^RATIONALE(?:\s*[:\-]|$)/i.test(text)) {
-      qb.mode = "rationale";
-      const rest = text.replace(/^RATIONALE\s*[:\-]?\s*/i, "").trim();
-      if (rest) qb.rationale = rest;
-      continue;
-    }
-
-    if (/^(?:STEP[\s\-]*BY[\s\-]*STEP(?:\s+CALCULATION)?|CALCULATION)(?:\s*[:\-]|$)/i.test(text)) {
-      qb.mode = "calculation";
-      const rest = text
-        .replace(/^STEP[\s\-]*BY[\s\-]*STEP(?:\s+CALCULATION)?\s*[:\-]?\s*/i, "")
-        .replace(/^CALCULATION\s*[:\-]?\s*/i, "")
-        .trim();
-      if (rest) qb.calculation = rest;
-      continue;
-    }
-
-    if (/^FORMULA(?:\s*[:\-]|$)/i.test(text)) {
-      qb.mode = "post_answer";
-      continue;
-    }
-
-    const splitChoiceMatch =
-      cells.length >= 2 && /^[A-D]$/i.test(text) && index + 1 < cells.length
-        ? { letter: text.toUpperCase(), choiceText: cells[index + 1]?.trim() ?? "" }
-        : null;
-    if (splitChoiceMatch?.choiceText) {
-      qb.mode = "choices";
-      qb.choices.push({
-        letter: splitChoiceMatch.letter,
-        choiceText: splitChoiceMatch.choiceText,
-        isCorrect: false,
-      });
-      index += 1;
-      continue;
-    }
-
-    const choiceMatch = text.match(/^([A-D])(?:[.)]\s*|\s*-\s+)(.+)$/);
-    if (choiceMatch) {
-      qb.mode = "choices";
-      qb.choices.push({
-        letter: choiceMatch[1].toUpperCase(),
-        choiceText: choiceMatch[2].trim(),
-        isCorrect: false,
-      });
-      continue;
-    }
-
-    switch (qb.mode) {
-      case "question":
-        qb.questionLines.push(text);
-        break;
-      case "rationale":
-        qb.rationale += (qb.rationale ? " " : "") + text;
-        break;
-      case "calculation":
-        qb.calculation += (qb.calculation ? " " : "") + text;
-        break;
-      default:
-        break;
-    }
+  for (const cell of row) {
+    for (const line of cell.lines) consumeQuestionText(line, state);
   }
 }
 
-// ─── Main export ──────────────────────────────────────────────────────────────
+function consumeQuestionTable(
+  rows: TableRowText[],
+  ctx: ParseContext,
+  getTargetFormula: () => ParsedFormula,
+  state: QuestionParserState
+) {
+  for (const row of rows) consumeQuestionRow(row, ctx, getTargetFormula, state);
+}
+
+function extractSegments(html: string): Segment[] {
+  const tableRanges: Array<{ start: number; end: number; html: string }> = [];
+  const tableRe = /<table(\s[^>]*)?>[\s\S]*?<\/table>/gi;
+  let tableMatch: RegExpExecArray | null;
+  while ((tableMatch = tableRe.exec(html)) !== null) {
+    tableRanges.push({
+      start: tableMatch.index,
+      end: tableMatch.index + tableMatch[0].length,
+      html: tableMatch[0],
+    });
+  }
+
+  function isInsideTable(index: number): boolean {
+    return tableRanges.some((range) => index > range.start && index < range.end);
+  }
+
+  const positioned: Array<{ pos: number; seg: Segment }> = [];
+  const paraRe = /<(h1|h2|h3|p)(\s[^>]*)?>[\s\S]*?<\/\1>/gi;
+  let paraMatch: RegExpExecArray | null;
+  while ((paraMatch = paraRe.exec(html)) !== null) {
+    if (isInsideTable(paraMatch.index)) continue;
+    const tag = paraMatch[1].toLowerCase() as "h1" | "h2" | "h3" | "p";
+    const text = stripTags(paraMatch[0]);
+    if (!text) continue;
+    positioned.push({
+      pos: paraMatch.index,
+      seg: { type: tag === "h3" ? "h2" : tag, text },
+    });
+  }
+
+  for (const range of tableRanges) {
+    const rows = parseTableRows(range.html);
+    if (rows.length > 0) positioned.push({ pos: range.start, seg: { type: "table", rows } });
+  }
+
+  return positioned.sort((a, b) => a.pos - b.pos).map(({ seg }) => seg);
+}
 
 export function parseDocxHtml(html: string): DocxParseResult {
-  // ── Split HTML into top-level segments ──────────────────────────────────────
-  // We need to handle <table> as a unit (cells can contain <p>/<em> etc.)
-  type Segment =
-    | { type: "h1" | "h2" | "p"; text: string }
-    | { type: "table"; cells: string[] };
-
-  const segments: Segment[] = [];
-  // Track table depths to avoid matching inner tags
-  // We use a two-pass approach: find tables first, then paragraphs outside them
-  const tableRanges: Array<{ start: number; end: number }> = [];
-  const tableRe = /<table(\s[^>]*)?>[\s\S]*?<\/table>/gi;
-  let tm: RegExpExecArray | null;
-  while ((tm = tableRe.exec(html)) !== null) {
-    tableRanges.push({ start: tm.index, end: tm.index + tm[0].length });
-  }
-
-  function isInsideTable(idx: number): boolean {
-    return tableRanges.some((r) => idx > r.start && idx < r.end);
-  }
-
-  // Extract headings and paragraphs that are NOT inside tables
-  const paraRe = /<(h1|h2|h3|p)(\s[^>]*)?>[\s\S]*?<\/\1>/gi;
-  let pm: RegExpExecArray | null;
-  const paraSegments: Array<{ pos: number; seg: Segment }> = [];
-  while ((pm = paraRe.exec(html)) !== null) {
-    if (!isInsideTable(pm.index)) {
-      const tag = pm[1].toLowerCase() as "h1" | "h2" | "h3" | "p";
-      const text = stripTags(pm[0]);
-      if (!text) continue;
-      paraSegments.push({
-        pos: pm.index,
-        seg: { type: tag === "h3" ? "h2" : tag, text } as Segment,
-      });
-    }
-  }
-
-  // Combine with tables, sorted by position
-  const tableSegments: Array<{ pos: number; seg: Segment }> = [];
-  for (const r of tableRanges) {
-    const tableHtml = html.slice(r.start, r.end);
-    const cells: string[] = [];
-    const cellRe = /<td(\s[^>]*)?>[\s\S]*?<\/td>/gi;
-    let cm: RegExpExecArray | null;
-    while ((cm = cellRe.exec(tableHtml)) !== null) {
-      const cellText = stripTags(cm[0]);
-      if (cellText) cells.push(cellText);
-    }
-    if (cells.length > 0) {
-      tableSegments.push({ pos: r.start, seg: { type: "table", cells } });
-    }
-  }
-
-  const allSegments = [...paraSegments, ...tableSegments].sort((a, b) => a.pos - b.pos);
-  for (const { seg } of allSegments) segments.push(seg);
-
-  // ── State machine over segments ─────────────────────────────────────────────
+  const segments = extractSegments(html);
   const sections: ParsedSection[] = [];
   let currentSection: ParsedSection | null = null;
   let currentFormula: ParsedFormula | null = null;
@@ -400,14 +453,12 @@ export function parseDocxHtml(html: string): DocxParseResult {
   }
 
   function ensureFormula(code: string, name: string) {
-    if (!currentSection) {
-      ensureSection("General");
-    }
+    if (!currentSection) ensureSection("General");
     currentFormula = { code, name, questions: [] };
     currentSection!.formulas.push(currentFormula);
   }
 
-  function getContext() {
+  function getContext(): ParseContext {
     return {
       domain: currentSection?.title ?? "General",
       formulaRef: currentFormula?.code ?? "",
@@ -427,35 +478,32 @@ export function parseDocxHtml(html: string): DocxParseResult {
   }
 
   for (const seg of segments) {
-    if (seg.type === "h1") {
+    if (seg.type === "h1" || (seg.type === "p" && isSectionHeader(seg.text))) {
       flushQuestion(questionState);
       ensureSection(parseSectionTitle(seg.text));
     } else if (seg.type === "h2") {
       flushQuestion(questionState);
-      const fi = parseFormulaHeader(seg.text);
-      if (fi) {
-        ensureFormula(fi.code, fi.name);
-      } else {
-        // Treat as a section if it doesn't look like a formula
-        ensureSection(seg.text);
-      }
+      const formula = parseFormulaHeader(seg.text);
+      if (formula) ensureFormula(formula.code, formula.name);
+      else ensureSection(parseSectionTitle(seg.text));
     } else if (seg.type === "table") {
-      const ctx = getContext();
-      consumeQuestionCells(seg.cells, ctx, ensureQuestionTargetFormula, questionState);
+      consumeQuestionTable(seg.rows, getContext(), ensureQuestionTargetFormula, questionState);
+    } else if (seg.type === "p") {
+      consumeQuestionText(seg.text, questionState);
     }
-    // Skip standalone paragraphs (p) — they are usually headings or blank space
   }
 
   flushQuestion(questionState);
-  const allQuestions = sections.flatMap((s) => s.formulas.flatMap((f) => f.questions));
+  const parsedSections = sections.filter((section) =>
+    section.formulas.some((formula) => formula.questions.length > 0)
+  );
+  const allQuestions = parsedSections.flatMap((section) => section.formulas.flatMap((formula) => formula.questions));
 
-  return { sections, allQuestions };
+  return { sections: parsedSections, allQuestions };
 }
 
 export async function parseDocxQuestions(buffer: Buffer): Promise<DocxParseResult> {
   const mammoth = await import("mammoth");
-
-  // Convert to HTML — mammoth maps Heading 1 → <h1>, Heading 2 → <h2>, tables → <table>
   const { value: html } = await mammoth.convertToHtml({ buffer });
   return parseDocxHtml(html);
 }

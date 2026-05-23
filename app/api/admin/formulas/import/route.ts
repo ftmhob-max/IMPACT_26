@@ -16,7 +16,7 @@ type ExistingSectionsData = {
   formulaSections: Array<{
     id: string;
     code: string;
-    formulas_on_section: Array<{ code: string }>;
+    formulas_on_section: Array<{ id: string; code: string; examplesJson?: string | null }>;
   }>;
 };
 
@@ -62,14 +62,24 @@ export async function POST(req: NextRequest) {
     () => ({ formulaSections: [] as ExistingSectionsData["formulaSections"] })
   );
   const existingBySectionCode = new Map(existingData.formulaSections.map((s) => [s.code, s.id]));
-  const existingFormulaKeys = new Set(
+  // Map composite key → existing formula id (for upsert of examplesJson)
+  const existingFormulaIdByKey = new Map(
     existingData.formulaSections.flatMap((s) =>
-      (s.formulas_on_section ?? []).map((f) => `${s.code}:${f.code}`)
+      (s.formulas_on_section ?? []).map((f) => [`${s.code}:${f.code}`, f.id])
+    )
+  );
+  // Track which existing formulas already have examples (skip re-importing if present)
+  const existingFormulaHasExamples = new Set(
+    existingData.formulaSections.flatMap((s) =>
+      (s.formulas_on_section ?? [])
+        .filter((f) => f.examplesJson)
+        .map((f) => `${s.code}:${f.code}`)
     )
   );
 
   let imported = 0;
   let skipped = 0;
+  let updated = 0;
   const errors: string[] = [...batch.errors];
   const importedSections: string[] = [];
 
@@ -77,11 +87,8 @@ export async function POST(req: NextRequest) {
   const createdSectionIds: string[] = [];
   const createdFormulaIds: string[] = [];
 
-  let fatalError: string | null = null;
-
   for (const section of batch.sections) {
     let sectionId = existingBySectionCode.get(section.code);
-    let sectionCreated = false;
 
     try {
       if (!sectionId) {
@@ -94,15 +101,32 @@ export async function POST(req: NextRequest) {
         });
         existingBySectionCode.set(section.code, sectionId);
         createdSectionIds.push(sectionId);
-        sectionCreated = true;
       }
 
       for (const formula of section.formulas) {
         const dupeKey = `${section.code}:${formula.code}`;
-        if (existingFormulaKeys.has(dupeKey)) {
-          skipped++;
+        const existingId = existingFormulaIdByKey.get(dupeKey);
+
+        if (existingId) {
+          // Formula already exists — update examplesJson if the import has examples
+          // and the existing record doesn't already have them.
+          if (formula.examplesJson && !existingFormulaHasExamples.has(dupeKey)) {
+            try {
+              await adminDcMutate("UpdateFormula", {
+                id: existingId,
+                examplesJson: formula.examplesJson,
+              });
+              existingFormulaHasExamples.add(dupeKey);
+              updated++;
+            } catch (fErr) {
+              errors.push(`Formula "${section.code}/${formula.code}" (update examples): ${fErr}`);
+            }
+          } else {
+            skipped++;
+          }
           continue;
         }
+
         try {
           const formulaId = randomUUID();
           await adminDcMutate("CreateFormula", {
@@ -113,8 +137,9 @@ export async function POST(req: NextRequest) {
             notes: formula.notes ?? null,
             position: formula.position,
             calcMetaJson: formula.calcMetaJson ?? null,
+            examplesJson: formula.examplesJson ?? null,
           });
-          existingFormulaKeys.add(dupeKey);
+          existingFormulaIdByKey.set(dupeKey, formulaId);
           createdFormulaIds.push(formulaId);
           imported++;
         } catch (fErr) {
@@ -124,8 +149,7 @@ export async function POST(req: NextRequest) {
       importedSections.push(section.code);
     } catch (sErr) {
       // Section-level failure: attempt rollback for everything created so far.
-      fatalError = `Section "${section.code}" failed: ${sErr}`;
-      errors.push(fatalError);
+      errors.push(`Section "${section.code}" failed: ${sErr}`);
 
       // Best-effort rollback: delete everything we just created.
       for (const fid of createdFormulaIds) {
@@ -138,6 +162,7 @@ export async function POST(req: NextRequest) {
       // Return early so the partial batch is not left in an inconsistent state.
       return NextResponse.json({
         imported: 0,
+        updated: 0,
         skipped,
         errors,
         sections: [],
@@ -146,5 +171,5 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ imported, skipped, errors, sections: importedSections, rolledBack: false });
+  return NextResponse.json({ imported, updated, skipped, errors, sections: importedSections, rolledBack: false });
 }

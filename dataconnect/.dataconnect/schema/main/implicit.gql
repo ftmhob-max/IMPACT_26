@@ -32,6 +32,12 @@ extend type Course {
   """
   updatedById: String @fdc_generated(from: "Course.updatedBy", purpose: IMPLICIT_REF_FIELD)
 }
+extend type CustomDomain {
+  """
+  ✨ Implicit foreign key field based on `CustomDomain`.`createdBy`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  createdById: String @fdc_generated(from: "CustomDomain.createdBy", purpose: IMPLICIT_REF_FIELD)
+}
 extend type Formula {
   """
   ✨ Implicit foreign key field based on `Formula`.`section`. It must match the value of `FormulaSection`.`id`. See `@ref` for how to customize it.

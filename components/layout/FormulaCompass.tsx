@@ -18,7 +18,39 @@ interface Formula {
   expression: string;
   notes?: string | null;
   calcMetaJson?: string | null;
+  examplesJson?: string | null;
 }
+
+type ExampleDifficulty = "easy" | "proficient" | "expert";
+
+interface FormulaExample {
+  difficulty: ExampleDifficulty;
+  steps: string[];
+  summary?: string;
+}
+
+interface FormulaExamplesData {
+  easy?: FormulaExample;
+  proficient?: FormulaExample;
+  expert?: FormulaExample;
+}
+
+function parseExamples(json: string | null | undefined): FormulaExamplesData | null {
+  if (!json) return null;
+  try { return JSON.parse(json) as FormulaExamplesData; } catch { return null; }
+}
+
+const EXAMPLE_DIFFICULTY_CONFIG: Array<{
+  key: ExampleDifficulty;
+  label: string;
+  activeBg: string;
+  activeText: string;
+  inactiveText: string;
+}> = [
+  { key: "easy", label: "Easy", activeBg: "bg-emerald-600", activeText: "text-white", inactiveText: "text-emerald-700" },
+  { key: "proficient", label: "Proficient", activeBg: "bg-amber-500", activeText: "text-white", inactiveText: "text-amber-700" },
+  { key: "expert", label: "Expert", activeBg: "bg-purple-600", activeText: "text-white", inactiveText: "text-purple-700" },
+];
 
 interface FormulaSection {
   id: string;
@@ -613,6 +645,9 @@ function DrillView({
                 <p className="text-[13px] leading-relaxed text-slate-500 italic">{formula.notes}</p>
               )}
 
+              {/* Tiered examples (drill mode inline) */}
+              <DrillExamplesPanel formula={formula} />
+
               {/* Actions */}
               <div className="flex gap-3 pt-1">
                 <button
@@ -736,6 +771,62 @@ function DrillView({
 
 // ─── Browse mode formula card ─────────────────────────────────────────────────
 
+// ─── Drill examples panel ─────────────────────────────────────────────────────
+
+function DrillExamplesPanel({ formula }: { formula: Formula }) {
+  const examplesData = parseExamples(formula.examplesJson);
+  const available = EXAMPLE_DIFFICULTY_CONFIG.filter((d) => examplesData?.[d.key]);
+  const [active, setActive] = useState<ExampleDifficulty | null>(null);
+
+  if (available.length === 0) return null;
+
+  return (
+    <div className="rounded-xl border border-slate-200 overflow-hidden">
+      <div className="flex border-b border-slate-200">
+        <span className="flex items-center gap-1 px-3 py-2 text-[11px] font-semibold text-slate-500 border-r border-slate-200">
+          <Icons.GraduationCap size={11} /> Examples
+        </span>
+        {available.map((d) => (
+          <button
+            key={d.key}
+            type="button"
+            onClick={() => setActive((prev) => (prev === d.key ? null : d.key))}
+            className={cn(
+              "flex-1 py-2 text-[11px] font-bold transition-colors",
+              active === d.key
+                ? cn(d.activeBg, d.activeText)
+                : cn("bg-white text-slate-500 hover:bg-slate-50")
+            )}
+          >
+            {d.label}
+          </button>
+        ))}
+      </div>
+      {active && examplesData?.[active] && (
+        <div className="px-4 py-3 space-y-2 bg-slate-50">
+          <ol className="space-y-2">
+            {examplesData[active]!.steps.map((step, i) => (
+              <li key={i} className="flex gap-2.5 text-[12px] text-slate-700 leading-relaxed">
+                <span className="shrink-0 mt-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-slate-200 text-[10px] font-bold text-slate-600">
+                  {i + 1}
+                </span>
+                <span>{step}</span>
+              </li>
+            ))}
+          </ol>
+          {examplesData[active]!.summary && (
+            <p className="text-[11px] italic text-slate-500 border-t border-slate-200 pt-2">
+              {examplesData[active]!.summary}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Browse formula card ──────────────────────────────────────────────────────
+
 function FormulaCard({
   formula,
   isFavorite,
@@ -755,6 +846,11 @@ function FormulaCard({
   calcCtx: ReturnType<typeof useFormulaCalc> | null;
   onToggleFavorite: () => void;
 }) {
+  const [examplesOpen, setExamplesOpen] = useState(false);
+  const [activeDifficulty, setActiveDifficulty] = useState<ExampleDifficulty>("easy");
+  const examplesData = parseExamples(formula.examplesJson);
+  const availableDifficulties = EXAMPLE_DIFFICULTY_CONFIG.filter((d) => examplesData?.[d.key]);
+
   return (
     <article className="border-b border-slate-100 px-5 py-4 transition-colors hover:bg-[#fbfcfd]">
       <div className="mb-2 flex items-start justify-between gap-3">
@@ -796,15 +892,80 @@ function FormulaCard({
         {HighlightText(formula.expression, searchQuery)}
       </p>
       {formula.notes && <p className="mt-2 text-xs leading-5 text-slate-500">{formula.notes}</p>}
-      {calcCtx && (
-        <button
-          type="button"
-          onClick={() => calcCtx.open(formula.code)}
-          className="mt-3 inline-flex items-center gap-1.5 rounded text-xs font-semibold text-[#185FA5] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2"
-        >
-          <Icons.Calculator size={12} />
-          Open calculator
-        </button>
+
+      {/* Bottom action row */}
+      <div className="mt-3 flex items-center gap-3 flex-wrap">
+        {calcCtx && (
+          <button
+            type="button"
+            onClick={() => calcCtx.open(formula.code)}
+            className="inline-flex items-center gap-1.5 rounded text-xs font-semibold text-[#185FA5] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2"
+          >
+            <Icons.Calculator size={12} />
+            Calculator
+          </button>
+        )}
+        {availableDifficulties.length > 0 && (
+          <button
+            type="button"
+            onClick={() => {
+              setExamplesOpen((v) => !v);
+              if (!examplesOpen && availableDifficulties.length > 0) {
+                setActiveDifficulty(availableDifficulties[0].key);
+              }
+            }}
+            className="inline-flex items-center gap-1.5 rounded text-xs font-semibold text-slate-500 hover:text-[#185FA5] hover:underline focus-visible:outline-none"
+          >
+            <Icons.GraduationCap size={12} />
+            {examplesOpen ? "Hide examples" : "View examples"}
+          </button>
+        )}
+      </div>
+
+      {/* Examples panel */}
+      {examplesOpen && availableDifficulties.length > 0 && (
+        <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 overflow-hidden">
+          {/* Difficulty tabs */}
+          <div className="flex border-b border-slate-200">
+            {availableDifficulties.map((d) => (
+              <button
+                key={d.key}
+                type="button"
+                onClick={() => setActiveDifficulty(d.key)}
+                className={cn(
+                  "flex-1 py-2 text-[11px] font-bold transition-colors",
+                  activeDifficulty === d.key
+                    ? cn(d.activeBg, d.activeText)
+                    : cn("bg-white text-slate-500 hover:bg-slate-50", d.inactiveText)
+                )}
+              >
+                {d.label}
+              </button>
+            ))}
+          </div>
+          {/* Steps */}
+          {availableDifficulties.map((d) => {
+            if (d.key !== activeDifficulty) return null;
+            const ex = examplesData![d.key]!;
+            return (
+              <div key={d.key} className="px-4 py-3 space-y-2">
+                <ol className="space-y-2">
+                  {ex.steps.map((step, i) => (
+                    <li key={i} className="flex gap-2.5 text-xs text-slate-700 leading-relaxed">
+                      <span className="shrink-0 mt-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-slate-200 text-[10px] font-bold text-slate-600">
+                        {i + 1}
+                      </span>
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ol>
+                {ex.summary && (
+                  <p className="text-[11px] italic text-slate-500 border-t border-slate-200 pt-2">{ex.summary}</p>
+                )}
+              </div>
+            );
+          })}
+        </div>
       )}
     </article>
   );

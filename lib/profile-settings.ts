@@ -10,6 +10,7 @@ export type LearnerProfileSettings = {
   defaultSessionLength: number;
   compactSidebar: boolean;
   reducedMotion: boolean;
+  theme: "light" | "dark";
   formulaHelperDefaultOpen: boolean;
   calculatorPrecision: string;
   profileVisibility: string;
@@ -25,6 +26,7 @@ export const DEFAULT_PROFILE_SETTINGS: LearnerProfileSettings = {
   defaultSessionLength: 30,
   compactSidebar: false,
   reducedMotion: false,
+  theme: "light",
   formulaHelperDefaultOpen: true,
   calculatorPrecision: "2",
   profileVisibility: "private",
@@ -62,6 +64,7 @@ export function normalizeProfileSettings(input: Record<string, unknown> | null |
     reducedMotion: typeof source.reducedMotion === "boolean"
       ? source.reducedMotion
       : DEFAULT_PROFILE_SETTINGS.reducedMotion,
+    theme: source.theme === "dark" ? "dark" : DEFAULT_PROFILE_SETTINGS.theme,
     formulaHelperDefaultOpen: typeof source.formulaHelperDefaultOpen === "boolean"
       ? source.formulaHelperDefaultOpen
       : DEFAULT_PROFILE_SETTINGS.formulaHelperDefaultOpen,

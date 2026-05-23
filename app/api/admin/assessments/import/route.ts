@@ -16,6 +16,13 @@ function isCorrectChoice(row: CsvQuestionRow, letter: string, choiceText: string
   });
 }
 
+function getImportChoices(row: CsvQuestionRow) {
+  if (row.question_type === "short_answer" && row.choices.length === 0) {
+    return row.correct_answers;
+  }
+  return row.choices;
+}
+
 export async function POST(request: NextRequest) {
   const auth = await requireAdminRequest(request, "instructor");
   if (!auth.ok) return auth.response;
@@ -62,7 +69,8 @@ export async function POST(request: NextRequest) {
     for (let importIndex = 0; importIndex < rowsToImport.length; importIndex++) {
       const { row } = rowsToImport[importIndex];
       const questionId = randomUUID();
-      const correctCount = row.choices.filter((choice, index) =>
+      const importChoices = getImportChoices(row);
+      const correctCount = importChoices.filter((choice, index) =>
         isCorrectChoice(row, String.fromCharCode(65 + index), choice)
       ).length;
 
@@ -82,9 +90,9 @@ export async function POST(request: NextRequest) {
         createdById: auth.session.uid,
       });
 
-      for (let choiceIndex = 0; choiceIndex < row.choices.length; choiceIndex++) {
+      for (let choiceIndex = 0; choiceIndex < importChoices.length; choiceIndex++) {
         const letter = String.fromCharCode(65 + choiceIndex);
-        const choiceText = row.choices[choiceIndex];
+        const choiceText = importChoices[choiceIndex];
         await adminDcMutate("CreateAnswerChoice", {
           questionId,
           letter,

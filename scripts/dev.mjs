@@ -152,13 +152,15 @@ async function main() {
     console.log("[dev] Firebase emulator disabled by NEXT_PUBLIC_USE_FIREBASE_EMULATOR=false.");
   }
 
-  const child = spawn("npx", args, {
+  const cmd = process.platform === "win32" ? "npx.cmd" : "npx";
+  const child = spawn(cmd, args, {
     cwd,
     env: {
       ...process.env,
       NODE_PATH: path.join(cwd, "node_modules"),
     },
     stdio: "inherit",
+    shell: process.platform === "win32",
   });
 
   child.on("exit", (code, signal) => {

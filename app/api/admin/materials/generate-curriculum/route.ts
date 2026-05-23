@@ -21,7 +21,7 @@ const choiceSchema = z.object({
 const questionSchema = z.object({
   questionNumber: z.number(),
   questionText: z.string(),
-  difficulty: z.enum(["easy", "intermediate", "expert"]),
+  difficulty: z.enum(["easy", "proficient", "expert"]),
   domain: z.string(),
   formulaRef: z.string(),
   topicTags: z.string(),
@@ -145,8 +145,8 @@ export async function POST(request: NextRequest) {
           ? `This formula has ${formula.questions.length} practice questions (${
               formula.questions.filter((q) => q.difficulty === "easy").length
             } easy, ${
-              formula.questions.filter((q) => q.difficulty === "intermediate").length
-            } intermediate, ${
+              formula.questions.filter((q) => q.difficulty === "proficient").length
+            } proficient, ${
               formula.questions.filter((q) => q.difficulty === "expert").length
             } expert).`
           : "";

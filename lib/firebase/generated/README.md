@@ -49,6 +49,7 @@ This README will guide you through the process of using the generated JavaScript
   - [*GetLessonNoteForUserLesson*](#getlessonnoteforuserlesson)
   - [*GetUserFavorites*](#getuserfavorites)
   - [*GetUserFavoritesByType*](#getuserfavoritesbytype)
+  - [*ListCustomDomains*](#listcustomdomains)
 - [**Mutations**](#mutations)
   - [*CreateUser*](#createuser)
   - [*UpdateUserRole*](#updateuserrole)
@@ -121,6 +122,7 @@ This README will guide you through the process of using the generated JavaScript
   - [*DeleteLessonNote*](#deletelessonnote)
   - [*UpsertUserFavorite*](#upsertuserfavorite)
   - [*DeleteUserFavorite*](#deleteuserfavorite)
+  - [*CreateCustomDomain*](#createcustomdomain)
 
 # Accessing the connector
 A connector is a collection of Queries and Mutations. One SDK is generated for each connector - this SDK is generated for the connector `impact26-connector`. You can find more information about connectors in the [Data Connect documentation](https://firebase.google.com/docs/data-connect#how-does).
@@ -1563,6 +1565,7 @@ export interface GetFormulaSectionsData {
       expression: string;
       notes?: string | null;
       calcMetaJson?: string | null;
+      examplesJson?: string | null;
     } & Formula_Key)[];
   } & FormulaSection_Key)[];
 }
@@ -5079,6 +5082,100 @@ console.log(data.userFavorites);
 executeQuery(ref).then((response) => {
   const data = response.data;
   console.log(data.userFavorites);
+});
+```
+
+## ListCustomDomains
+You can execute the `ListCustomDomains` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+listCustomDomains(options?: ExecuteQueryOptions): QueryPromise<ListCustomDomainsData, undefined>;
+
+interface ListCustomDomainsRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (): QueryRef<ListCustomDomainsData, undefined>;
+}
+export const listCustomDomainsRef: ListCustomDomainsRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `QueryRef` function.
+```typescript
+listCustomDomains(dc: DataConnect, options?: ExecuteQueryOptions): QueryPromise<ListCustomDomainsData, undefined>;
+
+interface ListCustomDomainsRef {
+  ...
+  (dc: DataConnect): QueryRef<ListCustomDomainsData, undefined>;
+}
+export const listCustomDomainsRef: ListCustomDomainsRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the listCustomDomainsRef:
+```typescript
+const name = listCustomDomainsRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `ListCustomDomains` query has no variables.
+### Return Type
+Recall that executing the `ListCustomDomains` query returns a `QueryPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `ListCustomDomainsData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface ListCustomDomainsData {
+  customDomains: ({
+    id: UUIDString;
+    name: string;
+  } & CustomDomain_Key)[];
+}
+```
+### Using `ListCustomDomains`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, listCustomDomains } from '@impact26/dataconnect-sdk';
+
+
+// Call the `listCustomDomains()` function to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await listCustomDomains();
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await listCustomDomains(dataConnect);
+
+console.log(data.customDomains);
+
+// Or, you can use the `Promise` API.
+listCustomDomains().then((response) => {
+  const data = response.data;
+  console.log(data.customDomains);
+});
+```
+
+### Using `ListCustomDomains`'s `QueryRef` function
+
+```typescript
+import { getDataConnect, executeQuery } from 'firebase/data-connect';
+import { connectorConfig, listCustomDomainsRef } from '@impact26/dataconnect-sdk';
+
+
+// Call the `listCustomDomainsRef()` function to get a reference to the query.
+const ref = listCustomDomainsRef();
+
+// You can also pass in a `DataConnect` instance to the `QueryRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = listCustomDomainsRef(dataConnect);
+
+// Call `executeQuery()` on the reference to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeQuery(ref);
+
+console.log(data.customDomains);
+
+// Or, you can use the `Promise` API.
+executeQuery(ref).then((response) => {
+  const data = response.data;
+  console.log(data.customDomains);
 });
 ```
 
@@ -11283,6 +11380,7 @@ export interface CreateFormulaVariables {
   notes?: string | null;
   position: number;
   calcMetaJson?: string | null;
+  examplesJson?: string | null;
 }
 ```
 ### Return Type
@@ -11309,13 +11407,14 @@ const createFormulaVars: CreateFormulaVariables = {
   notes: ..., // optional
   position: ..., 
   calcMetaJson: ..., // optional
+  examplesJson: ..., // optional
 };
 
 // Call the `createFormula()` function to execute the mutation.
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await createFormula(createFormulaVars);
 // Variables can be defined inline as well.
-const { data } = await createFormula({ sectionId: ..., code: ..., name: ..., expression: ..., notes: ..., position: ..., calcMetaJson: ..., });
+const { data } = await createFormula({ sectionId: ..., code: ..., name: ..., expression: ..., notes: ..., position: ..., calcMetaJson: ..., examplesJson: ..., });
 
 // You can also pass in a `DataConnect` instance to the action shortcut function.
 const dataConnect = getDataConnect(connectorConfig);
@@ -11345,12 +11444,13 @@ const createFormulaVars: CreateFormulaVariables = {
   notes: ..., // optional
   position: ..., 
   calcMetaJson: ..., // optional
+  examplesJson: ..., // optional
 };
 
 // Call the `createFormulaRef()` function to get a reference to the mutation.
 const ref = createFormulaRef(createFormulaVars);
 // Variables can be defined inline as well.
-const ref = createFormulaRef({ sectionId: ..., code: ..., name: ..., expression: ..., notes: ..., position: ..., calcMetaJson: ..., });
+const ref = createFormulaRef({ sectionId: ..., code: ..., name: ..., expression: ..., notes: ..., position: ..., calcMetaJson: ..., examplesJson: ..., });
 
 // You can also pass in a `DataConnect` instance to the `MutationRef` function.
 const dataConnect = getDataConnect(connectorConfig);
@@ -11409,6 +11509,7 @@ export interface UpdateFormulaVariables {
   expression?: string | null;
   notes?: string | null;
   calcMetaJson?: string | null;
+  examplesJson?: string | null;
   position?: number | null;
 }
 ```
@@ -11435,6 +11536,7 @@ const updateFormulaVars: UpdateFormulaVariables = {
   expression: ..., // optional
   notes: ..., // optional
   calcMetaJson: ..., // optional
+  examplesJson: ..., // optional
   position: ..., // optional
 };
 
@@ -11442,7 +11544,7 @@ const updateFormulaVars: UpdateFormulaVariables = {
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await updateFormula(updateFormulaVars);
 // Variables can be defined inline as well.
-const { data } = await updateFormula({ id: ..., code: ..., name: ..., expression: ..., notes: ..., calcMetaJson: ..., position: ..., });
+const { data } = await updateFormula({ id: ..., code: ..., name: ..., expression: ..., notes: ..., calcMetaJson: ..., examplesJson: ..., position: ..., });
 
 // You can also pass in a `DataConnect` instance to the action shortcut function.
 const dataConnect = getDataConnect(connectorConfig);
@@ -11471,13 +11573,14 @@ const updateFormulaVars: UpdateFormulaVariables = {
   expression: ..., // optional
   notes: ..., // optional
   calcMetaJson: ..., // optional
+  examplesJson: ..., // optional
   position: ..., // optional
 };
 
 // Call the `updateFormulaRef()` function to get a reference to the mutation.
 const ref = updateFormulaRef(updateFormulaVars);
 // Variables can be defined inline as well.
-const ref = updateFormulaRef({ id: ..., code: ..., name: ..., expression: ..., notes: ..., calcMetaJson: ..., position: ..., });
+const ref = updateFormulaRef({ id: ..., code: ..., name: ..., expression: ..., notes: ..., calcMetaJson: ..., examplesJson: ..., position: ..., });
 
 // You can also pass in a `DataConnect` instance to the `MutationRef` function.
 const dataConnect = getDataConnect(connectorConfig);
@@ -13487,6 +13590,121 @@ console.log(data.userFavorite_delete);
 executeMutation(ref).then((response) => {
   const data = response.data;
   console.log(data.userFavorite_delete);
+});
+```
+
+## CreateCustomDomain
+You can execute the `CreateCustomDomain` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+createCustomDomain(vars: CreateCustomDomainVariables): MutationPromise<CreateCustomDomainData, CreateCustomDomainVariables>;
+
+interface CreateCustomDomainRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateCustomDomainVariables): MutationRef<CreateCustomDomainData, CreateCustomDomainVariables>;
+}
+export const createCustomDomainRef: CreateCustomDomainRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+createCustomDomain(dc: DataConnect, vars: CreateCustomDomainVariables): MutationPromise<CreateCustomDomainData, CreateCustomDomainVariables>;
+
+interface CreateCustomDomainRef {
+  ...
+  (dc: DataConnect, vars: CreateCustomDomainVariables): MutationRef<CreateCustomDomainData, CreateCustomDomainVariables>;
+}
+export const createCustomDomainRef: CreateCustomDomainRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the createCustomDomainRef:
+```typescript
+const name = createCustomDomainRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `CreateCustomDomain` mutation requires an argument of type `CreateCustomDomainVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface CreateCustomDomainVariables {
+  id: UUIDString;
+  name: string;
+  createdById?: string | null;
+}
+```
+### Return Type
+Recall that executing the `CreateCustomDomain` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `CreateCustomDomainData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface CreateCustomDomainData {
+  customDomain_insert: CustomDomain_Key;
+}
+```
+### Using `CreateCustomDomain`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, createCustomDomain, CreateCustomDomainVariables } from '@impact26/dataconnect-sdk';
+
+// The `CreateCustomDomain` mutation requires an argument of type `CreateCustomDomainVariables`:
+const createCustomDomainVars: CreateCustomDomainVariables = {
+  id: ..., 
+  name: ..., 
+  createdById: ..., // optional
+};
+
+// Call the `createCustomDomain()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await createCustomDomain(createCustomDomainVars);
+// Variables can be defined inline as well.
+const { data } = await createCustomDomain({ id: ..., name: ..., createdById: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await createCustomDomain(dataConnect, createCustomDomainVars);
+
+console.log(data.customDomain_insert);
+
+// Or, you can use the `Promise` API.
+createCustomDomain(createCustomDomainVars).then((response) => {
+  const data = response.data;
+  console.log(data.customDomain_insert);
+});
+```
+
+### Using `CreateCustomDomain`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, createCustomDomainRef, CreateCustomDomainVariables } from '@impact26/dataconnect-sdk';
+
+// The `CreateCustomDomain` mutation requires an argument of type `CreateCustomDomainVariables`:
+const createCustomDomainVars: CreateCustomDomainVariables = {
+  id: ..., 
+  name: ..., 
+  createdById: ..., // optional
+};
+
+// Call the `createCustomDomainRef()` function to get a reference to the mutation.
+const ref = createCustomDomainRef(createCustomDomainVars);
+// Variables can be defined inline as well.
+const ref = createCustomDomainRef({ id: ..., name: ..., createdById: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = createCustomDomainRef(dataConnect, createCustomDomainVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.customDomain_insert);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.customDomain_insert);
 });
 ```
 

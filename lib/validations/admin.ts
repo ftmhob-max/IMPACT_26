@@ -19,6 +19,32 @@ export const questionTypeSchema = z.enum([
   "scenario",
 ]);
 
+function normalizeQuestionType(value: unknown) {
+  const normalized = String(value ?? "multiple_choice").trim().toLowerCase().replace(/[\s-]+/g, "_");
+  const aliases: Record<string, z.infer<typeof questionTypeSchema>> = {
+    mc: "multiple_choice",
+    multiple: "multiple_choice",
+    multiple_choice: "multiple_choice",
+    single: "multiple_choice",
+    single_choice: "multiple_choice",
+    single_select: "multiple_choice",
+    true_false: "multiple_choice",
+    multi: "multiselect",
+    multi_select: "multiselect",
+    multiple_select: "multiselect",
+    multiselect: "multiselect",
+    select_all: "multiselect",
+    short: "short_answer",
+    short_answer: "short_answer",
+    free_response: "short_answer",
+    open_response: "short_answer",
+    scenario: "scenario",
+    case: "scenario",
+    case_study: "scenario",
+  };
+  return aliases[normalized] ?? normalized;
+}
+
 export const roleUpdateSchema = z.object({
   userId: z.string().min(1),
   role: z.enum(["learner", ...adminRoles]),
@@ -74,11 +100,11 @@ export const manualQuestionSchema = z.object({
 
 export const csvQuestionRowSchema = z.object({
   question_text: z.string().trim().min(5),
-  question_type: questionTypeSchema.default("multiple_choice"),
+  question_type: z.preprocess(normalizeQuestionType, questionTypeSchema).default("multiple_choice"),
   difficulty: z.enum(difficultyValues),
   domain: z.enum(domainValues),
-  choices: z.array(z.string().trim().min(1)).min(2),
-  correct_answers: z.array(z.string().trim().min(1)).min(1),
+  choices: z.array(z.string().trim().min(1)).default([]),
+  correct_answers: z.array(z.string().trim().min(1)).default([]),
   explanation: z.string().trim().optional().nullable(),
   rationale: z.string().trim().optional().nullable(),
   calculation: z.string().trim().optional().nullable(),
@@ -86,6 +112,27 @@ export const csvQuestionRowSchema = z.object({
   topic_tags: z.array(z.string().trim().min(1)).default([]),
   formula_ref: z.string().trim().optional().nullable(),
   point_value: z.coerce.number().positive().default(1),
+}).superRefine((row, ctx) => {
+  if (row.correct_answers.length < 1) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.too_small,
+      minimum: 1,
+      type: "array",
+      inclusive: true,
+      path: ["correct_answers"],
+      message: "At least one correct answer is required.",
+    });
+  }
+  if (row.question_type !== "short_answer" && row.choices.length < 2) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.too_small,
+      minimum: 2,
+      type: "array",
+      inclusive: true,
+      path: ["choices"],
+      message: "At least 2 choices are required for choice-based questions.",
+    });
+  }
 });
 
 export const csvImportSchema = z.object({

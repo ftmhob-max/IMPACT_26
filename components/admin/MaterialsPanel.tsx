@@ -1,6 +1,8 @@
 "use client";
 
 import { type ReactNode, useDeferredValue, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/lib/firebase/client";
 import { cn } from "@/lib/utils";
 import { FileDropZone } from "./FileDropZone";
 import * as Icons from "@/components/ui/Icons";
@@ -2870,6 +2872,22 @@ function MaterialPreviewPane({
   const [reparseElapsed, setReparseElapsed] = useState(0);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
+  const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    return onAuthStateChanged(auth, async (u) => {
+      if (u) {
+        try {
+          const t = await u.getIdToken();
+          setToken(t);
+        } catch {
+          setToken(null);
+        }
+      } else {
+        setToken(null);
+      }
+    });
+  }, []);
 
   const materialInfo = material?.material ?? fallbackMaterial;
 
@@ -2962,11 +2980,19 @@ function MaterialPreviewPane({
     formattedMode: null,
     formattedHtml: null,
   };
-  const assetHref = "assetHref" in materialInfo && typeof materialInfo.assetHref === "string" ? materialInfo.assetHref : null;
-  const assetDownloadHref =
+  const rawAssetHref = "assetHref" in materialInfo && typeof materialInfo.assetHref === "string" ? materialInfo.assetHref : null;
+  const rawAssetDownloadHref =
     "assetDownloadHref" in materialInfo && typeof materialInfo.assetDownloadHref === "string"
       ? materialInfo.assetDownloadHref
       : null;
+
+  const assetHref = rawAssetHref && token
+    ? `${rawAssetHref}${rawAssetHref.includes("?") ? "&" : "?"}token=${encodeURIComponent(token)}`
+    : rawAssetHref;
+
+  const assetDownloadHref = rawAssetDownloadHref && token
+    ? `${rawAssetDownloadHref}${rawAssetDownloadHref.includes("?") ? "&" : "?"}token=${encodeURIComponent(token)}`
+    : rawAssetDownloadHref;
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">

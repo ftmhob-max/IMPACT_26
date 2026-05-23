@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import * as Icons from "@/components/ui/Icons";
-import { cn } from "@/lib/utils";
+import { cn, DOMAINS } from "@/lib/utils";
 import { CsvImportPanel } from "@/components/admin/CsvImportPanel";
+import { useDomains } from "@/lib/hooks/useDomains";
 
 // ─── Shared types ─────────────────────────────────────────────────────────────
 
@@ -38,7 +39,6 @@ interface BankCandidate {
 // returns all questions with inCurrentQuiz: false
 const PLACEHOLDER_QUIZ_ID = "00000000-0000-0000-0000-000000000001";
 
-const DOMAINS = ["math", "appraisal", "law", "philly", "admin", "ethics"] as const;
 const DIFFICULTIES = ["easy", "proficient", "expert"] as const;
 const MAX_ERRORS = 5;
 
@@ -244,15 +244,22 @@ function DocxImportFlow({ onImported }: { onImported: (msg: string) => void }) {
     <div className="space-y-4">
       {/* Template download */}
       {phase === "upload" && (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <a
             href="/api/admin/assessments/docx-question-template"
             className="inline-flex items-center gap-1.5 rounded-lg border border-[#185FA5]/30 bg-[#E6F1FB]/50 px-3 py-2 text-xs font-semibold text-[#185FA5] hover:bg-[#E6F1FB] transition"
           >
             <Icons.ArrowDown size={13} />
-            Download Word template
+            Table template
           </a>
-          <span className="text-xs text-slate-400">Fill in the question table, then upload</span>
+          <a
+            href="/api/admin/assessments/docx-question-template?variant=impact"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[#185FA5]/30 bg-[#E6F1FB]/50 px-3 py-2 text-xs font-semibold text-[#185FA5] hover:bg-[#E6F1FB] transition"
+          >
+            <Icons.FileText size={13} />
+            IMPACT workbook template
+          </a>
+          <span className="text-xs text-slate-400">Fill either supported Word template, then upload</span>
         </div>
       )}
 
@@ -494,6 +501,10 @@ function FromBankFlow({ onImported }: { onImported: (msg: string) => void }) {
   const [search, setSearch] = useState("");
   const [selectedDomains, setSelectedDomains] = useState<Set<string>>(new Set());
   const [selectedDifficulties, setSelectedDifficulties] = useState<Set<string>>(new Set());
+  const { domains: allDomains, addDomain } = useDomains();
+  const [addingDomain, setAddingDomain] = useState(false);
+  const [newDomainName, setNewDomainName] = useState("");
+  const [addDomainBusy, setAddDomainBusy] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -542,6 +553,19 @@ function FromBankFlow({ onImported }: { onImported: (msg: string) => void }) {
 
   function toggleDifficulty(d: string) {
     setSelectedDifficulties((prev) => { const n = new Set(prev); n.has(d) ? n.delete(d) : n.add(d); return n; });
+  }
+
+  async function handleAddNewDomain() {
+    const name = newDomainName.trim();
+    if (!name) return;
+    setAddDomainBusy(true);
+    const ok = await addDomain(name);
+    setAddDomainBusy(false);
+    if (ok) {
+      toggleDomain(name);
+      setNewDomainName("");
+      setAddingDomain(false);
+    }
   }
 
   function toggleQuestion(id: string) {
@@ -638,19 +662,58 @@ function FromBankFlow({ onImported }: { onImported: (msg: string) => void }) {
           />
           <div className="space-y-2">
             <div className="flex flex-wrap gap-1.5">
-              {DOMAINS.map((d) => (
-                <button
-                  key={d}
-                  type="button"
-                  onClick={() => toggleDomain(d)}
-                  className={cn(
-                    "rounded-full px-2.5 py-1 text-[11px] font-semibold transition",
-                    selectedDomains.has(d) ? "bg-[#185FA5] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                  )}
+              {allDomains.map((d) => {
+                const label = DOMAINS[d as keyof typeof DOMAINS]?.label ?? d;
+                return (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => toggleDomain(d)}
+                    className={cn(
+                      "rounded-full px-2.5 py-1 text-[11px] font-semibold transition",
+                      selectedDomains.has(d) ? "bg-[#185FA5] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    )}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+              {addingDomain ? (
+                <form
+                  className="flex items-center gap-1"
+                  onSubmit={(e) => { e.preventDefault(); handleAddNewDomain(); }}
                 >
-                  {d}
+                  <input
+                    autoFocus
+                    value={newDomainName}
+                    onChange={(e) => setNewDomainName(e.target.value)}
+                    className="h-[26px] w-28 rounded-full border border-[#185FA5] px-2.5 text-[11px] font-semibold outline-none"
+                    placeholder="new-domain"
+                  />
+                  <button
+                    type="submit"
+                    disabled={addDomainBusy}
+                    className="rounded-full bg-[#185FA5] px-2.5 py-1 text-[11px] font-semibold text-white disabled:opacity-60"
+                  >
+                    {addDomainBusy ? "…" : "Add"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setAddingDomain(false); setNewDomainName(""); }}
+                    className="rounded-full bg-slate-100 px-2 py-1 text-[11px] text-slate-500 hover:bg-slate-200"
+                  >
+                    ✕
+                  </button>
+                </form>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setAddingDomain(true)}
+                  className="rounded-full border border-dashed border-slate-300 px-2.5 py-1 text-[11px] font-semibold text-slate-400 hover:border-[#185FA5] hover:text-[#185FA5] transition-colors"
+                >
+                  + Add domain
                 </button>
-              ))}
+              )}
             </div>
             <div className="flex flex-wrap gap-1.5">
               {DIFFICULTIES.map((d) => (

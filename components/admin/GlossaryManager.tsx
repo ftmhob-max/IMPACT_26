@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import * as Icons from "@/components/ui/Icons";
 import { cn } from "@/lib/utils";
 import { GlossaryImportPanel } from "@/components/admin/GlossaryImportPanel";
+import { DomainCombobox } from "@/components/admin/DomainCombobox";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -217,12 +218,7 @@ export function GlossaryManager() {
             onChange={(e) => setSearch(e.target.value)}
             className="admin-input flex-1 min-w-40"
           />
-          <select className="admin-input w-36" value={filterDomain} onChange={(e) => setFilterDomain(e.target.value)}>
-            <option value="">All domains</option>
-            {[...new Set(terms.map((t) => t.domain).filter(Boolean))].sort().map((d) => (
-              <option key={d} value={d!}>{d!.charAt(0).toUpperCase() + d!.slice(1)}</option>
-            ))}
-          </select>
+          <DomainCombobox value={filterDomain} onChange={setFilterDomain} allowClear clearLabel="All domains" className="w-36" />
           <select className="admin-input w-32" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value as any)}>
             <option value="">All statuses</option>
             <option value="published">Published</option>
@@ -636,7 +632,7 @@ function TermForm({
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="admin-label">Domain (optional)</label>
-          <input className="admin-input" value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="e.g. assessment, appraisal, law" />
+          <DomainCombobox value={domain ?? ""} onChange={(val) => setDomain(val)} />
         </div>
         <div>
           <label className="admin-label">Category (optional)</label>

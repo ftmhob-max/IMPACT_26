@@ -31,7 +31,7 @@ const HEADERS = [
 const SAMPLE_ROWS = [
   [
     "What does NOI stand for in real estate?",
-    "single",
+    "multiple_choice",
     "easy",
     "math",
     "Net Operating Income|Net Other Income|Nominal Operating Input|None of the above",
@@ -55,7 +55,7 @@ const SAMPLE_ROWS = [
   ],
   [
     "Calculate the capitalization rate if NOI is $50,000 and property value is $500,000.",
-    "single",
+    "multiple_choice",
     "expert",
     "math",
     "5%|10%|15%|20%",
@@ -65,7 +65,67 @@ const SAMPLE_ROWS = [
     "cap rate|direct capitalization",
     "CAP",
   ],
+  [
+    "A taxpayer appeals an assessment using one comparable sale, while the assessor has a ratio study and three adjusted comparables. Which response best explains the strongest evidence?",
+    "scenario",
+    "expert",
+    "appraisal",
+    "The single sale always controls|The assessor should rely only on prior-year assessment|Converging evidence from multiple sources is stronger|The appeal must be denied without review",
+    "C",
+    "Scenario questions are case-style prompts that still resolve to selectable answers.",
+    "Converging evidence usually supports a stronger conclusion than one isolated data point.",
+    "appeals|evidence|scenario",
+    "APPEAL",
+  ],
+  [
+    "In one sentence, define cash-equivalent sale price.",
+    "short_answer",
+    "easy",
+    "appraisal",
+    "",
+    "A sale price adjusted to remove financing or concession terms that distort market value",
+    "Short-answer rows may leave choices blank; the correct answer is stored as the expected response.",
+    "Cash-equivalent validation helps normalize market evidence.",
+    "cash equivalent|sale validation",
+    "SALE_VALIDATION",
+  ],
 ];
+
+function impactQuestionTable({
+  questionNumber,
+  skill,
+  question,
+  choices,
+}: {
+  questionNumber: number;
+  skill: "EASY" | "INTERMEDIATE" | "EXPERT";
+  question: string;
+  choices: string[];
+}) {
+  return new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    rows: [
+      new TableRow({
+        children: [
+          dataCell(`Q ${questionNumber}`, "E6F1FB"),
+          dataCell("Sample Formula | Value = Income / Rate", "E6F1FB"),
+          dataCell(`SKILL: ${skill}`, "E6F1FB"),
+        ],
+      }),
+      new TableRow({
+        children: [dataCell(question)],
+      }),
+      ...choices.map((choice, index) =>
+        new TableRow({
+          children: [
+            dataCell(String.fromCharCode(65 + index)),
+            dataCell(choice),
+          ],
+        })
+      ),
+    ],
+  });
+}
 
 function headerCell(text: string): TableCell {
   return new TableCell({
@@ -106,7 +166,23 @@ export async function GET(request: NextRequest) {
   const auth = await requireAdminRequest(request, "viewer");
   if (!auth.ok) return auth.response;
 
-  const doc = new Document({
+  const variant = request.nextUrl.searchParams.get("variant");
+  const doc = variant === "impact" ? createImpactTemplate() : createTableTemplate();
+  const buffer = await Packer.toBuffer(doc);
+
+  return new NextResponse(new Uint8Array(buffer), {
+    headers: {
+      "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "Content-Disposition":
+        variant === "impact"
+          ? 'attachment; filename="impact-workbook-question-import-template.docx"'
+          : 'attachment; filename="quiz-question-import-template.docx"',
+    },
+  });
+}
+
+function createTableTemplate() {
+  return new Document({
     sections: [
       {
         children: [
@@ -120,9 +196,11 @@ export async function GET(request: NextRequest) {
               new TextRun(
                 "Fill in the table — one row per question. " +
                 "Use | to separate multiple choices and correct_answers (e.g. 'A|C' for multiselect). " +
-                "question_type must be: single or multiselect. " +
+                "question_type may be: multiple_choice, multiselect, scenario, or short_answer. " +
+                "Aliases like single, multi, and case_study are also accepted. " +
                 "difficulty: easy | proficient | expert. " +
-                "Choices are listed in order (A, B, C, D). correct_answers uses the letter(s) matching the correct choice(s)."
+                "For choice-based questions, list choices in order (A, B, C, D) and use correct_answers letter(s). " +
+                "For short_answer, choices may be blank and correct_answers should contain the expected response."
               ),
             ],
           }),
@@ -147,7 +225,7 @@ export async function GET(request: NextRequest) {
           new Paragraph({
             children: [
               new TextRun({ text: "question_type: ", bold: true }),
-              new TextRun("single | multiselect"),
+              new TextRun("multiple_choice | multiselect | scenario | short_answer"),
             ],
           }),
           new Paragraph({
@@ -171,20 +249,74 @@ export async function GET(request: NextRequest) {
           new Paragraph({
             children: [
               new TextRun({ text: "correct_answers: ", bold: true }),
-              new TextRun("Letter(s): A or A|C for multiselect"),
+              new TextRun("Letter(s): A or A|C for choice-based rows; expected response text for short_answer"),
             ],
           }),
         ],
       },
     ],
   });
+}
 
-  const buffer = await Packer.toBuffer(doc);
-
-  return new NextResponse(new Uint8Array(buffer), {
-    headers: {
-      "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "Content-Disposition": 'attachment; filename="quiz-question-import-template.docx"',
-    },
+function createImpactTemplate() {
+  return new Document({
+    sections: [
+      {
+        children: [
+          new Paragraph({
+            text: "IMPACT Workbook Question Import Template",
+            heading: HeadingLevel.HEADING_1,
+          }),
+          new Paragraph({
+            children: [
+              new TextRun({ text: "Instructions: ", bold: true }),
+              new TextRun(
+                "Use SECTION headings, FORMULA headings, and one question table per question. " +
+                "After the table, include FORMULA, STEP-BY-STEP CALCULATION, and RATIONALE paragraphs. " +
+                "End the rationale with wording like 'Answer A is correct.'"
+              ),
+            ],
+          }),
+          new Paragraph({ text: "" }),
+          new Paragraph({
+            text: "SECTION 1 - SALES COMPARISON & REGRESSION",
+            heading: HeadingLevel.HEADING_1,
+          }),
+          new Paragraph({
+            text: "Formula Mastery Practice Exam | 3 Questions Per Formula",
+          }),
+          new Paragraph({
+            text: "FORMULA 1 - Sample Formula",
+            heading: HeadingLevel.HEADING_2,
+          }),
+          new Paragraph({ text: "Value = Income / Rate" }),
+          impactQuestionTable({
+            questionNumber: 1,
+            skill: "EASY",
+            question: "A property has income of $50,000 and a capitalization rate of 10%. What is the indicated value?",
+            choices: ["$500,000", "$50,000", "$5,000", "$550,000"],
+          }),
+          new Paragraph({ text: "FORMULA", heading: HeadingLevel.HEADING_3 }),
+          new Paragraph({ text: "Value = Income / Rate" }),
+          new Paragraph({ text: "STEP-BY-STEP CALCULATION", heading: HeadingLevel.HEADING_3 }),
+          new Paragraph({ text: "Step 1: Convert 10% to 0.10. Step 2: Divide $50,000 by 0.10. Step 3: Value = $500,000." }),
+          new Paragraph({ text: "RATIONALE", heading: HeadingLevel.HEADING_3 }),
+          new Paragraph({ text: "Direct capitalization divides stabilized income by the market rate. Answer A is correct." }),
+          new Paragraph({ text: "" }),
+          impactQuestionTable({
+            questionNumber: 2,
+            skill: "INTERMEDIATE",
+            question: "Which expression correctly solves for value when income and rate are known?",
+            choices: ["Income / Rate", "Income x Rate", "Rate / Income", "Income + Rate"],
+          }),
+          new Paragraph({ text: "FORMULA", heading: HeadingLevel.HEADING_3 }),
+          new Paragraph({ text: "Value = Income / Rate" }),
+          new Paragraph({ text: "STEP-BY-STEP CALCULATION", heading: HeadingLevel.HEADING_3 }),
+          new Paragraph({ text: "Step 1: Identify the income variable. Step 2: Identify the capitalization rate. Step 3: Divide income by rate." }),
+          new Paragraph({ text: "RATIONALE", heading: HeadingLevel.HEADING_3 }),
+          new Paragraph({ text: "The rate is the denominator in direct capitalization. Answer A is correct." }),
+        ],
+      },
+    ],
   });
 }

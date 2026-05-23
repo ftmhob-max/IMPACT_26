@@ -8,6 +8,8 @@ import { auth } from "@/lib/firebase/client";
 import { cn } from "@/lib/utils";
 import * as Icons from "@/components/ui/Icons";
 import { UserAvatar as ProfileAvatar } from "@/components/profile/UserAvatar";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { applyTheme, type ThemeMode } from "@/components/theme/ThemeController";
 
 const DESKTOP_SIDEBAR_MODE_KEY = "impact26:desktop-sidebar-mode";
 const STUDY_RHYTHM_OPEN_KEY = "impact26:study-rhythm-open";
@@ -193,6 +195,7 @@ export function Sidebar({ isAdmin }: SidebarProps) {
               </nav>
 
               <div className="border-t border-[var(--sidebar-border)] px-3 py-4">
+                <ThemeToggle compact className="mb-2" onChange={persistThemePreference} />
                 <SignOutButton compact />
               </div>
             </div>
@@ -381,6 +384,9 @@ function SidebarPanelContent({
       <div className={cn("border-t border-[var(--sidebar-border)]", compact ? "px-3 py-4" : "px-3 py-4")}>
         {!isAdmin && !compact && <LearnerProgressCard />}
         <div className={cn(!isAdmin && !compact && "mt-3")}>
+          <ThemeToggle compact={compact} onChange={persistThemePreference} />
+        </div>
+        <div className="mt-2">
           <SignOutButton compact={compact} />
         </div>
       </div>
@@ -629,6 +635,23 @@ function SidebarModeButton({
       {children}
     </button>
   );
+}
+
+async function persistThemePreference(theme: ThemeMode) {
+  applyTheme(theme);
+
+  try {
+    const response = await fetch("/api/profile", { cache: "no-store" });
+    if (!response.ok) return;
+    const payload = await response.json().catch(() => ({}));
+    await fetch("/api/profile", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ settings: { ...(payload.settings ?? {}), theme } }),
+    });
+  } catch {
+    // Local storage still preserves the preference when profile persistence is unavailable.
+  }
 }
 
 function SignOutButton({ compact }: { compact?: boolean }) {

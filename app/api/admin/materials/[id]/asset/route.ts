@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getAdminStorage } from "@/lib/firebase/admin-storage";
-import { requireAdminRequest } from "@/lib/admin/auth";
+import { adminAuth } from "@/lib/firebase/admin";
 import { adminDcQuery } from "@/lib/firebase/admin-dc";
 import { parseGsPath } from "@/lib/admin/source-materials";
 import { formatUuid } from "@/lib/utils";
@@ -9,8 +9,31 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireAdminRequest(request, "viewer");
-  if (!auth.ok) return auth.response;
+  const authHeader = request.headers.get("Authorization");
+  const bearer = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+  const sessionCookie = request.headers.get("Cookie")?.match(/(?:^|;\s*)__session=([^;]+)/)?.[1];
+
+  const url = new URL(request.url);
+  const queryToken = url.searchParams.get("token") || url.searchParams.get("idToken");
+  const tokenToVerify = bearer || queryToken;
+
+  let authenticated = false;
+  try {
+    const decoded = tokenToVerify
+      ? await adminAuth.verifyIdToken(tokenToVerify)
+      : sessionCookie
+        ? await adminAuth.verifySessionCookie(decodeURIComponent(sessionCookie), false)
+        : null;
+    if (decoded) {
+      authenticated = true;
+    }
+  } catch (e) {
+    // Ignore error
+  }
+
+  if (!authenticated) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const { id } = await params;
   const materialId = formatUuid(id);
@@ -55,9 +78,33 @@ export async function GET(
       const contentType = material.fileType || "application/octet-stream";
       const disposition = `${shouldDownload ? "attachment" : "inline"}; filename="${material.fileName.replace(/"/g, "")}"`;
 
+      const range = request.headers.get("range");
+      const totalLength = buffer.length;
+
+      if (range) {
+        const parts = range.replace(/bytes=/, "").split("-");
+        const start = parseInt(parts[0], 10);
+        const end = parts[1] ? parseInt(parts[1], 10) : totalLength - 1;
+        const chunksize = (end - start) + 1;
+        const slice = buffer.subarray(start, end + 1);
+
+        return new NextResponse(slice, {
+          status: 206,
+          headers: {
+            "Content-Range": `bytes ${start}-${end}/${totalLength}`,
+            "Accept-Ranges": "bytes",
+            "Content-Length": String(chunksize),
+            "Content-Type": contentType,
+            "Content-Disposition": disposition,
+            "Cache-Control": "private, max-age=300",
+          },
+        });
+      }
+
       return new NextResponse(buffer, {
         status: 200,
         headers: {
+          "Accept-Ranges": "bytes",
           "Content-Type": contentType,
           "Content-Disposition": disposition,
           "Content-Length": String(buffer.length),

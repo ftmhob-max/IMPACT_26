@@ -3,6 +3,7 @@
 import { type ReactNode, useState, useMemo, useCallback, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import * as Icons from "@/components/ui/Icons";
+import { DomainCombobox } from "@/components/admin/DomainCombobox";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -113,6 +114,16 @@ export function QuestionBankClient({ questions, quizzes }: Props) {
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkMessage, setBulkMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const [localStatuses, setLocalStatuses] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    setQuestionItems(questions);
+    setSelected(new Set());
+    setLocalStatuses({});
+    setDetailQuestion((current) => {
+      if (!current) return null;
+      return questions.find((question) => question.id === current.id) ?? null;
+    });
+  }, [questions]);
 
   const hasActiveFilters = !!(search || filterDomain || filterDifficulty || filterStatus || statFilter !== "all");
 
@@ -336,10 +347,7 @@ export function QuestionBankClient({ questions, quizzes }: Props) {
               </div>
               <div className="w-36">
                 <label className="admin-label mb-1">Domain</label>
-                <select className="admin-input" value={filterDomain} onChange={(e) => { setFilterDomain(e.target.value); setPage(1); }}>
-                  <option value="">All domains</option>
-                  {DOMAINS.map((d) => <option key={d} value={d}>{d}</option>)}
-                </select>
+                <DomainCombobox value={filterDomain} onChange={(v) => { setFilterDomain(v); setPage(1); }} allowClear clearLabel="All domains" />
               </div>
               <div className="w-36">
                 <label className="admin-label mb-1">Difficulty</label>
@@ -779,7 +787,7 @@ function QuestionDetailPanel({
               </div>
               <div>
                 <label className="admin-label">Domain</label>
-                <input className="admin-input" value={draft.domain} onChange={(e) => setDraft((p) => ({ ...p, domain: e.target.value }))} />
+                <DomainCombobox value={draft.domain} onChange={(val) => setDraft((p) => ({ ...p, domain: val }))} />
               </div>
             </div>
           </div>

@@ -24,6 +24,7 @@ async function getFormulaSectionsData() {
           expression: string;
           notes?: string | null;
           calcMetaJson?: string | null;
+          examplesJson?: string | null;
         }>;
       }>;
     };

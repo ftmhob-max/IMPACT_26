@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import * as Icons from "@/components/ui/Icons";
 import { cn } from "@/lib/utils";
 import { QuestionBankPicker } from "@/components/admin/QuestionBankPicker";
+import { DomainCombobox } from "@/components/admin/DomainCombobox";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -345,10 +346,7 @@ function AddFromBankPanel({
           className="admin-input flex-1 min-w-40 text-xs"
           autoFocus
         />
-        <select className="admin-input w-36 text-xs" value={domain} onChange={(e) => setDomain(e.target.value)}>
-          <option value="">All domains</option>
-          {DOMAINS.map((d) => <option key={d} value={d}>{d}</option>)}
-        </select>
+        <DomainCombobox value={domain} onChange={setDomain} allowClear clearLabel="All domains" className="w-36 text-xs" />
         <select className="admin-input w-32 text-xs" value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
           <option value="">All levels</option>
           {DIFFICULTIES.map((d) => <option key={d} value={d}>{d}</option>)}
@@ -552,9 +550,7 @@ function CreateQuestionPanel({
           </div>
           <div>
             <label className="admin-label">Domain</label>
-            <select className="admin-input text-xs" value={domain} onChange={(e) => setDomain(e.target.value)}>
-              {DOMAINS.map((d) => <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>)}
-            </select>
+            <DomainCombobox value={domain} onChange={setDomain} className="text-xs" />
           </div>
         </div>
 
@@ -794,7 +790,7 @@ function QuestionCard({
                 </div>
                 <div>
                   <label className="admin-label">Domain</label>
-                  <input className="admin-input" value={draft.domain} onChange={(e) => setDraft((p) => ({ ...p, domain: e.target.value }))} />
+                  <DomainCombobox value={draft.domain} onChange={(val) => setDraft((p) => ({ ...p, domain: val }))} />
                 </div>
               </div>
               <div>

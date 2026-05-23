@@ -482,6 +482,16 @@ export interface CreateCourseVariables {
   createdById: string;
 }
 
+export interface CreateCustomDomainData {
+  customDomain_insert: CustomDomain_Key;
+}
+
+export interface CreateCustomDomainVariables {
+  id: UUIDString;
+  name: string;
+  createdById?: string | null;
+}
+
 export interface CreateFormulaData {
   formula_insert: Formula_Key;
 }
@@ -505,6 +515,7 @@ export interface CreateFormulaVariables {
   notes?: string | null;
   position: number;
   calcMetaJson?: string | null;
+  examplesJson?: string | null;
 }
 
 export interface CreateGlossaryNoteData {
@@ -722,6 +733,11 @@ export interface CreateUserVariables {
   id: string;
   email: string;
   fullName?: string | null;
+}
+
+export interface CustomDomain_Key {
+  id: UUIDString;
+  __typename?: 'CustomDomain_Key';
 }
 
 export interface DeleteAnswerChoicesForQuestionData {
@@ -1097,6 +1113,7 @@ export interface GetFormulaSectionsData {
       expression: string;
       notes?: string | null;
       calcMetaJson?: string | null;
+      examplesJson?: string | null;
     } & Formula_Key)[];
   } & FormulaSection_Key)[];
 }
@@ -1513,6 +1530,13 @@ export interface ListAdminQuizzesData {
   } & Quiz_Key)[];
 }
 
+export interface ListCustomDomainsData {
+  customDomains: ({
+    id: UUIDString;
+    name: string;
+  } & CustomDomain_Key)[];
+}
+
 export interface ListPublishedCoursesData {
   courses: ({
     id: UUIDString;
@@ -1657,6 +1681,7 @@ export interface UpdateFormulaVariables {
   expression?: string | null;
   notes?: string | null;
   calcMetaJson?: string | null;
+  examplesJson?: string | null;
   position?: number | null;
 }
 
@@ -2738,6 +2763,18 @@ export const deleteUserFavoriteRef: DeleteUserFavoriteRef;
 export function deleteUserFavorite(vars: DeleteUserFavoriteVariables): MutationPromise<DeleteUserFavoriteData, DeleteUserFavoriteVariables>;
 export function deleteUserFavorite(dc: DataConnect, vars: DeleteUserFavoriteVariables): MutationPromise<DeleteUserFavoriteData, DeleteUserFavoriteVariables>;
 
+interface CreateCustomDomainRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateCustomDomainVariables): MutationRef<CreateCustomDomainData, CreateCustomDomainVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: CreateCustomDomainVariables): MutationRef<CreateCustomDomainData, CreateCustomDomainVariables>;
+  operationName: string;
+}
+export const createCustomDomainRef: CreateCustomDomainRef;
+
+export function createCustomDomain(vars: CreateCustomDomainVariables): MutationPromise<CreateCustomDomainData, CreateCustomDomainVariables>;
+export function createCustomDomain(dc: DataConnect, vars: CreateCustomDomainVariables): MutationPromise<CreateCustomDomainData, CreateCustomDomainVariables>;
+
 interface ListPublishedCoursesRef {
   /* Allow users to create refs without passing in DataConnect */
   (): QueryRef<ListPublishedCoursesData, undefined>;
@@ -3229,4 +3266,16 @@ export const getUserFavoritesByTypeRef: GetUserFavoritesByTypeRef;
 
 export function getUserFavoritesByType(vars: GetUserFavoritesByTypeVariables, options?: ExecuteQueryOptions): QueryPromise<GetUserFavoritesByTypeData, GetUserFavoritesByTypeVariables>;
 export function getUserFavoritesByType(dc: DataConnect, vars: GetUserFavoritesByTypeVariables, options?: ExecuteQueryOptions): QueryPromise<GetUserFavoritesByTypeData, GetUserFavoritesByTypeVariables>;
+
+interface ListCustomDomainsRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (): QueryRef<ListCustomDomainsData, undefined>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect): QueryRef<ListCustomDomainsData, undefined>;
+  operationName: string;
+}
+export const listCustomDomainsRef: ListCustomDomainsRef;
+
+export function listCustomDomains(options?: ExecuteQueryOptions): QueryPromise<ListCustomDomainsData, undefined>;
+export function listCustomDomains(dc: DataConnect, options?: ExecuteQueryOptions): QueryPromise<ListCustomDomainsData, undefined>;
 

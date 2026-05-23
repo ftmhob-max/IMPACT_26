@@ -444,7 +444,7 @@ mutation CreateFormulaSection($id: UUID!, $code: String!, $title: String!, $posi
   })
 }
 
-mutation CreateFormula($sectionId: UUID!, $code: String!, $name: String!, $expression: String!, $notes: String, $position: Int!, $calcMetaJson: String) @auth(level: NO_ACCESS) {
+mutation CreateFormula($sectionId: UUID!, $code: String!, $name: String!, $expression: String!, $notes: String, $position: Int!, $calcMetaJson: String, $examplesJson: String) @auth(level: NO_ACCESS) {
   formula_insert(data: {
     section: { id: $sectionId }
     code: $code
@@ -453,16 +453,18 @@ mutation CreateFormula($sectionId: UUID!, $code: String!, $name: String!, $expre
     notes: $notes
     position: $position
     calcMetaJson: $calcMetaJson
+    examplesJson: $examplesJson
   })
 }
 
-mutation UpdateFormula($id: UUID!, $code: String, $name: String, $expression: String, $notes: String, $calcMetaJson: String, $position: Int) @auth(level: NO_ACCESS) {
+mutation UpdateFormula($id: UUID!, $code: String, $name: String, $expression: String, $notes: String, $calcMetaJson: String, $examplesJson: String, $position: Int) @auth(level: NO_ACCESS) {
   formula_update(id: $id, data: {
     code: $code
     name: $name
     expression: $expression
     notes: $notes
     calcMetaJson: $calcMetaJson
+    examplesJson: $examplesJson
     position: $position
   })
 }
@@ -627,6 +629,16 @@ mutation UpsertUserFavorite($userId: String!, $itemType: String!, $itemId: Strin
 
 mutation DeleteUserFavorite($userId: String!, $itemType: String!, $itemId: String!) @auth(level: NO_ACCESS) {
   userFavorite_delete(key: { userId: $userId, itemType: $itemType, itemId: $itemId })
+}
+
+# ─── Custom Domains ───────────────────────────────────────────────────────────
+
+mutation CreateCustomDomain($id: UUID!, $name: String!, $createdById: String) @auth(level: NO_ACCESS) {
+  customDomain_insert(data: {
+    id: $id
+    name: $name
+    createdBy: { id: $createdById }
+  })
 }
 
 

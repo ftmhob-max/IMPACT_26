@@ -82,10 +82,12 @@ async function fetchCourseDetail(courseId: string) {
 
 export default async function CourseDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ courseId: string }>;
+  searchParams: Promise<{ lesson?: string }>;
 }) {
-  const { courseId } = await params;
+  const [{ courseId }, { lesson: initialLessonId }] = await Promise.all([params, searchParams]);
   const data = await fetchCourseDetail(courseId);
 
   if (!data) {
@@ -107,5 +109,5 @@ export default async function CourseDetailPage({
     );
   }
 
-  return <LessonPlanDetailView course={data.course} initialModules={data.modules} />;
+  return <LessonPlanDetailView course={data.course} initialModules={data.modules} initialLessonId={initialLessonId} />;
 }

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { IconTile, SectionPanel, StatusBadge } from "@/components/ui/LearnerPrimitives";
 import * as Icons from "@/components/ui/Icons";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { applyTheme, type ThemeMode } from "@/components/theme/ThemeController";
 
 type LearnerProfileSettings = {
   studyReminderEnabled: boolean;
@@ -15,6 +17,7 @@ type LearnerProfileSettings = {
   defaultSessionLength: number;
   compactSidebar: boolean;
   reducedMotion: boolean;
+  theme: ThemeMode;
   formulaHelperDefaultOpen: boolean;
   calculatorPrecision: string;
   profileVisibility: string;
@@ -30,6 +33,7 @@ const DEFAULT_SETTINGS: LearnerProfileSettings = {
   defaultSessionLength: 30,
   compactSidebar: false,
   reducedMotion: false,
+  theme: "light",
   formulaHelperDefaultOpen: true,
   calculatorPrecision: "2",
   profileVisibility: "private",
@@ -50,7 +54,9 @@ export function SettingsClient() {
         const response = await fetch("/api/profile", { cache: "no-store" });
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || "Unable to load settings.");
-        setSettings(payload.settings ?? DEFAULT_SETTINGS);
+        const nextSettings = payload.settings ?? DEFAULT_SETTINGS;
+        setSettings(nextSettings);
+        applyTheme(nextSettings.theme ?? "light");
       } catch (err) {
         setError(err instanceof Error ? err.message : "Unable to load settings.");
       } finally {
@@ -180,6 +186,21 @@ export function SettingsClient() {
 
           <SectionPanel title="Display and tools" description="Tune the learning interface to your working style.">
             <div className="space-y-5 p-5">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm font-extrabold text-slate-900">Appearance</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                      Switch between the light and dark interface.
+                    </p>
+                  </div>
+                  <ThemeToggle
+                    value={settings.theme}
+                    onChange={(theme) => update("theme", theme)}
+                    className="border-slate-200 bg-white text-slate-700 hover:border-[#185FA5]/35 hover:bg-[#E6F1FB] hover:text-[#185FA5] focus-visible:ring-[#185FA5] focus-visible:ring-offset-white sm:w-40"
+                  />
+                </div>
+              </div>
               <ToggleRow
                 label="Compact sidebar"
                 detail="Prefer a tighter navigation layout on larger screens."

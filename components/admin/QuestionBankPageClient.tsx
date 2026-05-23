@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { adminFetch } from "@/lib/admin/client-fetch";
 import { QuestionBuilderClient } from "@/components/admin/QuestionBuilderClient";
 import { QuestionBankClient } from "@/components/admin/QuestionBankClient";
@@ -49,26 +49,27 @@ export function QuestionBankPageClient({
   const [importOpen, setImportOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
 
+  const refreshPageData = useCallback(async () => {
+    const [questionsRes, overviewRes] = await Promise.all([
+      adminFetch("/api/admin/questions", { cache: "no-store" }),
+      adminFetch("/api/admin/overview", { cache: "no-store" }),
+    ]);
+
+    if (questionsRes.ok) {
+      const data = await questionsRes.json();
+      setQuestions(data.questions ?? []);
+    }
+
+    if (overviewRes.ok) {
+      const data = await overviewRes.json();
+      setQuizzes(data.quizzes ?? []);
+    }
+  }, []);
+
   useEffect(() => {
     if (questions.length > 0 && quizzes.length > 0) return;
-
-    void (async () => {
-      const [questionsRes, overviewRes] = await Promise.all([
-        adminFetch("/api/admin/questions", { cache: "no-store" }),
-        adminFetch("/api/admin/overview", { cache: "no-store" }),
-      ]);
-
-      if (questionsRes.ok) {
-        const data = await questionsRes.json();
-        setQuestions(data.questions ?? []);
-      }
-
-      if (overviewRes.ok) {
-        const data = await overviewRes.json();
-        setQuizzes(data.quizzes ?? []);
-      }
-    })();
-  }, [questions.length, quizzes.length]);
+    void refreshPageData();
+  }, [questions.length, quizzes.length, refreshPageData]);
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 px-6 py-8">
@@ -93,7 +94,7 @@ export function QuestionBankPageClient({
           </button>
           {importOpen && (
             <div className="p-4">
-              <DocxImportClient />
+              <DocxImportClient onImported={refreshPageData} />
             </div>
           )}
         </div>
@@ -111,7 +112,7 @@ export function QuestionBankPageClient({
           </button>
           {manualOpen && (
             <div className="p-4">
-              <QuestionBuilderClient mode="manual" quizzes={quizzes} />
+              <QuestionBuilderClient mode="manual" quizzes={quizzes} onChanged={refreshPageData} />
             </div>
           )}
         </div>

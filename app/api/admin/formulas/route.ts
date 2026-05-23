@@ -16,6 +16,7 @@ type FormulaSectionsData = {
       expression: string;
       notes?: string | null;
       calcMetaJson?: string | null;
+      examplesJson?: string | null;
       position: number;
     }>;
   }>;
@@ -44,7 +45,7 @@ export async function POST(req: NextRequest) {
   if (!auth.ok) return auth.response;
 
   const body = await req.json();
-  const { sectionId, code, name, expression, notes, position, calcMetaJson } = body;
+  const { sectionId, code, name, expression, notes, position, calcMetaJson, examplesJson } = body;
 
   if (!sectionId || !code || !name || !expression) {
     return NextResponse.json({ error: "sectionId, code, name, expression are required" }, { status: 400 });
@@ -60,6 +61,7 @@ export async function POST(req: NextRequest) {
       notes: notes?.trim() ?? null,
       position: typeof position === "number" ? position : 0,
       calcMetaJson: calcMetaJson ?? null,
+      examplesJson: examplesJson ?? null,
     });
     return NextResponse.json({ id });
   } catch (err) {

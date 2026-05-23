@@ -66,7 +66,7 @@ function SectionRow({ section }: { section: ParsedSection }) {
           <div className="mt-2 space-y-1">
             {section.formulas.map((formula) => {
               const easy = formula.questions.filter((q) => q.difficulty === "easy").length;
-              const inter = formula.questions.filter((q) => q.difficulty === "intermediate").length;
+              const inter = formula.questions.filter((q) => q.difficulty === "proficient").length;
               const expert = formula.questions.filter((q) => q.difficulty === "expert").length;
               return (
                 <div
@@ -77,7 +77,7 @@ function SectionRow({ section }: { section: ParsedSection }) {
                   <span className="flex-1 truncate">{formula.name}</span>
                   <div className="flex items-center gap-1">
                     <DiffBadge label="easy" count={easy} color="bg-emerald-50 text-emerald-700" />
-                    <DiffBadge label="mid" count={inter} color="bg-amber-50 text-amber-700" />
+                    <DiffBadge label="proficient" count={inter} color="bg-amber-50 text-amber-700" />
                     <DiffBadge label="expert" count={expert} color="bg-red-50 text-red-700" />
                   </div>
                 </div>
@@ -134,9 +134,42 @@ function CheckRow({
   );
 }
 
+const DOCX_TEMPLATE_URL = "/api/admin/assessments/docx-question-template";
+
+function getDisplayError(error: unknown, fallback: string): string {
+  if (typeof error === "string" && error.trim()) return error;
+  if (error instanceof Error && error.message.trim()) return error.message;
+  if (error && typeof error === "object") {
+    const maybeFlattened = error as {
+      formErrors?: unknown;
+      fieldErrors?: Record<string, unknown>;
+      message?: unknown;
+    };
+
+    const messages: string[] = [];
+    if (Array.isArray(maybeFlattened.formErrors)) {
+      messages.push(...maybeFlattened.formErrors.filter((msg): msg is string => typeof msg === "string"));
+    }
+    if (maybeFlattened.fieldErrors && typeof maybeFlattened.fieldErrors === "object") {
+      for (const [field, fieldMessages] of Object.entries(maybeFlattened.fieldErrors)) {
+        if (!Array.isArray(fieldMessages)) continue;
+        for (const msg of fieldMessages) {
+          if (typeof msg === "string") messages.push(`${field}: ${msg}`);
+        }
+      }
+    }
+    if (messages.length > 0) return messages.join(" ");
+    if (typeof maybeFlattened.message === "string" && maybeFlattened.message.trim()) {
+      return maybeFlattened.message;
+    }
+  }
+
+  return fallback;
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export function DocxImportClient() {
+export function DocxImportClient({ onImported }: { onImported?: () => void | Promise<void> }) {
   const [mode, setMode] = useState<ImportMode>("docx");
   const [csvNotice, setCsvNotice] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>("upload");
@@ -175,7 +208,7 @@ export function DocxImportClient() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setErrorMsg(data.error ?? "Failed to parse document.");
+        setErrorMsg(getDisplayError(data.error, "Failed to parse document."));
         setIsParsing(false);
         return;
       }
@@ -246,12 +279,13 @@ export function DocxImportClient() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setErrorMsg(data.error ?? "Import failed.");
+        setErrorMsg(getDisplayError(data.error, "Import failed."));
         setPhase("options");
         return;
       }
       setImportResult(data);
       setPhase("done");
+      void onImported?.();
     } catch {
       setErrorMsg("Network error during import.");
       setPhase("options");
@@ -300,6 +334,27 @@ export function DocxImportClient() {
         </button>
       </div>
 
+      {mode === "docx" && (
+        <div className="flex flex-wrap justify-end gap-3">
+          <button
+            type="button"
+            onClick={() => { window.location.href = DOCX_TEMPLATE_URL; }}
+            className="flex items-center gap-1.5 text-xs font-medium text-[#185FA5] hover:underline"
+          >
+            <Icons.FileCheck size={13} />
+            Table template
+          </button>
+          <button
+            type="button"
+            onClick={() => { window.location.href = `${DOCX_TEMPLATE_URL}?variant=impact`; }}
+            className="flex items-center gap-1.5 text-xs font-medium text-[#185FA5] hover:underline"
+          >
+            <Icons.FileText size={13} />
+            IMPACT workbook template
+          </button>
+        </div>
+      )}
+
       {mode === "csv" ? (
         <div className="space-y-4">
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
@@ -317,7 +372,12 @@ export function DocxImportClient() {
             </div>
           )}
 
-          <CsvImportPanel onImported={({ message }) => setCsvNotice(message)} />
+          <CsvImportPanel
+            onImported={({ message }) => {
+              setCsvNotice(message);
+              void onImported?.();
+            }}
+          />
         </div>
       ) : (
         <>

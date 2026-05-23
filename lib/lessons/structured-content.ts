@@ -22,6 +22,7 @@ export interface LessonBlockBase {
   title?: string;
   isStudentVisible: boolean;
   required: boolean;
+  materialId?: string;
 }
 
 export interface LessonRichTextBlock extends LessonBlockBase {
@@ -485,6 +486,7 @@ function normalizeLessonBlock(block: LessonBlock): LessonBlock {
     title: block.title ? String(block.title) : defaultTitleForBlock(block.type),
     isStudentVisible: block.isStudentVisible !== false,
     required: Boolean(block.required),
+    materialId: block.materialId ? String(block.materialId) : undefined,
   };
 
   switch (block.type) {

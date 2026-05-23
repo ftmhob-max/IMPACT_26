@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import * as Icons from "@/components/ui/Icons";
 import { cn, DIFFICULTIES, DOMAINS } from "@/lib/utils";
+import { useDomains } from "@/lib/hooks/useDomains";
 import {
   type QuestionBankCandidate,
   type QuestionBankContext,
@@ -58,6 +59,10 @@ export function QuestionBankPicker({
   const [context, setContext] = useState<QuestionBankContext | null>(null);
   const [candidates, setCandidates] = useState<QuestionBankCandidate[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const { domains: allDomains, addDomain } = useDomains();
+  const [addingDomain, setAddingDomain] = useState(false);
+  const [newDomainName, setNewDomainName] = useState("");
+  const [addDomainBusy, setAddDomainBusy] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -135,6 +140,19 @@ export function QuestionBankPicker({
     setFilters(DEFAULT_FILTERS);
   }
 
+  async function handleAddNewDomain() {
+    const name = newDomainName.trim();
+    if (!name) return;
+    setAddDomainBusy(true);
+    const ok = await addDomain(name);
+    setAddDomainBusy(false);
+    if (ok) {
+      toggleDomain(name);
+      setNewDomainName("");
+      setAddingDomain(false);
+    }
+  }
+
   async function handleAdd() {
     if (selected.size === 0) return;
     setBusy(true);
@@ -192,8 +210,9 @@ export function QuestionBankPicker({
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {Object.entries(DOMAINS).map(([key, value]) => {
+          {allDomains.map((key) => {
             const active = filters.domains.includes(key);
+            const label = DOMAINS[key as keyof typeof DOMAINS]?.label ?? key;
             return (
               <button
                 key={key}
@@ -206,10 +225,46 @@ export function QuestionBankPicker({
                     : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
                 )}
               >
-                {value.label}
+                {label}
               </button>
             );
           })}
+          {addingDomain ? (
+            <form
+              className="flex items-center gap-1"
+              onSubmit={(e) => { e.preventDefault(); handleAddNewDomain(); }}
+            >
+              <input
+                autoFocus
+                value={newDomainName}
+                onChange={(e) => setNewDomainName(e.target.value)}
+                className="h-[26px] w-28 rounded-full border border-[#185FA5] px-2.5 text-[11px] font-semibold outline-none"
+                placeholder="new-domain"
+              />
+              <button
+                type="submit"
+                disabled={addDomainBusy}
+                className="rounded-full bg-[#185FA5] px-2.5 py-1 text-[11px] font-semibold text-white disabled:opacity-60"
+              >
+                {addDomainBusy ? "…" : "Add"}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setAddingDomain(false); setNewDomainName(""); }}
+                className="rounded-full bg-slate-100 px-2 py-1 text-[11px] text-slate-500 hover:bg-slate-200"
+              >
+                ✕
+              </button>
+            </form>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setAddingDomain(true)}
+              className="rounded-full border border-dashed border-slate-300 px-2.5 py-1 text-[11px] font-semibold text-slate-400 hover:border-[#185FA5] hover:text-[#185FA5] transition-colors"
+            >
+              + Add domain
+            </button>
+          )}
         </div>
 
         <div className="grid gap-2 md:grid-cols-4">

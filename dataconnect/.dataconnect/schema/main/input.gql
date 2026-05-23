@@ -17,6 +17,12 @@ It has the same format as `Course_Key`, but is only used as mutation return valu
 """
 scalar Course_KeyOutput
 """
+✨ `CustomDomain_KeyOutput` returns the primary key fields of table type `CustomDomain`.
+
+It has the same format as `CustomDomain_Key`, but is only used as mutation return value.
+"""
+scalar CustomDomain_KeyOutput
+"""
 ✨ `Formula_KeyOutput` returns the primary key fields of table type `Formula`.
 
 It has the same format as `Formula_Key`, but is only used as mutation return value.
@@ -944,6 +950,22 @@ input Course_Data {
   ✨ `_update` server value variant of `version` (✨ Generated from Field `Course`.`version` of type `Int!`)
   """
   version_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Course`.`contentSourceLinks_on_course` of type `[ContentSourceLink!]!`
+  """
+  contentSourceLinks_on_course: [ContentSourceLink_Data!]
+  """
+  ✨ Generated from Field `Course`.`modules_on_course` of type `[Module!]!`
+  """
+  modules_on_course: [Module_Data!]
+  """
+  ✨ Generated from Field `Course`.`sourceMaterialFolders_on_course` of type `[SourceMaterialFolder!]!`
+  """
+  sourceMaterialFolders_on_course: [SourceMaterialFolder_Data!]
+  """
+  ✨ Generated from Field `Course`.`userCourseProgresses_on_course` of type `[UserCourseProgress!]!`
+  """
+  userCourseProgresses_on_course: [UserCourseProgress_Data!]
 }
 """
 ✨ Generated filter input type for table 'Course'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
@@ -1360,6 +1382,233 @@ input Course_Order {
   version_max: OrderDirection
 }
 """
+✨ Generated data input type for table 'CustomDomain'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input CustomDomain_Data {
+  """
+  ✨ Generated from Field `CustomDomain`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `CustomDomain`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CustomDomain`.`createdById` of type `String`
+  """
+  createdById: String
+  """
+  ✨ `_expr` server value variant of `createdById` (✨ Generated from Field `CustomDomain`.`createdById` of type `String`)
+  """
+  createdById_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CustomDomain`.`createdBy` of type `User`
+  """
+  createdBy: User_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CustomDomain`.`createdAt` of type `Date!`
+  """
+  createdAt: Date
+  """
+  ✨ `_date` server value variant of `createdAt` (✨ Generated from Field `CustomDomain`.`createdAt` of type `Date!`)
+  """
+  createdAt_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `CustomDomain`.`createdAt` of type `Date!`)
+  """
+  createdAt_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `CustomDomain`.`createdAt` of type `Date!`)
+  """
+  createdAt_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CustomDomain`.`name` of type `String!`
+  """
+  name: String
+  """
+  ✨ `_expr` server value variant of `name` (✨ Generated from Field `CustomDomain`.`name` of type `String!`)
+  """
+  name_expr: String_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'CustomDomain'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input CustomDomain_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [CustomDomain_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: CustomDomain_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [CustomDomain_Filter!]
+  """
+  ✨ Generated from Field `CustomDomain`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `CustomDomain`.`createdById` of type `String`
+  """
+  createdById: String_Filter
+  """
+  ✨ Generated from Field `CustomDomain`.`createdBy` of type `User`
+  """
+  createdBy: User_Filter
+  """
+  ✨ Generated from Field `CustomDomain`.`createdAt` of type `Date!`
+  """
+  createdAt: Date_Filter
+  """
+  ✨ Generated from Field `CustomDomain`.`name` of type `String!`
+  """
+  name: String_Filter
+}
+"""
+✨ Generated first-row input type for table 'CustomDomain'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input CustomDomain_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [CustomDomain_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: CustomDomain_Filter
+}
+"""
+✨ Generated having input type for table 'CustomDomain'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input CustomDomain_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [CustomDomain_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: CustomDomain_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [CustomDomain_Having!]
+  """
+  ✨ Generated from Field `CustomDomain`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `CustomDomain`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `CustomDomain`.`createdById_count` of type `Int!`
+  """
+  createdById_count: Int_Filter
+  """
+  ✨ Generated from Field `CustomDomain`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `CustomDomain`.`name_count` of type `Int!`
+  """
+  name_count: Int_Filter
+  """
+  ✨ Generated from Field `CustomDomain`.`createdAt_min` of type `Date`
+  """
+  createdAt_min: Date_Filter
+  """
+  ✨ Generated from Field `CustomDomain`.`createdAt_max` of type `Date`
+  """
+  createdAt_max: Date_Filter
+}
+"""
+✨ Generated key input type for table 'CustomDomain'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input CustomDomain_Key {
+  """
+  ✨ Generated from Field `CustomDomain`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `CustomDomain`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'CustomDomain'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input CustomDomain_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: CustomDomain_Filter
+}
+"""
+✨ Generated order input type for table 'CustomDomain'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input CustomDomain_Order {
+  """
+  ✨ Generated from Field `CustomDomain`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `CustomDomain`.`createdById` of type `String`
+  """
+  createdById: OrderDirection
+  """
+  ✨ Generated from Field `CustomDomain`.`createdBy` of type `User`
+  """
+  createdBy: User_Order
+  """
+  ✨ Generated from Field `CustomDomain`.`createdAt` of type `Date!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `CustomDomain`.`name` of type `String!`
+  """
+  name: OrderDirection
+  """
+  ✨ Generated from Field `CustomDomain`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `CustomDomain`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `CustomDomain`.`createdById_count` of type `Int!`
+  """
+  createdById_count: OrderDirection
+  """
+  ✨ Generated from Field `CustomDomain`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `CustomDomain`.`name_count` of type `Int!`
+  """
+  name_count: OrderDirection
+  """
+  ✨ Generated from Field `CustomDomain`.`createdAt_min` of type `Date`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `CustomDomain`.`createdAt_max` of type `Date`
+  """
+  createdAt_max: OrderDirection
+}
+"""
 ✨ Generated data input type for table 'Formula'. It includes all necessary fields for creating or upserting rows into table.
 """
 input Formula_Data {
@@ -1399,6 +1648,14 @@ input Formula_Data {
   ✨ `_expr` server value variant of `code` (✨ Generated from Field `Formula`.`code` of type `String!`)
   """
   code_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Formula`.`examplesJson` of type `String`
+  """
+  examplesJson: String
+  """
+  ✨ `_expr` server value variant of `examplesJson` (✨ Generated from Field `Formula`.`examplesJson` of type `String`)
+  """
+  examplesJson_expr: String_Expr @fdc_forbiddenInVariables
   """
   ✨ Generated from Field `Formula`.`expression` of type `String!`
   """
@@ -1473,6 +1730,10 @@ input Formula_Filter {
   """
   code: String_Filter
   """
+  ✨ Generated from Field `Formula`.`examplesJson` of type `String`
+  """
+  examplesJson: String_Filter
+  """
   ✨ Generated from Field `Formula`.`expression` of type `String!`
   """
   expression: String_Filter
@@ -1534,6 +1795,10 @@ input Formula_Having {
   ✨ Generated from Field `Formula`.`code_count` of type `Int!`
   """
   code_count: Int_Filter
+  """
+  ✨ Generated from Field `Formula`.`examplesJson_count` of type `Int!`
+  """
+  examplesJson_count: Int_Filter
   """
   ✨ Generated from Field `Formula`.`expression_count` of type `Int!`
   """
@@ -1626,6 +1891,10 @@ input Formula_Order {
   """
   code: OrderDirection
   """
+  ✨ Generated from Field `Formula`.`examplesJson` of type `String`
+  """
+  examplesJson: OrderDirection
+  """
   ✨ Generated from Field `Formula`.`expression` of type `String!`
   """
   expression: OrderDirection
@@ -1653,6 +1922,10 @@ input Formula_Order {
   ✨ Generated from Field `Formula`.`code_count` of type `Int!`
   """
   code_count: OrderDirection
+  """
+  ✨ Generated from Field `Formula`.`examplesJson_count` of type `Int!`
+  """
+  examplesJson_count: OrderDirection
   """
   ✨ Generated from Field `Formula`.`expression_count` of type `Int!`
   """
@@ -1734,6 +2007,10 @@ input FormulaSection_Data {
   ✨ `_expr` server value variant of `title` (✨ Generated from Field `FormulaSection`.`title` of type `String!`)
   """
   title_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `FormulaSection`.`formulas_on_section` of type `[Formula!]!`
+  """
+  formulas_on_section: [Formula_Data!]
 }
 """
 ✨ Generated filter input type for table 'FormulaSection'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
@@ -2364,6 +2641,10 @@ input GlossaryTerm_Data {
   ✨ `_update` server value variant of `updatedAt` (✨ Generated from Field `GlossaryTerm`.`updatedAt` of type `Date!`)
   """
   updatedAt_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `GlossaryTerm`.`glossaryNotes_on_term` of type `[GlossaryNote!]!`
+  """
+  glossaryNotes_on_term: [GlossaryNote_Data!]
 }
 """
 ✨ Generated filter input type for table 'GlossaryTerm'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
@@ -3290,6 +3571,22 @@ input Lesson_Data {
   ✨ `_expr` server value variant of `videoUrl` (✨ Generated from Field `Lesson`.`videoUrl` of type `String`)
   """
   videoUrl_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Lesson`.`contentSourceLinks_on_lesson` of type `[ContentSourceLink!]!`
+  """
+  contentSourceLinks_on_lesson: [ContentSourceLink_Data!]
+  """
+  ✨ Generated from Field `Lesson`.`lessonVersions_on_lesson` of type `[LessonVersion!]!`
+  """
+  lessonVersions_on_lesson: [LessonVersion_Data!]
+  """
+  ✨ Generated from Field `Lesson`.`sourceMaterialFolders_on_lesson` of type `[SourceMaterialFolder!]!`
+  """
+  sourceMaterialFolders_on_lesson: [SourceMaterialFolder_Data!]
+  """
+  ✨ Generated from Field `Lesson`.`userLessonProgresses_on_lesson` of type `[UserLessonProgress!]!`
+  """
+  userLessonProgresses_on_lesson: [UserLessonProgress_Data!]
 }
 """
 ✨ Generated filter input type for table 'Lesson'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
@@ -4603,6 +4900,10 @@ input Module_Data {
   ✨ `_update` server value variant of `version` (✨ Generated from Field `Module`.`version` of type `Int!`)
   """
   version_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Module`.`lessons_on_module` of type `[Lesson!]!`
+  """
+  lessons_on_module: [Lesson_Data!]
 }
 """
 ✨ Generated filter input type for table 'Module'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
@@ -5114,6 +5415,22 @@ input Question_Data {
   ✨ `_update` server value variant of `version` (✨ Generated from Field `Question`.`version` of type `Int!`)
   """
   version_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Question`.`answerChoices_on_question` of type `[AnswerChoice!]!`
+  """
+  answerChoices_on_question: [AnswerChoice_Data!]
+  """
+  ✨ Generated from Field `Question`.`contentSourceLinks_on_question` of type `[ContentSourceLink!]!`
+  """
+  contentSourceLinks_on_question: [ContentSourceLink_Data!]
+  """
+  ✨ Generated from Field `Question`.`quizQuestions_on_question` of type `[QuizQuestion!]!`
+  """
+  quizQuestions_on_question: [QuizQuestion_Data!]
+  """
+  ✨ Generated from Field `Question`.`quizResponses_on_question` of type `[QuizResponse!]!`
+  """
+  quizResponses_on_question: [QuizResponse_Data!]
 }
 """
 ✨ Generated filter input type for table 'Question'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
@@ -5733,6 +6050,18 @@ input Quiz_Data {
   ✨ `_update` server value variant of `version` (✨ Generated from Field `Quiz`.`version` of type `Int!`)
   """
   version_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Quiz`.`lessons_on_quiz` of type `[Lesson!]!`
+  """
+  lessons_on_quiz: [Lesson_Data!]
+  """
+  ✨ Generated from Field `Quiz`.`quizAttempts_on_quiz` of type `[QuizAttempt!]!`
+  """
+  quizAttempts_on_quiz: [QuizAttempt_Data!]
+  """
+  ✨ Generated from Field `Quiz`.`quizQuestions_on_quiz` of type `[QuizQuestion!]!`
+  """
+  quizQuestions_on_quiz: [QuizQuestion_Data!]
 }
 """
 ✨ Generated filter input type for table 'Quiz'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
@@ -6336,6 +6665,10 @@ input QuizAttempt_Data {
   ✨ `_expr` server value variant of `status` (✨ Generated from Field `QuizAttempt`.`status` of type `String!`)
   """
   status_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `QuizAttempt`.`quizResponses_on_attempt` of type `[QuizResponse!]!`
+  """
+  quizResponses_on_attempt: [QuizResponse_Data!]
 }
 """
 ✨ Generated filter input type for table 'QuizAttempt'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
@@ -7657,6 +7990,30 @@ input SourceMaterial_Data {
   ✨ `_expr` server value variant of `visibility` (✨ Generated from Field `SourceMaterial`.`visibility` of type `String!`)
   """
   visibility_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterial`.`contentSourceLinks_on_sourceMaterial` of type `[ContentSourceLink!]!`
+  """
+  contentSourceLinks_on_sourceMaterial: [ContentSourceLink_Data!]
+  """
+  ✨ Generated from Field `SourceMaterial`.`ingestionJobs_on_sourceMaterial` of type `[IngestionJob!]!`
+  """
+  ingestionJobs_on_sourceMaterial: [IngestionJob_Data!]
+  """
+  ✨ Generated from Field `SourceMaterial`.`lessons_on_sourceMaterial` of type `[Lesson!]!`
+  """
+  lessons_on_sourceMaterial: [Lesson_Data!]
+  """
+  ✨ Generated from Field `SourceMaterial`.`sourceMaterials_on_duplicateOf` of type `[SourceMaterial!]!`
+  """
+  sourceMaterials_on_duplicateOf: [SourceMaterial_Data!]
+  """
+  ✨ Generated from Field `SourceMaterial`.`sourceMaterialActivities_on_sourceMaterial` of type `[SourceMaterialActivity!]!`
+  """
+  sourceMaterialActivities_on_sourceMaterial: [SourceMaterialActivity_Data!]
+  """
+  ✨ Generated from Field `SourceMaterial`.`sourceMaterialTagAssignments_on_sourceMaterial` of type `[SourceMaterialTagAssignment!]!`
+  """
+  sourceMaterialTagAssignments_on_sourceMaterial: [SourceMaterialTagAssignment_Data!]
 }
 """
 ✨ Generated filter input type for table 'SourceMaterial'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
@@ -8683,6 +9040,18 @@ input SourceMaterialFolder_Data {
   ✨ `_update` server value variant of `updatedAt` (✨ Generated from Field `SourceMaterialFolder`.`updatedAt` of type `Date!`)
   """
   updatedAt_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`sourceMaterials_on_folder` of type `[SourceMaterial!]!`
+  """
+  sourceMaterials_on_folder: [SourceMaterial_Data!]
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`sourceMaterialActivities_on_folder` of type `[SourceMaterialActivity!]!`
+  """
+  sourceMaterialActivities_on_folder: [SourceMaterialActivity_Data!]
+  """
+  ✨ Generated from Field `SourceMaterialFolder`.`sourceMaterialFolders_on_parentFolder` of type `[SourceMaterialFolder!]!`
+  """
+  sourceMaterialFolders_on_parentFolder: [SourceMaterialFolder_Data!]
 }
 """
 ✨ Generated filter input type for table 'SourceMaterialFolder'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
@@ -9130,6 +9499,10 @@ input SourceMaterialTag_Data {
   ✨ `_update` server value variant of `updatedAt` (✨ Generated from Field `SourceMaterialTag`.`updatedAt` of type `Date!`)
   """
   updatedAt_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`sourceMaterialTagAssignments_on_tag` of type `[SourceMaterialTagAssignment!]!`
+  """
+  sourceMaterialTagAssignments_on_tag: [SourceMaterialTagAssignment_Data!]
 }
 """
 ✨ Generated filter input type for table 'SourceMaterialTag'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
@@ -9652,6 +10025,86 @@ input User_Data {
   ✨ `_expr` server value variant of `role` (✨ Generated from Field `User`.`role` of type `String!`)
   """
   role_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `User`.`courses_on_createdBy` of type `[Course!]!`
+  """
+  courses_on_createdBy: [Course_Data!]
+  """
+  ✨ Generated from Field `User`.`courses_on_updatedBy` of type `[Course!]!`
+  """
+  courses_on_updatedBy: [Course_Data!]
+  """
+  ✨ Generated from Field `User`.`customDomains_on_createdBy` of type `[CustomDomain!]!`
+  """
+  customDomains_on_createdBy: [CustomDomain_Data!]
+  """
+  ✨ Generated from Field `User`.`glossaryNotes_on_user` of type `[GlossaryNote!]!`
+  """
+  glossaryNotes_on_user: [GlossaryNote_Data!]
+  """
+  ✨ Generated from Field `User`.`glossaryTerms_on_createdBy` of type `[GlossaryTerm!]!`
+  """
+  glossaryTerms_on_createdBy: [GlossaryTerm_Data!]
+  """
+  ✨ Generated from Field `User`.`lessons_on_updatedBy` of type `[Lesson!]!`
+  """
+  lessons_on_updatedBy: [Lesson_Data!]
+  """
+  ✨ Generated from Field `User`.`lessonNotes_on_user` of type `[LessonNote!]!`
+  """
+  lessonNotes_on_user: [LessonNote_Data!]
+  """
+  ✨ Generated from Field `User`.`lessonVersions_on_createdBy` of type `[LessonVersion!]!`
+  """
+  lessonVersions_on_createdBy: [LessonVersion_Data!]
+  """
+  ✨ Generated from Field `User`.`questions_on_createdBy` of type `[Question!]!`
+  """
+  questions_on_createdBy: [Question_Data!]
+  """
+  ✨ Generated from Field `User`.`questions_on_updatedBy` of type `[Question!]!`
+  """
+  questions_on_updatedBy: [Question_Data!]
+  """
+  ✨ Generated from Field `User`.`quizzes_on_createdBy` of type `[Quiz!]!`
+  """
+  quizzes_on_createdBy: [Quiz_Data!]
+  """
+  ✨ Generated from Field `User`.`quizzes_on_updatedBy` of type `[Quiz!]!`
+  """
+  quizzes_on_updatedBy: [Quiz_Data!]
+  """
+  ✨ Generated from Field `User`.`quizAttempts_on_user` of type `[QuizAttempt!]!`
+  """
+  quizAttempts_on_user: [QuizAttempt_Data!]
+  """
+  ✨ Generated from Field `User`.`sourceMaterials_on_uploadedBy` of type `[SourceMaterial!]!`
+  """
+  sourceMaterials_on_uploadedBy: [SourceMaterial_Data!]
+  """
+  ✨ Generated from Field `User`.`sourceMaterialActivities_on_actor` of type `[SourceMaterialActivity!]!`
+  """
+  sourceMaterialActivities_on_actor: [SourceMaterialActivity_Data!]
+  """
+  ✨ Generated from Field `User`.`sourceMaterialFolders_on_createdBy` of type `[SourceMaterialFolder!]!`
+  """
+  sourceMaterialFolders_on_createdBy: [SourceMaterialFolder_Data!]
+  """
+  ✨ Generated from Field `User`.`sourceMaterialTags_on_createdBy` of type `[SourceMaterialTag!]!`
+  """
+  sourceMaterialTags_on_createdBy: [SourceMaterialTag_Data!]
+  """
+  ✨ Generated from Field `User`.`userCourseProgresses_on_user` of type `[UserCourseProgress!]!`
+  """
+  userCourseProgresses_on_user: [UserCourseProgress_Data!]
+  """
+  ✨ Generated from Field `User`.`userFavorites_on_user` of type `[UserFavorite!]!`
+  """
+  userFavorites_on_user: [UserFavorite_Data!]
+  """
+  ✨ Generated from Field `User`.`userLessonProgresses_on_user` of type `[UserLessonProgress!]!`
+  """
+  userLessonProgresses_on_user: [UserLessonProgress_Data!]
 }
 """
 ✨ Generated filter input type for table 'User'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
@@ -9697,6 +10150,10 @@ input User_Filter {
   ✨ Generated from Field `User`.`courses_on_updatedBy` of type `[Course!]!`
   """
   courses_on_updatedBy: Course_ListFilter
+  """
+  ✨ Generated from Field `User`.`customDomains_on_createdBy` of type `[CustomDomain!]!`
+  """
+  customDomains_on_createdBy: CustomDomain_ListFilter
   """
   ✨ Generated from Field `User`.`glossaryNotes_on_user` of type `[GlossaryNote!]!`
   """

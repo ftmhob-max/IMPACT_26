@@ -7,15 +7,19 @@ import { ManualQuestionPanel } from "./ManualQuestionPanel";
 interface QuestionBuilderClientProps {
   mode: "csv" | "manual";
   quizzes: Array<{ id: string; title: string }>;
+  onChanged?: () => void | Promise<void>;
 }
 
-export function QuestionBuilderClient({ mode, quizzes }: QuestionBuilderClientProps) {
+export function QuestionBuilderClient({ mode, quizzes, onChanged }: QuestionBuilderClientProps) {
   const [notice, setNotice] = useState<string | null>(null);
 
   if (mode === "csv") {
     return (
       <CsvImportPanel
-        onImported={({ message }) => setNotice(message)}
+        onImported={({ message }) => {
+          setNotice(message);
+          void onChanged?.();
+        }}
       />
     );
   }
@@ -23,7 +27,10 @@ export function QuestionBuilderClient({ mode, quizzes }: QuestionBuilderClientPr
   return (
     <ManualQuestionPanel
       quizzes={quizzes}
-      onSaved={(msg) => setNotice(msg)}
+      onSaved={(msg) => {
+        setNotice(msg);
+        void onChanged?.();
+      }}
     />
   );
 }
