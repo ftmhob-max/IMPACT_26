@@ -159,9 +159,9 @@ export function GlossaryManager() {
   const publishedCount = terms.filter((t) => t.isPublished).length;
 
   return (
-    <div className="flex gap-5 min-h-0">
+    <div className="flex min-h-0 flex-col gap-5 lg:flex-row">
       {/* Left column: list */}
-      <div className={cn("flex flex-col gap-4 min-w-0", selected ? "w-80 shrink-0" : "flex-1")}>
+      <div className={cn("flex min-w-0 flex-col gap-4", selected ? "w-full lg:w-80 lg:shrink-0" : "flex-1")}>
         {/* Stats + header */}
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div>
@@ -170,7 +170,7 @@ export function GlossaryManager() {
               {terms.length} total · {publishedCount} published · {terms.length - publishedCount} draft
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
             <button
               type="button"
               onClick={selectMode ? exitSelectMode : enterSelectMode}
@@ -216,10 +216,10 @@ export function GlossaryManager() {
             placeholder="Search terms…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="admin-input flex-1 min-w-40"
+            className="admin-input w-full sm:min-w-40 sm:flex-1"
           />
-          <DomainCombobox value={filterDomain} onChange={setFilterDomain} allowClear clearLabel="All domains" className="w-36" />
-          <select className="admin-input w-32" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value as any)}>
+          <DomainCombobox value={filterDomain} onChange={setFilterDomain} allowClear clearLabel="All domains" className="w-full min-[380px]:w-36" />
+          <select className="admin-input w-full min-[380px]:w-32" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value as any)}>
             <option value="">All statuses</option>
             <option value="published">Published</option>
             <option value="draft">Draft</option>
@@ -533,7 +533,7 @@ function TermEditPanel({
           </button>
         </div>
       </div>
-      <div className="p-5 max-h-[calc(100vh-200px)] overflow-y-auto">
+      <div className="p-4 lg:max-h-[calc(100vh-200px)] lg:overflow-y-auto sm:p-5">
         <TermForm
           initial={term}
           onSave={async (data) => {
@@ -629,7 +629,7 @@ function TermForm({
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <label className="admin-label">Domain (optional)</label>
           <DomainCombobox value={domain ?? ""} onChange={(val) => setDomain(val)} />

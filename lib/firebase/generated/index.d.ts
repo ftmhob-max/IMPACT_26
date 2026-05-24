@@ -748,6 +748,14 @@ export interface DeleteAnswerChoicesForQuestionVariables {
   questionId: UUIDString;
 }
 
+export interface DeleteContentSourceLinkData {
+  contentSourceLink_delete?: ContentSourceLink_Key | null;
+}
+
+export interface DeleteContentSourceLinkVariables {
+  id: UUIDString;
+}
+
 export interface DeleteFormulaData {
   formula_delete?: Formula_Key | null;
 }
@@ -1190,12 +1198,15 @@ export interface GetLessonData {
       shuffleQuestions: boolean;
       shuffleChoices: boolean;
     } & Quiz_Key;
-      module: {
-        course: {
-          slug: string;
-          title: string;
+      sourceMaterial?: {
+        id: UUIDString;
+      } & SourceMaterial_Key;
+        module: {
+          course: {
+            slug: string;
+            title: string;
+          };
         };
-      };
   } & Lesson_Key;
 }
 
@@ -2618,6 +2629,18 @@ export const createContentSourceLinkRef: CreateContentSourceLinkRef;
 
 export function createContentSourceLink(vars: CreateContentSourceLinkVariables): MutationPromise<CreateContentSourceLinkData, CreateContentSourceLinkVariables>;
 export function createContentSourceLink(dc: DataConnect, vars: CreateContentSourceLinkVariables): MutationPromise<CreateContentSourceLinkData, CreateContentSourceLinkVariables>;
+
+interface DeleteContentSourceLinkRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteContentSourceLinkVariables): MutationRef<DeleteContentSourceLinkData, DeleteContentSourceLinkVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteContentSourceLinkVariables): MutationRef<DeleteContentSourceLinkData, DeleteContentSourceLinkVariables>;
+  operationName: string;
+}
+export const deleteContentSourceLinkRef: DeleteContentSourceLinkRef;
+
+export function deleteContentSourceLink(vars: DeleteContentSourceLinkVariables): MutationPromise<DeleteContentSourceLinkData, DeleteContentSourceLinkVariables>;
+export function deleteContentSourceLink(dc: DataConnect, vars: DeleteContentSourceLinkVariables): MutationPromise<DeleteContentSourceLinkData, DeleteContentSourceLinkVariables>;
 
 interface CreateGlossaryTermRef {
   /* Allow users to create refs without passing in DataConnect */

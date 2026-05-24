@@ -38,6 +38,7 @@ interface Props {
   lessonId: string;
   initialContent: string | null;
   onContentChange?: (json: string) => void;
+  onSaveStatusChange?: (status: SaveStatus) => void;
   hideAuthorTools?: boolean;
 }
 
@@ -96,13 +97,20 @@ const BLOCK_LIBRARY: Array<{
 ];
 
 export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(function LessonBuilderEditor(
-  { lessonId, initialContent, onContentChange, hideAuthorTools = false }: Props,
+  { lessonId, initialContent, onContentChange, onSaveStatusChange, hideAuthorTools = false }: Props,
   ref
 ) {
   const [documentState, setDocumentState] = useState<StructuredLessonDocument>(() =>
     parseStructuredLessonContent(initialContent)
   );
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
+  const [saveStatus, setSaveStatusRaw] = useState<SaveStatus>("saved");
+  const setSaveStatus = useCallback(
+    (status: SaveStatus) => {
+      setSaveStatusRaw(status);
+      onSaveStatusChange?.(status);
+    },
+    [onSaveStatusChange]
+  );
   const [formulas, setFormulas] = useState<FormulaLibraryItem[]>([]);
   const [glossaryTerms, setGlossaryTerms] = useState<GlossaryLibraryItem[]>([]);
   const [materials, setMaterials] = useState<MaterialLibraryItem[]>([]);

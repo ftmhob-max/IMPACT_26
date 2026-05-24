@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useDeferredValue, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { type CSSProperties, type ReactNode, useDeferredValue, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase/client";
 import { cn } from "@/lib/utils";
@@ -188,6 +188,8 @@ interface UploadQueueItem {
   clientId: string;
   file: File;
   title: string;
+  uploadStatus?: "queued" | "uploading" | "done" | "error";
+  progress?: number;
 }
 
 const PREVIEW_SIZES: Record<"sm" | "md" | "lg", number> = { sm: 320, md: 380, lg: 500 };
@@ -518,7 +520,8 @@ export function MaterialsPanel() {
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<CollectionViewMode>("list");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [uploadTags, setUploadTags] = useState("");
+  const [uploadTags, setUploadTags] = useState<string[]>([]);
+  const [uploadTagInput, setUploadTagInput] = useState("");
   const [uploadFolderId, setUploadFolderId] = useState("");
   const [uploadCourseId, setUploadCourseId] = useState("");
   const [uploadLessonId, setUploadLessonId] = useState("");
@@ -721,23 +724,41 @@ export function MaterialsPanel() {
       summary: { total: 0, succeeded: 0, failed: 0, warnings: 0 },
     };
 
+    function uploadWithProgress(item: UploadQueueItem, clientId: string): Promise<Response> {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "/api/admin/materials");
+        xhr.setRequestHeader("Content-Type", item.file.type || "application/octet-stream");
+        xhr.setRequestHeader("X-File-Name", encodeURIComponent(item.file.name));
+        xhr.setRequestHeader("X-Title", encodeURIComponent(item.title.trim()));
+        xhr.setRequestHeader("X-Folder-Id", encodeURIComponent(uploadFolderId || selectedFolderId || ""));
+        xhr.setRequestHeader("X-Tags", encodeURIComponent(uploadTags.join(",")));
+        xhr.setRequestHeader("X-Course-Id", encodeURIComponent(uploadCourseId));
+        xhr.setRequestHeader("X-Lesson-Id", encodeURIComponent(uploadLessonId));
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            const pct = Math.round((e.loaded / e.total) * 100);
+            setUploadItems((prev) =>
+              prev.map((it) => it.clientId === clientId ? { ...it, progress: pct, uploadStatus: "uploading" } : it)
+            );
+          }
+        };
+        xhr.onload = () => {
+          resolve(new Response(xhr.responseText, { status: xhr.status, headers: { "Content-Type": "application/json" } }));
+        };
+        xhr.onerror = () => reject(new Error("Network error"));
+        xhr.send(item.file);
+      });
+    }
+
     try {
       for (let uploadIdx = 0; uploadIdx < uploadItems.length; uploadIdx++) {
         const item = uploadItems[uploadIdx];
         setUploadFileIndex(uploadIdx);
-        const res = await fetch("/api/admin/materials", {
-          method: "POST",
-          headers: {
-            "Content-Type": item.file.type || "application/octet-stream",
-            "X-File-Name": encodeURIComponent(item.file.name),
-            "X-Title": encodeURIComponent(item.title.trim()),
-            "X-Folder-Id": encodeURIComponent(uploadFolderId || selectedFolderId || ""),
-            "X-Tags": encodeURIComponent(uploadTags),
-            "X-Course-Id": encodeURIComponent(uploadCourseId),
-            "X-Lesson-Id": encodeURIComponent(uploadLessonId),
-          },
-          body: item.file,
-        });
+        setUploadItems((prev) =>
+          prev.map((it) => it.clientId === item.clientId ? { ...it, uploadStatus: "uploading", progress: 0 } : it)
+        );
+        const res = await uploadWithProgress(item, item.clientId);
 
         if (res.ok) {
           const itemData = (await res.json()) as UploadResult;
@@ -749,6 +770,9 @@ export function MaterialsPanel() {
             data.summary.failed += itemData.summary.failed;
             data.summary.warnings += itemData.summary.warnings;
           }
+          setUploadItems((prev) =>
+            prev.map((it) => it.clientId === item.clientId ? { ...it, uploadStatus: "done", progress: 100 } : it)
+          );
         } else {
           const errorData = await readApiError(res);
           data.failed.push({
@@ -757,13 +781,16 @@ export function MaterialsPanel() {
             error: errorData.error ?? "Upload failed.",
           });
           if (data.summary) data.summary.failed += 1;
+          setUploadItems((prev) =>
+            prev.map((it) => it.clientId === item.clientId ? { ...it, uploadStatus: "error" } : it)
+          );
         }
       }
 
       const warningCount = data.summary?.warnings ?? 0;
       const successCount = data.summary?.succeeded ?? data.created.length;
       const failedCount = data.summary?.failed ?? data.failed.length;
-      const summaryParts = [`${successCount} material${successCount === 1 ? "" : "s"} ingested`];
+      const summaryParts = [`${successCount} material${successCount === 1 ? "" : "s"} uploaded`];
       if (failedCount > 0) summaryParts.push(`${failedCount} failed`);
       if (warningCount > 0) summaryParts.push(`${warningCount} storage warning${warningCount === 1 ? "" : "s"}`);
       setNotice({
@@ -788,6 +815,7 @@ export function MaterialsPanel() {
         });
       });
       setUploadOpen(failedCount > 0);
+      if (!failedCount) { setUploadTags([]); setUploadTagInput(""); }
       setPage(1);
       if (data.id) setPendingSelectionId(data.id);
       setRefreshKey((value) => value + 1);
@@ -1064,11 +1092,28 @@ export function MaterialsPanel() {
   const folderOptions = buildFolderOptions(folders);
   const advancedFiltersActive = hasAsset !== "all" || hasText !== "all";
 
+  // Determine list columns based on preview pane visibility and size to prevent layout squishing
+  const showSignals = !previewPaneVisible || previewPaneSize === "sm";
+  const showUsage = !previewPaneVisible;
+
+  let headerGridCols = "minmax(260px,1.8fr) minmax(150px,0.7fr) minmax(150px,0.65fr) auto";
+  let rowGridCols = "minmax(260px,1.8fr) minmax(130px,0.7fr) minmax(130px,0.65fr) auto";
+
+  if (previewPaneVisible) {
+    if (previewPaneSize === "sm") {
+      headerGridCols = "minmax(200px,1.8fr) minmax(120px,0.7fr) auto";
+      rowGridCols = "minmax(200px,1.8fr) minmax(110px,0.7fr) auto";
+    } else {
+      headerGridCols = "minmax(200px,1fr) auto";
+      rowGridCols = "minmax(200px,1fr) auto";
+    }
+  }
+
   return (
     <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div
-        className="grid min-h-[calc(100vh-170px)] transition-[grid-template-columns] duration-200"
-        style={{ gridTemplateColumns: `${sidebarCollapsed ? 0 : 240}px minmax(0,1fr)` }}
+        className="grid grid-cols-1 xl:min-h-[calc(100vh-170px)] xl:[grid-template-columns:var(--material-library-cols)] xl:transition-[grid-template-columns] xl:duration-200"
+        style={{ "--material-library-cols": `${sidebarCollapsed ? 0 : 240}px minmax(0,1fr)` } as CSSProperties}
       >
         <MaterialLibrarySidebar
           view={view}
@@ -1094,13 +1139,13 @@ export function MaterialsPanel() {
               title="Expand sidebar"
               aria-label="Expand sidebar"
               onClick={() => setSidebarCollapsed(false)}
-              className="absolute left-0 top-1/2 z-10 -translate-y-1/2 flex h-10 w-5 items-center justify-center rounded-r-lg border border-l-0 border-slate-200 bg-white text-slate-400 shadow-sm transition hover:text-[#185FA5]"
+              className="absolute left-0 top-1/2 z-10 hidden h-10 w-5 -translate-y-1/2 items-center justify-center rounded-r-lg border border-l-0 border-slate-200 bg-white text-slate-400 shadow-sm transition hover:text-[#185FA5] xl:flex"
             >
               <Icons.ChevronRight size={12} />
             </button>
           )}
         <div className="border-b border-slate-100 bg-[linear-gradient(180deg,#fdfefe_0%,#f6f9fc_100%)] px-4 py-2.5">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex min-w-0 items-center gap-2.5">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#E6F1FB] text-[#185FA5]">
                 <Icons.Database size={15} />
@@ -1128,7 +1173,7 @@ export function MaterialsPanel() {
               </div>
             </div>
 
-            <div className="flex shrink-0 items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-1.5 sm:shrink-0">
               <div className="flex rounded-lg border border-slate-200 bg-white p-0.5 shadow-sm">
                 <button
                   type="button"
@@ -1207,7 +1252,7 @@ export function MaterialsPanel() {
                       <div>
                         <p className="text-sm font-semibold text-slate-900">Batch queue</p>
                         <p className="text-xs text-slate-500">
-                          {uploadItems.length.toLocaleString()} file{uploadItems.length === 1 ? "" : "s"} ready. Titles can be edited before ingestion.
+                          {uploadItems.length.toLocaleString()} file{uploadItems.length === 1 ? "" : "s"} ready. Titles can be edited before uploading.
                         </p>
                       </div>
                       <button
@@ -1247,6 +1292,30 @@ export function MaterialsPanel() {
                               placeholder="Source material title"
                             />
                           </div>
+                          {/* Per-file progress */}
+                          {item.uploadStatus === "uploading" && (
+                            <div className="mt-2">
+                              <div className="h-1.5 w-full rounded-full bg-slate-200 overflow-hidden">
+                                <div
+                                  className="h-full rounded-full bg-[#185FA5] transition-all"
+                                  style={{ width: `${item.progress ?? 0}%` }}
+                                />
+                              </div>
+                              <p className="mt-0.5 text-[10px] text-slate-400">{item.progress ?? 0}%</p>
+                            </div>
+                          )}
+                          {item.uploadStatus === "done" && (
+                            <div className="mt-2 flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
+                              <Icons.Check size={12} />
+                              Uploaded
+                            </div>
+                          )}
+                          {item.uploadStatus === "error" && (
+                            <div className="mt-2 flex items-center gap-1 text-[11px] font-semibold text-red-600">
+                              <Icons.X size={12} />
+                              Failed
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -1263,13 +1332,13 @@ export function MaterialsPanel() {
                     <>
                       <Icons.Loader size={14} className="animate-spin" />
                       {uploadFileIndex !== null && uploadItems.length > 1
-                        ? `Ingesting file ${uploadFileIndex + 1} of ${uploadItems.length}…`
-                        : "Ingesting…"}
+                        ? `Uploading file ${uploadFileIndex + 1} of ${uploadItems.length}…`
+                        : "Uploading…"}
                     </>
                   ) : (
                     <>
                       <Icons.Upload size={14} />
-                      {uploadItems.length > 1 ? `Ingest ${uploadItems.length} materials` : "Ingest material"}
+                      {uploadItems.length > 1 ? `Upload ${uploadItems.length} materials` : "Upload material"}
                     </>
                   )}
                 </button>
@@ -1291,17 +1360,44 @@ export function MaterialsPanel() {
                   </div>
                   <div>
                     <label className="admin-label">Tags</label>
-                    <input
-                      className="admin-input"
-                      list="upload-tag-suggestions"
-                      value={uploadTags}
-                      onChange={(event) => setUploadTags(event.target.value)}
-                      placeholder="Legal, Needs Review"
-                    />
-                    <datalist id="upload-tag-suggestions">
-                      {tags.map((tag) => <option key={tag.id} value={uploadTags.split(",").slice(0, -1).join(", ") + (uploadTags.includes(",") ? ", " : "") + tag.name} />)}
-                    </datalist>
-                    <p className="mt-1 text-[10px] text-slate-400">Separate multiple tags with commas</p>
+                    {/* Chip-based tag editor */}
+                    <div className="admin-input flex flex-wrap items-center gap-1 min-h-[2rem] h-auto py-1 cursor-text" onClick={(e) => (e.currentTarget.querySelector("input") as HTMLInputElement | null)?.focus()}>
+                      {uploadTags.map((tag) => (
+                        <span key={tag} className="inline-flex items-center gap-0.5 rounded-full bg-[#E6F1FB] px-2 py-0.5 text-[11px] font-semibold text-[#185FA5]">
+                          {tag}
+                          <button
+                            type="button"
+                            onClick={() => setUploadTags((prev) => prev.filter((t) => t !== tag))}
+                            className="ml-0.5 text-[#185FA5]/60 hover:text-[#185FA5]"
+                          >
+                            <Icons.X size={9} />
+                          </button>
+                        </span>
+                      ))}
+                      <input
+                        className="flex-1 min-w-[80px] border-none outline-none bg-transparent text-xs text-slate-700 placeholder:text-slate-400"
+                        value={uploadTagInput}
+                        onChange={(e) => setUploadTagInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if ((e.key === "Enter" || e.key === ",") && uploadTagInput.trim()) {
+                            e.preventDefault();
+                            const newTag = uploadTagInput.trim().replace(/,$/, "");
+                            if (newTag && !uploadTags.includes(newTag)) setUploadTags((prev) => [...prev, newTag]);
+                            setUploadTagInput("");
+                          } else if (e.key === "Backspace" && !uploadTagInput && uploadTags.length) {
+                            setUploadTags((prev) => prev.slice(0, -1));
+                          }
+                        }}
+                        list="upload-tag-suggestions"
+                        placeholder={uploadTags.length ? "" : "Add tags…"}
+                      />
+                      <datalist id="upload-tag-suggestions">
+                        {tags.filter((t) => !uploadTags.includes(t.name)).map((tag) => (
+                          <option key={tag.id} value={tag.name} />
+                        ))}
+                      </datalist>
+                    </div>
+                    <p className="mt-1 text-[10px] text-slate-400">Type a tag and press Enter or comma to add</p>
                   </div>
                   <div>
                     <label className="admin-label">Link to course</label>
@@ -1347,11 +1443,11 @@ export function MaterialsPanel() {
 
         <div className="border-b border-slate-100 bg-white px-4 py-2">
           {/* Always-visible row: search + filters toggle + sort */}
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative basis-full sm:flex-1">
               <Icons.Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
-                className="admin-input h-8 pl-8 text-sm"
+                className="admin-input h-8 !pl-8 text-sm"
                 value={search}
                 onChange={(event) => { setSearch(event.target.value); setPage(1); }}
                 placeholder="Search materials…"
@@ -1376,7 +1472,7 @@ export function MaterialsPanel() {
               )}
             </button>
             <div className="flex items-center gap-1.5 shrink-0">
-              <select className="admin-input h-8 w-36 text-xs" value={sort} onChange={(event) => { const v = event.target.value; startTransition(() => { setSort(v); setPage(1); }); }}>
+              <select className="admin-input h-8 w-32 text-xs sm:w-36" value={sort} onChange={(event) => { const v = event.target.value; startTransition(() => { setSort(v); setPage(1); }); }}>
                 {SORT_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>{option.label}</option>
                 ))}
@@ -1481,11 +1577,11 @@ export function MaterialsPanel() {
         </div>
 
         <div
-          className="grid"
-          style={previewPaneVisible ? { gridTemplateColumns: `minmax(0,1fr) ${PREVIEW_SIZES[previewPaneSize]}px` } : undefined}
+          className={cn("grid grid-cols-1", previewPaneVisible && "xl:[grid-template-columns:var(--material-preview-cols)]")}
+          style={previewPaneVisible ? { "--material-preview-cols": `minmax(0,1fr) ${PREVIEW_SIZES[previewPaneSize]}px` } as CSSProperties : undefined}
         >
           <div
-            className="border-b border-slate-100 xl:border-b-0 xl:border-r xl:border-slate-100"
+            className={cn("border-b xl:border-b-0", previewPaneVisible ? "materials-list-pane" : "border-slate-100")}
             onContextMenu={(event) => {
               const target = event.target as HTMLElement;
               if (target.closest("button,a,input,select,textarea,[role=button]")) return;
@@ -1539,7 +1635,10 @@ export function MaterialsPanel() {
               />
             ) : (
               <>
-            <div className="grid grid-cols-[minmax(260px,1.8fr)_minmax(150px,0.7fr)_minmax(150px,0.65fr)_auto] gap-3 border-b border-slate-100 bg-[#f8fafc] px-5 py-3 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500">
+            <div
+              style={{ "--list-grid-cols": headerGridCols } as CSSProperties}
+              className="hidden gap-3 border-b border-slate-100 bg-[#f8fafc] px-5 py-3 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500 sm:grid sm:[grid-template-columns:var(--list-grid-cols)]"
+            >
               <span className="flex items-center gap-3">
                 <input
                   type="checkbox"
@@ -1553,8 +1652,8 @@ export function MaterialsPanel() {
                 />
                 Material
               </span>
-              <span>Signals</span>
-              <span>Usage</span>
+              {showSignals && <span>Signals</span>}
+              {showUsage && <span>Usage</span>}
               <span className="text-right">Actions</span>
             </div>
 
@@ -1576,10 +1675,11 @@ export function MaterialsPanel() {
                     draggable
                     onDragStart={(event) => startMaterialDrag(event, material.id)}
                     onDragEnd={() => setDraggingMaterialIds([])}
+                    style={{ "--list-grid-cols": rowGridCols } as CSSProperties}
                     className={cn(
-                      "grid cursor-grab grid-cols-1 gap-3 px-4 transition active:cursor-grabbing sm:grid-cols-[minmax(260px,1.8fr)_minmax(130px,0.7fr)_minmax(130px,0.65fr)_auto] sm:items-center hover:bg-[#fbfdff]",
+                      "materials-row grid cursor-grab grid-cols-1 gap-3 px-4 transition active:cursor-grabbing sm:items-center sm:[grid-template-columns:var(--list-grid-cols)]",
                       rowDensity === "compact" ? "py-1.5" : "py-3",
-                      selectedId === material.id && "bg-[#f7fbff]"
+                      selectedId === material.id ? "materials-row-selected" : "hover:bg-[#fbfdff]"
                     )}
                   >
                     <button
@@ -1622,21 +1722,25 @@ export function MaterialsPanel() {
                         </div>
                       </div>
 
-                      <div className="space-y-1 text-xs text-slate-500">
-                        <p className="font-semibold text-slate-700">{PARSER_LABELS[material.parser] ?? material.parser}</p>
-                        <div className="flex flex-wrap gap-1">
-                          {material.pages != null && <TinyBadge label={`${material.pages}p`} />}
-                          {material.sizeBytes > 0 && <TinyBadge label={formatBytes(material.sizeBytes)} />}
+                      {showSignals && (
+                        <div className="space-y-1 text-xs text-slate-500">
+                          <p className="font-semibold text-slate-700">{PARSER_LABELS[material.parser] ?? material.parser}</p>
+                          <div className="flex flex-wrap gap-1">
+                            {material.pages != null && <TinyBadge label={`${material.pages}p`} />}
+                            {material.sizeBytes > 0 && <TinyBadge label={formatBytes(material.sizeBytes)} />}
+                          </div>
                         </div>
-                      </div>
+                      )}
 
-                      <div className="space-y-1 text-xs text-slate-500">
-                        <p>{material.linkCount > 0 ? `${material.linkCount} linked` : "Unlinked"}</p>
-                        {rowDensity === "comfortable" && <p>{formatDateTime(material.createdAt)}</p>}
-                        <div className="flex flex-wrap gap-1">
-                          {material.tags.slice(0, 2).map((tag) => <TinyBadge key={tag.id} label={tag.name} />)}
+                      {showUsage && (
+                        <div className="space-y-1 text-xs text-slate-500">
+                          <p>{material.linkCount > 0 ? `${material.linkCount} linked` : "Unlinked"}</p>
+                          {rowDensity === "comfortable" && <p>{formatDateTime(material.createdAt)}</p>}
+                          <div className="flex flex-wrap gap-1">
+                            {material.tags.slice(0, 2).map((tag) => <TinyBadge key={tag.id} label={tag.name} />)}
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </button>
 
                     <div className="flex items-center justify-end gap-1">
@@ -1672,14 +1776,15 @@ export function MaterialsPanel() {
                         currentFolderId={material.folder?.id ?? null}
                         onMove={(folderId) => void moveMaterials([material.id], folderId)}
                       />
-                      <ActionIconButton
-                        label="Link material"
-                        onClick={() => {
-                          setLinkingMaterialId(material.id);
-                        }}
+                      <button
+                        type="button"
+                        title="Link to lesson or course"
+                        onClick={(e) => { e.stopPropagation(); setLinkingMaterialId(material.id); }}
+                        className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 text-[11px] font-semibold text-slate-600 transition hover:border-[#185FA5] hover:text-[#185FA5]"
                       >
-                        <Icons.Link2 size={14} />
-                      </ActionIconButton>
+                        <Icons.Link2 size={12} />
+                        Link
+                      </button>
                       <ActionIconButton
                         label="Delete material"
                         onClick={() => {
@@ -1726,9 +1831,9 @@ export function MaterialsPanel() {
           </div>
 
           {previewPaneVisible && (
-            <div className="bg-[#fbfcfe] px-3 py-3 xl:px-4">
+            <div className="materials-preview-pane px-3 py-3 xl:px-4">
               <div className="xl:sticky xl:top-4">
-                <div className="mb-2 flex items-center justify-end gap-1">
+                <div className="mb-2 hidden items-center justify-end gap-1 xl:flex">
                   {(["sm", "md", "lg"] as const).map((size) => (
                     <button
                       key={size}
@@ -1953,8 +2058,8 @@ function MaterialLibrarySidebar({
   }
 
   return (
-    <aside className="overflow-hidden border-b border-slate-200 bg-[#f8fafc] xl:border-b-0 xl:border-r" style={{ minWidth: collapsed ? 0 : undefined }}>
-      <div className="w-[240px] p-3">
+    <aside className={cn("overflow-hidden border-b border-slate-200 bg-[#f8fafc] xl:border-b-0 xl:border-r", collapsed && "hidden xl:block")} style={{ minWidth: collapsed ? 0 : undefined }}>
+      <div className="w-full p-3 xl:w-[240px]">
       <div className="mb-2">
         <p className="px-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Library</p>
       </div>
@@ -1999,9 +2104,10 @@ function MaterialLibrarySidebar({
             type="button"
             title={selectedFolderId ? "Create subfolder here" : "Create new folder"}
             onClick={() => { setNewFolderOpen((v) => !v); setNewFolderName(""); }}
-            className="inline-flex h-5 w-5 items-center justify-center rounded text-slate-400 transition hover:bg-white hover:text-[#185FA5]"
+            className="inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-[10px] font-semibold text-slate-400 transition hover:bg-white hover:text-[#185FA5]"
           >
-            <Icons.FolderPlus size={12} />
+            <Icons.FolderPlus size={11} />
+            <span className="hidden xl:inline">New folder</span>
           </button>
         </div>
 
@@ -2028,7 +2134,7 @@ function MaterialLibrarySidebar({
           <nav className="mt-1 max-h-[280px] space-y-0.5 overflow-y-auto pr-1">
             {rootFolders.length === 0 ? (
               <p className="rounded-lg border border-dashed border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-400">
-                No folders yet. Click <Icons.FolderPlus size={10} className="inline" /> to create one.
+                No folders yet. Click "New folder" above to create one.
               </p>
             ) : rootFolders.map((folder) => (
               <SidebarButton
@@ -3077,19 +3183,14 @@ function MaterialPreviewPane({
         </div>
       </div>
 
-      <div className="border-b border-slate-100 px-3 py-2">
+      <div className="materials-preview-tabs px-3 py-2">
         <div className="flex flex-wrap gap-1">
           {tabs.map((entry) => (
             <button
               key={entry.id}
               type="button"
               onClick={() => onTabChange(entry.id)}
-              className={cn(
-                "rounded-lg px-3 py-1.5 text-xs font-semibold transition",
-                tab === entry.id
-                  ? "bg-[#185FA5] text-white shadow-sm"
-                  : "text-slate-500 hover:bg-[#E6F1FB] hover:text-[#185FA5]"
-              )}
+              className={tab === entry.id ? "materials-preview-tab-btn-active" : "materials-preview-tab-btn"}
             >
               {entry.label}
             </button>
@@ -3776,6 +3877,7 @@ interface LinkToLessonModalProps {
 }
 
 function LinkToLessonModal({ materialId, courses, onClose, onLinked }: LinkToLessonModalProps) {
+  const [linkTarget, setLinkTarget] = useState<"lesson" | "course">("lesson");
   const [selectedCourse, setSelectedCourse] = useState("");
   const [selectedLesson, setSelectedLesson] = useState("");
   const [label, setLabel] = useState("");
@@ -3783,16 +3885,20 @@ function LinkToLessonModal({ materialId, courses, onClose, onLinked }: LinkToLes
   const [error, setError] = useState<string | null>(null);
 
   const course = courses.find((entry) => entry.id === selectedCourse);
+  const canSubmit = linkTarget === "course" ? Boolean(selectedCourse) : Boolean(selectedLesson);
 
   async function handleLink() {
-    if (!selectedLesson) return;
+    if (!canSubmit) return;
     setBusy(true);
     setError(null);
     try {
+      const body = linkTarget === "course"
+        ? { materialId, courseId: selectedCourse, referenceLabel: label || null }
+        : { materialId, lessonId: selectedLesson, referenceLabel: label || null };
       const res = await fetch("/api/admin/materials/link", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ materialId, lessonId: selectedLesson, referenceLabel: label || null }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -3814,8 +3920,8 @@ function LinkToLessonModal({ materialId, courses, onClose, onLinked }: LinkToLes
       >
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
           <div>
-            <h3 className="text-base font-bold text-slate-900">Link material to lesson</h3>
-            <p className="text-sm text-slate-500">Attach this source material to a lesson for curriculum traceability.</p>
+            <h3 className="text-base font-bold text-slate-900">Link material to curriculum</h3>
+            <p className="text-sm text-slate-500">Attach this source material to a lesson or course for traceability.</p>
           </div>
           <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-700">
             <Icons.X size={18} />
@@ -3823,6 +3929,33 @@ function LinkToLessonModal({ materialId, courses, onClose, onLinked }: LinkToLes
         </div>
 
         <div className="space-y-4 px-5 py-5">
+          {/* Link target toggle */}
+          <div>
+            <label className="admin-label">Link to</label>
+            <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 w-fit">
+              <button
+                type="button"
+                onClick={() => { setLinkTarget("lesson"); setSelectedLesson(""); }}
+                className={cn(
+                  "rounded-md px-4 py-1.5 text-xs font-semibold transition",
+                  linkTarget === "lesson" ? "bg-white shadow-sm text-[#185FA5]" : "text-slate-500 hover:text-slate-700"
+                )}
+              >
+                Lesson
+              </button>
+              <button
+                type="button"
+                onClick={() => { setLinkTarget("course"); setSelectedLesson(""); }}
+                className={cn(
+                  "rounded-md px-4 py-1.5 text-xs font-semibold transition",
+                  linkTarget === "course" ? "bg-white shadow-sm text-[#185FA5]" : "text-slate-500 hover:text-slate-700"
+                )}
+              >
+                Course
+              </button>
+            </div>
+          </div>
+
           <div>
             <label className="admin-label">Course</label>
             <select
@@ -3840,7 +3973,7 @@ function LinkToLessonModal({ materialId, courses, onClose, onLinked }: LinkToLes
             </select>
           </div>
 
-          {course && (
+          {linkTarget === "lesson" && course && (
             <div>
               <label className="admin-label">Lesson</label>
               <select
@@ -3875,7 +4008,7 @@ function LinkToLessonModal({ materialId, courses, onClose, onLinked }: LinkToLes
 
         <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-4">
           <button type="button" onClick={onClose} className="admin-action secondary">Cancel</button>
-          <button type="button" onClick={handleLink} disabled={busy || !selectedLesson} className="admin-action">
+          <button type="button" onClick={handleLink} disabled={busy || !canSubmit} className="admin-action">
             {busy ? "Linking…" : "Link material"}
           </button>
         </div>

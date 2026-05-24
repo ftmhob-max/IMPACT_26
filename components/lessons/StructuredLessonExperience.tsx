@@ -485,7 +485,7 @@ function LessonBlockRenderer({
     case "richText":
       return <RichTextRenderer content={block.content} glossaryTerms={glossaryTerms} />;
     case "audio": {
-      const resolvedAudioUrl = getAssetUrl(block.audioUrl, block.materialId, token);
+      const resolvedAudioUrl = getAssetUrl(block.audioUrl, block.materialId, token, true);
       return (
         <div className="space-y-4">
           {block.description && <p className="text-sm text-slate-600">{block.description}</p>}
@@ -659,18 +659,19 @@ function LessonBlockRenderer({
 function getAssetUrl(
   url: string | undefined | null,
   materialId: string | undefined | null,
-  token: string | null
+  token: string | null,
+  streamInline = false
 ): string {
-  if (url) {
-    if (url.startsWith("/api/")) {
-      return token ? `${url}${url.includes("?") ? "&" : "?"}token=${encodeURIComponent(token)}` : url;
-    }
-    return url;
+  const rawUrl = url || (materialId ? `/api/admin/materials/${materialId}/asset` : "");
+  if (!rawUrl || !rawUrl.startsWith("/api/")) return rawUrl;
+
+  let resolvedUrl = rawUrl;
+  if (streamInline && rawUrl.includes("/api/admin/materials/") && rawUrl.includes("/asset")) {
+    resolvedUrl = `${resolvedUrl}${resolvedUrl.includes("?") ? "&" : "?"}stream=1`;
   }
-  if (materialId) {
-    return `/api/admin/materials/${materialId}/asset${token ? `?token=${encodeURIComponent(token)}` : ""}`;
-  }
-  return "";
+  return token
+    ? `${resolvedUrl}${resolvedUrl.includes("?") ? "&" : "?"}token=${encodeURIComponent(token)}`
+    : resolvedUrl;
 }
 
 function LinkCard({

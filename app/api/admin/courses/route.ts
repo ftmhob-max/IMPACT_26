@@ -4,6 +4,7 @@ import { requireAdminRequest } from "@/lib/admin/auth";
 import { adminDcMutate, adminDcQuery } from "@/lib/firebase/admin-dc";
 import { formatUuid } from "@/lib/utils";
 import { courseSchema, lessonSchema } from "@/lib/validations/admin";
+import { runLessonPreflight, summarizePreflightResults } from "@/lib/lessons/publish-preflight";
 import { z } from "zod";
 
 const uuidSchema = z.string().trim().transform(formatUuid).pipe(z.string().uuid());
@@ -54,6 +55,8 @@ const bulkPublishLessonsSchema = z.object({
   action: z.literal("publish-lessons"),
   lessonIds: z.array(uuidSchema).min(1),
   publish: z.boolean().default(true),
+  preflight: z.boolean().default(false),
+  force: z.boolean().default(false),
 });
 
 const deleteLessonsSchema = z.object({
@@ -245,7 +248,66 @@ export async function PUT(request: NextRequest) {
     const parsed = bulkPublishLessonsSchema.safeParse(body);
     if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-    const { lessonIds, publish } = parsed.data;
+    const { lessonIds, publish, preflight, force } = parsed.data;
+
+    // Fetch lesson data needed for preflight (only when publishing, not unpublishing)
+    if (publish && (preflight || !force)) {
+      try {
+        const lessonData = await Promise.all(
+          lessonIds.map((id) =>
+            adminDcQuery<{ lesson: any }>("GetLesson", { id }).then((d) => d?.lesson ?? null)
+          )
+        );
+
+        const preflightResults = lessonData.map((lesson) => {
+          if (!lesson) {
+            return { lessonId: lessonIds[lessonData.indexOf(lesson)], title: "Unknown", lessonType: "text", blockers: ["Lesson not found."], warnings: [], isReady: false };
+          }
+          return runLessonPreflight({
+            lessonId: formatUuid(lesson.id),
+            title: lesson.title ?? "",
+            lessonType: lesson.lessonType ?? "text",
+            contentJson: lesson.contentJson ?? null,
+            videoPlaybackId: lesson.videoPlaybackId ?? null,
+            videoUrl: lesson.videoUrl ?? null,
+            quiz: lesson.quiz?.id ? { id: lesson.quiz.id } : null,
+            sourceMaterialId: lesson.sourceMaterial?.id ?? null,
+          });
+        });
+
+        const { readyIds, blockedIds, results } = summarizePreflightResults(preflightResults);
+
+        // Preflight-only mode: return report without mutations
+        if (preflight) {
+          return NextResponse.json({ preflight: true, results, readyIds, blockedIds });
+        }
+
+        // Default publish (no force): publish only ready lessons, report blocked ones
+        if (blockedIds.length > 0) {
+          if (readyIds.length === 0) {
+            return NextResponse.json({ ok: false, preflight: true, results, readyIds, blockedIds });
+          }
+          // Publish only the ready subset
+          await Promise.all(
+            readyIds.map((lessonId) =>
+              adminDcMutate("UpdateLesson", {
+                id: lessonId,
+                status: "published",
+                isPublished: true,
+                updatedById: auth.session.uid,
+                publishedAt: new Date().toISOString(),
+              })
+            )
+          );
+          return NextResponse.json({ ok: true, updated: readyIds.length, skipped: blockedIds.length, results, readyIds, blockedIds });
+        }
+      } catch (err) {
+        console.error("[admin/courses:publish-lessons:preflight]", err);
+        // Fall through to direct publish on preflight error to avoid blocking
+      }
+    }
+
+    // Force publish or unpublish: apply to all lessonIds directly
     try {
       await Promise.all(
         lessonIds.map((lessonId) =>

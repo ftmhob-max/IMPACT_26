@@ -343,7 +343,7 @@ function AddFromBankPanel({
           placeholder="Search questions…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="admin-input flex-1 min-w-40 text-xs"
+          className="admin-input w-full text-xs sm:min-w-40 sm:flex-1"
           autoFocus
         />
         <DomainCombobox value={domain} onChange={setDomain} allowClear clearLabel="All domains" className="w-36 text-xs" />
@@ -534,7 +534,7 @@ function CreateQuestionPanel({
         </div>
 
         {/* Metadata row */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid gap-3 sm:grid-cols-3">
           <div>
             <label className="admin-label">Type</label>
             <select className="admin-input text-xs" value={questionType} onChange={(e) => setQuestionType(e.target.value)}>

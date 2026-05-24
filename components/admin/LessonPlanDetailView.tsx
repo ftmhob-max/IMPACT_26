@@ -10,10 +10,11 @@ import { LessonQuizPanel } from "@/components/admin/LessonQuizPanel";
 import { VideoUpload } from "@/components/admin/VideoUpload";
 import { VideoLinkInput } from "@/components/admin/VideoLinkInput";
 import {
-  getLessonReadinessIssues,
   getLessonReadinessReport,
   parseStructuredLessonContent,
 } from "@/lib/lessons/structured-content";
+import { runLessonPreflight } from "@/lib/lessons/publish-preflight";
+import { getQuizReadiness } from "@/lib/admin/quiz-dashboard";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -25,6 +26,8 @@ interface LessonQuiz {
   timeLimitSeconds?: number | null;
   shuffleQuestions: boolean;
   shuffleChoices: boolean;
+  questionCount?: number;
+  incompleteQuestionCount?: number;
 }
 
 interface LessonData {
@@ -63,6 +66,7 @@ interface CourseData {
 
 type TabId = "content" | "questions" | "resources" | "settings";
 type PreviewMode = "edit" | "review" | "preview";
+type OutlineFilter = "all" | "draft" | "blocked" | "ready" | "published" | "missing-media" | "missing-transcript";
 
 const OUTLINE_COLLAPSED_KEY = "impact26:course-editor:outline-collapsed";
 
@@ -92,6 +96,8 @@ export function LessonPlanDetailView({
   const [outlineCollapsed, setOutlineCollapsed] = useState(false);
   const [mobileOutlineOpen, setMobileOutlineOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>("content");
+  const [outlineFilter, setOutlineFilter] = useState<OutlineFilter>("all");
+  const [focusMode, setFocusMode] = useState(false);
   const [notice, setNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [draftContentByLessonId, setDraftContentByLessonId] = useState<Record<string, string>>({});
   const contentEditorRef = useRef<LessonBuilderEditorHandle | null>(null);
@@ -119,6 +125,18 @@ export function LessonPlanDetailView({
       // Ignore persistence failures in private browsing or restricted contexts.
     }
   }, [outlineCollapsed]);
+
+  useEffect(() => {
+    if (focusMode) {
+      document.body.setAttribute("data-focus-mode", "true");
+      setOutlineCollapsed(true);
+    } else {
+      document.body.removeAttribute("data-focus-mode");
+    }
+    return () => {
+      document.body.removeAttribute("data-focus-mode");
+    };
+  }, [focusMode]);
 
   function showNotice(type: "success" | "error", text: string) {
     setNotice({ type, text });
@@ -219,12 +237,13 @@ export function LessonPlanDetailView({
   );
 
   const totalLessons = modules.reduce((n, m) => n + m.lessons.length, 0);
-  const publishedLessons = modules
-    .flatMap((m) => m.lessons)
-    .filter((l) => l.isPublished).length;
+  const allLessonsList = modules.flatMap((m) => m.lessons);
+  const publishedLessons = allLessonsList.filter((l) => l.isPublished).length;
+  const [showReadinessSummary, setShowReadinessSummary] = useState(false);
+  const readinessSummaryCounts = computeFilterCounts(allLessonsList);
 
   return (
-    <div className="lesson-plan-editor flex h-full flex-col bg-[#f0efe9]">
+    <div className="lesson-plan-editor flex min-h-screen flex-col bg-[#f0efe9] lg:h-full lg:min-h-0">
       {/* Top bar */}
       <header className="lesson-editor-topbar flex flex-wrap items-center gap-3 border-b border-black/10 bg-white px-4 py-3 shadow-sm sm:px-5">
         <button
@@ -259,8 +278,45 @@ export function LessonPlanDetailView({
           <PublishBadge isPublished={course.isPublished} />
         </div>
         <div className="min-w-6 flex-1" />
-        <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
-          <span>{publishedLessons}/{totalLessons} published</span>
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setShowReadinessSummary((v) => !v)}
+            className="flex items-center gap-1.5 text-[11px] text-slate-400 hover:text-slate-700 transition-colors"
+            title="Course readiness summary"
+          >
+            <Icons.BarChart3 size={13} />
+            <span>{publishedLessons}/{totalLessons} published</span>
+            {readinessSummaryCounts.blocked > 0 && (
+              <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-[9px] font-bold text-red-600">
+                {readinessSummaryCounts.blocked} blocked
+              </span>
+            )}
+          </button>
+          {showReadinessSummary && (
+            <>
+              <button
+                type="button"
+                className="fixed inset-0 z-20"
+                onClick={() => setShowReadinessSummary(false)}
+                aria-label="Close readiness summary"
+              />
+              <div className="absolute right-0 top-full z-30 mt-2 w-64 rounded-xl border border-black/10 bg-white shadow-xl p-4 space-y-2">
+                <p className="text-xs font-bold text-slate-800">Course readiness</p>
+                {(["published", "ready", "blocked", "draft"] as OutlineFilter[]).map((f) => (
+                  <button
+                    key={f}
+                    type="button"
+                    onClick={() => { setOutlineFilter(f); setShowReadinessSummary(false); }}
+                    className="flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-xs hover:bg-slate-50 transition-colors"
+                  >
+                    <span className={cn("capitalize font-medium", f === "blocked" ? "text-red-600" : f === "ready" ? "text-emerald-600" : "text-slate-600")}>{f}</span>
+                    <span className="font-bold text-slate-700">{readinessSummaryCounts[f]}</span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
         {/* Mode toggle */}
         <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 text-xs font-semibold">
@@ -281,6 +337,21 @@ export function LessonPlanDetailView({
             </button>
           ))}
         </div>
+        {mode === "edit" && (
+          <button
+            type="button"
+            onClick={() => setFocusMode((v) => !v)}
+            title={focusMode ? "Exit focus mode" : "Focus mode — hide navigation"}
+            className={cn(
+              "hidden lg:flex h-8 w-8 items-center justify-center rounded-lg border transition-colors",
+              focusMode
+                ? "border-[#185FA5] bg-[#E6F1FB] text-[#185FA5]"
+                : "border-slate-200 text-slate-400 hover:border-[#185FA5] hover:text-[#185FA5]"
+            )}
+          >
+            {focusMode ? <Icons.Minimize2 size={14} /> : <Icons.Maximize2 size={14} />}
+          </button>
+        )}
       </header>
 
       {notice && (
@@ -290,7 +361,7 @@ export function LessonPlanDetailView({
         </div>
       )}
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 flex-col overflow-visible lg:flex-row lg:overflow-hidden">
         {mobileOutlineOpen && (
           <div className="fixed inset-0 z-40 lg:hidden">
             <button
@@ -315,6 +386,11 @@ export function LessonPlanDetailView({
                 </button>
               </div>
               <div className="space-y-1 p-3">
+                <OutlineFilterBar
+                  activeFilter={outlineFilter}
+                  onChange={setOutlineFilter}
+                  counts={computeFilterCounts(modules.flatMap((m) => m.lessons))}
+                />
                 {modules.map((mod) => (
                   <ModuleSidebarSection
                     key={mod.id}
@@ -322,6 +398,7 @@ export function LessonPlanDetailView({
                     compact={false}
                     expanded={expandedModules.has(mod.id)}
                     selectedLessonId={selectedLessonId}
+                    activeFilter={outlineFilter}
                     onToggle={() => toggleModule(mod.id)}
                     onSelectLesson={selectLesson}
                     onAddLesson={() => addLesson(mod.id)}
@@ -365,6 +442,13 @@ export function LessonPlanDetailView({
                 {outlineCollapsed ? <Icons.PanelRight size={14} /> : <Icons.PanelLeft size={14} />}
               </button>
             </div>
+            {!outlineCollapsed && (
+              <OutlineFilterBar
+                activeFilter={outlineFilter}
+                onChange={setOutlineFilter}
+                counts={computeFilterCounts(modules.flatMap((m) => m.lessons))}
+              />
+            )}
             {modules.map((mod) => (
               <ModuleSidebarSection
                 key={mod.id}
@@ -372,6 +456,7 @@ export function LessonPlanDetailView({
                 compact={outlineCollapsed}
                 expanded={expandedModules.has(mod.id)}
                 selectedLessonId={selectedLessonId}
+                activeFilter={outlineFilter}
                 onToggle={() => toggleModule(mod.id)}
                 onSelectLesson={selectLesson}
                 onAddLesson={() => addLesson(mod.id)}
@@ -393,7 +478,7 @@ export function LessonPlanDetailView({
         </aside>
 
         {/* Main content area */}
-        <main className="min-w-0 flex-1 overflow-hidden p-3 sm:p-5">
+        <main className="min-w-0 flex-1 overflow-visible p-3 sm:p-5 lg:overflow-hidden">
           {!selectedLessonForDisplay ? (
             <div className="flex h-full items-center justify-center">
               <div className="text-center">
@@ -421,11 +506,71 @@ export function LessonPlanDetailView({
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 
+function OutlineFilterBar({
+  activeFilter,
+  onChange,
+  counts,
+}: {
+  activeFilter: OutlineFilter;
+  onChange: (f: OutlineFilter) => void;
+  counts: Record<OutlineFilter, number>;
+}) {
+  const filters: Array<{ value: OutlineFilter; label: string; color?: string }> = [
+    { value: "all", label: "All" },
+    { value: "blocked", label: "Blocked", color: "text-red-600" },
+    { value: "ready", label: "Ready", color: "text-emerald-600" },
+    { value: "published", label: "Published", color: "text-blue-600" },
+    { value: "missing-media", label: "No media" },
+    { value: "missing-transcript", label: "No transcript" },
+  ];
+  return (
+    <div className="flex flex-wrap gap-1 mb-2 px-1">
+      {filters.map(({ value, label, color }) => {
+        const count = counts[value];
+        if (value !== "all" && count === 0) return null;
+        return (
+          <button
+            key={value}
+            type="button"
+            onClick={() => onChange(value)}
+            className={cn(
+              "rounded-full px-2 py-0.5 text-[10px] font-semibold transition-colors",
+              activeFilter === value
+                ? "bg-[#185FA5] text-white"
+                : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+            )}
+          >
+            {label}
+            {value !== "all" && <span className="ml-1 opacity-70">{count}</span>}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function ModuleReadinessBadge({ lessons }: { lessons: LessonData[] }) {
+  if (lessons.length === 0) return null;
+  const ready = lessons.filter((l) => l.isPublished || getLessonReadinessTone(l) === "ready").length;
+  const tone = ready === lessons.length ? "ready" : ready > 0 ? "warn" : "blocked";
+  return (
+    <span className={cn(
+      "text-[10px] font-semibold rounded-full px-1.5 py-0.5",
+      tone === "ready" ? "bg-emerald-100 text-emerald-700" :
+      tone === "warn" ? "bg-amber-100 text-amber-700" :
+      "bg-red-100 text-red-600"
+    )}>
+      {ready}/{lessons.length}
+    </span>
+  );
+}
+
 function ModuleSidebarSection({
   module,
   compact,
   expanded,
   selectedLessonId,
+  activeFilter,
   onToggle,
   onSelectLesson,
   onAddLesson,
@@ -434,6 +579,7 @@ function ModuleSidebarSection({
   compact: boolean;
   expanded: boolean;
   selectedLessonId: string | null;
+  activeFilter: OutlineFilter;
   onToggle: () => void;
   onSelectLesson: (id: string) => void;
   onAddLesson: () => void;
@@ -467,6 +613,9 @@ function ModuleSidebarSection({
     );
   }
 
+  const filteredLessons = module.lessons.filter((l) => lessonMatchesFilter(l, activeFilter));
+  const isFiltering = activeFilter !== "all";
+
   return (
     <div>
       <button
@@ -481,28 +630,34 @@ function ModuleSidebarSection({
         )}
         <Icons.BookMarked size={13} className="shrink-0 text-slate-400" />
         <span className="flex-1 truncate">{module.title}</span>
-        <span className="text-[10px] text-slate-400">{module.lessons.length}</span>
+        <ModuleReadinessBadge lessons={module.lessons} />
       </button>
 
       {expanded && (
         <div className="ml-4 space-y-0.5 mt-0.5">
-          {module.lessons.map((lesson) => (
-            <LessonSidebarButton
-              key={lesson.id}
-              lesson={lesson}
-              selected={selectedLessonId === lesson.id}
-              compact={false}
-              onSelect={() => onSelectLesson(lesson.id)}
-            />
-          ))}
-          <button
-            type="button"
-            onClick={onAddLesson}
-            className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-colors"
-          >
-            <Icons.Plus size={10} />
-            Add lesson
-          </button>
+          {filteredLessons.length === 0 && isFiltering ? (
+            <p className="px-2 py-1.5 text-[10px] text-slate-400 italic">0 matches in this module</p>
+          ) : (
+            filteredLessons.map((lesson) => (
+              <LessonSidebarButton
+                key={lesson.id}
+                lesson={lesson}
+                selected={selectedLessonId === lesson.id}
+                compact={false}
+                onSelect={() => onSelectLesson(lesson.id)}
+              />
+            ))
+          )}
+          {!isFiltering && (
+            <button
+              type="button"
+              onClick={onAddLesson}
+              className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-colors"
+            >
+              <Icons.Plus size={10} />
+              Add lesson
+            </button>
+          )}
         </div>
       )}
     </div>
@@ -588,7 +743,185 @@ function LessonSidebarButton({
   );
 }
 
+// ─── Preview Validation Panel ─────────────────────────────────────────────────
+
+function LessonPreviewValidationPanel({
+  lesson,
+  onTabChange,
+}: {
+  lesson: LessonData;
+  onTabChange: (tab: TabId) => void;
+}) {
+  const [collapsed, setCollapsed] = useState(false);
+
+  const quizReadiness =
+    lesson.lessonType === "quiz" && lesson.quiz
+      ? getQuizReadiness(lesson.quiz.questionCount ?? 0, lesson.quiz.incompleteQuestionCount ?? 0)
+      : undefined;
+
+  const doc = parseStructuredLessonContent(lesson.contentJson ?? null);
+  const hasVideoTranscript = !doc.blocks.some(
+    (b) => b.isStudentVisible && b.type === "video" && !b.transcript?.trim()
+  );
+  const hasAudioTranscript = !doc.blocks.some(
+    (b) => b.isStudentVisible && b.type === "audio" && !b.transcript?.trim()
+  );
+  const hasVideoBlocks = doc.blocks.some((b) => b.type === "video" && b.isStudentVisible);
+  const hasAudioBlocks = doc.blocks.some((b) => b.type === "audio" && b.isStudentVisible);
+
+  type CheckRow = {
+    label: string;
+    pass: boolean;
+    skip?: boolean;
+    action?: { label: string; tab: TabId };
+  };
+
+  const checks: CheckRow[] = [
+    { label: "Title present", pass: !!lesson.title.trim() },
+    {
+      label: "Video source attached",
+      pass: !!(lesson.videoPlaybackId || lesson.videoUrl),
+      skip: lesson.lessonType !== "video",
+      action: { label: "Go to Structure", tab: "content" },
+    },
+    {
+      label: "Video transcript present",
+      pass: hasVideoTranscript,
+      skip: !hasVideoBlocks,
+      action: { label: "Go to Structure", tab: "content" },
+    },
+    {
+      label: "Audio transcript present",
+      pass: hasAudioTranscript,
+      skip: !hasAudioBlocks,
+      action: { label: "Go to Structure", tab: "content" },
+    },
+    {
+      label: "Quiz linked and complete",
+      pass: !!(lesson.quiz && quizReadiness === "ready"),
+      skip: lesson.lessonType !== "quiz",
+      action: { label: "Go to Assessment", tab: "questions" },
+    },
+    {
+      label: "Source material linked",
+      pass: !!lesson.sourceMaterial,
+      skip: lesson.lessonType !== "source",
+      action: { label: "Go to Resources", tab: "resources" },
+    },
+    {
+      label: "Duration set",
+      pass: !!(lesson.durationSeconds),
+      action: { label: "Go to Publishing", tab: "settings" },
+    },
+    {
+      label: "Lesson is published",
+      pass: lesson.isPublished,
+      action: { label: "Go to Publishing", tab: "settings" },
+    },
+  ];
+
+  const visible = checks.filter((c) => !c.skip);
+  const failing = visible.filter((c) => !c.pass);
+
+  useEffect(() => {
+    setCollapsed(failing.length === 0);
+  }, [lesson.id]);
+
+  return (
+    <div className="rounded-xl border border-black/10 bg-white shadow-sm overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setCollapsed((v) => !v)}
+        className="flex w-full items-center gap-2 px-4 py-3 text-left"
+      >
+        <Icons.ShieldCheck size={15} className={failing.length === 0 ? "text-emerald-500" : "text-amber-500"} />
+        <span className="text-xs font-bold text-slate-800 flex-1">Lesson health check</span>
+        {failing.length === 0 ? (
+          <span className="text-[10px] font-semibold text-emerald-600">All checks passed</span>
+        ) : (
+          <span className="text-[10px] font-semibold text-amber-600">{failing.length} issue{failing.length !== 1 ? "s" : ""}</span>
+        )}
+        <Icons.ChevronDown size={13} className={cn("text-slate-400 transition-transform", collapsed && "rotate-180")} />
+      </button>
+      {!collapsed && (
+        <div className="border-t border-slate-100 divide-y divide-slate-50">
+          {visible.map((check) => (
+            <div key={check.label} className="flex items-center gap-3 px-4 py-2.5">
+              {check.pass ? (
+                <Icons.Check size={13} className="text-emerald-500 shrink-0" />
+              ) : (
+                <Icons.X size={13} className="text-red-500 shrink-0" />
+              )}
+              <span className={cn("text-xs flex-1", check.pass ? "text-slate-600" : "text-slate-800 font-medium")}>
+                {check.label}
+              </span>
+              {!check.pass && check.action && (
+                <button
+                  type="button"
+                  onClick={() => onTabChange(check.action!.tab)}
+                  className="text-[11px] font-semibold text-[#185FA5] hover:underline shrink-0"
+                >
+                  {check.action.label} →
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Lesson Detail Panel ──────────────────────────────────────────────────────
+
+type SaveStatusCombined = "saved" | "unsaved" | "saving" | "error";
+
+function LessonSaveStatusBar({
+  contentStatus,
+  metaStatus,
+}: {
+  contentStatus: SaveStatusCombined;
+  metaStatus: SaveStatusCombined;
+}) {
+  const combined: SaveStatusCombined =
+    contentStatus === "error" || metaStatus === "error" ? "error" :
+    contentStatus === "saving" || metaStatus === "saving" ? "saving" :
+    contentStatus === "unsaved" || metaStatus === "unsaved" ? "unsaved" :
+    "saved";
+
+  const borderColor =
+    combined === "saved" ? "border-emerald-400" :
+    combined === "saving" ? "border-slate-300" :
+    combined === "unsaved" ? "border-amber-400" :
+    "border-red-400";
+
+  const label =
+    combined === "saved" ? "All changes saved" :
+    combined === "saving" ? "Saving…" :
+    combined === "unsaved" ? "Unsaved changes" :
+    "Save error — try again";
+
+  const textColor =
+    combined === "saved" ? "text-emerald-600" :
+    combined === "saving" ? "text-slate-400" :
+    combined === "unsaved" ? "text-amber-600" :
+    "text-red-600";
+
+  return (
+    <div className={cn("flex items-center gap-2 border-l-2 pl-3 py-0.5 text-[11px] font-medium transition-colors", borderColor, textColor)}>
+      {combined === "saving" ? (
+        <Icons.Loader size={11} className="animate-spin" />
+      ) : combined === "saved" ? (
+        <Icons.Check size={11} />
+      ) : combined === "unsaved" ? (
+        <span className="h-2 w-2 rounded-full bg-amber-400 inline-block" />
+      ) : (
+        <Icons.AlertCircle size={11} />
+      )}
+      {label}
+    </div>
+  );
+}
 
 function LessonDetailPanel({
   lesson,
@@ -609,6 +942,9 @@ function LessonDetailPanel({
   editorRef: React.RefObject<LessonBuilderEditorHandle | null>;
   onContentChange: (contentJson: string) => void;
 }) {
+  const [contentSaveStatus, setContentSaveStatus] = useState<SaveStatusCombined>("saved");
+  const [metaSaveStatus, setMetaSaveStatus] = useState<SaveStatusCombined>("saved");
+
   const tabs: { id: TabId; label: string; icon: React.ComponentType<any>; show: boolean }[] = [
     { id: "content", label: "Structure", icon: Icons.FileText, show: true },
     { id: "questions", label: "Assessment", icon: Icons.ClipboardList, show: lesson.lessonType === "quiz" },
@@ -645,7 +981,8 @@ function LessonDetailPanel({
         <div className="flex flex-wrap items-center gap-3 px-4 py-3">
           <LessonTypeIcon type={lesson.lessonType} size={18} className="text-[#185FA5]" />
           <h1 className="min-w-0 flex-1 truncate text-lg font-extrabold text-slate-900">{lesson.title}</h1>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <LessonSaveStatusBar contentStatus={contentSaveStatus} metaStatus={metaSaveStatus} />
             <PublishBadge isPublished={lesson.isPublished} />
             <ReadinessDot lesson={lesson} />
           </div>
@@ -685,9 +1022,11 @@ function LessonDetailPanel({
                 onUpdate={onUpdate}
                 editorRef={editorRef}
                 onContentChange={onContentChange}
+                onSaveStatusChange={setContentSaveStatus}
                 hideAuthorTools
               />
               <div className="min-w-0 space-y-3">
+                <LessonPreviewValidationPanel lesson={lesson} onTabChange={onTabChange} />
                 <div className="rounded-xl border border-[#b8d7f0] bg-[#f8fbff] px-4 py-3">
                   <div className="flex items-center gap-2 text-[#185FA5]">
                     <Icons.Eye size={15} />
@@ -706,6 +1045,7 @@ function LessonDetailPanel({
               onUpdate={onUpdate}
               editorRef={editorRef}
               onContentChange={onContentChange}
+              onSaveStatusChange={setContentSaveStatus}
             />
           )
         )}
@@ -716,7 +1056,7 @@ function LessonDetailPanel({
           <ResourcesTab lesson={lesson} onUpdate={onUpdate} onReload={onReload} />
         )}
         {activeTab === "settings" && (
-          <SettingsTab lesson={lesson} onUpdate={onUpdate} onReload={onReload} />
+          <SettingsTab lesson={lesson} onUpdate={onUpdate} onReload={onReload} onSaveStatusChange={setMetaSaveStatus} />
         )}
       </div>
     </div>
@@ -730,12 +1070,14 @@ function ContentTab({
   onUpdate,
   editorRef,
   onContentChange,
+  onSaveStatusChange,
   hideAuthorTools = false,
 }: {
   lesson: LessonData;
   onUpdate: (updates: Record<string, unknown>) => Promise<void>;
   editorRef: React.RefObject<LessonBuilderEditorHandle | null>;
   onContentChange: (contentJson: string) => void;
+  onSaveStatusChange?: (status: SaveStatusCombined) => void;
   hideAuthorTools?: boolean;
 }) {
   const [videoTab, setVideoTab] = useState<"upload" | "link">(
@@ -761,6 +1103,7 @@ function ContentTab({
         lessonId={lesson.id}
         initialContent={lesson.contentJson ?? null}
         onContentChange={onContentChange}
+        onSaveStatusChange={onSaveStatusChange}
         hideAuthorTools={hideAuthorTools}
       />
     );
@@ -853,6 +1196,69 @@ interface ResourceMaterial {
   pages?: number | null;
   fileType?: string;
   previewSnippet?: string;
+  status?: string;
+  displayStatus?: string;
+  sizeBytes?: number;
+  characters?: number;
+}
+
+interface LinkedMaterialEntry {
+  linkId: string;
+  materialId: string;
+  title: string;
+  kind?: string;
+  status?: string;
+  displayStatus?: string;
+  referenceLabel?: string | null;
+}
+
+const KIND_FILTERS = [
+  { value: "", label: "All" },
+  { value: "document", label: "Doc" },
+  { value: "audio", label: "Audio" },
+  { value: "video", label: "Video" },
+  { value: "image", label: "Image" },
+] as const;
+
+function formatBytes(bytes?: number) {
+  if (!bytes) return "";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function kindIcon(kind?: string) {
+  if (kind === "video") return Icons.Video;
+  if (kind === "audio") return Icons.FileText;
+  if (kind === "image") return Icons.BookOpen;
+  return Icons.FileText;
+}
+
+function kindLabel(kind?: string) {
+  if (!kind) return "Doc";
+  return kind.charAt(0).toUpperCase() + kind.slice(1);
+}
+
+function StatusBadge({ status, displayStatus }: { status?: string; displayStatus?: string }) {
+  const s = displayStatus ?? status ?? "";
+  if (s === "parsed" || s === "uploaded" && !displayStatus) {
+    return null; // ready — no noise
+  }
+  if (s.includes("fail") || s.includes("error") || s.includes("ocr")) {
+    return (
+      <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-[9px] font-bold uppercase text-red-600">
+        Parse failed
+      </span>
+    );
+  }
+  if (s === "uploaded" || s === "processing" || s === "pending") {
+    return (
+      <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold uppercase text-amber-700">
+        Processing…
+      </span>
+    );
+  }
+  return null;
 }
 
 function ResourcesTab({
@@ -864,19 +1270,61 @@ function ResourcesTab({
   onUpdate: (updates: Record<string, unknown>) => Promise<void>;
   onReload: () => Promise<void>;
 }) {
+  // Browse library state
   const [materials, setMaterials] = useState<ResourceMaterial[]>([]);
-  const [loaded, setLoaded] = useState(false);
+  const [libraryLoaded, setLibraryLoaded] = useState(false);
   const [query, setQuery] = useState("");
+  const [kindFilter, setKindFilter] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+
+  // Linked materials state (ContentSourceLinks for this lesson)
+  const [linkedMaterials, setLinkedMaterials] = useState<LinkedMaterialEntry[]>([]);
+  const [linkedLoaded, setLinkedLoaded] = useState(false);
+
+  // Upload state
   const [file, setFile] = useState<File | null>(null);
   const [uploadTitle, setUploadTitle] = useState("");
   const [busy, setBusy] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
 
-  // Load eagerly when tab mounts
-  useEffect(() => {
-    if (loaded) return;
-    fetch("/api/admin/materials", { cache: "no-store" })
+  // Hover snippet state
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+
+  const LIMIT = 30;
+
+  function loadLinked() {
+    if (!lesson.id) return;
+    fetch(`/api/admin/materials?lessonId=${lesson.id}&limit=100`, { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : { materials: [] }))
+      .then((data) => {
+        const entries: LinkedMaterialEntry[] = [];
+        for (const m of data.materials ?? []) {
+          for (const link of m.links ?? []) {
+            entries.push({
+              linkId: link.id,
+              materialId: m.id,
+              title: m.title,
+              kind: m.kind,
+              status: m.status,
+              displayStatus: m.displayStatus,
+              referenceLabel: link.referenceLabel ?? null,
+            });
+          }
+        }
+        setLinkedMaterials(entries);
+        setLinkedLoaded(true);
+      })
+      .catch(() => setLinkedLoaded(true));
+  }
+
+  function loadLibrary(pageNum: number, q: string, kind: string) {
+    const params = new URLSearchParams({ limit: String(LIMIT), page: String(pageNum) });
+    if (q.trim()) params.set("q", q.trim());
+    if (kind) params.set("kind", kind);
+    fetch(`/api/admin/materials?${params.toString()}`, { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : { materials: [], pagination: {} }))
       .then((data) => {
         setMaterials(
           (data.materials ?? []).map((m: any) => ({
@@ -886,15 +1334,50 @@ function ResourcesTab({
             pages: m.pages ?? null,
             fileType: m.fileType,
             previewSnippet: m.previewSnippet ?? "",
+            status: m.status,
+            displayStatus: m.displayStatus,
+            sizeBytes: m.sizeBytes,
+            characters: m.characters,
           }))
         );
-        setLoaded(true);
+        setTotalPages(data.pagination?.totalPages ?? 1);
+        setTotalItems(data.pagination?.total ?? 0);
+        setLibraryLoaded(true);
       })
-      .catch(() => setLoaded(true));
-  }, [loaded]);
+      .catch(() => setLibraryLoaded(true));
+  }
 
-  async function linkMaterial(materialId: string) {
+  useEffect(() => {
+    loadLinked();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lesson.id]);
+
+  useEffect(() => {
+    setLibraryLoaded(false);
+    loadLibrary(page, query, kindFilter);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, query, kindFilter]);
+
+  async function setPrimaryMaterial(materialId: string) {
     await onUpdate({ sourceMaterialId: materialId || null });
+  }
+
+  async function addLink(materialId: string) {
+    const res = await fetch("/api/admin/materials/link", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ materialId, lessonId: lesson.id }),
+    });
+    if (res.ok) {
+      loadLinked();
+    }
+  }
+
+  async function removeLink(linkId: string) {
+    const res = await fetch(`/api/admin/materials/link?id=${linkId}`, { method: "DELETE" });
+    if (res.ok) {
+      setLinkedMaterials((prev) => prev.filter((entry) => entry.linkId !== linkId));
+    }
   }
 
   async function uploadAndLink() {
@@ -906,11 +1389,12 @@ function ResourcesTab({
     const res = await fetch("/api/admin/materials", { method: "POST", body: form });
     if (res.ok) {
       const data = await res.json();
-      await onUpdate({ sourceMaterialId: data.id });
+      await addLink(data.id);
       setFile(null);
       setUploadTitle("");
       setShowUpload(false);
-      setLoaded(false); // reload library
+      setLibraryLoaded(false);
+      loadLibrary(1, query, kindFilter);
     } else {
       const text = await res.text();
       let message = "Upload failed.";
@@ -925,30 +1409,17 @@ function ResourcesTab({
     setBusy(false);
   }
 
-  const filtered = query.trim()
-    ? materials.filter((m) => m.title.toLowerCase().includes(query.toLowerCase()))
-    : materials;
-
-  function kindIcon(kind?: string) {
-    if (kind === "video") return Icons.Video;
-    if (kind === "audio") return Icons.FileText;
-    if (kind === "image") return Icons.BookOpen;
-    return Icons.FileText;
-  }
-
-  function kindLabel(kind?: string) {
-    if (!kind) return "Doc";
-    return kind.charAt(0).toUpperCase() + kind.slice(1);
-  }
+  const alreadyLinkedIds = new Set(linkedMaterials.map((entry) => entry.materialId));
+  const primaryId = lesson.sourceMaterial?.id;
 
   return (
     <div className="space-y-4">
-      {/* Current attachment */}
+      {/* Linked materials */}
       <div className="rounded-xl border border-black/10 bg-white shadow-sm p-5 space-y-3">
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
             <Icons.Database size={15} className="text-[#185FA5]" />
-            Primary lesson attachment
+            Attached materials
           </h3>
           <a
             href="/admin/materials"
@@ -958,100 +1429,205 @@ function ResourcesTab({
             Manage library
           </a>
         </div>
-        {lesson.sourceMaterial ? (
-          <div className="rounded-xl border border-[#b8d7f0] bg-[#E6F1FB]/40 px-4 py-3">
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#E6F1FB] text-[#185FA5]">
-                <Icons.Database size={15} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-slate-900 truncate">{lesson.sourceMaterial.title}</p>
-                <p className="text-[11px] text-[#185FA5] font-medium mt-0.5">Linked to this lesson</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => linkMaterial("")}
-                className="text-xs text-red-500 hover:text-red-700 font-semibold shrink-0"
-              >
-                Unlink
-              </button>
-            </div>
+
+        {!linkedLoaded ? (
+          <div className="flex items-center gap-2 py-2 text-xs text-slate-400">
+            <Icons.Loader size={13} className="animate-spin" />
+            Loading…
           </div>
-        ) : (
+        ) : linkedMaterials.length === 0 && !lesson.sourceMaterial ? (
           <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center">
             <Icons.Database size={22} className="mx-auto text-slate-300 mb-2" />
-            <p className="text-xs text-slate-500 font-medium">No source material linked yet.</p>
-            <p className="text-[11px] text-slate-400 mt-0.5">Attach one primary file here. Insert in-lesson source references from Author tools.</p>
+            <p className="text-xs text-slate-500 font-medium">No materials attached yet.</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              Search the library below to attach an existing file, or upload a new one and it will be linked automatically.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {lesson.sourceMaterial && (
+              <div className="rounded-xl border border-[#b8d7f0] bg-[#E6F1FB]/40 px-4 py-3">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#E6F1FB] text-[#185FA5]">
+                    <Icons.Database size={15} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-slate-900 truncate">{lesson.sourceMaterial.title}</p>
+                    <p className="text-[10px] text-[#185FA5] font-medium mt-0.5">Primary attachment</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPrimaryMaterial("")}
+                    className="text-xs text-red-500 hover:text-red-700 font-semibold shrink-0"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            )}
+            {linkedMaterials.map((entry) => {
+              const Icon = kindIcon(entry.kind);
+              return (
+                <div key={entry.linkId} className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-500">
+                    <Icon size={13} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-slate-800 truncate">{entry.title}</p>
+                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                      <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold uppercase text-slate-500">
+                        {kindLabel(entry.kind)}
+                      </span>
+                      <StatusBadge status={entry.status} displayStatus={entry.displayStatus} />
+                      {entry.referenceLabel && (
+                        <span className="text-[10px] text-slate-400 italic truncate max-w-[120px]">{entry.referenceLabel}</span>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeLink(entry.linkId)}
+                    className="text-xs text-red-500 hover:text-red-700 font-semibold shrink-0"
+                  >
+                    Unlink
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
 
       {/* Browse library */}
       <div className="rounded-xl border border-black/10 bg-white shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-100">
+        <div className="px-5 py-4 border-b border-slate-100 space-y-3">
           <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
             <Icons.Link size={15} className="text-[#185FA5]" />
             Attach from library
           </h3>
+          {/* Kind filter strip */}
+          <div className="flex gap-1 flex-wrap">
+            {KIND_FILTERS.map((f) => (
+              <button
+                key={f.value}
+                type="button"
+                onClick={() => { setKindFilter(f.value); setPage(1); }}
+                className={cn(
+                  "rounded-full px-2.5 py-0.5 text-[10px] font-bold transition",
+                  kindFilter === f.value
+                    ? "bg-[#185FA5] text-white"
+                    : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                )}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
           <input
             type="search"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => { setQuery(e.target.value); setPage(1); }}
             placeholder="Search materials…"
-            className="admin-input mt-3"
+            className="admin-input"
           />
         </div>
-        <div className="max-h-80 overflow-y-auto divide-y divide-slate-100">
-          {!loaded ? (
+        <div className="divide-y divide-slate-100">
+          {!libraryLoaded ? (
             <div className="flex items-center justify-center py-10 text-xs text-slate-400">
               <Icons.Loader size={14} className="animate-spin mr-2" />
               Loading library…
             </div>
-          ) : filtered.length === 0 ? (
+          ) : materials.length === 0 ? (
             <div className="py-8 text-center text-xs text-slate-400">
               {query ? "No materials match your search." : "No materials in your library yet."}
             </div>
           ) : (
-            filtered.map((material) => {
-              const Icon = kindIcon(material.kind);
-              const isLinked = lesson.sourceMaterial?.id === material.id;
-              return (
-                <div
-                  key={material.id}
-                  className={cn(
-                    "flex items-start gap-3 px-5 py-3 transition",
-                    isLinked ? "bg-[#E6F1FB]/30" : "hover:bg-slate-50"
-                  )}
-                >
-                  <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
-                    <Icon size={13} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-slate-800 truncate">{material.title}</p>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold uppercase text-slate-500">
-                        {kindLabel(material.kind)}
-                      </span>
-                      {material.pages ? <span className="text-[10px] text-slate-400">{material.pages}p</span> : null}
+            <>
+              <div className="max-h-72 overflow-y-auto divide-y divide-slate-100">
+                {materials.map((material) => {
+                  const Icon = kindIcon(material.kind);
+                  const isLinked = alreadyLinkedIds.has(material.id);
+                  const isPrimary = primaryId === material.id;
+                  const isHovered = hoveredId === material.id;
+                  return (
+                    <div
+                      key={material.id}
+                      className={cn(
+                        "relative flex items-start gap-3 px-5 py-3 transition",
+                        isLinked || isPrimary ? "bg-[#E6F1FB]/30" : "hover:bg-slate-50"
+                      )}
+                      onMouseEnter={() => setHoveredId(material.id)}
+                      onMouseLeave={() => setHoveredId(null)}
+                    >
+                      <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+                        <Icon size={13} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-slate-800 truncate">{material.title}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                          <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold uppercase text-slate-500">
+                            {kindLabel(material.kind)}
+                          </span>
+                          {material.pages ? <span className="text-[10px] text-slate-400">{material.pages}p</span> : null}
+                          <StatusBadge status={material.status} displayStatus={material.displayStatus} />
+                        </div>
+                        {/* Snippet preview on hover */}
+                        {isHovered && material.previewSnippet && (
+                          <p className="mt-1.5 text-[10px] text-slate-500 leading-4 line-clamp-2">
+                            {material.previewSnippet}
+                          </p>
+                        )}
+                        {isHovered && (material.sizeBytes || material.characters) && (
+                          <div className="flex items-center gap-2 mt-0.5">
+                            {material.sizeBytes ? <span className="text-[10px] text-slate-400">{formatBytes(material.sizeBytes)}</span> : null}
+                            {material.characters ? <span className="text-[10px] text-slate-400">{material.characters.toLocaleString()} chars</span> : null}
+                          </div>
+                        )}
+                      </div>
+                      {isLinked || isPrimary ? (
+                        <span className="flex items-center gap-1 text-[11px] font-semibold text-[#185FA5] shrink-0">
+                          <Icons.Check size={12} />
+                          Attached
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => addLink(material.id)}
+                          className="shrink-0 rounded-lg border border-slate-200 px-2.5 py-1 text-[11px] font-semibold text-slate-600 transition hover:border-[#185FA5] hover:text-[#185FA5]"
+                        >
+                          Attach
+                        </button>
+                      )}
                     </div>
-                  </div>
-                  {isLinked ? (
-                    <span className="flex items-center gap-1 text-[11px] font-semibold text-[#185FA5] shrink-0">
-                      <Icons.Check size={12} />
-                      Linked
-                    </span>
-                  ) : (
+                  );
+                })}
+              </div>
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between px-5 py-2.5 bg-slate-50 border-t border-slate-100">
+                  <span className="text-[10px] text-slate-400">{totalItems} materials</span>
+                  <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => linkMaterial(material.id)}
-                      className="shrink-0 rounded-lg border border-slate-200 px-2.5 py-1 text-[11px] font-semibold text-slate-600 transition hover:border-[#185FA5] hover:text-[#185FA5]"
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={page === 1}
+                      className="text-[11px] font-semibold text-slate-500 disabled:opacity-40 hover:text-[#185FA5]"
                     >
-                      Attach
+                      ← Prev
                     </button>
-                  )}
+                    <span className="text-[10px] text-slate-400">{page} / {totalPages}</span>
+                    <button
+                      type="button"
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={page === totalPages}
+                      className="text-[11px] font-semibold text-slate-500 disabled:opacity-40 hover:text-[#185FA5]"
+                    >
+                      Next →
+                    </button>
+                  </div>
                 </div>
-              );
-            })
+              )}
+            </>
           )}
         </div>
       </div>
@@ -1078,7 +1654,7 @@ function ResourcesTab({
             <label className="flex min-h-20 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-[#185FA5]/40 bg-[#E6F1FB]/30 text-center text-xs text-slate-500 px-4 py-3">
               <Icons.Upload size={18} className="text-[#185FA5] mb-1.5" />
               <span className="font-semibold text-[#185FA5]">{file ? file.name : "Drop or choose file"}</span>
-              <span>PDF, DOCX, CSV, TXT</span>
+              <span>PDF, DOCX, CSV, MP3, MP4, TXT</span>
               <input
                 type="file"
                 className="sr-only"
@@ -1111,14 +1687,18 @@ function SettingsTab({
   lesson,
   onUpdate,
   onReload,
+  onSaveStatusChange,
 }: {
   lesson: LessonData;
   onUpdate: (updates: Record<string, unknown>) => Promise<void>;
   onReload: () => Promise<void>;
+  onSaveStatusChange?: (status: SaveStatusCombined) => void;
 }) {
   const [title, setTitle] = useState(lesson.title);
   const [lessonType, setLessonType] = useState(lesson.lessonType);
-  const [duration, setDuration] = useState(String(lesson.durationSeconds ?? ""));
+  const [duration, setDuration] = useState(
+    lesson.durationSeconds ? String(Math.round(lesson.durationSeconds / 60)) : ""
+  );
   const [isPublished, setIsPublished] = useState(lesson.isPublished);
   const [quizzes, setQuizzes] = useState<Array<{ id: string; title: string }>>([]);
   const [selectedQuizId, setSelectedQuizId] = useState(lesson.quiz?.id ?? "");
@@ -1137,37 +1717,41 @@ function SettingsTab({
     setQuizzesLoaded(true);
   }
 
-  function readinessIssues(): string[] {
-    const issues: string[] = [];
-    if (!title.trim()) issues.push("Lesson needs a title.");
-    if (lessonType === "text") {
-      issues.push(...getLessonReadinessIssues(parseStructuredLessonContent(lesson.contentJson)));
-    }
-    if (lessonType === "video" && !lesson.videoPlaybackId && !lesson.videoUrl) issues.push("No video attached.");
-    if (lessonType === "quiz" && !lesson.quiz) issues.push("No quiz linked.");
-    return issues;
+  function readinessIssues() {
+    return runLessonPreflight({
+      lessonId: lesson.id,
+      title,
+      lessonType,
+      contentJson: lesson.contentJson,
+      videoPlaybackId: lesson.videoPlaybackId,
+      videoUrl: lesson.videoUrl,
+      quiz: lesson.quiz ? { id: lesson.quiz.id } : null,
+      sourceMaterialId: lesson.sourceMaterial?.id ?? null,
+    });
   }
 
   async function save() {
     const wouldPublish = isPublished && !lesson.isPublished;
     if (wouldPublish) {
-      const issues = readinessIssues();
-      if (issues.length > 0) {
+      const preflight = readinessIssues();
+      if (!preflight.isReady) {
         setShowPublishWarning(true);
         return;
       }
     }
     setBusy(true);
+    onSaveStatusChange?.("saving");
     await onUpdate({
       title,
       lessonType,
       quizId: lessonType === "quiz" ? (selectedQuizId || null) : null,
-      durationSeconds: duration ? parseInt(duration) : null,
+      durationSeconds: duration ? parseInt(duration) * 60 : null,
       isPublished,
       status: isPublished ? "published" : "draft",
       versionNote: versionNote || null,
       saveVersion: lesson.isPublished,
     });
+    onSaveStatusChange?.("saved");
     setBusy(false);
     setVersionNote("");
   }
@@ -1175,20 +1759,22 @@ function SettingsTab({
   async function forcePublish() {
     setShowPublishWarning(false);
     setBusy(true);
+    onSaveStatusChange?.("saving");
     await onUpdate({
       title,
       lessonType,
       quizId: lessonType === "quiz" ? (selectedQuizId || null) : null,
-      durationSeconds: duration ? parseInt(duration) : null,
+      durationSeconds: duration ? parseInt(duration) * 60 : null,
       isPublished,
       status: isPublished ? "published" : "draft",
       saveVersion: lesson.isPublished,
       versionNote: versionNote || null,
     });
+    onSaveStatusChange?.("saved");
     setBusy(false);
   }
 
-  const issues = readinessIssues();
+  const preflightResult = readinessIssues();
 
   return (
     <div className="space-y-4">
@@ -1214,13 +1800,14 @@ function SettingsTab({
             </select>
           </div>
           <div>
-            <label className="admin-label">Duration (seconds)</label>
+            <label className="admin-label">Duration (minutes)</label>
             <input
               type="number"
               className="admin-input"
               value={duration}
               onChange={(e) => setDuration(e.target.value)}
-              placeholder="e.g. 300"
+              placeholder="e.g. 5"
+              min="0"
             />
           </div>
         </div>
@@ -1274,14 +1861,17 @@ function SettingsTab({
         )}
 
         {/* Readiness check */}
-        {issues.length > 0 && (
+        {(preflightResult.blockers.length > 0 || preflightResult.warnings.length > 0) && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 space-y-1">
             <p className="text-xs font-bold text-amber-800 flex items-center gap-1.5">
               <Icons.AlertTriangle size={13} />
               Before publishing, resolve:
             </p>
-            {issues.map((issue) => (
-              <p key={issue} className="text-xs text-amber-700 pl-5">{issue}</p>
+            {preflightResult.blockers.map((b) => (
+              <p key={b} className="text-xs text-red-700 pl-5">✕ {b}</p>
+            ))}
+            {preflightResult.warnings.map((w) => (
+              <p key={w} className="text-xs text-amber-700 pl-5">⚠ {w}</p>
             ))}
           </div>
         )}
@@ -1301,15 +1891,30 @@ function SettingsTab({
       {showPublishWarning && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 space-y-3">
           <p className="text-sm font-bold text-amber-900">
-            This lesson has incomplete content. Publish anyway?
+            This lesson has issues that may affect learners. Review before publishing.
           </p>
-          <ul className="list-disc pl-5 space-y-1">
-            {issues.map((issue) => (
-              <li key={issue} className="text-xs text-amber-800">{issue}</li>
-            ))}
-          </ul>
+          {preflightResult.blockers.length > 0 && (
+            <div className="space-y-1">
+              <p className="text-xs font-semibold text-red-700 uppercase tracking-wide">Blockers</p>
+              <ul className="list-disc pl-5 space-y-1">
+                {preflightResult.blockers.map((b) => (
+                  <li key={b} className="text-xs text-red-800">{b}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {preflightResult.warnings.length > 0 && (
+            <div className="space-y-1">
+              <p className="text-xs font-semibold text-amber-700 uppercase tracking-wide">Warnings</p>
+              <ul className="list-disc pl-5 space-y-1">
+                {preflightResult.warnings.map((w) => (
+                  <li key={w} className="text-xs text-amber-800">{w}</li>
+                ))}
+              </ul>
+            </div>
+          )}
           <div className="flex gap-2">
-            <button type="button" onClick={forcePublish} className="admin-action text-xs">Publish anyway</button>
+            <button type="button" onClick={forcePublish} className="admin-action text-xs">Publish with issues</button>
             <button type="button" onClick={() => setShowPublishWarning(false)} className="admin-action secondary text-xs">Cancel</button>
           </div>
         </div>
@@ -1320,13 +1925,78 @@ function SettingsTab({
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+function lessonMatchesFilter(lesson: LessonData, filter: OutlineFilter): boolean {
+  if (filter === "all") return true;
+  if (filter === "published") return lesson.isPublished;
+  if (filter === "missing-media") {
+    return lesson.lessonType === "video" && !lesson.videoPlaybackId && !lesson.videoUrl;
+  }
+  if (filter === "missing-transcript") {
+    if (!lesson.contentJson) return false;
+    const doc = parseStructuredLessonContent(lesson.contentJson);
+    return doc.blocks.some(
+      (b) =>
+        b.isStudentVisible &&
+        ((b.type === "video" && !b.transcript?.trim()) ||
+          (b.type === "audio" && !b.transcript?.trim()))
+    );
+  }
+  const quizReadiness =
+    lesson.lessonType === "quiz" && lesson.quiz
+      ? getQuizReadiness(lesson.quiz.questionCount ?? 0, lesson.quiz.incompleteQuestionCount ?? 0)
+      : undefined;
+  const preflight = runLessonPreflight(
+    {
+      lessonId: lesson.id,
+      title: lesson.title,
+      lessonType: lesson.lessonType,
+      contentJson: lesson.contentJson,
+      videoPlaybackId: lesson.videoPlaybackId,
+      videoUrl: lesson.videoUrl,
+      quiz: lesson.quiz ? { id: lesson.quiz.id } : null,
+      sourceMaterialId: lesson.sourceMaterial?.id ?? null,
+    },
+    quizReadiness
+  );
+  if (filter === "blocked") return !lesson.isPublished && !preflight.isReady;
+  if (filter === "ready") return !lesson.isPublished && preflight.isReady;
+  if (filter === "draft") return !lesson.isPublished;
+  return true;
+}
+
+function computeFilterCounts(lessons: LessonData[]): Record<OutlineFilter, number> {
+  const filters: OutlineFilter[] = ["all", "draft", "blocked", "ready", "published", "missing-media", "missing-transcript"];
+  return Object.fromEntries(
+    filters.map((f) => [f, lessons.filter((l) => lessonMatchesFilter(l, f)).length])
+  ) as Record<OutlineFilter, number>;
+}
+
 function getLessonSidebarInsight(lesson: LessonData) {
   const document = parseStructuredLessonContent(lesson.contentJson ?? null);
   const visibleBlocks = document.blocks.filter((block) => block.isStudentVisible).length;
-  const readinessCount = lesson.lessonType === "text" ? getLessonReadinessReport(document).length : 0;
   const durationMinutes =
     document.estimatedDurationMinutes ??
     (lesson.durationSeconds ? Math.max(1, Math.round(lesson.durationSeconds / 60)) : null);
+
+  const quizReadiness =
+    lesson.lessonType === "quiz" && lesson.quiz
+      ? getQuizReadiness(lesson.quiz.questionCount ?? 0, lesson.quiz.incompleteQuestionCount ?? 0)
+      : undefined;
+
+  const preflight = runLessonPreflight(
+    {
+      lessonId: lesson.id,
+      title: lesson.title,
+      lessonType: lesson.lessonType,
+      contentJson: lesson.contentJson,
+      videoPlaybackId: lesson.videoPlaybackId,
+      videoUrl: lesson.videoUrl,
+      quiz: lesson.quiz ? { id: lesson.quiz.id } : null,
+      sourceMaterialId: lesson.sourceMaterial?.id ?? null,
+    },
+    quizReadiness
+  );
+  const readinessCount = preflight.blockers.length;
 
   return {
     durationLabel: durationMinutes ? `${durationMinutes} min` : "No duration",
@@ -1337,39 +2007,59 @@ function getLessonSidebarInsight(lesson: LessonData) {
         : readinessCount === 0
         ? "Ready to preview"
         : readinessCount <= 2
-        ? `${readinessCount} item${readinessCount === 1 ? "" : "s"} to finish`
-        : `${readinessCount} issues to finish`,
+        ? `${readinessCount} item${readinessCount === 1 ? "" : "s"} to resolve`
+        : `${readinessCount} issues to resolve`,
     readinessTone:
       lesson.isPublished ? "ready" : readinessCount === 0 ? "ready" : readinessCount <= 2 ? "warn" : "blocked",
   };
 }
 
+function getLessonReadinessTone(lesson: LessonData): "ready" | "warn" | "blocked" {
+  if (lesson.isPublished) return "ready";
+  const quizReadiness =
+    lesson.lessonType === "quiz" && lesson.quiz
+      ? getQuizReadiness(lesson.quiz.questionCount ?? 0, lesson.quiz.incompleteQuestionCount ?? 0)
+      : undefined;
+  const preflight = runLessonPreflight(
+    {
+      lessonId: lesson.id,
+      title: lesson.title,
+      lessonType: lesson.lessonType,
+      contentJson: lesson.contentJson,
+      videoPlaybackId: lesson.videoPlaybackId,
+      videoUrl: lesson.videoUrl,
+      quiz: lesson.quiz ? { id: lesson.quiz.id } : null,
+      sourceMaterialId: lesson.sourceMaterial?.id ?? null,
+    },
+    quizReadiness
+  );
+  if (preflight.blockers.length === 0) return "ready";
+  if (preflight.blockers.length <= 2) return "warn";
+  return "blocked";
+}
+
 function LessonStatusDot({ lesson }: { lesson: LessonData }) {
-  const hasContent =
-    (lesson.lessonType === "text" && !!lesson.contentJson) ||
-    (lesson.lessonType === "video" && (!!lesson.videoPlaybackId || !!lesson.videoUrl)) ||
-    (lesson.lessonType === "quiz" && !!lesson.quiz);
-
-  const color = lesson.isPublished
-    ? "bg-emerald-400"
-    : hasContent
-    ? "bg-amber-400"
-    : "bg-red-300";
-
+  const tone = getLessonReadinessTone(lesson);
+  const color =
+    tone === "ready" ? "bg-emerald-400" :
+    tone === "warn" ? "bg-amber-400" :
+    "bg-red-300";
   return <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${color}`} />;
 }
 
 function ReadinessDot({ lesson }: { lesson: LessonData }) {
-  const hasContent =
-    (lesson.lessonType === "text" && !!lesson.contentJson) ||
-    (lesson.lessonType === "video" && (!!lesson.videoPlaybackId || !!lesson.videoUrl)) ||
-    (lesson.lessonType === "quiz" && !!lesson.quiz);
-
   if (lesson.isPublished) return null;
-  if (!hasContent) return (
-    <span title="Missing content" className="flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-600">
+  const tone = getLessonReadinessTone(lesson);
+  if (tone === "blocked") return (
+    <span title="Missing required content" className="flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-600">
       <Icons.AlertCircle size={10} />
       Incomplete
+    </span>
+  );
+  if (tone === "warn") return (
+    <span title="Has warnings" className="flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-600">
+      <Icons.AlertTriangle size={10} />
+      Needs review
     </span>
   );
   return null;

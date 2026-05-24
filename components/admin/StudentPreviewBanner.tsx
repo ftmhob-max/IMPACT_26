@@ -11,8 +11,8 @@ export function StudentPreviewBanner({
   backLabel = "Back to admin",
 }: StudentPreviewBannerProps) {
   return (
-    <div className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-amber-300 bg-amber-50 px-4 py-2.5 shadow-sm">
-      <div className="flex items-center gap-2.5">
+    <div className="sticky top-0 z-10 flex flex-col items-start gap-3 border-b border-amber-300 bg-amber-50 px-4 py-2.5 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+      <div className="flex items-start gap-2.5">
         <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-amber-500 text-white">
           <Icons.Eye size={15} />
         </div>

@@ -212,9 +212,11 @@ export async function GET(request: NextRequest) {
   const auth = await requireAdminRequest(request, "viewer");
   if (!auth.ok) return auth.response;
   const query = request.nextUrl.searchParams.get("q") ?? "";
+  const lessonId = request.nextUrl.searchParams.get("lessonId") ?? undefined;
   const materials = await fetchAdminMaterialLibrary(query);
   const result = listAdminMaterials(materials, {
     q: query,
+    lessonId,
     kind: request.nextUrl.searchParams.get("kind") ?? undefined,
     parser: request.nextUrl.searchParams.get("parser") ?? undefined,
     status: request.nextUrl.searchParams.get("status") ?? undefined,
@@ -283,6 +285,7 @@ export async function GET(request: NextRequest) {
       linkCount: material.linkCount,
       latestJob: material.latestJob,
       metadata: material.metadata,
+      ...(lessonId ? { links: material.links.filter((link) => link.lesson?.id === lessonId) } : {}),
     })),
     pagination: result.pagination,
     sort: result.sort,

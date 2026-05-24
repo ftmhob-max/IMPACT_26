@@ -92,7 +92,7 @@ export default async function CourseDetailPage({
 
   if (!data) {
     return (
-      <div className="mx-auto max-w-3xl px-6 py-16 text-center">
+      <div className="mx-auto max-w-3xl px-4 py-12 text-center sm:px-6 sm:py-16">
         <Icons.GraduationCap size={40} className="mx-auto text-slate-200 mb-4" />
         <h1 className="text-xl font-bold text-slate-900">Course not found</h1>
         <p className="mt-2 text-sm text-slate-500">

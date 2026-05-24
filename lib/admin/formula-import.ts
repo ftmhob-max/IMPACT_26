@@ -271,12 +271,24 @@ function parseDocxExamples(text: string): FormulaExamplesData {
     const steps: string[] = [];
     let summary: string | undefined;
 
+    let awaitingStepText = false;
     for (const line of lines) {
-      const stepMatch = line.match(/^Step\s+(\d+)\s+(.+)$/i);
-      if (stepMatch) {
-        steps.push(stepMatch[2].trim());
+      // One-line format: "Step N some text" (CSV/TXT imports)
+      const stepWithText = line.match(/^Step\s+\d+\s+(.+)$/i);
+      if (stepWithText) {
+        steps.push(stepWithText[1].trim());
+        awaitingStepText = false;
+        continue;
+      }
+      // Two-line format: "Step N" alone (this DOCX), text follows on next non-empty line
+      if (line.match(/^Step\s+\d+$/i)) {
+        awaitingStepText = true;
+        continue;
+      }
+      if (awaitingStepText) {
+        steps.push(line);
+        awaitingStepText = false;
       } else if (steps.length > 0 && !line.match(/^[●•]/)) {
-        // Non-step lines after steps are treated as a summary/interpretation
         summary = line;
       }
     }

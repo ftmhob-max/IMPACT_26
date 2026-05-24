@@ -502,6 +502,10 @@ mutation CreateContentSourceLink($id: UUID!, $sourceMaterialId: UUID!, $lessonId
   })
 }
 
+mutation DeleteContentSourceLink($id: UUID!) @auth(level: NO_ACCESS) {
+  contentSourceLink_delete(id: $id)
+}
+
 # ─── Glossary (admin) ─────────────────────────────────────────────────────────
 
 mutation CreateGlossaryTerm(

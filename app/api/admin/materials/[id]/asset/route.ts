@@ -38,6 +38,7 @@ export async function GET(
   const { id } = await params;
   const materialId = formatUuid(id);
   const shouldDownload = request.nextUrl.searchParams.get("download") === "1";
+  const shouldStreamInline = request.nextUrl.searchParams.get("stream") === "1";
 
   try {
     const data = await adminDcQuery<{
@@ -65,14 +66,22 @@ export async function GET(
     // Try signed URL first (works when service account has signBlob permission).
     // Fall back to direct streaming when running with Application Default Credentials
     // on Cloud Run where signBlob is not granted.
-    try {
-      const [signedUrl] = await file.getSignedUrl({
-        action: "read",
-        expires: Date.now() + 15 * 60 * 1000,
-        responseDisposition: `${shouldDownload ? "attachment" : "inline"}; filename="${material.fileName.replace(/"/g, "")}"`,
-      });
+    let signedUrl: string | null = null;
+    if (!shouldStreamInline) {
+      try {
+        [signedUrl] = await file.getSignedUrl({
+          action: "read",
+          expires: Date.now() + 15 * 60 * 1000,
+          responseDisposition: `${shouldDownload ? "attachment" : "inline"}; filename="${material.fileName.replace(/"/g, "")}"`,
+        });
+      } catch {
+        // Use direct streaming below when signing is unavailable.
+      }
+    }
+    if (signedUrl) {
       return NextResponse.redirect(signedUrl);
-    } catch {
+    }
+    {
       // Signed URL failed — stream directly through the API route
       const [buffer] = await file.download();
       const contentType = material.fileType || "application/octet-stream";

@@ -72,7 +72,7 @@ export function QuestionBankPageClient({
   }, [questions.length, quizzes.length, refreshPageData]);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-8 px-6 py-8">
+    <div className="mx-auto max-w-7xl space-y-6 px-4 py-5 sm:space-y-8 sm:px-6 sm:py-8">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Question Bank</h1>
         <p className="mt-1 text-sm text-slate-500">
@@ -85,7 +85,7 @@ export function QuestionBankPageClient({
           <button
             type="button"
             onClick={() => setImportOpen((open) => !open)}
-            className="flex w-full items-center gap-2 border-b border-slate-100 px-4 py-3 text-left"
+            className="flex w-full flex-wrap items-center gap-2 border-b border-slate-100 px-4 py-3 text-left"
           >
             <span className="text-[#185FA5]">📄</span>
             <h2 className="text-sm font-bold text-slate-900">Question Import</h2>
@@ -103,11 +103,11 @@ export function QuestionBankPageClient({
           <button
             type="button"
             onClick={() => setManualOpen((open) => !open)}
-            className="flex w-full items-center gap-2 border-b border-slate-100 px-4 py-3 text-left"
+            className="flex w-full flex-wrap items-center gap-2 border-b border-slate-100 px-4 py-3 text-left"
           >
             <span className="text-[#185FA5]">✏️</span>
             <h2 className="text-sm font-bold text-slate-900">Manual Builder</h2>
-            <span className="ml-auto text-xs text-slate-400">Multiple choice, multiselect, scenario</span>
+            <span className="order-last w-full text-xs text-slate-400 sm:order-none sm:ml-auto sm:w-auto">Multiple choice, multiselect, scenario</span>
             {manualOpen ? <Icons.ChevronUp size={16} className="text-slate-400" /> : <Icons.ChevronDown size={16} className="text-slate-400" />}
           </button>
           {manualOpen && (

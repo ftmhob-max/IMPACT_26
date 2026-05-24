@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import * as Icons from "@/components/ui/Icons";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 const valueStrip = [
   { label: "Logic before formula", icon: Icons.ShieldCheck },
@@ -165,6 +166,7 @@ function Header() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
+          <ThemeToggle compact presentation="surface" />
           <Link
             href="/sign-in"
             className="hidden min-h-10 items-center justify-center rounded-lg px-3 py-2 text-sm font-bold text-slate-700 transition-colors hover:text-[#185FA5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2 sm:inline-flex"
@@ -188,17 +190,17 @@ function HeroSection() {
   return (
     <section className="relative overflow-hidden border-b border-slate-200 bg-white">
       <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#f7f8f6] to-transparent" />
-      <div className="mx-auto grid w-full max-w-7xl min-w-0 items-center gap-10 px-4 py-14 sm:px-6 sm:py-18 lg:grid-cols-[0.9fr_1.1fr] lg:px-8 lg:py-20">
+      <div className="mx-auto grid w-full max-w-7xl min-w-0 items-center gap-8 px-4 py-10 sm:gap-10 sm:px-6 sm:py-18 lg:grid-cols-[0.9fr_1.1fr] lg:px-8 lg:py-20">
         <div className="relative z-10 max-w-2xl">
-          <h1 className="max-w-[22rem] text-4xl font-extrabold leading-[1.04] tracking-[-0.035em] text-slate-950 sm:max-w-2xl sm:text-5xl lg:text-6xl">
+          <h1 className="text-[2.15rem] font-extrabold leading-[1.06] tracking-[-0.035em] text-slate-950 sm:max-w-2xl sm:text-5xl lg:text-6xl">
             <span className="block">Learn to reason</span>
             <span className="block">through <span className="text-[#185FA5]">every</span></span>
             <span className="block">assessment.</span>
           </h1>
-          <p className="mt-5 max-w-[22rem] text-base leading-7 text-slate-600 sm:max-w-xl sm:text-lg">
+          <p className="mt-4 text-base leading-7 text-slate-600 sm:mt-5 sm:max-w-xl sm:text-lg">
             IMPACT_26V.1 trains municipal assessors to understand formulas, apply principles, and make defensible, equitable decisions.
           </p>
-          <div className="mt-8 flex max-w-[22rem] flex-col gap-3 sm:max-w-none sm:flex-row">
+          <div className="mt-7 flex flex-col gap-3 sm:mt-8 sm:flex-row">
             <Link
               href="/sign-up"
               className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-[#185FA5] px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#0d3d6e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2"
@@ -223,10 +225,41 @@ function HeroSection() {
 
 function HeroVisual() {
   return (
-    <div className="relative z-10 min-w-0 w-[calc(100vw_-_3rem)] max-w-[22rem] overflow-hidden sm:mx-auto sm:w-full sm:max-w-2xl" aria-hidden="true">
-      <div className="absolute -left-8 top-10 h-36 w-36 rounded-full bg-[#185FA5]/8 blur-3xl" />
-      <div className="absolute -right-8 bottom-6 h-40 w-40 rounded-full bg-[#2f7a4d]/10 blur-3xl" />
-      <div className="relative overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl">
+    <div className="relative z-10 w-full min-w-0 sm:mx-auto sm:max-w-2xl" aria-hidden="true">
+      <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg sm:hidden">
+        <div className="bg-[#073866] p-4 text-white">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-[11px] font-bold text-white/65">Lesson 3.2</p>
+              <p className="mt-0.5 text-sm font-extrabold">Market Approach</p>
+            </div>
+            <div className="rounded-md bg-white/10 px-2 py-1 text-[11px] font-bold text-white/75">62% complete</div>
+          </div>
+          <div className="mt-4 flex items-center gap-2 rounded-md bg-[#185FA5] px-3 py-2 text-xs font-bold">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full border border-white/50 bg-white/10">
+              3
+            </span>
+            Formula
+          </div>
+          <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/20">
+            <div className="h-full w-[62%] rounded-full bg-[#67c58e]" />
+          </div>
+        </div>
+        <div className="p-4">
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#185FA5]">Assessment reasoning</p>
+          <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-[#9dc6eb] bg-[#f8fbff] px-4 py-3">
+            <p className="font-calc text-xl font-bold tracking-[-0.02em] text-slate-900">V = I / R</p>
+            <div className="text-right text-[11px] leading-4 text-slate-500">
+              <p className="font-bold text-slate-800">Value</p>
+              <p>$5,625,000</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="absolute -left-8 top-10 hidden h-36 w-36 rounded-full bg-[#185FA5]/8 blur-3xl sm:block" />
+      <div className="absolute -right-8 bottom-6 hidden h-40 w-40 rounded-full bg-[#2f7a4d]/10 blur-3xl sm:block" />
+      <div className="relative hidden overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl sm:block">
         <div className="grid min-h-[390px] lg:grid-cols-[180px_1fr]">
           <div className="min-w-0 bg-[#073866] p-5 text-white">
             <p className="text-xs font-bold text-white/70">Lesson 3.2</p>
@@ -332,13 +365,13 @@ function MiniPanel({ title, rows }: { title: string; rows: string[] }) {
 function ValueStrip() {
   return (
     <section className="border-b border-slate-200 bg-white">
-      <div className="mx-auto grid max-w-7xl gap-px px-4 py-5 sm:grid-cols-2 sm:px-6 lg:grid-cols-4 lg:px-8">
+      <div className="mx-auto grid max-w-7xl grid-cols-2 gap-3 px-4 py-4 sm:px-6 sm:py-5 lg:grid-cols-4 lg:px-8">
         {valueStrip.map((item) => (
-          <div key={item.label} className="flex items-center gap-3 py-3 lg:justify-center">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-[#b8d7f0] bg-[#E6F1FB] text-[#185FA5]">
+          <div key={item.label} className="flex items-center gap-2 py-2 sm:gap-3 sm:py-3 lg:justify-center">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#b8d7f0] bg-[#E6F1FB] text-[#185FA5] sm:h-10 sm:w-10">
               <item.icon size={19} />
             </div>
-            <p className="text-sm font-extrabold text-slate-800">{item.label}</p>
+            <p className="text-xs font-extrabold leading-4 text-slate-800 sm:text-sm">{item.label}</p>
           </div>
         ))}
       </div>
@@ -349,7 +382,7 @@ function ValueStrip() {
 function BenefitsSection() {
   return (
     <SectionShell id="benefits" title="Built for applied assessment judgment" description="Short, practical training tools for formulas, fairness, and defensible conclusions.">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-4">
         {benefits.map((item) => (
           <InfoCard key={item.title} {...item} />
         ))}
@@ -371,19 +404,19 @@ function LearningPaths() {
         </Link>
       }
     >
-      <div className="grid gap-5 lg:grid-cols-3">
+      <div className="grid gap-4 sm:gap-5 lg:grid-cols-3">
         {learningPaths.map((path) => (
           <Link
             key={path.title}
             href={path.href}
             className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#185FA5] hover:shadow-md"
           >
-            <div className="grid grid-cols-[76px_1fr]">
-              <div className={`${path.accent} flex min-h-40 items-start justify-center p-5 text-white`}>
-                <path.icon size={30} />
+            <div className="grid grid-cols-[58px_1fr] sm:grid-cols-[76px_1fr]">
+              <div className={`${path.accent} flex min-h-40 items-start justify-center p-4 text-white sm:p-5`}>
+                <path.icon size={27} />
               </div>
-              <div className="p-5">
-                <h3 className="text-lg font-extrabold leading-tight text-slate-950 group-hover:text-[#185FA5]">
+              <div className="p-4 sm:p-5">
+                <h3 className="text-base font-extrabold leading-tight text-slate-950 group-hover:text-[#185FA5] sm:text-lg">
                   {path.title}
                 </h3>
                 <p className="mt-3 text-sm leading-6 text-slate-600">{path.description}</p>
@@ -406,9 +439,9 @@ function LearningPaths() {
 function HowItWorks() {
   return (
     <SectionShell id="how-it-works" title="How IMPACT_26 works" description="A clear learning loop from concept to confident application.">
-      <div className="grid gap-5 md:grid-cols-4">
+      <div className="grid gap-3 sm:gap-5 md:grid-cols-4">
         {steps.map((step, index) => (
-          <div key={step.title} className="relative rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <div key={step.title} className="relative rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             {index < steps.length - 1 && (
               <div className="absolute left-[calc(100%-0.5rem)] top-12 hidden h-px w-5 border-t border-dashed border-slate-300 md:block" />
             )}
@@ -420,7 +453,7 @@ function HowItWorks() {
                 {step.number}
               </span>
             </div>
-            <h3 className="mt-5 text-base font-extrabold text-slate-950">{step.title}</h3>
+            <h3 className="mt-4 text-base font-extrabold text-slate-950 sm:mt-5">{step.title}</h3>
             <p className="mt-2 text-sm leading-6 text-slate-600">{step.description}</p>
           </div>
         ))}
@@ -434,7 +467,7 @@ function Capabilities() {
     <SectionShell title="Platform capabilities" description="Everything learners and administrators need to support consistent progress.">
       <div className="grid gap-px overflow-hidden rounded-lg border border-slate-200 bg-slate-200 sm:grid-cols-2 lg:grid-cols-3">
         {capabilities.map((item) => (
-          <div key={item.title} className="bg-white p-5">
+          <div key={item.title} className="bg-white p-4 sm:p-5">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-[#b8d7f0] bg-[#E6F1FB] text-[#185FA5]">
               <item.icon size={20} />
             </div>
@@ -450,15 +483,15 @@ function Capabilities() {
 function MissionProof() {
   return (
     <section className="bg-white">
-      <div className="mx-auto grid max-w-7xl gap-0 px-4 py-16 sm:px-6 lg:grid-cols-[0.78fr_1.22fr] lg:px-8">
-        <div className="rounded-t-lg bg-[#073866] p-7 text-white lg:rounded-l-lg lg:rounded-tr-none">
+      <div className="mx-auto grid max-w-7xl gap-0 px-4 py-10 sm:px-6 sm:py-16 lg:grid-cols-[0.78fr_1.22fr] lg:px-8">
+        <div className="rounded-t-lg bg-[#073866] p-5 text-white sm:p-7 lg:rounded-l-lg lg:rounded-tr-none">
           <p className="text-4xl font-extrabold leading-none text-white/25">"</p>
           <p className="mt-2 max-w-md text-xl font-extrabold leading-8 tracking-[-0.02em]">
             Wisdom is applied knowledge - using logic before formula to serve the public with equity, transparency, and defensible reasoning.
           </p>
           <p className="mt-5 text-sm font-semibold text-white/70">The IMPACT_26V.1 mission</p>
         </div>
-        <div className="rounded-b-lg border border-slate-200 bg-[#f8fafc] p-7 lg:rounded-r-lg lg:rounded-bl-none lg:border-l-0">
+        <div className="rounded-b-lg border border-slate-200 bg-[#f8fafc] p-5 sm:p-7 lg:rounded-r-lg lg:rounded-bl-none lg:border-l-0">
           <h2 className="text-2xl font-extrabold tracking-[-0.02em] text-slate-950">
             Rooted in public service.
           </h2>
@@ -482,8 +515,8 @@ function MissionProof() {
 
 function FinalCta() {
   return (
-    <section className="bg-[#073866]">
-      <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-9 text-white sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+    <section className="brand-inverse bg-[#073866]">
+      <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-7 text-white sm:gap-6 sm:px-6 sm:py-9 lg:flex-row lg:items-center lg:justify-between lg:px-8">
         <div>
           <p className="text-sm font-bold uppercase tracking-[0.12em] text-white/60">Ready to strengthen your assessments?</p>
           <h2 className="mt-2 text-2xl font-extrabold tracking-[-0.02em]">Build knowledge you can explain and defend.</h2>
@@ -517,7 +550,7 @@ function Footer() {
 
   return (
     <footer className="bg-[#052a4f] text-white">
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-[1.2fr_2fr] lg:px-8">
+      <div className="mx-auto grid max-w-7xl gap-7 px-4 py-8 sm:px-6 sm:py-10 md:grid-cols-[1.2fr_2fr] lg:px-8">
         <div>
           <div className="flex items-center gap-3">
             <Image
@@ -535,7 +568,7 @@ function Footer() {
             </div>
           </div>
         </div>
-        <div className="grid gap-6 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-6 sm:grid-cols-3">
           {groups.map((group) => (
             <div key={group.title}>
               <p className="text-sm font-extrabold text-white">{group.title}</p>
@@ -551,7 +584,7 @@ function Footer() {
         </div>
       </div>
       <div className="border-t border-white/10">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 text-xs text-white/55 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl flex-col gap-1.5 px-4 py-4 text-xs text-white/55 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-6 lg:px-8">
           <p>IMPACT_26V.1 - 2026 Version 1</p>
           <p>Built for assessment learning and public trust.</p>
         </div>
@@ -574,15 +607,15 @@ function SectionShell({
   children: React.ReactNode;
 }) {
   return (
-    <section id={id} className="mx-auto w-full max-w-7xl overflow-hidden px-4 py-16 sm:px-6 lg:px-8">
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <section id={id} className="mx-auto w-full max-w-7xl overflow-hidden px-4 py-10 sm:px-6 sm:py-16 lg:px-8">
+      <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-2xl font-extrabold tracking-[-0.025em] text-slate-950 sm:text-3xl">{title}</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">{description}</p>
         </div>
         {action && <div className="shrink-0">{action}</div>}
       </div>
-      <div className="min-w-0 w-full max-w-[21rem] sm:max-w-none">{children}</div>
+      <div className="w-full min-w-0">{children}</div>
     </section>
   );
 }
@@ -604,7 +637,7 @@ function InfoCard({
       : "border-[#b8d7f0] bg-[#f4f9ff] text-[#185FA5]";
 
   return (
-    <div className="min-w-0 w-full max-w-[21rem] rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:max-w-none">
+    <div className="w-full min-w-0 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
       <div className={`flex h-11 w-11 items-center justify-center rounded-lg border ${styles}`}>
         <Icon size={21} />
       </div>

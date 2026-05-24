@@ -282,7 +282,7 @@ export function FormulaCompass({
                         return next;
                       });
                     }}
-                    className="flex w-full items-start justify-between gap-4 px-5 py-4 text-left transition-colors hover:bg-[#F8F7F4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-inset"
+                    className="formula-compass-section-toggle flex w-full items-start justify-between gap-4 px-5 py-4 text-left transition-colors hover:bg-[#F8F7F4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-inset"
                   >
                     <div>
                       <StatusBadge tone="blue" className="mb-2">{section.code}</StatusBadge>
@@ -409,20 +409,20 @@ function CompassHeader({
               ))}
             </div>
 
-            {/* Calculator button */}
+            {/* Calculator button — top-right */}
             {calcCtx && (
               <button
                 type="button"
                 onClick={() => calcCtx!.isOpen ? (calcCtx!.isMinimized ? calcCtx!.restore() : undefined) : calcCtx!.open()}
+                title="Open formula calculator"
                 className={cn(
-                  "flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[11px] font-bold transition-colors",
+                  "flex h-8 w-8 items-center justify-center rounded-lg border transition-colors",
                   calcCtx.isOpen && !calcCtx.isMinimized
                     ? "border-white/60 bg-white/20 text-white"
-                    : "border-white/20 text-white/80 hover:bg-white/15"
+                    : "border-white/20 text-white/70 hover:bg-white/15 hover:text-white"
                 )}
               >
-                <Icons.Calculator size={12} />
-                Calculator
+                <Icons.Calculator size={15} />
               </button>
             )}
           </div>
@@ -690,11 +690,11 @@ function DrillView({
                     className={cn(
                       "ml-auto flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] disabled:opacity-60",
                       favoriteFormulaIds.has(formula.id)
-                        ? "bg-[#E6F1FB] text-[#185FA5]"
-                        : "text-slate-400 hover:bg-slate-100"
+                        ? "text-amber-500"
+                        : "text-slate-400 hover:text-amber-400"
                     )}
                   >
-                    <Icons.BookMarked size={12} />
+                    <Icons.Star size={13} fill={favoriteFormulaIds.has(formula.id) ? "currentColor" : "none"} />
                     {favoriteFormulaIds.has(formula.id) ? "Saved" : "Save"}
                   </button>
                 )}
@@ -776,7 +776,13 @@ function DrillView({
 function DrillExamplesPanel({ formula }: { formula: Formula }) {
   const examplesData = parseExamples(formula.examplesJson);
   const available = EXAMPLE_DIFFICULTY_CONFIG.filter((d) => examplesData?.[d.key]);
-  const [active, setActive] = useState<ExampleDifficulty | null>(null);
+  const [active, setActive] = useState<ExampleDifficulty | null>(available[0]?.key ?? null);
+
+  // Reset to first tab when the formula changes
+  useEffect(() => {
+    setActive(available[0]?.key ?? null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formula.id]);
 
   if (available.length === 0) return null;
 
@@ -852,7 +858,7 @@ function FormulaCard({
   const availableDifficulties = EXAMPLE_DIFFICULTY_CONFIG.filter((d) => examplesData?.[d.key]);
 
   return (
-    <article className="border-b border-slate-100 px-5 py-4 transition-colors hover:bg-[#fbfcfd]">
+    <article className="formula-compass-card border-b border-slate-100 px-5 py-4 transition-colors hover:bg-[#fbfcfd]">
       <div className="mb-2 flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
@@ -878,13 +884,13 @@ function FormulaCard({
             aria-pressed={isFavorite}
             aria-label={isFavorite ? "Remove favorite formula" : "Save formula"}
             className={cn(
-              "inline-flex h-8 w-8 items-center justify-center rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60",
+              "inline-flex h-8 w-8 items-center justify-center rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60",
               isFavorite
-                ? "border-[#185FA5] bg-[#E6F1FB] text-[#185FA5]"
-                : "border-slate-200 bg-white text-slate-400 hover:border-[#185FA5] hover:text-[#185FA5]"
+                ? "border-amber-300 bg-amber-50 text-amber-500"
+                : "border-slate-200 bg-white text-slate-300 hover:border-amber-300 hover:text-amber-400"
             )}
           >
-            <Icons.BookMarked size={15} />
+            <Icons.Star size={15} fill={isFavorite ? "currentColor" : "none"} />
           </button>
         )}
       </div>

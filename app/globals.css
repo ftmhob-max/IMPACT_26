@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  color-scheme: light;
   /* Domain color palette — reference design values */
   --color-math:      #534AB7;
   --color-appraisal: #0F6E56;
@@ -17,10 +18,30 @@
   --impact-blue-dark: #0d3d6e;
   --impact-page: #f0efe9;
   --impact-surface: #ffffff;
+  --impact-surface-raised: #ffffff;
+  --impact-surface-muted: #f7f8f6;
+  --impact-surface-inset: #f8fbff;
   --impact-ink: #1a1a18;
   --impact-muted: #4a4a46;
   --impact-faint: #888880;
   --impact-border: rgba(0,0,0,0.11);
+  --impact-border-strong: rgba(24, 95, 165, 0.3);
+  --impact-brand-soft: #E6F1FB;
+  --impact-brand-border: #b8d7f0;
+  --impact-success-bg: #e8f6ee;
+  --impact-success-text: #17633d;
+  --impact-success-border: #a8d8ba;
+  --impact-warning-bg: #fff3dc;
+  --impact-warning-text: #854f0b;
+  --impact-warning-border: #ecd39b;
+  --impact-danger-bg: #fcebea;
+  --impact-danger-text: #a32d2d;
+  --impact-danger-border: #efc1be;
+  --impact-info-bg: #eaf3fc;
+  --impact-info-text: #185fa5;
+  --impact-info-border: #b8d7f0;
+  --impact-input-bg: #ffffff;
+  --impact-overlay: rgba(15, 23, 42, 0.45);
   --sidebar-bg: #0b3a69;
   --sidebar-bg-strong: #073866;
   --sidebar-border: rgba(196, 220, 245, 0.18);
@@ -43,10 +64,30 @@
   --impact-blue-dark: #9bd0ff;
   --impact-page: #0e141b;
   --impact-surface: #151d26;
+  --impact-surface-raised: #18222d;
+  --impact-surface-muted: #101821;
+  --impact-surface-inset: #192532;
   --impact-ink: #f4f7fb;
   --impact-muted: #c8d3df;
   --impact-faint: #9fb0c2;
   --impact-border: rgba(226, 232, 240, 0.15);
+  --impact-border-strong: rgba(110, 182, 255, 0.45);
+  --impact-brand-soft: rgba(110, 182, 255, 0.16);
+  --impact-brand-border: rgba(110, 182, 255, 0.36);
+  --impact-success-bg: rgba(16, 185, 129, 0.16);
+  --impact-success-text: #7ee6b1;
+  --impact-success-border: rgba(110, 231, 183, 0.34);
+  --impact-warning-bg: rgba(251, 191, 36, 0.16);
+  --impact-warning-text: #f8d783;
+  --impact-warning-border: rgba(252, 211, 77, 0.32);
+  --impact-danger-bg: rgba(248, 113, 113, 0.15);
+  --impact-danger-text: #fca5a5;
+  --impact-danger-border: rgba(252, 165, 165, 0.34);
+  --impact-info-bg: rgba(110, 182, 255, 0.16);
+  --impact-info-text: #79c0ff;
+  --impact-info-border: rgba(110, 182, 255, 0.36);
+  --impact-input-bg: #101821;
+  --impact-overlay: rgba(0, 0, 0, 0.7);
   --sidebar-bg: #071c33;
   --sidebar-bg-strong: #041525;
   --sidebar-border: rgba(196, 220, 245, 0.16);
@@ -68,8 +109,8 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
   font-size: 14px;
   line-height: 1.65;
-  color: #1e293b;
-  background-color: #f0efe9;
+  color: var(--impact-ink);
+  background-color: var(--impact-page);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -88,7 +129,7 @@ body {
 .dark [class~="bg-[#f0efe9]"],
 .dark [class~="bg-slate-50"],
 .dark [class~="bg-slate-100"] {
-  background-color: #101821 !important;
+  background-color: var(--impact-surface-muted) !important;
 }
 
 .dark [class~="bg-slate-200"] {
@@ -96,7 +137,43 @@ body {
 }
 
 .dark [class~="bg-[#E6F1FB]"] {
-  background-color: rgba(110, 182, 255, 0.16) !important;
+  background-color: var(--impact-brand-soft) !important;
+}
+
+/* Theme adapters for existing tinted utility surfaces. Components can use
+   semantic tokens directly over time without leaving older screens behind. */
+.dark [class~="bg-[#f0f7ff]"],
+.dark [class~="bg-[#f2f7fc]"],
+.dark [class~="bg-[#f4f9ff]"],
+.dark [class~="bg-[#f5f9ff]"],
+.dark [class~="bg-[#f5fbf7]"],
+.dark [class~="bg-[#f7fbff]"],
+.dark [class~="bg-[#f8f7ff]"],
+.dark [class~="bg-[#F8F7F4]"],
+.dark [class~="bg-[#f0ede3]"],
+.dark [class~="bg-[#fbfcfd]"],
+.dark [class~="bg-[#fbfcfe]"],
+.dark [class~="bg-[#fbfdff]"] {
+  background-color: var(--impact-surface-inset) !important;
+}
+
+.dark [class*="bg-[#E6F1FB]/"],
+.dark [class*="bg-[#f8fbff]/"] {
+  background-color: var(--impact-brand-soft) !important;
+}
+
+.dark [class~="bg-white/92"],
+.dark [class~="bg-white/95"],
+.dark [class~="bg-white/80"] {
+  background-color: rgb(21 29 38 / 0.94) !important;
+}
+
+.dark [class*="bg-[linear-gradient(180deg,#"] {
+  background: var(--impact-surface-inset) !important;
+}
+
+.dark [class~="from-[#f7f8f6]"] {
+  --tw-gradient-from: var(--impact-page) !important;
 }
 
 .dark [class~="text-slate-950"],
@@ -120,10 +197,52 @@ body {
   color: var(--impact-blue) !important;
 }
 
+.dark [class~="text-[#1a1a18]"] {
+  color: var(--impact-ink) !important;
+}
+
+.dark [class~="text-[#4a4a46]"] {
+  color: var(--impact-muted) !important;
+}
+
+.dark [class~="text-[#888880]"] {
+  color: var(--impact-faint) !important;
+}
+
+.dark [class~="text-[#0b3970]"],
+.dark [class~="text-[#073866]"] {
+  color: var(--impact-ink) !important;
+}
+
+.dark [class~="text-[#2f7a4d]"],
+.dark [class~="text-[#3B6D11]"] {
+  color: var(--impact-success-text) !important;
+}
+
+.dark [class~="text-[#854F0B]"] {
+  color: var(--impact-warning-text) !important;
+}
+
+.dark [class~="text-[#534AB7]"] {
+  color: #c7b8ff !important;
+}
+
+.dark [class~="border-[#9dc6eb]"],
+.dark [class~="border-[#b8d7f0]"],
+.dark [class~="border-[#b9d8c5]"],
+.dark [class~="border-[#d8d5fb]"],
+.dark [class~="border-[#d8e6f4]"],
+.dark [class~="border-[#ecd39b]"] {
+  border-color: var(--impact-brand-border) !important;
+}
+
 .dark [class~="border-slate-300"],
 .dark [class~="border-slate-200"],
 .dark [class~="border-slate-100"],
-.dark [class~="border-black/10"] {
+.dark [class~="border-slate-50"],
+.dark [class~="border-black/10"],
+.dark [class~="border-[rgba(0,0,0,0.08)]"],
+.dark [class~="border-[rgba(0,0,0,0.11)]"] {
   border-color: var(--impact-border) !important;
 }
 
@@ -151,6 +270,204 @@ body {
 
 .dark [class~="focus:bg-white"]:focus {
   background-color: var(--impact-surface) !important;
+}
+
+.dark [class~="hover:bg-[#E6F1FB]"]:hover,
+.dark [class*="hover:bg-[#E6F1FB]/"]:hover,
+.dark [class~="hover:bg-[#f8fbff]"]:hover {
+  background-color: rgba(110, 182, 255, 0.2) !important;
+}
+
+.dark [class~="hover:border-[#185FA5]"]:hover,
+.dark [class*="hover:border-[#185FA5]/"]:hover {
+  border-color: var(--impact-border-strong) !important;
+}
+
+.dark [class~="bg-emerald-50"],
+.dark [class~="bg-emerald-100"],
+.dark [class~="bg-green-50"],
+.dark [class~="bg-green-100"],
+.dark [class~="bg-[#EAF3DE]"],
+.dark [class*="bg-emerald-50/"],
+.dark [class*="bg-green-50/"] {
+  background-color: var(--impact-success-bg) !important;
+}
+
+.dark [class~="text-emerald-600"],
+.dark [class~="text-emerald-700"],
+.dark [class~="text-emerald-800"],
+.dark [class~="text-emerald-900"],
+.dark [class~="text-green-700"],
+.dark [class~="text-green-800"] {
+  color: var(--impact-success-text) !important;
+}
+
+.dark [class~="border-emerald-200"],
+.dark [class~="border-emerald-300"],
+.dark [class~="border-green-200"],
+.dark [class~="border-green-300"] {
+  border-color: var(--impact-success-border) !important;
+}
+
+.dark [class~="bg-amber-50"],
+.dark [class~="bg-amber-100"],
+.dark [class~="bg-yellow-50"],
+.dark [class~="bg-[#FAEEDA]"],
+.dark [class~="bg-[#fff0b8]"],
+.dark [class*="bg-amber-50/"] {
+  background-color: var(--impact-warning-bg) !important;
+}
+
+.dark [class~="text-amber-600"],
+.dark [class~="text-amber-700"],
+.dark [class~="text-amber-800"],
+.dark [class~="text-amber-900"],
+.dark [class~="text-amber-950"],
+.dark [class~="text-yellow-700"] {
+  color: var(--impact-warning-text) !important;
+}
+
+.dark [class~="border-amber-100"],
+.dark [class~="border-amber-200"],
+.dark [class~="border-amber-300"] {
+  border-color: var(--impact-warning-border) !important;
+}
+
+.dark [class~="bg-red-50"],
+.dark [class~="bg-red-100"],
+.dark [class~="bg-rose-50"],
+.dark [class~="bg-rose-100"],
+.dark [class~="bg-[#FCEBEB]"],
+.dark [class*="bg-red-50/"],
+.dark [class*="bg-rose-50/"] {
+  background-color: var(--impact-danger-bg) !important;
+}
+
+.dark [class~="text-red-500"],
+.dark [class~="text-red-600"],
+.dark [class~="text-red-700"],
+.dark [class~="text-red-800"],
+.dark [class~="text-red-900"],
+.dark [class~="text-rose-700"] {
+  color: var(--impact-danger-text) !important;
+}
+
+.dark [class~="border-red-200"],
+.dark [class~="border-red-300"] {
+  border-color: var(--impact-danger-border) !important;
+}
+
+.dark [class~="bg-blue-50"],
+.dark [class~="bg-blue-100"],
+.dark [class~="bg-sky-50"],
+.dark [class~="bg-sky-100"],
+.dark [class*="bg-blue-50/"],
+.dark [class*="bg-sky-50/"] {
+  background-color: var(--impact-info-bg) !important;
+}
+
+.dark [class~="text-blue-700"],
+.dark [class~="text-sky-800"],
+.dark [class~="text-sky-900"] {
+  color: var(--impact-info-text) !important;
+}
+
+.dark [class~="border-blue-200"],
+.dark [class~="border-blue-300"],
+.dark [class~="border-sky-200"] {
+  border-color: var(--impact-info-border) !important;
+}
+
+.dark [class~="bg-purple-50"],
+.dark [class~="bg-purple-100"],
+.dark [class~="bg-violet-100"],
+.dark [class~="bg-pink-100"],
+.dark [class~="bg-[#EEEDFE]"],
+.dark [class*="bg-purple-50/"] {
+  background-color: rgba(167, 139, 250, 0.16) !important;
+}
+
+.dark [class~="text-purple-700"],
+.dark [class~="text-violet-700"],
+.dark [class~="text-pink-700"] {
+  color: #d8c8ff !important;
+}
+
+.dark [class~="border-purple-200"] {
+  border-color: rgba(196, 181, 253, 0.34) !important;
+}
+
+.dark .badge-math,
+.dark .badge-proficient {
+  background: rgba(167, 139, 250, 0.16);
+  color: #d8c8ff;
+}
+
+.dark .badge-appraisal,
+.dark .badge-ethics,
+.dark .badge-easy {
+  background: var(--impact-success-bg);
+  color: var(--impact-success-text);
+}
+
+.dark .badge-law,
+.dark .badge-admin,
+.dark .badge-expert {
+  background: var(--impact-danger-bg);
+  color: var(--impact-danger-text);
+}
+
+.dark .badge-philly {
+  background: var(--impact-warning-bg);
+  color: var(--impact-warning-text);
+}
+
+.dark input:not([type="checkbox"]):not([type="radio"]):not([class~="bg-transparent"]),
+.dark textarea:not([class~="bg-transparent"]),
+.dark select:not([class~="bg-transparent"]) {
+  background-color: var(--impact-input-bg);
+  border-color: var(--impact-border);
+  color: var(--impact-ink);
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: var(--impact-faint);
+}
+
+.dark option {
+  background-color: var(--impact-surface);
+  color: var(--impact-ink);
+}
+
+.dark [class~="bg-black/40"],
+.dark [class~="bg-slate-950/45"] {
+  background-color: var(--impact-overlay) !important;
+}
+
+.dark .brand-inverse [class~="bg-white"] {
+  background-color: #ffffff !important;
+}
+
+.dark .brand-inverse [class~="text-[#073866]"] {
+  color: #073866 !important;
+}
+
+.theme-toggle-surface {
+  border-color: var(--impact-border);
+  background: var(--impact-surface-raised);
+  color: var(--impact-muted);
+}
+
+.theme-toggle-surface:hover {
+  border-color: var(--impact-brand-border);
+  background: var(--impact-brand-soft);
+  color: var(--impact-blue);
+}
+
+.theme-toggle-surface .theme-toggle-icon {
+  background: var(--impact-brand-soft);
+  color: var(--impact-blue);
 }
 
 .dark .admin-dashboard-hero,
@@ -185,6 +502,11 @@ body {
 .dark .progress-profile-hero [class~="ring-slate-200"],
 .dark .progress-profile-hero [class~="ring-[#b8d7f0]"] {
   --tw-ring-color: rgba(226, 232, 240, 0.16) !important;
+}
+
+.dark .formula-compass-section-toggle:hover,
+.dark .formula-compass-card:hover {
+  background-color: #1b2633 !important;
 }
 
 .dark .course-editor {
@@ -515,6 +837,11 @@ body {
   outline: none;
 }
 
+select.h-8 {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
 .dark .admin-input {
   border-color: var(--impact-border);
   background: #101821;
@@ -600,4 +927,107 @@ body {
 .glossary-term {
   border-bottom: 1.5px dotted #185FA5;
   cursor: help;
+}
+
+/* ─── Missing hover overrides for dark mode ────────────────────────────────── */
+
+/* List row hover color (#fbfdff) — not covered by the generic slate-50 rule */
+.dark [class~="hover:bg-[#fbfdff]"]:hover,
+.dark [class~="hover:bg-[#fbfcfe]"]:hover {
+  background-color: #1d2b3a !important;
+}
+
+/* Slate-200 hover (SM/MD/LG size buttons, etc.) */
+.dark [class~="hover:bg-slate-200"]:hover {
+  background-color: #263444 !important;
+}
+
+/* Slate-600 hover text */
+.dark [class~="hover:text-slate-600"]:hover {
+  color: var(--impact-muted) !important;
+}
+
+/* ─── Materials library panel ──────────────────────────────────────────────── */
+
+/* The right-border divider between the list pane and the preview pane */
+.materials-list-pane {
+  border-right: 1px solid rgba(0, 0, 0, 0.08);
+}
+.dark .materials-list-pane {
+  border-right-color: rgba(226, 232, 240, 0.18) !important;
+}
+
+/* Preview pane — distinct tinted surface so it reads as "inspector", not "second list" */
+.materials-preview-pane {
+  background-color: #f8fafc;
+}
+.dark .materials-preview-pane {
+  background-color: #111923 !important;
+}
+
+/* Preview tab strip */
+.materials-preview-tabs {
+  background-color: #f4f6f9;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+}
+.dark .materials-preview-tabs {
+  background-color: #0e1620 !important;
+  border-bottom-color: rgba(226, 232, 240, 0.14) !important;
+}
+
+/* Inactive preview tab button — base */
+.materials-preview-tab-btn {
+  color: #64748b;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+.materials-preview-tab-btn:hover {
+  background-color: rgba(24, 95, 165, 0.08);
+  color: #185FA5;
+}
+.dark .materials-preview-tab-btn {
+  color: #9fb0c2;
+}
+.dark .materials-preview-tab-btn:hover {
+  background-color: rgba(110, 182, 255, 0.14) !important;
+  color: #6eb6ff !important;
+}
+
+/* Active preview tab button */
+.materials-preview-tab-btn-active {
+  background-color: #185FA5;
+  color: #ffffff;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.dark .materials-preview-tab-btn-active {
+  background-color: #2d7fd3 !important;
+  color: #ffffff !important;
+}
+
+/* Selected list row — left accent bar + tinted background */
+.materials-row-selected {
+  background-color: #eef6ff;
+  border-left: 3px solid #185FA5;
+}
+.dark .materials-row-selected {
+  background-color: #192232 !important;
+  border-left-color: #6eb6ff !important;
+}
+
+/* Unselected rows — ensure hover is clearly visible in dark mode */
+.dark .materials-row:hover:not(.materials-row-selected) {
+  background-color: #1d2b3a !important;
+}
+
+/* Focus mode — hide admin nav sidebar for distraction-free editing */
+@media (min-width: 1024px) {
+  body[data-focus-mode] > div > aside {
+    display: none;
+  }
 }

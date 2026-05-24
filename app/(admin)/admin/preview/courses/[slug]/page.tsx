@@ -146,13 +146,13 @@ export default async function AdminPreviewCourseDetailPage({
                           <Link
                             key={lesson.id}
                             href={`/admin/preview/lessons/${lesson.id}`}
-                            className="grid grid-cols-[48px_1fr_auto] items-center gap-3 px-5 py-3 transition-colors hover:bg-[#F8F7F4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-inset"
+                            className="grid grid-cols-[36px_minmax(0,1fr)] items-center gap-x-3 gap-y-2 px-4 py-3 transition-colors hover:bg-[#F8F7F4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-inset sm:grid-cols-[48px_1fr_auto] sm:px-5"
                           >
                             <span className="font-mono text-xs text-slate-400">{mIdx + 1}.{lIdx + 1}</span>
                             <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-700">
                               {lesson.title}
                             </span>
-                            <span className={`whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold ${style.className}`}>
+                            <span className={`col-start-2 w-fit whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold sm:col-start-auto ${style.className}`}>
                               {style.label}
                             </span>
                           </Link>

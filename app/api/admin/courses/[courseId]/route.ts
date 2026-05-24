@@ -34,6 +34,42 @@ export async function GET(
       quizzesData.quizzes.map((q: any) => [formatUuid(q.id), q])
     );
 
+    // Collect unique quiz IDs from lessons in this course for readiness checks
+    const allLessons = (course.modules_on_course ?? []).flatMap((m: any) => m.lessons_on_module ?? []);
+    const linkedQuizIds = [...new Set(
+      allLessons
+        .filter((l: any) => l.lessonType === "quiz" && l.quiz?.id)
+        .map((l: any) => formatUuid(l.quiz.id))
+    )];
+
+    // Fetch quiz question data in parallel to compute readiness
+    const quizReadinessMap = new Map<string, { questionCount: number; incompleteQuestionCount: number }>();
+    if (linkedQuizIds.length > 0) {
+      const quizQuestionResults = await Promise.all(
+        linkedQuizIds.map((qId) =>
+          adminDcQuery<{ quizQuestions: any[] }>("GetQuizQuestionCount", { quizId: qId })
+            .then((d) => ({ quizId: qId, questions: d?.quizQuestions ?? [] }))
+            .catch(() => ({ quizId: qId, questions: [] }))
+        )
+      );
+      // For readiness we need isCorrect — use a richer admin query for each quiz
+      const richResults = await Promise.all(
+        linkedQuizIds.map((qId) =>
+          adminDcQuery<{ quizQuestions: any[] }>("GetQuizQuestionsAdmin", { quizId: qId })
+            .then((d) => ({ quizId: qId as string, questions: d?.quizQuestions ?? [] }))
+            .catch(() => ({ quizId: qId as string, questions: [] as any[] }))
+        )
+      );
+      void quizQuestionResults; // unused after switching to richer query
+      for (const { quizId, questions } of richResults) {
+        const questionCount = questions.length;
+        const incompleteQuestionCount = questions.filter(
+          (qq: any) => !qq.question?.answerChoices_on_question?.some((c: any) => c.isCorrect)
+        ).length;
+        quizReadinessMap.set(quizId, { questionCount, incompleteQuestionCount });
+      }
+    }
+
     const modules = (course.modules_on_course ?? [])
       .slice()
       .sort((a: any, b: any) => a.position - b.position)
@@ -50,6 +86,7 @@ export async function GET(
           .sort((a: any, b: any) => a.position - b.position)
           .map((lesson: any) => {
             const linkedQuiz = lesson.quiz?.id ? quizMap.get(formatUuid(lesson.quiz.id)) : null;
+            const quizCounts = lesson.quiz?.id ? quizReadinessMap.get(formatUuid(lesson.quiz.id)) : null;
             return {
               id: lesson.id,
               title: lesson.title,
@@ -70,6 +107,8 @@ export async function GET(
                     timeLimitSeconds: linkedQuiz.timeLimitSeconds ?? null,
                     shuffleQuestions: linkedQuiz.shuffleQuestions,
                     shuffleChoices: linkedQuiz.shuffleChoices,
+                    questionCount: quizCounts?.questionCount ?? 0,
+                    incompleteQuestionCount: quizCounts?.incompleteQuestionCount ?? 0,
                   }
                 : null,
               sourceMaterial: lesson.sourceMaterial

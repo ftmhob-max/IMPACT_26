@@ -81,6 +81,13 @@ export function CurriculumTree({
   const [showImportCourse, setShowImportCourse] = useState(false);
   const [quizzes, setQuizzes] = useState<Array<{ id: string; title: string }>>(initialQuizzes);
   const [materials, setMaterials] = useState<Array<{ id: string; title: string }>>(initialMaterials);
+  const [preflightDialog, setPreflightDialog] = useState<{
+    lessonIds: string[];
+    readyIds: string[];
+    blockedIds: string[];
+    results: Array<{ lessonId: string; title: string; lessonType: string; blockers: string[]; warnings: string[]; isReady: boolean }>;
+    onConfirm: (publishAll: boolean) => void;
+  } | null>(null);
 
   async function load() {
     setLoading(true);
@@ -138,12 +145,12 @@ export function CurriculumTree({
     });
   }
 
-  async function publishLessons(lessonIds: string[]) {
+  async function publishLessonsForce(lessonIds: string[]) {
     if (!lessonIds.length) return;
     const res = await adminFetch("/api/admin/courses", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "publish-lessons", lessonIds, publish: true }),
+      body: JSON.stringify({ action: "publish-lessons", lessonIds, publish: true, force: true }),
     });
     if (res.ok) {
       setSelectedLessonIds((prev) => {
@@ -153,10 +160,47 @@ export function CurriculumTree({
       });
       showNotice("success", `${lessonIds.length} lesson${lessonIds.length !== 1 ? "s" : ""} published.`);
       await load();
+    } else {
+      const err = await res.json().catch(() => ({}));
+      showNotice("error", err.error ?? "Failed to publish lessons.");
+    }
+  }
+
+  async function publishLessons(lessonIds: string[]) {
+    if (!lessonIds.length) return;
+    // Preflight check before publishing
+    const res = await adminFetch("/api/admin/courses", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "publish-lessons", lessonIds, publish: true, preflight: true }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      showNotice("error", err.error ?? "Failed to check lesson readiness.");
       return;
     }
-    const err = await res.json().catch(() => ({}));
-    showNotice("error", err.error ?? "Failed to publish lessons.");
+    const data = await res.json();
+    const { readyIds = [], blockedIds = [], results = [] } = data;
+
+    if (blockedIds.length === 0) {
+      // All lessons ready — publish directly
+      await publishLessonsForce(lessonIds);
+      return;
+    }
+
+    // Show preflight dialog for admin to decide
+    setPreflightDialog({
+      lessonIds,
+      readyIds,
+      blockedIds,
+      results,
+      onConfirm: async (publishAll: boolean) => {
+        setPreflightDialog(null);
+        const idsToPublish = publishAll ? lessonIds : readyIds;
+        if (idsToPublish.length) await publishLessonsForce(idsToPublish);
+        else showNotice("error", "No lessons published — all had blockers.");
+      },
+    });
   }
 
   async function unpublishLesson(lessonId: string) {
@@ -235,29 +279,46 @@ export function CurriculumTree({
     const lessonIds = module.lessons_on_module.map((l) => l.id);
     if (!lessonIds.length) { showNotice("error", "No lessons in this module."); return; }
 
+    // Preflight check before publishing
     const res = await adminFetch("/api/admin/courses", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "publish-lessons", lessonIds, publish: true }),
+      body: JSON.stringify({ action: "publish-lessons", lessonIds, publish: true, preflight: true }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      showNotice("error", err.error ?? "Failed to publish lessons.");
+      showNotice("error", err.error ?? "Failed to check lesson readiness.");
+      return;
+    }
+    const data = await res.json();
+    const { readyIds = [], blockedIds = [], results = [] } = data;
+
+    const doPublish = async (idsToPublish: string[]) => {
+      if (!idsToPublish.length) { showNotice("error", "No lessons published — all had blockers."); return; }
+      await publishLessonsForce(idsToPublish);
+      if (!courseIsPublished) {
+        const shouldPublishCourse = window.confirm(
+          `Lessons in "${module.title}" published.\n\nThe course is currently hidden from students. Publish the course now?`
+        );
+        if (shouldPublishCourse) await publishCourse(courseId, true);
+      }
+    };
+
+    if (blockedIds.length === 0) {
+      await doPublish(lessonIds);
       return;
     }
 
-    if (!courseIsPublished) {
-      const shouldPublishCourse = window.confirm(
-        `All ${lessonIds.length} lesson${lessonIds.length !== 1 ? "s" : ""} in "${module.title}" are now published.\n\nThe course is currently hidden from students. Publish the course now?`
-      );
-      if (shouldPublishCourse) {
-        await publishCourse(courseId, true);
-        return;
-      }
-    }
-
-    showNotice("success", `${lessonIds.length} lesson${lessonIds.length !== 1 ? "s" : ""} published.`);
-    await load();
+    setPreflightDialog({
+      lessonIds,
+      readyIds,
+      blockedIds,
+      results,
+      onConfirm: async (publishAll: boolean) => {
+        setPreflightDialog(null);
+        await doPublish(publishAll ? lessonIds : readyIds);
+      },
+    });
   }
 
   async function addModule(courseId: string) {
@@ -314,7 +375,47 @@ export function CurriculumTree({
   }
 
   return (
-    <div className="course-editor flex gap-6">
+    <div className="course-editor flex flex-col gap-6 lg:flex-row">
+      {/* Preflight dialog */}
+      {preflightDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl p-6 space-y-4">
+            <h2 className="text-base font-bold text-slate-900">Review before publishing</h2>
+            <p className="text-sm text-slate-600">
+              {preflightDialog.blockedIds.length} of {preflightDialog.lessonIds.length} lesson{preflightDialog.lessonIds.length !== 1 ? "s" : ""} have issues.
+              {preflightDialog.readyIds.length > 0 && ` ${preflightDialog.readyIds.length} are ready.`}
+            </p>
+            <div className="max-h-64 overflow-y-auto space-y-2">
+              {preflightDialog.results.map((r) => (
+                <div key={r.lessonId} className={`rounded-lg border p-3 text-xs ${r.isReady ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50"}`}>
+                  <p className="font-semibold text-slate-800 mb-1">{r.title}</p>
+                  {r.blockers.map((b) => (
+                    <p key={b} className="text-red-700">✕ {b}</p>
+                  ))}
+                  {r.warnings.map((w) => (
+                    <p key={w} className="text-amber-700">⚠ {w}</p>
+                  ))}
+                  {r.isReady && <p className="text-emerald-700">✓ Ready to publish</p>}
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-2 pt-1">
+              {preflightDialog.readyIds.length > 0 && (
+                <button type="button" onClick={() => preflightDialog.onConfirm(false)} className="admin-action text-xs">
+                  Publish {preflightDialog.readyIds.length} ready
+                </button>
+              )}
+              <button type="button" onClick={() => preflightDialog.onConfirm(true)} className="admin-action secondary text-xs">
+                Publish all anyway
+              </button>
+              <button type="button" onClick={() => setPreflightDialog(null)} className="admin-action secondary text-xs">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Tree */}
       <div className="flex-1 min-w-0 space-y-4">
         {notice && (
@@ -324,7 +425,7 @@ export function CurriculumTree({
           </div>
         )}
 
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-col items-start gap-3 min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between">
           <h2 className="text-base font-bold text-slate-800">Course hierarchy</h2>
           <div className="flex items-center gap-2">
             <button
@@ -788,14 +889,14 @@ function EditPanel({
   onClose: () => void;
 }) {
   return (
-    <div className="w-80 shrink-0 rounded-xl border border-black/10 bg-white shadow-sm self-start sticky top-6">
+    <div className="w-full shrink-0 self-start rounded-xl border border-black/10 bg-white shadow-sm lg:sticky lg:top-6 lg:w-80">
       <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
         <p className="text-sm font-bold text-slate-900 capitalize">Edit {target.type}</p>
         <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-700">
           <Icons.X size={16} />
         </button>
       </div>
-      <div className="p-4 max-h-[calc(100vh-200px)] overflow-y-auto">
+      <div className="p-4 lg:max-h-[calc(100vh-200px)] lg:overflow-y-auto">
         {target.type === "course" && <CourseEditForm course={target.item} onSaved={onSaved} />}
         {target.type === "module" && (
           <ModuleEditForm module={target.item} courseId={target.courseId} allModules={allModules} onSaved={onSaved} />

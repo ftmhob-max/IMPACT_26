@@ -486,7 +486,7 @@ export function DocxImportClient({ onImported }: { onImported?: () => void | Pro
       {mode === "docx" && phase === "preview" && parseResult && (
         <div className="space-y-4">
           {/* Summary cards */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid gap-3 min-[380px]:grid-cols-3">
             {[
               { label: "Sections", value: parseResult.sectionCount, icon: Icons.BookOpen, color: "text-[#185FA5] bg-[#E6F1FB]" },
               { label: "Formulas", value: parseResult.formulaCount, icon: Icons.Calculator, color: "text-amber-700 bg-amber-50" },

@@ -254,9 +254,9 @@ export function QuizManagementPanel({
         <SummaryCard label="Need attention" value={String(quizTotals.attention + quizTotals.empty)} tone="amber" active={summaryFilter === "attention"} onClick={() => setSummaryFilter(summaryFilter === "attention" ? "all" : "attention")} />
       </div>
 
-      <div className="flex gap-5">
+      <div className="flex flex-col gap-5 lg:flex-row">
       {/* Left: quiz list */}
-      <div className={cn("space-y-5", selectedQuiz ? "w-80 shrink-0" : "w-full")}>
+      <div className={cn("min-w-0 space-y-5", selectedQuiz ? "w-full lg:w-80 lg:shrink-0" : "w-full")}>
         {notice && (
           <div className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${notice.type === "success" ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
             {notice.type === "success" ? <Icons.Check size={16} /> : <Icons.X size={16} />}
@@ -265,7 +265,7 @@ export function QuizManagementPanel({
         )}
 
         <div className="rounded-xl border border-black/10 bg-white shadow-sm">
-          <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
+          <div className="flex flex-wrap items-center gap-3 border-b border-slate-100 px-4 py-3">
             <div className="flex items-center gap-2">
               <Icons.LayoutDashboard size={18} className="text-[#185FA5]" />
               <h2 className="text-sm font-bold text-slate-900">Quizzes</h2>
@@ -612,7 +612,7 @@ function QuizDetailPanel({
   return (
     <div className="flex-1 min-w-0 rounded-xl border border-black/10 bg-white shadow-sm overflow-hidden self-start">
       {/* Header */}
-      <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-3 bg-slate-50/60">
+      <div className="flex flex-wrap items-start gap-3 border-b border-slate-100 bg-slate-50/60 px-4 py-3 sm:px-5">
         <Icons.ClipboardList size={16} className="text-[#185FA5] shrink-0" />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-bold text-slate-900 truncate">{quiz.title}</p>
@@ -624,7 +624,7 @@ function QuizDetailPanel({
             <span>{quiz.shuffleQuestions ? "Question shuffle on" : "Fixed question order"}</span>
           </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:shrink-0">
           <button
             type="button"
             onClick={() => onPublish(!isPublished)}
@@ -647,7 +647,7 @@ function QuizDetailPanel({
         </div>
       </div>
 
-      <div className="p-5 space-y-4">
+      <div className="space-y-4 p-4 sm:p-5">
         <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex items-center gap-2">
@@ -667,7 +667,7 @@ function QuizDetailPanel({
         </div>
 
         {/* Stats row */}
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <StatCard label="Questions" value={String(questions.length)} />
           <StatCard label="Incomplete" value={String(incomplete.length)} warn={incomplete.length > 0} />
           <StatCard label="Pass score" value={quiz.passingScore != null ? `${quiz.passingScore}%` : "—"} />

@@ -160,7 +160,7 @@ function ContinuePanel({ latestAttempt }: { latestAttempt: LatestAttempt | null 
   return (
     <SectionPanel>
       <div className="grid gap-5 p-5 lg:grid-cols-[1.25fr_0.75fr] lg:items-center">
-        <div className="flex gap-4">
+        <div className="flex flex-col gap-4 min-[380px]:flex-row">
           <IconTile icon={hasScore ? Icons.BarChart3 : Icons.BookOpen} tone={hasScore ? "green" : "blue"} />
           <div className="min-w-0">
             <StatusBadge tone={hasScore ? (latestAttempt?.passed ? "green" : "amber") : "blue"}>
@@ -245,7 +245,7 @@ function RecentActivity({ attempt }: { attempt: LatestAttempt }) {
             </p>
           </div>
         </div>
-        <div className="flex gap-2 sm:shrink-0">
+        <div className="flex flex-col gap-2 min-[380px]:flex-row sm:shrink-0">
           <SecondaryAction href={`/quiz/${attempt.id}`} icon={false}>Review attempt</SecondaryAction>
           <PrimaryAction href="/courses" icon={false}>
             Take again
@@ -272,13 +272,13 @@ function LearningStep({
   icon: React.ComponentType<{ className?: string; size?: number }>;
 }) {
   return (
-    <div className="flex gap-4 px-5 py-4">
+    <div className="flex flex-col gap-3 px-4 py-4 min-[380px]:flex-row sm:px-5">
       <IconTile icon={Icon} size={16} className="h-9 w-9" />
       <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold text-slate-800">{title}</p>
         <p className="mt-1 text-sm leading-6 text-slate-500">{description}</p>
       </div>
-      <Link href={href} className="self-center whitespace-nowrap text-xs font-semibold text-[#185FA5] hover:underline">
+      <Link href={href} className="self-start whitespace-nowrap text-xs font-semibold text-[#185FA5] hover:underline min-[380px]:self-center">
         {cta}
       </Link>
     </div>

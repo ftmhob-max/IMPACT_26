@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAdminRequest } from "@/lib/admin/auth";
-import { adminDcMutate, adminDcQuery } from "@/lib/firebase/admin-dc";
+import { adminDcMutate, adminDcQuery, adminDcRawMutate } from "@/lib/firebase/admin-dc";
 import {
   parseFormulaCsv,
   parseFormulaDocx,
@@ -16,7 +16,7 @@ type ExistingSectionsData = {
   formulaSections: Array<{
     id: string;
     code: string;
-    formulas_on_section: Array<{ id: string; code: string; examplesJson?: string | null }>;
+    formulas_on_section: Array<{ id: string; code: string; notes?: string | null; examplesJson?: string | null }>;
   }>;
 };
 
@@ -68,11 +68,18 @@ export async function POST(req: NextRequest) {
       (s.formulas_on_section ?? []).map((f) => [`${s.code}:${f.code}`, f.id])
     )
   );
-  // Track which existing formulas already have examples (skip re-importing if present)
+  // Track which existing formulas already have examples or notes (skip re-importing if present)
   const existingFormulaHasExamples = new Set(
     existingData.formulaSections.flatMap((s) =>
       (s.formulas_on_section ?? [])
         .filter((f) => f.examplesJson)
+        .map((f) => `${s.code}:${f.code}`)
+    )
+  );
+  const existingFormulaHasNotes = new Set(
+    existingData.formulaSections.flatMap((s) =>
+      (s.formulas_on_section ?? [])
+        .filter((f) => f.notes)
         .map((f) => `${s.code}:${f.code}`)
     )
   );
@@ -108,18 +115,27 @@ export async function POST(req: NextRequest) {
         const existingId = existingFormulaIdByKey.get(dupeKey);
 
         if (existingId) {
-          // Formula already exists — update examplesJson if the import has examples
-          // and the existing record doesn't already have them.
-          if (formula.examplesJson && !existingFormulaHasExamples.has(dupeKey)) {
+          // Formula already exists — backfill examplesJson and/or notes if missing.
+          const needsExamples = formula.examplesJson && !existingFormulaHasExamples.has(dupeKey);
+          const needsNotes = formula.notes && !existingFormulaHasNotes.has(dupeKey);
+          if (needsExamples || needsNotes) {
             try {
-              await adminDcMutate("UpdateFormula", {
-                id: existingId,
-                examplesJson: formula.examplesJson,
-              });
-              existingFormulaHasExamples.add(dupeKey);
+              // Use raw GQL so examplesJson works regardless of emulator compilation state.
+              await adminDcRawMutate(
+                `mutation ($id: UUID!, $examplesJson: String, $notes: String) {
+                   formula_update(id: $id, data: { examplesJson: $examplesJson, notes: $notes })
+                 }`,
+                {
+                  id: existingId,
+                  examplesJson: needsExamples ? formula.examplesJson : null,
+                  notes: needsNotes ? formula.notes : null,
+                }
+              );
+              if (needsExamples) existingFormulaHasExamples.add(dupeKey);
+              if (needsNotes) existingFormulaHasNotes.add(dupeKey);
               updated++;
             } catch (fErr) {
-              errors.push(`Formula "${section.code}/${formula.code}" (update examples): ${fErr}`);
+              errors.push(`Formula "${section.code}/${formula.code}" (update): ${fErr}`);
             }
           } else {
             skipped++;
@@ -129,16 +145,33 @@ export async function POST(req: NextRequest) {
 
         try {
           const formulaId = randomUUID();
-          await adminDcMutate("CreateFormula", {
-            sectionId,
-            code: formula.code,
-            name: formula.name,
-            expression: formula.expression,
-            notes: formula.notes ?? null,
-            position: formula.position,
-            calcMetaJson: formula.calcMetaJson ?? null,
-            examplesJson: formula.examplesJson ?? null,
-          });
+          // Use raw GQL for insert so examplesJson works regardless of emulator state.
+          await adminDcRawMutate(
+            `mutation ($sectionId: UUID!, $id: UUID!, $code: String!, $name: String!, $expression: String!, $notes: String, $position: Int!, $calcMetaJson: String, $examplesJson: String) {
+               formula_insert(data: {
+                 id: $id
+                 section: { id: $sectionId }
+                 code: $code
+                 name: $name
+                 expression: $expression
+                 notes: $notes
+                 position: $position
+                 calcMetaJson: $calcMetaJson
+                 examplesJson: $examplesJson
+               })
+             }`,
+            {
+              sectionId,
+              id: formulaId,
+              code: formula.code,
+              name: formula.name,
+              expression: formula.expression,
+              notes: formula.notes ?? null,
+              position: formula.position,
+              calcMetaJson: formula.calcMetaJson ?? null,
+              examplesJson: formula.examplesJson ?? null,
+            }
+          );
           existingFormulaIdByKey.set(dupeKey, formulaId);
           createdFormulaIds.push(formulaId);
           imported++;

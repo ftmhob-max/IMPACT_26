@@ -319,7 +319,7 @@ export function QuestionBankClient({ questions, quizzes }: Props) {
   }
 
   return (
-    <div className="flex gap-5">
+    <div className="flex flex-col gap-5 xl:flex-row">
       {/* Left: table */}
       <div className={cn("min-w-0 space-y-4", detailQuestion ? "flex-1" : "w-full")}>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
@@ -335,7 +335,7 @@ export function QuestionBankClient({ questions, quizzes }: Props) {
         <div className="rounded-xl border border-black/10 bg-white shadow-sm">
           <div className="border-b border-slate-100 px-4 py-3">
             <div className="flex flex-wrap items-center gap-2">
-              <div className="min-w-[15rem] flex-1">
+              <div className="w-full sm:min-w-[15rem] sm:flex-1">
                 <label className="admin-label mb-1">Search</label>
                 <input
                   type="search"
@@ -345,18 +345,18 @@ export function QuestionBankClient({ questions, quizzes }: Props) {
                   className="admin-input"
                 />
               </div>
-              <div className="w-36">
+              <div className="w-full min-[380px]:w-36">
                 <label className="admin-label mb-1">Domain</label>
                 <DomainCombobox value={filterDomain} onChange={(v) => { setFilterDomain(v); setPage(1); }} allowClear clearLabel="All domains" />
               </div>
-              <div className="w-36">
+              <div className="w-full min-[380px]:w-36">
                 <label className="admin-label mb-1">Difficulty</label>
                 <select className="admin-input" value={filterDifficulty} onChange={(e) => { setFilterDifficulty(e.target.value); setPage(1); }}>
                   <option value="">All difficulties</option>
                   {DIFFICULTIES.map((d) => <option key={d} value={d}>{d}</option>)}
                 </select>
               </div>
-              <div className="w-36">
+              <div className="w-full min-[380px]:w-36">
                 <label className="admin-label mb-1">Status</label>
                 <select className="admin-input" value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}>
                   <option value="">All statuses</option>
@@ -377,7 +377,7 @@ export function QuestionBankClient({ questions, quizzes }: Props) {
                 Filters active{statFilter !== "all" ? ` · ${statFilter}` : ""}
               </span>
             )}
-            <button type="button" onClick={resetFilters} className="ml-auto admin-action secondary text-xs">
+            <button type="button" onClick={resetFilters} className="admin-action secondary text-xs sm:ml-auto">
               <Icons.RotateCcw size={12} />
               Reset filters
             </button>
@@ -454,7 +454,67 @@ export function QuestionBankClient({ questions, quizzes }: Props) {
             )}
           </div>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm">
+          <>
+            <div className="space-y-3 sm:hidden">
+              {pageItems.map((q) => {
+                const effectiveStatus = localStatuses[q.id] ?? q.status;
+                const isActive = detailQuestion?.id === q.id;
+                return (
+                  <article
+                    key={q.id}
+                    className={cn(
+                      "rounded-xl border bg-white p-3 shadow-sm",
+                      isActive ? "border-[#185FA5] bg-[#f7fbff]" : "border-slate-100"
+                    )}
+                  >
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        aria-label={`Select ${q.questionText}`}
+                        checked={selected.has(q.id)}
+                        onChange={() => toggleOne(q.id)}
+                        className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-[#185FA5]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setDetailQuestion(isActive ? null : q)}
+                        className="min-w-0 flex-1 text-left"
+                      >
+                        <p className={cn("text-sm leading-5", isActive ? "font-semibold text-[#185FA5]" : "font-medium text-slate-800")}>
+                          {q.questionText}
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          <DomainBadge domain={q.domain} />
+                          <DifficultyBadge difficulty={q.difficulty} />
+                          <MetaChip label={effectiveStatus} tone="slate" />
+                          {q.isMultiselect && <MetaChip label="multiselect" tone="purple" />}
+                          {!q.answerChoices_on_question.some((choice) => choice.isCorrect) && <MetaChip label="missing correct answer" tone="amber" />}
+                          {q.formulaRef && <MetaChip label={q.formulaRef} tone="blue" />}
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => deleteQuestion(q)}
+                        className="rounded p-1 text-slate-400 hover:text-red-600"
+                        title="Delete question"
+                      >
+                        <Icons.Trash2 size={14} />
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between rounded-xl border border-slate-100 bg-white px-3 py-2 shadow-sm">
+                  <p className="text-xs text-slate-500">Page {currentPage} of {totalPages}</p>
+                  <div className="flex gap-1">
+                    <PageBtn label="Previous" disabled={currentPage === 1} onClick={() => setPage((p) => p - 1)} />
+                    <PageBtn label="Next" disabled={currentPage === totalPages} onClick={() => setPage((p) => p + 1)} />
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="hidden overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm sm:block">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50">
@@ -544,6 +604,7 @@ export function QuestionBankClient({ questions, quizzes }: Props) {
               </div>
             )}
           </div>
+          </>
         )}
       </div>
 
@@ -693,7 +754,7 @@ function QuestionDetailPanel({
   const hasCorrect = sortedChoices.some((c) => c.isCorrect);
 
   return (
-    <div className="w-[400px] shrink-0 self-start sticky top-6 rounded-xl border border-black/10 bg-white shadow-sm overflow-hidden">
+    <div className="w-full shrink-0 self-start overflow-hidden rounded-xl border border-black/10 bg-white shadow-sm xl:sticky xl:top-6 xl:w-[400px]">
       {/* Header */}
       <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-3 bg-slate-50/60">
         <div className="flex items-center gap-2">
@@ -721,7 +782,7 @@ function QuestionDetailPanel({
         </div>
       </div>
 
-      <div className="max-h-[calc(100vh-160px)] overflow-y-auto divide-y divide-slate-100">
+      <div className="divide-y divide-slate-100 xl:max-h-[calc(100vh-160px)] xl:overflow-y-auto">
         {/* Notice */}
         {notice && (
           <div className={cn("flex items-center gap-2 px-4 py-2 text-xs font-medium", notice.ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700")}>

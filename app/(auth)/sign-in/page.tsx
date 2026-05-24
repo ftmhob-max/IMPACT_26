@@ -6,13 +6,14 @@ import Link from "next/link";
 import Image from "next/image";
 import { AuthFlowError, completeAppSignIn, signIn, signInWithGoogle } from "@/lib/firebase/auth";
 import { ArrowRight, ChevronLeft, GraduationCap, ShieldCheck } from "@/components/ui/Icons";
+import { AuthShell } from "@/components/auth/AuthShell";
 import { cn } from "@/lib/utils";
 
 type LoginMode = "student" | "teacher";
 
 export default function SignInPage() {
   return (
-    <Suspense fallback={<AuthShell />}>
+    <Suspense fallback={<SignInShell />}>
       <SignInForm />
     </Suspense>
   );
@@ -76,7 +77,7 @@ function SignInForm() {
       : "Access course tools, learner progress, and administrative workflows.";
 
   return (
-    <AuthShell>
+    <SignInShell>
       <Link
         href="/"
         className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 transition-colors hover:text-[#185FA5]"
@@ -173,61 +174,19 @@ function SignInForm() {
           </Link>
         </p>
       </div>
-    </AuthShell>
+    </SignInShell>
   );
 }
 
-function AuthShell({ children }: { children?: React.ReactNode }) {
+function SignInShell({ children }: { children?: React.ReactNode }) {
   return (
-    <div className="grid w-full max-w-xs overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl sm:max-w-5xl lg:grid-cols-[0.95fr_1.05fr]">
-      <aside className="hidden bg-[#073866] p-8 text-white lg:flex lg:flex-col lg:justify-between">
-        <div>
-          <div className="flex items-center gap-3">
-            <Image
-              src="/impact-logo.svg"
-              alt="IMPACT_26 logo"
-              width={46}
-              height={46}
-              priority
-              className="h-11 w-11 rounded-lg"
-            />
-            <div>
-              <p className="text-2xl font-extrabold tracking-[-0.03em]">IMPACT_26</p>
-              <p className="mt-1 text-sm font-semibold uppercase tracking-[0.12em] text-white/55">
-                Property Assessment
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="my-12">
-          <p className="text-3xl font-extrabold leading-tight tracking-[-0.03em]">
-            Learn the method. Explain the reasoning. Defend the decision.
-          </p>
-          <p className="mt-4 text-sm leading-6 text-white/70">
-            Training built around formulas, rationale, equity, and public trust.
-          </p>
-        </div>
-        <div className="grid gap-3">
-          {["Step-by-step rationale", "Formula-based practice", "Progress tracking"].map((item) => (
-            <div key={item} className="flex items-center gap-3 rounded-lg bg-white/8 px-3 py-2 text-sm font-bold">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#67c58e] text-[#073866]">
-                <ShieldCheck size={13} />
-              </span>
-              {item}
-            </div>
-          ))}
-        </div>
-      </aside>
-
-      <section className="min-w-0 p-6 sm:p-8 lg:p-10">
-        {children ?? (
-          <div className="py-24 text-center">
-            <h1 className="text-2xl font-extrabold text-slate-950">Sign in to IMPACT_26</h1>
-            <p className="mt-2 text-sm text-slate-500">Loading sign-in...</p>
-          </div>
-        )}
-      </section>
-    </div>
+    <AuthShell
+      heading="Learn the method. Explain the reasoning. Defend the decision."
+      description="Training built around formulas, rationale, equity, and public trust."
+      highlights={["Step-by-step rationale", "Formula-based practice", "Progress tracking"]}
+    >
+      {children}
+    </AuthShell>
   );
 }
 

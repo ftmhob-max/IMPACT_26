@@ -441,6 +441,15 @@ export const BookMarked = (props: IconProps) => (
   </IconWrapper>
 );
 
+export const Star = ({ fill, ...props }: IconProps & { fill?: string }) => (
+  <IconWrapper {...props}>
+    <polygon
+      points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
+      fill={fill ?? "none"}
+    />
+  </IconWrapper>
+);
+
 export const Award = (props: IconProps) => (
   <IconWrapper {...props}>
     <circle cx="12" cy="8" r="6" />
@@ -617,3 +626,28 @@ export const Rows = (props: IconProps) => (
     <rect width="18" height="7" x="3" y="14" rx="1" />
   </IconWrapper>
 );
+
+export const Circle = (props: IconProps) => (
+  <IconWrapper {...props}>
+    <circle cx="12" cy="12" r="10" />
+  </IconWrapper>
+);
+
+export const Maximize2 = (props: IconProps) => (
+  <IconWrapper {...props}>
+    <polyline points="15 3 21 3 21 9" />
+    <polyline points="9 21 3 21 3 15" />
+    <line x1="21" y1="3" x2="14" y2="10" />
+    <line x1="3" y1="21" x2="10" y2="14" />
+  </IconWrapper>
+);
+
+export const Minimize2 = (props: IconProps) => (
+  <IconWrapper {...props}>
+    <polyline points="4 14 10 14 10 20" />
+    <polyline points="20 10 14 10 14 4" />
+    <line x1="10" y1="14" x2="3" y2="21" />
+    <line x1="21" y1="3" x2="14" y2="10" />
+  </IconWrapper>
+);
+

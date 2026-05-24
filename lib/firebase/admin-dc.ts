@@ -72,3 +72,19 @@ export async function adminDcMutate<T = Record<string, unknown>>(
     throw new Error(`[DC:Mutate:${operation}] ${err.message ?? err}`);
   }
 }
+
+// Sends raw GQL to the service's executeGraphql endpoint, bypassing the
+// compiled named-operation registry. Use this for schema fields that exist
+// in schema.gql but aren't yet reflected in a running emulator's named ops.
+export async function adminDcRawMutate<T = Record<string, unknown>>(
+  query: string,
+  variables: Record<string, unknown> = {}
+): Promise<T> {
+  try {
+    const dc = getAdminDc();
+    const result = await dc.executeGraphql(query, { variables });
+    return result.data as T;
+  } catch (err: any) {
+    throw new Error(`[DC:RawMutate] ${err.message ?? err}`);
+  }
+}

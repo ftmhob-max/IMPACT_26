@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { signUp, getIdToken } from "@/lib/firebase/auth";
-import { ArrowRight, ChevronLeft, GraduationCap, ShieldCheck } from "@/components/ui/Icons";
+import { ArrowRight, ChevronLeft } from "@/components/ui/Icons";
+import { AuthShell } from "@/components/auth/AuthShell";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -42,47 +43,11 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="grid w-full max-w-xs overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl sm:max-w-5xl lg:grid-cols-[0.95fr_1.05fr]">
-      <aside className="hidden bg-[#073866] p-8 text-white lg:flex lg:flex-col lg:justify-between">
-        <div>
-          <div className="flex items-center gap-3">
-            <Image
-              src="/impact-logo.svg"
-              alt="IMPACT_26 logo"
-              width={46}
-              height={46}
-              priority
-              className="h-11 w-11 rounded-lg"
-            />
-            <div>
-              <p className="text-2xl font-extrabold tracking-[-0.03em]">IMPACT_26</p>
-              <p className="mt-1 text-sm font-semibold uppercase tracking-[0.12em] text-white/55">
-                Property Assessment
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="my-12">
-          <p className="text-3xl font-extrabold leading-tight tracking-[-0.03em]">
-            Start with principles. Build toward defensible assessment judgment.
-          </p>
-          <p className="mt-4 text-sm leading-6 text-white/70">
-            Create an account to access learning paths, formulas, practice, and progress tracking.
-          </p>
-        </div>
-        <div className="grid gap-3">
-          {["10 structured sections", "53 formula references", "458 practice questions"].map((item) => (
-            <div key={item} className="flex items-center gap-3 rounded-lg bg-white/8 px-3 py-2 text-sm font-bold">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#67c58e] text-[#073866]">
-                <ShieldCheck size={13} />
-              </span>
-              {item}
-            </div>
-          ))}
-        </div>
-      </aside>
-
-      <section className="min-w-0 p-6 sm:p-8 lg:p-10">
+    <AuthShell
+      heading="Start with principles. Build toward defensible assessment judgment."
+      description="Create an account to access learning paths, formulas, practice, and progress tracking."
+      highlights={["10 structured sections", "53 formula references", "458 practice questions"]}
+    >
         <Link
           href="/"
           className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 transition-colors hover:text-[#185FA5]"
@@ -160,8 +125,7 @@ export default function SignUpPage() {
             Sign in
           </Link>
         </p>
-      </section>
-    </div>
+    </AuthShell>
   );
 }
 

@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { resetPassword } from "@/lib/firebase/auth";
 import { ArrowRight, ChevronLeft } from "@/components/ui/Icons";
+import { AuthShell } from "@/components/auth/AuthShell";
 
 export default function ResetPasswordPage() {
   const [email, setEmail] = useState("");
@@ -29,43 +30,18 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="grid w-full max-w-xs overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl sm:max-w-5xl lg:grid-cols-[0.95fr_1.05fr]">
-      <aside className="hidden bg-[#073866] p-8 text-white lg:flex lg:flex-col lg:justify-between">
-        <div className="flex items-center gap-3">
-          <Image
-            src="/impact-logo.svg"
-            alt="IMPACT_26 logo"
-            width={46}
-            height={46}
-            priority
-            className="h-11 w-11 rounded-lg"
-          />
-          <div>
-            <p className="text-2xl font-extrabold tracking-[-0.03em]">IMPACT_26</p>
-            <p className="mt-1 text-sm font-semibold uppercase tracking-[0.12em] text-white/55">
-              Property Assessment
-            </p>
-          </div>
-        </div>
-
-        <div className="my-12">
-          <p className="text-3xl font-extrabold leading-tight tracking-[-0.03em]">
-            Reset your password and get back to learning.
-          </p>
-          <p className="mt-4 text-sm leading-6 text-white/70">
-            We&apos;ll email you a secure link so you can restore access to your training account.
-          </p>
-        </div>
-
+    <AuthShell
+      heading="Reset your password and get back to learning."
+      description="We'll email you a secure link so you can restore access to your training account."
+      asideFooter={
         <div className="rounded-lg bg-white/8 px-4 py-3 text-sm font-bold">
           Need your password reset email?
           <p className="mt-1 text-sm font-medium text-white/70">
             Use the same email address you registered with.
           </p>
         </div>
-      </aside>
-
-      <section className="min-w-0 p-6 sm:p-8 lg:p-10">
+      }
+    >
         <Link
           href="/sign-in"
           className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 transition-colors hover:text-[#185FA5]"
@@ -119,7 +95,6 @@ export default function ResetPasswordPage() {
             {!loading && <ArrowRight size={15} />}
           </button>
         </form>
-      </section>
-    </div>
+    </AuthShell>
   );
 }

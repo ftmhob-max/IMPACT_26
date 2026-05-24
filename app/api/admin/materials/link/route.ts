@@ -4,6 +4,24 @@ import { requireAdminRequest } from "@/lib/admin/auth";
 import { adminDcMutate } from "@/lib/firebase/admin-dc";
 import { z } from "zod";
 
+export async function DELETE(request: NextRequest) {
+  const auth = await requireAdminRequest(request, "instructor");
+  if (!auth.ok) return auth.response;
+
+  const linkId = request.nextUrl.searchParams.get("id");
+  if (!linkId) {
+    return NextResponse.json({ error: "Missing link id" }, { status: 400 });
+  }
+
+  try {
+    await adminDcMutate("DeleteContentSourceLink", { id: linkId });
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("[admin/materials/link DELETE]", error);
+    return NextResponse.json({ error: "Unable to unlink material" }, { status: 500 });
+  }
+}
+
 const linkSchema = z.object({
   materialId: z.string().uuid(),
   lessonId: z.string().uuid().optional().nullable(),

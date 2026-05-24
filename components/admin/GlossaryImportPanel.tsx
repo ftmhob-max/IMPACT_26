@@ -219,7 +219,7 @@ export function GlossaryImportPanel({ onImported, onClose }: Props) {
         {step === "preview" && preview && (
           <div className="space-y-5">
             {/* Summary bar */}
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <SummaryCard label="Parsed" value={preview.rows.length} />
               <SummaryCard label="Errors" value={preview.errors.length} warn={preview.errors.length > 0} />
               <SummaryCard label="Duplicates" value={preview.duplicates.length} warn={preview.duplicates.length > 0} />

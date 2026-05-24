@@ -110,6 +110,7 @@ This README will guide you through the process of using the generated JavaScript
   - [*DeleteFormulasForSection*](#deleteformulasforsection)
   - [*DeleteFormulaSection*](#deleteformulasection)
   - [*CreateContentSourceLink*](#createcontentsourcelink)
+  - [*DeleteContentSourceLink*](#deletecontentsourcelink)
   - [*CreateGlossaryTerm*](#createglossaryterm)
   - [*UpdateGlossaryTerm*](#updateglossaryterm)
   - [*DeleteGlossaryTerm*](#deleteglossaryterm)
@@ -460,12 +461,15 @@ export interface GetLessonData {
       shuffleQuestions: boolean;
       shuffleChoices: boolean;
     } & Quiz_Key;
-      module: {
-        course: {
-          slug: string;
-          title: string;
+      sourceMaterial?: {
+        id: UUIDString;
+      } & SourceMaterial_Key;
+        module: {
+          course: {
+            slug: string;
+            title: string;
+          };
         };
-      };
   } & Lesson_Key;
 }
 ```
@@ -12165,6 +12169,115 @@ console.log(data.contentSourceLink_insert);
 executeMutation(ref).then((response) => {
   const data = response.data;
   console.log(data.contentSourceLink_insert);
+});
+```
+
+## DeleteContentSourceLink
+You can execute the `DeleteContentSourceLink` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+deleteContentSourceLink(vars: DeleteContentSourceLinkVariables): MutationPromise<DeleteContentSourceLinkData, DeleteContentSourceLinkVariables>;
+
+interface DeleteContentSourceLinkRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteContentSourceLinkVariables): MutationRef<DeleteContentSourceLinkData, DeleteContentSourceLinkVariables>;
+}
+export const deleteContentSourceLinkRef: DeleteContentSourceLinkRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+deleteContentSourceLink(dc: DataConnect, vars: DeleteContentSourceLinkVariables): MutationPromise<DeleteContentSourceLinkData, DeleteContentSourceLinkVariables>;
+
+interface DeleteContentSourceLinkRef {
+  ...
+  (dc: DataConnect, vars: DeleteContentSourceLinkVariables): MutationRef<DeleteContentSourceLinkData, DeleteContentSourceLinkVariables>;
+}
+export const deleteContentSourceLinkRef: DeleteContentSourceLinkRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the deleteContentSourceLinkRef:
+```typescript
+const name = deleteContentSourceLinkRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `DeleteContentSourceLink` mutation requires an argument of type `DeleteContentSourceLinkVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface DeleteContentSourceLinkVariables {
+  id: UUIDString;
+}
+```
+### Return Type
+Recall that executing the `DeleteContentSourceLink` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `DeleteContentSourceLinkData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface DeleteContentSourceLinkData {
+  contentSourceLink_delete?: ContentSourceLink_Key | null;
+}
+```
+### Using `DeleteContentSourceLink`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, deleteContentSourceLink, DeleteContentSourceLinkVariables } from '@impact26/dataconnect-sdk';
+
+// The `DeleteContentSourceLink` mutation requires an argument of type `DeleteContentSourceLinkVariables`:
+const deleteContentSourceLinkVars: DeleteContentSourceLinkVariables = {
+  id: ..., 
+};
+
+// Call the `deleteContentSourceLink()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await deleteContentSourceLink(deleteContentSourceLinkVars);
+// Variables can be defined inline as well.
+const { data } = await deleteContentSourceLink({ id: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await deleteContentSourceLink(dataConnect, deleteContentSourceLinkVars);
+
+console.log(data.contentSourceLink_delete);
+
+// Or, you can use the `Promise` API.
+deleteContentSourceLink(deleteContentSourceLinkVars).then((response) => {
+  const data = response.data;
+  console.log(data.contentSourceLink_delete);
+});
+```
+
+### Using `DeleteContentSourceLink`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, deleteContentSourceLinkRef, DeleteContentSourceLinkVariables } from '@impact26/dataconnect-sdk';
+
+// The `DeleteContentSourceLink` mutation requires an argument of type `DeleteContentSourceLinkVariables`:
+const deleteContentSourceLinkVars: DeleteContentSourceLinkVariables = {
+  id: ..., 
+};
+
+// Call the `deleteContentSourceLinkRef()` function to get a reference to the mutation.
+const ref = deleteContentSourceLinkRef(deleteContentSourceLinkVars);
+// Variables can be defined inline as well.
+const ref = deleteContentSourceLinkRef({ id: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = deleteContentSourceLinkRef(dataConnect, deleteContentSourceLinkVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.contentSourceLink_delete);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.contentSourceLink_delete);
 });
 ```
 

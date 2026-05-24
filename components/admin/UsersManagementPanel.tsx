@@ -85,13 +85,13 @@ export function UsersManagementPanel() {
 
       {/* User table */}
       <div className="rounded-xl border border-black/10 bg-white shadow-sm">
-        <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-3">
+        <div className="flex flex-wrap items-center gap-3 border-b border-slate-100 px-4 py-3">
           <Icons.Users size={18} className="text-[#185FA5] shrink-0" />
           <h2 className="text-sm font-bold text-slate-900 shrink-0">All users</h2>
-          <div className="relative flex-1 max-w-xs">
+          <div className="relative order-last basis-full sm:order-none sm:max-w-xs sm:flex-1">
             <Icons.Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             <input
-              className="admin-input pl-7 py-1.5 text-xs"
+              className="admin-input !pl-7 py-1.5 text-xs"
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
               placeholder="Search by name or email…"
@@ -109,7 +109,7 @@ export function UsersManagementPanel() {
             </p>
           ) : (
             filtered.map((user) => (
-              <div key={user.id} className="grid grid-cols-[1fr_auto] items-center gap-3 px-4 py-3">
+              <div key={user.id} className="flex flex-col items-start gap-3 px-4 py-3 min-[380px]:grid min-[380px]:grid-cols-[1fr_auto] min-[380px]:items-center">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-sm font-semibold text-slate-800 truncate">

@@ -226,6 +226,7 @@ export interface MaterialListParams {
   direction?: string;
   page?: number;
   limit?: number;
+  lessonId?: string;
 }
 
 export function parseMetadataJson(value?: string | null) {
@@ -623,6 +624,10 @@ export function listAdminMaterials(materials: MaterialLibraryRecord[], params: M
   if (hasAsset === "no") filtered = filtered.filter((material) => !material.hasAsset);
   if (hasText === "yes") filtered = filtered.filter((material) => material.hasExtractedText);
   if (hasText === "no") filtered = filtered.filter((material) => !material.hasExtractedText);
+  if (params.lessonId) {
+    const lid = params.lessonId;
+    filtered = filtered.filter((material) => material.links.some((link) => link.lesson?.id === lid));
+  }
 
   filtered.sort((left, right) => {
     switch (sort) {

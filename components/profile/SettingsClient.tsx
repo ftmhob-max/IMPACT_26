@@ -197,7 +197,8 @@ export function SettingsClient() {
                   <ThemeToggle
                     value={settings.theme}
                     onChange={(theme) => update("theme", theme)}
-                    className="border-slate-200 bg-white text-slate-700 hover:border-[#185FA5]/35 hover:bg-[#E6F1FB] hover:text-[#185FA5] focus-visible:ring-[#185FA5] focus-visible:ring-offset-white sm:w-40"
+                    presentation="surface"
+                    className="sm:w-40"
                   />
                 </div>
               </div>

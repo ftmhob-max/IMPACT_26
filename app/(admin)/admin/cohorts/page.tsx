@@ -118,14 +118,14 @@ export default async function CohortStatsPage() {
   const tooHardCount = questionStats.filter((q) => q.calibration === "too-hard").length;
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8 px-6 py-8">
+    <div className="mx-auto max-w-5xl space-y-6 px-4 py-5 sm:space-y-8 sm:px-6 sm:py-8">
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Cohort Performance</h1>
           <p className="mt-1 text-sm text-slate-500">Aggregate learner statistics and exportable attempt history.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 min-[380px]:flex-row">
           <a className="admin-action secondary" href="/api/admin/analytics/export?kind=questions">Question export</a>
           <a className="admin-action" href="/api/admin/analytics/export?kind=attempts">Attempt export</a>
         </div>

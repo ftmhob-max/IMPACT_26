@@ -254,7 +254,7 @@ function LessonRow({
       <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-700">
         {lesson.title}
       </span>
-      <div className="flex items-center gap-2">
+      <div className="col-start-2 flex items-center gap-2 sm:col-start-auto">
         <span className={`whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold ${className}`}>
           {label}
         </span>
@@ -270,7 +270,7 @@ function LessonRow({
 
   if (locked) {
     return (
-      <div className="grid grid-cols-[48px_1fr_auto] items-center gap-3 px-5 py-3 opacity-50 cursor-not-allowed">
+      <div className="grid grid-cols-[36px_minmax(0,1fr)] items-center gap-x-3 gap-y-2 px-4 py-3 opacity-50 cursor-not-allowed sm:grid-cols-[48px_1fr_auto] sm:px-5">
         {inner}
       </div>
     );
@@ -279,7 +279,7 @@ function LessonRow({
   return (
     <Link
       href={`/lessons/${lesson.id}`}
-      className="grid grid-cols-[48px_1fr_auto] items-center gap-3 px-5 py-3 transition-colors hover:bg-[#F8F7F4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-inset"
+      className="grid grid-cols-[36px_minmax(0,1fr)] items-center gap-x-3 gap-y-2 px-4 py-3 transition-colors hover:bg-[#F8F7F4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-inset sm:grid-cols-[48px_1fr_auto] sm:px-5"
     >
       {inner}
     </Link>

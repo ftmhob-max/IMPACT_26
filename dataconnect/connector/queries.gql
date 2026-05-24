@@ -56,6 +56,7 @@ query GetLesson($id: UUID!) @auth(level: NO_ACCESS) {
       shuffleQuestions
       shuffleChoices
     }
+    sourceMaterial { id }
     module {
       course {
         slug
