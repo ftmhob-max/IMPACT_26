@@ -120,7 +120,7 @@ function DuplicateIncludeSection({
 
 type DocxPhase = "upload" | "preview" | "configure" | "importing" | "done";
 
-function DocxImportFlow({ onImported }: { onImported: (msg: string) => void }) {
+function DocxImportFlow({ onImported }: { onImported: (msg: string, quizId?: string, quizTitle?: string) => void }) {
   const [phase, setPhase] = useState<DocxPhase>("upload");
   const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState<PreviewResult | null>(null);
@@ -231,7 +231,7 @@ function DocxImportFlow({ onImported }: { onImported: (msg: string) => void }) {
 
       const totalAdded = preview.validRows.length + selectedDuplicateIds.size;
       setPhase("done");
-      onImported(`Quiz "${quizTitle}" created with ${totalAdded} question${totalAdded !== 1 ? "s" : ""}.`);
+      onImported(`Quiz "${quizTitle}" created with ${totalAdded} question${totalAdded !== 1 ? "s" : ""}.`, quizId, quizTitle);
     } catch {
       setErrorMsg("Network error during import.");
       setPhase("configure");
@@ -494,7 +494,7 @@ function DocxImportFlow({ onImported }: { onImported: (msg: string) => void }) {
 
 type BankPhase = "browse" | "configure" | "creating" | "done";
 
-function FromBankFlow({ onImported }: { onImported: (msg: string) => void }) {
+function FromBankFlow({ onImported }: { onImported: (msg: string, quizId?: string, quizTitle?: string) => void }) {
   const [bankPhase, setBankPhase] = useState<BankPhase>("browse");
   const [candidates, setCandidates] = useState<BankCandidate[]>([]);
   const [loadingBank, setLoadingBank] = useState(false);
@@ -609,7 +609,7 @@ function FromBankFlow({ onImported }: { onImported: (msg: string) => void }) {
       if (!linkRes.ok) throw new Error("Quiz created but failed to add questions.");
 
       setBankPhase("done");
-      onImported(`Quiz "${quizTitle.trim()}" created with ${selectedIds.size} question${selectedIds.size !== 1 ? "s" : ""} from the bank.`);
+      onImported(`Quiz "${quizTitle.trim()}" created with ${selectedIds.size} question${selectedIds.size !== 1 ? "s" : ""} from the bank.`, quizId, quizTitle.trim());
     } catch (err: any) {
       setErrorMsg(err.message ?? "Failed to create quiz.");
       setBankPhase("configure");
@@ -853,7 +853,7 @@ function FromBankFlow({ onImported }: { onImported: (msg: string) => void }) {
 
 // ─── CSV wrapper with post-import duplicate linking ───────────────────────────
 
-function CsvWithDuplicateLinking({ onImported }: { onImported: (msg: string) => void }) {
+function CsvWithDuplicateLinking({ onImported }: { onImported: (msg: string, quizId?: string, quizTitle?: string) => void }) {
   const [lastPreviewDuplicates, setLastPreviewDuplicates] = useState<
     Array<{ questionText: string; existingQuestionId: string }>
   >([]);
@@ -867,8 +867,8 @@ function CsvWithDuplicateLinking({ onImported }: { onImported: (msg: string) => 
   // Since CsvImportPanel doesn't expose preview externally, we handle this via the
   // onImported callback which now returns quizId. At that point we use the last
   // known duplicates from a shadow preview call.
-  async function handleImported({ message, quizId }: { message: string; quizId?: string }) {
-    onImported(message);
+  async function handleImported({ message, quizId, quizTitle }: { message: string; quizId?: string; quizTitle?: string }) {
+    onImported(message, quizId, quizTitle);
 
     // If there are enriched duplicates with IDs and a quizId was returned, offer linking
     const withIds = lastPreviewDuplicates.filter((d) => d.existingQuestionId);
@@ -970,7 +970,7 @@ export function QuizQuickImportPanel({
   onImported,
   onCancel,
 }: {
-  onImported: (message: string) => void;
+  onImported: (message: string, quizId?: string, quizTitle?: string) => void;
   onCancel: () => void;
 }) {
   const [tab, setTab] = useState<Tab>("csv");

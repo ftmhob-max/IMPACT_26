@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { LessonBuilderEditor, type LessonBuilderEditorHandle } from "@/components/admin/LessonBuilderEditor";
 import { LessonStudentPreview } from "@/components/admin/LessonStudentPreview";
 import { LessonQuizPanel } from "@/components/admin/LessonQuizPanel";
+import { QuestionBankPicker } from "@/components/admin/QuestionBankPicker";
 import { VideoUpload } from "@/components/admin/VideoUpload";
 import { VideoLinkInput } from "@/components/admin/VideoLinkInput";
 import {
@@ -1700,7 +1701,9 @@ function SettingsTab({
     lesson.durationSeconds ? String(Math.round(lesson.durationSeconds / 60)) : ""
   );
   const [isPublished, setIsPublished] = useState(lesson.isPublished);
-  const [quizzes, setQuizzes] = useState<Array<{ id: string; title: string }>>([]);
+  const [quizzes, setQuizzes] = useState<
+    Array<{ id: string; title: string; questionCount: number; incompleteQuestionCount: number }>
+  >([]);
   const [selectedQuizId, setSelectedQuizId] = useState(lesson.quiz?.id ?? "");
   const [quizzesLoaded, setQuizzesLoaded] = useState(false);
   const [versionNote, setVersionNote] = useState("");
@@ -1717,17 +1720,29 @@ function SettingsTab({
     setQuizzesLoaded(true);
   }
 
+  useEffect(() => {
+    if (lessonType === "quiz") void loadQuizzes();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lessonType]);
+
   function readinessIssues() {
-    return runLessonPreflight({
-      lessonId: lesson.id,
-      title,
-      lessonType,
-      contentJson: lesson.contentJson,
-      videoPlaybackId: lesson.videoPlaybackId,
-      videoUrl: lesson.videoUrl,
-      quiz: lesson.quiz ? { id: lesson.quiz.id } : null,
-      sourceMaterialId: lesson.sourceMaterial?.id ?? null,
-    });
+    const selectedQuiz = quizzes.find((q) => q.id === selectedQuizId);
+    const quizReadiness = selectedQuizId && selectedQuiz
+      ? getQuizReadiness(selectedQuiz.questionCount, selectedQuiz.incompleteQuestionCount)
+      : undefined;
+    return runLessonPreflight(
+      {
+        lessonId: lesson.id,
+        title,
+        lessonType,
+        contentJson: lesson.contentJson,
+        videoPlaybackId: lesson.videoPlaybackId,
+        videoUrl: lesson.videoUrl,
+        quiz: selectedQuizId ? { id: selectedQuizId } : null,
+        sourceMaterialId: lesson.sourceMaterial?.id ?? null,
+      },
+      quizReadiness
+    );
   }
 
   async function save() {
@@ -1819,13 +1834,29 @@ function SettingsTab({
               className="admin-input"
               value={selectedQuizId}
               onChange={(e) => setSelectedQuizId(e.target.value)}
-              onFocus={loadQuizzes}
             >
               <option value="">— Select quiz —</option>
               {quizzes.map((q) => (
                 <option key={q.id} value={q.id}>{q.title}</option>
               ))}
             </select>
+            {selectedQuizId && quizzesLoaded && (() => {
+              const q = quizzes.find((x) => x.id === selectedQuizId);
+              if (!q) return null;
+              const r = getQuizReadiness(q.questionCount, q.incompleteQuestionCount);
+              return (
+                <p className={cn(
+                  "mt-1 text-xs font-medium",
+                  r === "ready" ? "text-emerald-600" : r === "attention" ? "text-amber-600" : "text-red-500"
+                )}>
+                  {r === "ready"
+                    ? `${q.questionCount} question${q.questionCount !== 1 ? "s" : ""} — ready`
+                    : r === "attention"
+                    ? `${q.questionCount} question${q.questionCount !== 1 ? "s" : ""} — ${q.incompleteQuestionCount} incomplete`
+                    : "No questions added yet"}
+                </p>
+              );
+            })()}
           </div>
         )}
 
@@ -1918,6 +1949,58 @@ function SettingsTab({
             <button type="button" onClick={() => setShowPublishWarning(false)} className="admin-action secondary text-xs">Cancel</button>
           </div>
         </div>
+      )}
+
+      {/* Inline question bank for quiz lessons */}
+      {lessonType === "quiz" && selectedQuizId && (
+        <QuizQuestionsSection quizId={selectedQuizId} onReload={onReload} />
+      )}
+    </div>
+  );
+}
+
+function QuizQuestionsSection({
+  quizId,
+  onReload,
+}: {
+  quizId: string;
+  onReload: () => Promise<void>;
+}) {
+  const [showPicker, setShowPicker] = useState(false);
+
+  async function handleAdd(questionIds: string[]) {
+    if (questionIds.length === 0) return;
+    await fetch("/api/admin/quizzes/questions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ quizId, questionIds }),
+    });
+    setShowPicker(false);
+    await onReload();
+  }
+
+  return (
+    <div className="rounded-xl border border-black/10 bg-white shadow-sm p-5 space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+          <Icons.ClipboardList size={15} className="text-[#185FA5]" />
+          Quiz questions
+        </h3>
+        <button
+          type="button"
+          onClick={() => setShowPicker((v) => !v)}
+          className="admin-action secondary text-xs py-1 flex items-center gap-1"
+        >
+          <Icons.Plus size={12} />
+          Add from bank
+        </button>
+      </div>
+      {showPicker && (
+        <QuestionBankPicker
+          quizId={quizId}
+          onAdd={handleAdd}
+          onClose={() => setShowPicker(false)}
+        />
       )}
     </div>
   );

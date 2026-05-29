@@ -1,4 +1,3 @@
-import { StartQuizButton } from "@/components/quiz/StartQuizButton";
 import { IconTile, LearnerPage, PageHeader, PrimaryAction, SectionPanel } from "@/components/ui/LearnerPrimitives";
 import { CourseEnrollmentClient } from "@/components/platform/CourseEnrollmentClient";
 import { adminDcQuery } from "@/lib/firebase/admin-dc";
@@ -47,25 +46,6 @@ async function getCourse(slug: string) {
   }
 }
 
-async function getFallbackPracticeQuiz() {
-  try {
-    const data = await adminDcQuery<{
-      quizzes: Array<{
-        id: string;
-        title: string;
-        description?: string | null;
-      }>;
-    }>("ListAdminQuizzes");
-    return (
-      data.quizzes.find((quiz) =>
-        /impact|practice|exam/i.test(`${quiz.title} ${quiz.description ?? ""}`)
-      ) ?? data.quizzes[0] ?? null
-    );
-  } catch {
-    return null;
-  }
-}
-
 export default async function CourseDetailPage({
   params,
 }: {
@@ -73,7 +53,6 @@ export default async function CourseDetailPage({
 }) {
   const { slug } = await params;
   const course = await getCourse(slug);
-  const fallbackQuiz = await getFallbackPracticeQuiz();
 
   if (!course) {
     return (
@@ -97,7 +76,6 @@ export default async function CourseDetailPage({
     0
   );
   const firstLesson = course.modules_on_course.flatMap((m) => m.lessons_on_module)[0];
-  const shouldShowFallbackQuiz = totalLessons === 0 && fallbackQuiz;
 
   // Shape modules — only include modules that have at least one published lesson
   // (GetCourseBySlug already filters lessons to isPublished=true, so empty arrays mean no live content)
@@ -131,8 +109,6 @@ export default async function CourseDetailPage({
         action={
           firstLesson ? (
             <PrimaryAction href={`/lessons/${firstLesson.id}`}>Start course</PrimaryAction>
-          ) : fallbackQuiz ? (
-            <StartQuizButton quizId={fallbackQuiz.id} label="Start exam" />
           ) : null
         }
       />
@@ -148,28 +124,6 @@ export default async function CourseDetailPage({
         courseId={course.id}
         modules={modules}
       />
-
-      {shouldShowFallbackQuiz && (
-        <div className="mt-5">
-          <SectionPanel
-            title="Available practice exam"
-            description="A quiz exists in Data Connect, but it is not currently linked as a published lesson in this course outline."
-          >
-            <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-base font-semibold text-slate-900">{fallbackQuiz.title}</p>
-                {fallbackQuiz.description && (
-                  <p className="mt-1 text-sm leading-6 text-slate-500">{fallbackQuiz.description}</p>
-                )}
-                <p className="mt-2 text-xs font-semibold uppercase tracking-[0.08em] text-[#185FA5]">
-                  80-question IMPACT_26 practice exam
-                </p>
-              </div>
-              <StartQuizButton quizId={fallbackQuiz.id} label="Start exam" />
-            </div>
-          </SectionPanel>
-        </div>
-      )}
     </LearnerPage>
   );
 }

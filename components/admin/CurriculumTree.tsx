@@ -22,6 +22,8 @@ interface Lesson {
   videoPlaybackId?: string | null;
   videoUrl?: string | null;
   contentJson?: string | null;
+  quiz?: { id: string } | null;
+  sourceMaterial?: { id: string } | null;
 }
 
 interface Module {
@@ -1091,8 +1093,8 @@ function LessonEditForm({
   const [videoTab, setVideoTab] = useState<"upload" | "link">(
     (lesson as any).videoUrl ? "link" : "upload"
   );
-  const [quizId, setQuizId] = useState("");
-  const [materialId, setMaterialId] = useState("");
+  const [quizId, setQuizId] = useState(lesson.quiz?.id ?? "");
+  const [materialId, setMaterialId] = useState(lesson.sourceMaterial?.id ?? "");
   const [duration, setDuration] = useState(String(lesson.durationSeconds ?? ""));
   const [versionNote, setVersionNote] = useState("");
   const [isPublished, setIsPublished] = useState(lesson.isPublished);

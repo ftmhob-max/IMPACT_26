@@ -20,6 +20,32 @@ async function fetchCourseDetail(courseId: string) {
       quizzesData.quizzes.map((q: any) => [formatUuid(q.id), q])
     );
 
+    // Collect unique quiz IDs for readiness checks
+    const allLessons = (course.modules_on_course ?? []).flatMap((m: any) => m.lessons_on_module ?? []);
+    const linkedQuizIds: string[] = [...new Set<string>(
+      allLessons
+        .filter((l: any) => l.lessonType === "quiz" && l.quiz?.id)
+        .map((l: any) => formatUuid(l.quiz.id))
+    )];
+
+    const quizReadinessMap = new Map<string, { questionCount: number; incompleteQuestionCount: number }>();
+    if (linkedQuizIds.length > 0) {
+      const richResults = await Promise.all(
+        linkedQuizIds.map((qId: string) =>
+          adminDcQuery<{ quizQuestions: any[] }>("GetQuizQuestionsAdmin", { quizId: qId })
+            .then((d) => ({ quizId: qId, questions: d?.quizQuestions ?? [] }))
+            .catch(() => ({ quizId: qId, questions: [] as any[] }))
+        )
+      );
+      for (const { quizId, questions } of richResults) {
+        const questionCount = questions.length;
+        const incompleteQuestionCount = questions.filter(
+          (qq: any) => !qq.question?.answerChoices_on_question?.some((c: any) => c.isCorrect)
+        ).length;
+        quizReadinessMap.set(quizId, { questionCount, incompleteQuestionCount });
+      }
+    }
+
     const modules = (course.modules_on_course ?? [])
       .slice()
       .sort((a: any, b: any) => a.position - b.position)
@@ -35,6 +61,7 @@ async function fetchCourseDetail(courseId: string) {
           .sort((a: any, b: any) => a.position - b.position)
           .map((lesson: any) => {
             const linkedQuiz = lesson.quiz?.id ? quizMap.get(formatUuid(lesson.quiz.id)) : null;
+            const quizCounts = lesson.quiz?.id ? quizReadinessMap.get(formatUuid(lesson.quiz.id)) : null;
             return {
               id: lesson.id,
               title: lesson.title,
@@ -55,6 +82,8 @@ async function fetchCourseDetail(courseId: string) {
                     timeLimitSeconds: linkedQuiz.timeLimitSeconds ?? null,
                     shuffleQuestions: linkedQuiz.shuffleQuestions,
                     shuffleChoices: linkedQuiz.shuffleChoices,
+                    questionCount: quizCounts?.questionCount ?? 0,
+                    incompleteQuestionCount: quizCounts?.incompleteQuestionCount ?? 0,
                   }
                 : null,
               sourceMaterial: lesson.sourceMaterial

@@ -4,6 +4,7 @@ import { adminDcQuery, adminDcMutate } from "@/lib/firebase/admin-dc";
 import { shuffle } from "@/lib/quiz-engine/evaluate";
 import { sanitizeQuestion } from "@/lib/quiz-engine/sanitize";
 import { formatUuid } from "@/lib/utils";
+import { isAdminRole } from "@/lib/admin/auth";
 
 export async function POST(
   request: NextRequest,
@@ -15,6 +16,17 @@ export async function POST(
     const userId = decoded.uid;
     const userEmail = decoded.email ?? `${decoded.uid}@impact26.local`;
     const userName = decoded.name ?? null;
+
+    // Enforce quiz visibility: only published quizzes are accessible to learners
+    const quizMeta = await adminDcQuery<{ quiz: { id: string; status: string } | null }>(
+      "GetQuizById", { quizId }
+    ).catch(() => null);
+    if (!quizMeta?.quiz) {
+      return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
+    }
+    if (quizMeta.quiz.status !== "published" && !isAdminRole(decoded.role)) {
+      return NextResponse.json({ error: "Quiz not available" }, { status: 403 });
+    }
 
     // Quiz metadata is passed from the lesson page (already fetched via GetLesson)
     const body = await request.json().catch(() => ({}));

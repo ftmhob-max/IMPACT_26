@@ -33,7 +33,7 @@ interface PreviewResult {
 }
 
 interface CsvImportPanelProps {
-  onImported: (result: { message: string; quizId?: string }) => void;
+  onImported: (result: { message: string; quizId?: string; quizTitle?: string }) => void;
 }
 
 type InputMode = "text" | "file";
@@ -118,6 +118,7 @@ export function CsvImportPanel({ onImported }: CsvImportPanelProps) {
           ? `Assessment imported: "${quizTitle}" (${importedCount} added, ${duplicatesSkipped} duplicate${duplicatesSkipped !== 1 ? "s" : ""} skipped out of ${attemptedCount})`
           : `Assessment imported: "${quizTitle}" (${importedCount} questions)`,
         quizId: data.quizId ?? undefined,
+        quizTitle,
       });
     } else {
       const err = await res.json().catch(() => ({}));

@@ -66,6 +66,14 @@ query GetLesson($id: UUID!) @auth(level: NO_ACCESS) {
   }
 }
 
+# Fetch quiz metadata (status, glossaryEnabled) for start-route visibility check
+query GetQuizById($quizId: UUID!) @auth(level: NO_ACCESS) {
+  quiz(id: $quizId) {
+    id
+    status
+  }
+}
+
 # Get quiz questions with choices — OMITS isCorrect and explanation
 # (those fields blocked by @auth for learner tokens)
 query GetQuizQuestions($quizId: UUID!) @auth(level: NO_ACCESS) {

@@ -8,6 +8,7 @@ import { DomainCombobox } from "@/components/admin/DomainCombobox";
 import { QuestionBankPicker } from "@/components/admin/QuestionBankPicker";
 import { CalculatorAccessSettings } from "@/components/admin/CalculatorAccessSettings";
 import { QuizQuickImportPanel } from "@/components/admin/QuizQuickImportPanel";
+import { AttachQuizModal } from "@/components/admin/AttachQuizModal";
 import {
   getQuizReadiness,
   type QuizDashboardSummary,
@@ -139,6 +140,7 @@ export function QuizManagementPanel({
   const [selectedQuizId, setSelectedQuizId] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [showQuickImport, setShowQuickImport] = useState(false);
+  const [attachTarget, setAttachTarget] = useState<{ id: string; title: string } | null>(null);
   const [summaryFilter, setSummaryFilter] = useState<
     "all" | "published" | "review" | "draft" | "ready" | "attention"
   >("all");
@@ -294,7 +296,14 @@ export function QuizManagementPanel({
           {showQuickImport && (
             <div className="border-b border-slate-100 p-4">
               <QuizQuickImportPanel
-                onImported={(msg) => { showNotice("success", msg); setShowQuickImport(false); void load(); }}
+                onImported={async (msg, importedQuizId, importedQuizTitle) => {
+                  showNotice("success", msg);
+                  setShowQuickImport(false);
+                  await load();
+                  if (importedQuizId && importedQuizTitle) {
+                    setAttachTarget({ id: importedQuizId, title: importedQuizTitle });
+                  }
+                }}
                 onCancel={() => setShowQuickImport(false)}
               />
             </div>
@@ -369,8 +378,21 @@ export function QuizManagementPanel({
           onClose={() => setSelectedQuizId(null)}
           onPublish={(pub) => publishQuiz(selectedQuiz.id, pub)}
           onDelete={() => deleteQuiz(selectedQuiz)}
+          onAttach={() => setAttachTarget({ id: selectedQuiz.id, title: selectedQuiz.title })}
           onQuestionsChanged={load}
           showNotice={showNotice}
+        />
+      )}
+
+      {attachTarget && (
+        <AttachQuizModal
+          quizId={attachTarget.id}
+          quizTitle={attachTarget.title}
+          onClose={() => setAttachTarget(null)}
+          onAttached={(msg) => {
+            setAttachTarget(null);
+            showNotice("success", msg);
+          }}
         />
       )}
     </div>
@@ -468,6 +490,7 @@ function QuizDetailPanel({
   onClose,
   onPublish,
   onDelete,
+  onAttach,
   onQuestionsChanged,
   showNotice,
 }: {
@@ -475,6 +498,7 @@ function QuizDetailPanel({
   onClose: () => void;
   onPublish: (pub: boolean) => void;
   onDelete: () => void;
+  onAttach: () => void;
   onQuestionsChanged: () => void;
   showNotice: (type: "success" | "error", text: string) => void;
 }) {
@@ -625,6 +649,15 @@ function QuizDetailPanel({
           </div>
         </div>
         <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:shrink-0">
+          <button
+            type="button"
+            onClick={onAttach}
+            className="admin-action secondary text-xs py-1 flex items-center gap-1"
+            title="Attach quiz to a lesson"
+          >
+            <Icons.Link size={12} />
+            Attach to lesson
+          </button>
           <button
             type="button"
             onClick={() => onPublish(!isPublished)}
