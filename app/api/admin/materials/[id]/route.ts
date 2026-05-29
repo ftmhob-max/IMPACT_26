@@ -206,7 +206,6 @@ export async function PATCH(
             createdById: auth.session.uid,
           }).catch(() => null);
           await adminDcMutate("CreateSourceMaterialTagAssignment", {
-            id: randomUUID(),
             sourceMaterialId: materialId,
             tagId,
           }).catch(() => null);

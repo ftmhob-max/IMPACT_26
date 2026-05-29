@@ -178,7 +178,6 @@ async function ingestSourceMaterial({
         }).catch(() => null);
       }
       await adminDcMutate("CreateSourceMaterialTagAssignment", {
-        id: randomUUID(),
         sourceMaterialId: materialId,
         tagId,
       }).catch(() => null);

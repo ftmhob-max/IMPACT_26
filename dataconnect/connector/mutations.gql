@@ -232,9 +232,8 @@ mutation CreateSourceMaterialTag($id: UUID!, $name: String!, $color: String, $cr
   })
 }
 
-mutation CreateSourceMaterialTagAssignment($id: UUID!, $sourceMaterialId: UUID!, $tagId: UUID!) @auth(level: NO_ACCESS) {
+mutation CreateSourceMaterialTagAssignment($sourceMaterialId: UUID!, $tagId: UUID!) @auth(level: NO_ACCESS) {
   sourceMaterialTagAssignment_insert(data: {
-    id: $id
     sourceMaterial: { id: $sourceMaterialId }
     tag: { id: $tagId }
   })

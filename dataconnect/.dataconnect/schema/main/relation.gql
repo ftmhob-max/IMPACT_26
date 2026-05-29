@@ -3546,6 +3546,40 @@ extend type SourceMaterial {
     having: SourceMaterialTagAssignment_Having
   ): [SourceMaterialTagAssignment!]! @fdc_generated(from: "SourceMaterialTagAssignment.sourceMaterial", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
   """
+  ✨ List `SourceMaterialTag` objects using `SourceMaterialTagAssignment` as the join table (a `SourceMaterialTagAssignment` object exists where its `sourceMaterial` is this and its `tag` is that).
+  """
+  sourceMaterialTags_via_SourceMaterialTagAssignment(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: SourceMaterialTagAssignment_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [SourceMaterialTagAssignment_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: SourceMaterialTagAssignment_Having
+  ): [SourceMaterialTag!]! @fdc_generated(from: "SourceMaterialTagAssignment", purpose: QUERY_MULTIPLE_MANY_TO_MANY)
+  """
   Implicit metadata field that cannot be written. It provides extra information about query results.
   """
   _metadata: _Metadata @fdc_generated(from: "SourceMaterial", purpose: METADATA_FIELD)
@@ -4155,6 +4189,40 @@ extend type SourceMaterialTag {
     having: SourceMaterialTagAssignment_Having
   ): [SourceMaterialTagAssignment!]! @fdc_generated(from: "SourceMaterialTagAssignment.tag", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
   """
+  ✨ List `SourceMaterial` objects using `SourceMaterialTagAssignment` as the join table (a `SourceMaterialTagAssignment` object exists where its `tag` is this and its `sourceMaterial` is that).
+  """
+  sourceMaterials_via_SourceMaterialTagAssignment(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: SourceMaterialTagAssignment_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [SourceMaterialTagAssignment_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: SourceMaterialTagAssignment_Having
+  ): [SourceMaterial!]! @fdc_generated(from: "SourceMaterialTagAssignment", purpose: QUERY_MULTIPLE_MANY_TO_MANY)
+  """
   Implicit metadata field that cannot be written. It provides extra information about query results.
   """
   _metadata: _Metadata @fdc_generated(from: "SourceMaterialTag", purpose: METADATA_FIELD)
@@ -4256,15 +4324,6 @@ extend type SourceMaterialTagAssignment {
     distinct: Boolean = false
   ): Int! @fdc_generated(from: "SourceMaterialTagAssignment.createdAt", purpose: QUERY_COUNT)
   """
-  ✨ Count the number of rows in the `SourceMaterialTagAssignment` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
-  """
-  id_count(
-    """
-    Set to true to count the number of distinct values.
-    """
-    distinct: Boolean = false
-  ): Int! @fdc_generated(from: "SourceMaterialTagAssignment.id", purpose: QUERY_COUNT)
-  """
   ✨ Count the number of rows in the `SourceMaterialTagAssignment` table where the `sourceMaterialId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
   """
   sourceMaterialId_count(
@@ -4293,7 +4352,7 @@ extend type SourceMaterialTagAssignment {
   """
   A generated field that is used for caching results in SDKs.
   """
-  _id: ID! @fdc_generated(from: "SourceMaterialTagAssignment.id", purpose: ENTITY_ID)
+  _id: ID! @fdc_generated(from: "SourceMaterialTagAssignment.sourceMaterialId,tagId", purpose: ENTITY_ID)
 }
 extend type User {
   """

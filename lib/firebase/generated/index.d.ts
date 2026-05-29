@@ -348,13 +348,12 @@ export interface AdminListSourceMaterialsRichData {
           fullName?: string | null;
         } & User_Key;
           sourceMaterialTagAssignments_on_sourceMaterial: ({
-            id: UUIDString;
             tag: {
               id: UUIDString;
               name: string;
               color?: string | null;
             } & SourceMaterialTag_Key;
-          } & SourceMaterialTagAssignment_Key)[];
+          })[];
             sourceMaterialActivities_on_sourceMaterial: ({
               id: UUIDString;
               activityType: string;
@@ -695,7 +694,6 @@ export interface CreateSourceMaterialTagAssignmentData {
 }
 
 export interface CreateSourceMaterialTagAssignmentVariables {
-  id: UUIDString;
   sourceMaterialId: UUIDString;
   tagId: UUIDString;
 }
@@ -1300,6 +1298,17 @@ export interface GetQuestionWithAnswersVariables {
   questionId: UUIDString;
 }
 
+export interface GetQuizByIdData {
+  quiz?: {
+    id: UUIDString;
+    status: string;
+  } & Quiz_Key;
+}
+
+export interface GetQuizByIdVariables {
+  quizId: UUIDString;
+}
+
 export interface GetQuizQuestionCountData {
   quizQuestions: ({
     position: number;
@@ -1630,7 +1639,8 @@ export interface SourceMaterialFolder_Key {
 }
 
 export interface SourceMaterialTagAssignment_Key {
-  id: UUIDString;
+  sourceMaterialId: UUIDString;
+  tagId: UUIDString;
   __typename?: 'SourceMaterialTagAssignment_Key';
 }
 
@@ -2833,6 +2843,18 @@ export const getLessonRef: GetLessonRef;
 
 export function getLesson(vars: GetLessonVariables, options?: ExecuteQueryOptions): QueryPromise<GetLessonData, GetLessonVariables>;
 export function getLesson(dc: DataConnect, vars: GetLessonVariables, options?: ExecuteQueryOptions): QueryPromise<GetLessonData, GetLessonVariables>;
+
+interface GetQuizByIdRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetQuizByIdVariables): QueryRef<GetQuizByIdData, GetQuizByIdVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: GetQuizByIdVariables): QueryRef<GetQuizByIdData, GetQuizByIdVariables>;
+  operationName: string;
+}
+export const getQuizByIdRef: GetQuizByIdRef;
+
+export function getQuizById(vars: GetQuizByIdVariables, options?: ExecuteQueryOptions): QueryPromise<GetQuizByIdData, GetQuizByIdVariables>;
+export function getQuizById(dc: DataConnect, vars: GetQuizByIdVariables, options?: ExecuteQueryOptions): QueryPromise<GetQuizByIdData, GetQuizByIdVariables>;
 
 interface GetQuizQuestionsRef {
   /* Allow users to create refs without passing in DataConnect */

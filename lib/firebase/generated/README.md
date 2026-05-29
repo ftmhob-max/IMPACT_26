@@ -11,6 +11,7 @@ This README will guide you through the process of using the generated JavaScript
   - [*ListPublishedCourses*](#listpublishedcourses)
   - [*GetCourseBySlug*](#getcoursebyslug)
   - [*GetLesson*](#getlesson)
+  - [*GetQuizById*](#getquizbyid)
   - [*GetQuizQuestions*](#getquizquestions)
   - [*GetInProgressAttempt*](#getinprogressattempt)
   - [*GetUserCourseProgress*](#getusercourseprogress)
@@ -533,6 +534,118 @@ console.log(data.lesson);
 executeQuery(ref).then((response) => {
   const data = response.data;
   console.log(data.lesson);
+});
+```
+
+## GetQuizById
+You can execute the `GetQuizById` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+getQuizById(vars: GetQuizByIdVariables, options?: ExecuteQueryOptions): QueryPromise<GetQuizByIdData, GetQuizByIdVariables>;
+
+interface GetQuizByIdRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetQuizByIdVariables): QueryRef<GetQuizByIdData, GetQuizByIdVariables>;
+}
+export const getQuizByIdRef: GetQuizByIdRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `QueryRef` function.
+```typescript
+getQuizById(dc: DataConnect, vars: GetQuizByIdVariables, options?: ExecuteQueryOptions): QueryPromise<GetQuizByIdData, GetQuizByIdVariables>;
+
+interface GetQuizByIdRef {
+  ...
+  (dc: DataConnect, vars: GetQuizByIdVariables): QueryRef<GetQuizByIdData, GetQuizByIdVariables>;
+}
+export const getQuizByIdRef: GetQuizByIdRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the getQuizByIdRef:
+```typescript
+const name = getQuizByIdRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `GetQuizById` query requires an argument of type `GetQuizByIdVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface GetQuizByIdVariables {
+  quizId: UUIDString;
+}
+```
+### Return Type
+Recall that executing the `GetQuizById` query returns a `QueryPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `GetQuizByIdData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface GetQuizByIdData {
+  quiz?: {
+    id: UUIDString;
+    status: string;
+  } & Quiz_Key;
+}
+```
+### Using `GetQuizById`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, getQuizById, GetQuizByIdVariables } from '@impact26/dataconnect-sdk';
+
+// The `GetQuizById` query requires an argument of type `GetQuizByIdVariables`:
+const getQuizByIdVars: GetQuizByIdVariables = {
+  quizId: ..., 
+};
+
+// Call the `getQuizById()` function to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await getQuizById(getQuizByIdVars);
+// Variables can be defined inline as well.
+const { data } = await getQuizById({ quizId: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await getQuizById(dataConnect, getQuizByIdVars);
+
+console.log(data.quiz);
+
+// Or, you can use the `Promise` API.
+getQuizById(getQuizByIdVars).then((response) => {
+  const data = response.data;
+  console.log(data.quiz);
+});
+```
+
+### Using `GetQuizById`'s `QueryRef` function
+
+```typescript
+import { getDataConnect, executeQuery } from 'firebase/data-connect';
+import { connectorConfig, getQuizByIdRef, GetQuizByIdVariables } from '@impact26/dataconnect-sdk';
+
+// The `GetQuizById` query requires an argument of type `GetQuizByIdVariables`:
+const getQuizByIdVars: GetQuizByIdVariables = {
+  quizId: ..., 
+};
+
+// Call the `getQuizByIdRef()` function to get a reference to the query.
+const ref = getQuizByIdRef(getQuizByIdVars);
+// Variables can be defined inline as well.
+const ref = getQuizByIdRef({ quizId: ..., });
+
+// You can also pass in a `DataConnect` instance to the `QueryRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = getQuizByIdRef(dataConnect, getQuizByIdVars);
+
+// Call `executeQuery()` on the reference to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeQuery(ref);
+
+console.log(data.quiz);
+
+// Or, you can use the `Promise` API.
+executeQuery(ref).then((response) => {
+  const data = response.data;
+  console.log(data.quiz);
 });
 ```
 
@@ -3496,13 +3609,12 @@ export interface AdminListSourceMaterialsRichData {
           fullName?: string | null;
         } & User_Key;
           sourceMaterialTagAssignments_on_sourceMaterial: ({
-            id: UUIDString;
             tag: {
               id: UUIDString;
               name: string;
               color?: string | null;
             } & SourceMaterialTag_Key;
-          } & SourceMaterialTagAssignment_Key)[];
+          })[];
             sourceMaterialActivities_on_sourceMaterial: ({
               id: UUIDString;
               activityType: string;
@@ -8327,7 +8439,6 @@ The `CreateSourceMaterialTagAssignment` mutation requires an argument of type `C
 
 ```typescript
 export interface CreateSourceMaterialTagAssignmentVariables {
-  id: UUIDString;
   sourceMaterialId: UUIDString;
   tagId: UUIDString;
 }
@@ -8349,7 +8460,6 @@ import { connectorConfig, createSourceMaterialTagAssignment, CreateSourceMateria
 
 // The `CreateSourceMaterialTagAssignment` mutation requires an argument of type `CreateSourceMaterialTagAssignmentVariables`:
 const createSourceMaterialTagAssignmentVars: CreateSourceMaterialTagAssignmentVariables = {
-  id: ..., 
   sourceMaterialId: ..., 
   tagId: ..., 
 };
@@ -8358,7 +8468,7 @@ const createSourceMaterialTagAssignmentVars: CreateSourceMaterialTagAssignmentVa
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await createSourceMaterialTagAssignment(createSourceMaterialTagAssignmentVars);
 // Variables can be defined inline as well.
-const { data } = await createSourceMaterialTagAssignment({ id: ..., sourceMaterialId: ..., tagId: ..., });
+const { data } = await createSourceMaterialTagAssignment({ sourceMaterialId: ..., tagId: ..., });
 
 // You can also pass in a `DataConnect` instance to the action shortcut function.
 const dataConnect = getDataConnect(connectorConfig);
@@ -8381,7 +8491,6 @@ import { connectorConfig, createSourceMaterialTagAssignmentRef, CreateSourceMate
 
 // The `CreateSourceMaterialTagAssignment` mutation requires an argument of type `CreateSourceMaterialTagAssignmentVariables`:
 const createSourceMaterialTagAssignmentVars: CreateSourceMaterialTagAssignmentVariables = {
-  id: ..., 
   sourceMaterialId: ..., 
   tagId: ..., 
 };
@@ -8389,7 +8498,7 @@ const createSourceMaterialTagAssignmentVars: CreateSourceMaterialTagAssignmentVa
 // Call the `createSourceMaterialTagAssignmentRef()` function to get a reference to the mutation.
 const ref = createSourceMaterialTagAssignmentRef(createSourceMaterialTagAssignmentVars);
 // Variables can be defined inline as well.
-const ref = createSourceMaterialTagAssignmentRef({ id: ..., sourceMaterialId: ..., tagId: ..., });
+const ref = createSourceMaterialTagAssignmentRef({ sourceMaterialId: ..., tagId: ..., });
 
 // You can also pass in a `DataConnect` instance to the `MutationRef` function.
 const dataConnect = getDataConnect(connectorConfig);

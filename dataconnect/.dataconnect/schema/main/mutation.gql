@@ -1494,11 +1494,6 @@ extend type Mutation {
   """
   sourceMaterialTagAssignment_update(
     """
-    The unique ID of the object.
-    """
-    id: UUID
-
-    """
     The key used to identify the object.
     """
     key: SourceMaterialTagAssignment_Key
@@ -2524,11 +2519,6 @@ extend type Mutation {
   ✨ Delete a single `SourceMaterialTagAssignment` based on `id`, `key` or `first` and return its key (or `null` if not found).
   """
   sourceMaterialTagAssignment_delete(
-    """
-    The unique ID of the object.
-    """
-    id: UUID
-
     """
     The key used to identify the object.
     """

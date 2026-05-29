@@ -554,7 +554,6 @@ query AdminListSourceMaterialsRich @auth(level: NO_ACCESS) {
     updatedAt
     uploadedBy { id email fullName }
     sourceMaterialTagAssignments_on_sourceMaterial(orderBy: { createdAt: DESC }) {
-      id
       tag { id name color }
     }
     sourceMaterialActivities_on_sourceMaterial(orderBy: { createdAt: DESC }, limit: 20) {

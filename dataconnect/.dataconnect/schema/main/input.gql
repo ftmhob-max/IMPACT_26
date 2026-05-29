@@ -8147,6 +8147,10 @@ input SourceMaterial_Filter {
   ✨ Generated from Field `SourceMaterial`.`sourceMaterialTagAssignments_on_sourceMaterial` of type `[SourceMaterialTagAssignment!]!`
   """
   sourceMaterialTagAssignments_on_sourceMaterial: SourceMaterialTagAssignment_ListFilter
+  """
+  ✨ Generated from Field `SourceMaterial`.`sourceMaterialTags_via_SourceMaterialTagAssignment` of type `[SourceMaterialTag!]!`
+  """
+  sourceMaterialTags_via_SourceMaterialTagAssignment: SourceMaterialTag_ListFilter
 }
 """
 ✨ Generated first-row input type for table 'SourceMaterial'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
@@ -9552,6 +9556,10 @@ input SourceMaterialTag_Filter {
   ✨ Generated from Field `SourceMaterialTag`.`sourceMaterialTagAssignments_on_tag` of type `[SourceMaterialTagAssignment!]!`
   """
   sourceMaterialTagAssignments_on_tag: SourceMaterialTagAssignment_ListFilter
+  """
+  ✨ Generated from Field `SourceMaterialTag`.`sourceMaterials_via_SourceMaterialTagAssignment` of type `[SourceMaterial!]!`
+  """
+  sourceMaterials_via_SourceMaterialTagAssignment: SourceMaterial_ListFilter
 }
 """
 ✨ Generated first-row input type for table 'SourceMaterialTag'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
@@ -9739,14 +9747,6 @@ input SourceMaterialTag_Order {
 """
 input SourceMaterialTagAssignment_Data {
   """
-  ✨ Generated from Field `SourceMaterialTagAssignment`.`id` of type `UUID!`
-  """
-  id: UUID
-  """
-  ✨ `_expr` server value variant of `id` (✨ Generated from Field `SourceMaterialTagAssignment`.`id` of type `UUID!`)
-  """
-  id_expr: UUID_Expr @fdc_forbiddenInVariables
-  """
   ✨ Generated from Field `SourceMaterialTagAssignment`.`sourceMaterialId` of type `UUID!`
   """
   sourceMaterialId: UUID
@@ -9803,10 +9803,6 @@ input SourceMaterialTagAssignment_Filter {
   Apply multiple filter conditions using `OR` logic.
   """
   _or: [SourceMaterialTagAssignment_Filter!]
-  """
-  ✨ Generated from Field `SourceMaterialTagAssignment`.`id` of type `UUID!`
-  """
-  id: UUID_Filter
   """
   ✨ Generated from Field `SourceMaterialTagAssignment`.`sourceMaterialId` of type `UUID!`
   """
@@ -9870,10 +9866,6 @@ input SourceMaterialTagAssignment_Having {
   """
   createdAt_count: Int_Filter
   """
-  ✨ Generated from Field `SourceMaterialTagAssignment`.`id_count` of type `Int!`
-  """
-  id_count: Int_Filter
-  """
   ✨ Generated from Field `SourceMaterialTagAssignment`.`sourceMaterialId_count` of type `Int!`
   """
   sourceMaterialId_count: Int_Filter
@@ -9895,13 +9887,21 @@ input SourceMaterialTagAssignment_Having {
 """
 input SourceMaterialTagAssignment_Key {
   """
-  ✨ Generated from Field `SourceMaterialTagAssignment`.`id` of type `UUID!`
+  ✨ Generated from Field `SourceMaterialTagAssignment`.`sourceMaterialId` of type `UUID!`
   """
-  id: UUID
+  sourceMaterialId: UUID
   """
-  ✨ `_expr` server value variant of `id` (✨ Generated from Field `SourceMaterialTagAssignment`.`id` of type `UUID!`)
+  ✨ `_expr` server value variant of `sourceMaterialId` (✨ Generated from Field `SourceMaterialTagAssignment`.`sourceMaterialId` of type `UUID!`)
   """
-  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  sourceMaterialId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `SourceMaterialTagAssignment`.`tagId` of type `UUID!`
+  """
+  tagId: UUID
+  """
+  ✨ `_expr` server value variant of `tagId` (✨ Generated from Field `SourceMaterialTagAssignment`.`tagId` of type `UUID!`)
+  """
+  tagId_expr: UUID_Expr @fdc_forbiddenInVariables
 }
 """
 ✨ Generated list filter input type for table 'SourceMaterialTagAssignment'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
@@ -9920,10 +9920,6 @@ input SourceMaterialTagAssignment_ListFilter {
 ✨ Generated order input type for table 'SourceMaterialTagAssignment'. This input defines the sorting order of rows in query results based on one or more fields.
 """
 input SourceMaterialTagAssignment_Order {
-  """
-  ✨ Generated from Field `SourceMaterialTagAssignment`.`id` of type `UUID!`
-  """
-  id: OrderDirection
   """
   ✨ Generated from Field `SourceMaterialTagAssignment`.`sourceMaterialId` of type `UUID!`
   """
@@ -9952,10 +9948,6 @@ input SourceMaterialTagAssignment_Order {
   ✨ Generated from Field `SourceMaterialTagAssignment`.`createdAt_count` of type `Int!`
   """
   createdAt_count: OrderDirection
-  """
-  ✨ Generated from Field `SourceMaterialTagAssignment`.`id_count` of type `Int!`
-  """
-  id_count: OrderDirection
   """
   ✨ Generated from Field `SourceMaterialTagAssignment`.`sourceMaterialId_count` of type `Int!`
   """

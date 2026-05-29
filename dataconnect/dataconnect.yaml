@@ -1,6 +1,7 @@
-specVersion: "v1beta"
+specVersion: "v1"
 serviceId: "impact26-dataconnect"
 location: "us-central1"
+schemaValidation: "COMPATIBLE"
 schema:
   source: "./schema"
   datasource:

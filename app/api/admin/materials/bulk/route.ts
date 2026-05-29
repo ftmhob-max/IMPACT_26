@@ -122,7 +122,6 @@ export async function POST(request: NextRequest) {
             createdById: auth.session.uid,
           }).catch(() => null);
           await adminDcMutate("CreateSourceMaterialTagAssignment", {
-            id: randomUUID(),
             sourceMaterialId: material.id,
             tagId,
           }).catch(() => null);
