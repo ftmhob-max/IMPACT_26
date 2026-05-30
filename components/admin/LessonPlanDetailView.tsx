@@ -4,6 +4,23 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import * as Icons from "@/components/ui/Icons";
 import { cn } from "@/lib/utils";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { LessonBuilderEditor, type LessonBuilderEditorHandle } from "@/components/admin/LessonBuilderEditor";
 import { LessonStudentPreview } from "@/components/admin/LessonStudentPreview";
 import { LessonQuizPanel } from "@/components/admin/LessonQuizPanel";
@@ -237,6 +254,74 @@ export function LessonPlanDetailView({
     [course.id]
   );
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  async function reorderModules(oldIndex: number, newIndex: number) {
+    const reordered = arrayMove(modules, oldIndex, newIndex);
+    setModules(reordered); // optimistic
+    const res = await fetch("/api/admin/courses", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "reorder",
+        type: "module",
+        items: reordered.map((m, i) => ({ id: m.id, position: i })),
+      }),
+    });
+    if (!res.ok) {
+      showNotice("error", "Failed to save module order.");
+      await reload();
+    }
+  }
+
+  async function reorderLessonsInModule(moduleId: string, oldIndex: number, newIndex: number) {
+    const modIndex = modules.findIndex((m) => m.id === moduleId);
+    if (modIndex < 0) return;
+    const reorderedLessons = arrayMove(modules[modIndex].lessons, oldIndex, newIndex);
+    const nextModules = modules.map((m, i) =>
+      i === modIndex ? { ...m, lessons: reorderedLessons } : m
+    );
+    setModules(nextModules); // optimistic
+    const res = await fetch("/api/admin/courses", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "reorder",
+        type: "lesson",
+        items: reorderedLessons.map((l, i) => ({ id: l.id, position: i })),
+      }),
+    });
+    if (!res.ok) {
+      showNotice("error", "Failed to save lesson order.");
+      await reload();
+    }
+  }
+
+  function handleModuleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = modules.findIndex((m) => m.id === active.id);
+    const newIndex = modules.findIndex((m) => m.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    void reorderModules(oldIndex, newIndex);
+  }
+
+  function handleLessonDragEnd(moduleId: string) {
+    return (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+      const mod = modules.find((m) => m.id === moduleId);
+      if (!mod) return;
+      const oldIndex = mod.lessons.findIndex((l) => l.id === active.id);
+      const newIndex = mod.lessons.findIndex((l) => l.id === over.id);
+      if (oldIndex < 0 || newIndex < 0) return;
+      void reorderLessonsInModule(moduleId, oldIndex, newIndex);
+    };
+  }
+
   const totalLessons = modules.reduce((n, m) => n + m.lessons.length, 0);
   const allLessonsList = modules.flatMap((m) => m.lessons);
   const publishedLessons = allLessonsList.filter((l) => l.isPublished).length;
@@ -392,19 +477,32 @@ export function LessonPlanDetailView({
                   onChange={setOutlineFilter}
                   counts={computeFilterCounts(modules.flatMap((m) => m.lessons))}
                 />
-                {modules.map((mod) => (
-                  <ModuleSidebarSection
-                    key={mod.id}
-                    module={mod}
-                    compact={false}
-                    expanded={expandedModules.has(mod.id)}
-                    selectedLessonId={selectedLessonId}
-                    activeFilter={outlineFilter}
-                    onToggle={() => toggleModule(mod.id)}
-                    onSelectLesson={selectLesson}
-                    onAddLesson={() => addLesson(mod.id)}
-                  />
-                ))}
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleModuleDragEnd}
+                >
+                  <SortableContext
+                    items={modules.map((m) => m.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {modules.map((mod) => (
+                      <SortableModuleItem
+                        key={mod.id}
+                        module={mod}
+                        compact={false}
+                        expanded={expandedModules.has(mod.id)}
+                        selectedLessonId={selectedLessonId}
+                        activeFilter={outlineFilter}
+                        onToggle={() => toggleModule(mod.id)}
+                        onSelectLesson={selectLesson}
+                        onAddLesson={() => addLesson(mod.id)}
+                        onLessonDragEnd={handleLessonDragEnd(mod.id)}
+                        sensors={sensors}
+                      />
+                    ))}
+                  </SortableContext>
+                </DndContext>
                 <button
                   type="button"
                   onClick={addModule}
@@ -450,19 +548,32 @@ export function LessonPlanDetailView({
                 counts={computeFilterCounts(modules.flatMap((m) => m.lessons))}
               />
             )}
-            {modules.map((mod) => (
-              <ModuleSidebarSection
-                key={mod.id}
-                module={mod}
-                compact={outlineCollapsed}
-                expanded={expandedModules.has(mod.id)}
-                selectedLessonId={selectedLessonId}
-                activeFilter={outlineFilter}
-                onToggle={() => toggleModule(mod.id)}
-                onSelectLesson={selectLesson}
-                onAddLesson={() => addLesson(mod.id)}
-              />
-            ))}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleModuleDragEnd}
+            >
+              <SortableContext
+                items={modules.map((m) => m.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                {modules.map((mod) => (
+                  <SortableModuleItem
+                    key={mod.id}
+                    module={mod}
+                    compact={outlineCollapsed}
+                    expanded={expandedModules.has(mod.id)}
+                    selectedLessonId={selectedLessonId}
+                    activeFilter={outlineFilter}
+                    onToggle={() => toggleModule(mod.id)}
+                    onSelectLesson={selectLesson}
+                    onAddLesson={() => addLesson(mod.id)}
+                    onLessonDragEnd={handleLessonDragEnd(mod.id)}
+                    sensors={sensors}
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
             <button
               type="button"
               onClick={addModule}
@@ -566,7 +677,9 @@ function ModuleReadinessBadge({ lessons }: { lessons: LessonData[] }) {
   );
 }
 
-function ModuleSidebarSection({
+// ─── Sortable wrappers ────────────────────────────────────────────────────────
+
+function SortableModuleItem({
   module,
   compact,
   expanded,
@@ -575,6 +688,8 @@ function ModuleSidebarSection({
   onToggle,
   onSelectLesson,
   onAddLesson,
+  onLessonDragEnd,
+  sensors,
 }: {
   module: ModuleData;
   compact: boolean;
@@ -584,6 +699,98 @@ function ModuleSidebarSection({
   onToggle: () => void;
   onSelectLesson: (id: string) => void;
   onAddLesson: () => void;
+  onLessonDragEnd: (event: DragEndEvent) => void;
+  sensors: ReturnType<typeof useSensors>;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: module.id });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 50 : undefined,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <ModuleSidebarSection
+        module={module}
+        compact={compact}
+        expanded={expanded}
+        selectedLessonId={selectedLessonId}
+        activeFilter={activeFilter}
+        onToggle={onToggle}
+        onSelectLesson={onSelectLesson}
+        onAddLesson={onAddLesson}
+        onLessonDragEnd={onLessonDragEnd}
+        sensors={sensors}
+        dragHandleProps={{ ...attributes, ...listeners }}
+        isDragging={isDragging}
+      />
+    </div>
+  );
+}
+
+function SortableLesson({
+  lesson,
+  selected,
+  compact,
+  onSelect,
+}: {
+  lesson: LessonData;
+  selected: boolean;
+  compact: boolean;
+  onSelect: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: lesson.id });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.45 : 1,
+    zIndex: isDragging ? 50 : undefined,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <LessonSidebarButton
+        lesson={lesson}
+        selected={selected}
+        compact={compact}
+        onSelect={onSelect}
+        dragHandleProps={{ ...attributes, ...listeners }}
+        isDragging={isDragging}
+      />
+    </div>
+  );
+}
+
+// ─── Sidebar sections ─────────────────────────────────────────────────────────
+
+function ModuleSidebarSection({
+  module,
+  compact,
+  expanded,
+  selectedLessonId,
+  activeFilter,
+  onToggle,
+  onSelectLesson,
+  onAddLesson,
+  onLessonDragEnd,
+  sensors,
+  dragHandleProps,
+  isDragging,
+}: {
+  module: ModuleData;
+  compact: boolean;
+  expanded: boolean;
+  selectedLessonId: string | null;
+  activeFilter: OutlineFilter;
+  onToggle: () => void;
+  onSelectLesson: (id: string) => void;
+  onAddLesson: () => void;
+  onLessonDragEnd?: (event: DragEndEvent) => void;
+  sensors?: ReturnType<typeof useSensors>;
+  dragHandleProps?: React.HTMLAttributes<HTMLButtonElement>;
+  isDragging?: boolean;
 }) {
   if (compact) {
     return (
@@ -618,26 +825,62 @@ function ModuleSidebarSection({
   const isFiltering = activeFilter !== "all";
 
   return (
-    <div>
-      <button
-        type="button"
-        onClick={onToggle}
-        className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
-      >
-        {expanded ? (
-          <Icons.ChevronDown size={12} className="shrink-0 text-slate-400" />
-        ) : (
-          <Icons.ChevronRight size={12} className="shrink-0 text-slate-400" />
-        )}
-        <Icons.BookMarked size={13} className="shrink-0 text-slate-400" />
-        <span className="flex-1 truncate">{module.title}</span>
-        <ModuleReadinessBadge lessons={module.lessons} />
-      </button>
+    <div className={cn(isDragging && "rounded-lg ring-2 ring-[#185FA5]/30 bg-[#E6F1FB]/20")}>
+      {/* Module header row with drag handle */}
+      <div className="group flex w-full items-center gap-1 rounded-lg pr-1 hover:bg-slate-50 transition-colors">
+        {/* Drag handle for module */}
+        <button
+          type="button"
+          className="flex h-7 w-5 shrink-0 cursor-grab items-center justify-center rounded text-transparent transition group-hover:text-slate-300 hover:!text-slate-500 active:cursor-grabbing"
+          title="Drag to reorder module"
+          aria-label="Drag to reorder module"
+          {...dragHandleProps}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Icons.GripVertical size={13} />
+        </button>
+
+        <button
+          type="button"
+          onClick={onToggle}
+          className="flex flex-1 min-w-0 items-center gap-2 py-2 text-left text-xs font-semibold text-slate-700"
+        >
+          {expanded ? (
+            <Icons.ChevronDown size={12} className="shrink-0 text-slate-400" />
+          ) : (
+            <Icons.ChevronRight size={12} className="shrink-0 text-slate-400" />
+          )}
+          <Icons.BookMarked size={13} className="shrink-0 text-slate-400" />
+          <span className="flex-1 truncate">{module.title}</span>
+          <ModuleReadinessBadge lessons={module.lessons} />
+        </button>
+      </div>
 
       {expanded && (
-        <div className="ml-4 space-y-0.5 mt-0.5">
+        <div className="ml-5 space-y-0.5 mt-0.5">
           {filteredLessons.length === 0 && isFiltering ? (
             <p className="px-2 py-1.5 text-[10px] text-slate-400 italic">0 matches in this module</p>
+          ) : onLessonDragEnd && sensors ? (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={onLessonDragEnd}
+            >
+              <SortableContext
+                items={filteredLessons.map((l) => l.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                {filteredLessons.map((lesson) => (
+                  <SortableLesson
+                    key={lesson.id}
+                    lesson={lesson}
+                    selected={selectedLessonId === lesson.id}
+                    compact={false}
+                    onSelect={() => onSelectLesson(lesson.id)}
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
           ) : (
             filteredLessons.map((lesson) => (
               <LessonSidebarButton
@@ -670,11 +913,15 @@ function LessonSidebarButton({
   selected,
   compact = false,
   onSelect,
+  dragHandleProps,
+  isDragging,
 }: {
   lesson: LessonData;
   selected: boolean;
   compact?: boolean;
   onSelect: () => void;
+  dragHandleProps?: React.HTMLAttributes<HTMLButtonElement>;
+  isDragging?: boolean;
 }) {
   const insight = getLessonSidebarInsight(lesson);
 
@@ -697,16 +944,30 @@ function LessonSidebarButton({
   }
 
   return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className={cn(
-        "w-full rounded-xl border px-2.5 py-2 text-left transition-colors",
-        selected
-          ? "border-[#b8d7f0] bg-[#E6F1FB] text-[#185FA5]"
-          : "border-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900"
-      )}
-    >
+    <div className={cn(
+      "group flex items-stretch gap-0 rounded-xl border transition-colors",
+      isDragging ? "border-[#185FA5]/40 bg-[#E6F1FB]/30 shadow-md" :
+      selected
+        ? "border-[#b8d7f0] bg-[#E6F1FB] text-[#185FA5]"
+        : "border-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900"
+    )}>
+      {/* Drag handle */}
+      <button
+        type="button"
+        className="flex shrink-0 cursor-grab items-center justify-center rounded-l-xl px-1 text-transparent transition group-hover:text-slate-300 hover:!text-slate-500 active:cursor-grabbing"
+        title="Drag to reorder lesson"
+        aria-label="Drag to reorder lesson"
+        onClick={(e) => e.stopPropagation()}
+        {...dragHandleProps}
+      >
+        <Icons.GripVertical size={12} />
+      </button>
+
+      <button
+        type="button"
+        onClick={onSelect}
+        className="min-w-0 flex-1 py-2 pr-2.5 text-left"
+      >
       <div className="flex items-start gap-2">
         <LessonStatusDot lesson={lesson} />
         <LessonTypeIcon type={lesson.lessonType} size={11} />
@@ -740,7 +1001,8 @@ function LessonSidebarButton({
           </div>
         </div>
       </div>
-    </button>
+      </button>
+    </div>
   );
 }
 
@@ -1702,10 +1964,30 @@ function SettingsTab({
   );
   const [isPublished, setIsPublished] = useState(lesson.isPublished);
   const [quizzes, setQuizzes] = useState<
-    Array<{ id: string; title: string; questionCount: number; incompleteQuestionCount: number }>
+    Array<{
+      id: string;
+      title: string;
+      questionCount: number;
+      incompleteQuestionCount: number;
+      shuffleQuestions: boolean;
+      shuffleChoices: boolean;
+      passingScore: number | null;
+      timeLimitSeconds: number | null;
+    }>
   >([]);
   const [selectedQuizId, setSelectedQuizId] = useState(lesson.quiz?.id ?? "");
   const [quizzesLoaded, setQuizzesLoaded] = useState(false);
+  const [quizSearch, setQuizSearch] = useState("");
+  const [showQuizPicker, setShowQuizPicker] = useState(!lesson.quiz?.id);
+  // Inline quiz settings state (mirrors selected quiz, saves separately)
+  const [quizSettingsShuffle, setQuizSettingsShuffle] = useState(lesson.quiz?.shuffleQuestions ?? true);
+  const [quizSettingsChoiceShuffle, setQuizSettingsChoiceShuffle] = useState(lesson.quiz?.shuffleChoices ?? false);
+  const [quizSettingsPassScore, setQuizSettingsPassScore] = useState(String(lesson.quiz?.passingScore ?? 70));
+  const [quizSettingsTimeLimit, setQuizSettingsTimeLimit] = useState(
+    lesson.quiz?.timeLimitSeconds ? String(Math.round(lesson.quiz.timeLimitSeconds / 60)) : ""
+  );
+  const [quizSettingsBusy, setQuizSettingsBusy] = useState(false);
+  const [quizSettingsNotice, setQuizSettingsNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [versionNote, setVersionNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [showPublishWarning, setShowPublishWarning] = useState(false);
@@ -1715,9 +1997,77 @@ function SettingsTab({
     const res = await fetch("/api/admin/overview", { cache: "no-store" });
     if (res.ok) {
       const data = await res.json();
-      setQuizzes(data.quizzes ?? []);
+      setQuizzes(
+        (data.quizzes ?? []).map((q: any) => ({
+          id: q.id,
+          title: q.title,
+          questionCount: q.questionCount ?? 0,
+          incompleteQuestionCount: q.incompleteQuestionCount ?? 0,
+          shuffleQuestions: q.shuffleQuestions ?? false,
+          shuffleChoices: q.shuffleChoices ?? false,
+          passingScore: q.passingScore ?? null,
+          timeLimitSeconds: q.timeLimitSeconds ?? null,
+        }))
+      );
     }
     setQuizzesLoaded(true);
+  }
+
+  // When user selects a different quiz, sync inline settings state to that quiz
+  function handleSelectQuiz(quizId: string) {
+    setSelectedQuizId(quizId);
+    const q = quizzes.find((x) => x.id === quizId);
+    if (q) {
+      setQuizSettingsShuffle(q.shuffleQuestions);
+      setQuizSettingsChoiceShuffle(q.shuffleChoices);
+      setQuizSettingsPassScore(String(q.passingScore ?? 70));
+      setQuizSettingsTimeLimit(q.timeLimitSeconds ? String(Math.round(q.timeLimitSeconds / 60)) : "");
+    }
+    setShowQuizPicker(false);
+    setQuizSettingsNotice(null);
+  }
+
+  async function saveQuizSettings() {
+    if (!selectedQuizId) return;
+    setQuizSettingsBusy(true);
+    setQuizSettingsNotice(null);
+    try {
+      const res = await fetch("/api/admin/quizzes", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "update-settings",
+          quizId: selectedQuizId,
+          shuffleQuestions: quizSettingsShuffle,
+          shuffleChoices: quizSettingsChoiceShuffle,
+          passingScore: parseInt(quizSettingsPassScore) || 70,
+          timeLimitSeconds: quizSettingsTimeLimit ? parseInt(quizSettingsTimeLimit) * 60 : null,
+        }),
+      });
+      if (res.ok) {
+        setQuizSettingsNotice({ type: "success", text: "Quiz settings saved." });
+        // Update local quiz list so the picker shows fresh values
+        setQuizzes((prev) =>
+          prev.map((q) =>
+            q.id === selectedQuizId
+              ? {
+                  ...q,
+                  shuffleQuestions: quizSettingsShuffle,
+                  shuffleChoices: quizSettingsChoiceShuffle,
+                  passingScore: parseInt(quizSettingsPassScore) || 70,
+                  timeLimitSeconds: quizSettingsTimeLimit ? parseInt(quizSettingsTimeLimit) * 60 : null,
+                }
+              : q
+          )
+        );
+      } else {
+        setQuizSettingsNotice({ type: "error", text: "Failed to save quiz settings." });
+      }
+    } catch {
+      setQuizSettingsNotice({ type: "error", text: "Network error." });
+    } finally {
+      setQuizSettingsBusy(false);
+    }
   }
 
   useEffect(() => {
@@ -1828,33 +2178,182 @@ function SettingsTab({
         </div>
 
         {lessonType === "quiz" && (
-          <div>
+          <div className="space-y-3">
             <label className="admin-label">Linked quiz</label>
-            <select
-              className="admin-input"
-              value={selectedQuizId}
-              onChange={(e) => setSelectedQuizId(e.target.value)}
-            >
-              <option value="">— Select quiz —</option>
-              {quizzes.map((q) => (
-                <option key={q.id} value={q.id}>{q.title}</option>
-              ))}
-            </select>
-            {selectedQuizId && quizzesLoaded && (() => {
+
+            {/* State A: picker open */}
+            {(!selectedQuizId || showQuizPicker) && (
+              <div className="space-y-2">
+                <input
+                  type="search"
+                  value={quizSearch}
+                  onChange={(e) => setQuizSearch(e.target.value)}
+                  placeholder="Search quizzes…"
+                  className="admin-input"
+                  autoFocus
+                />
+                <div className="max-h-52 overflow-y-auto rounded-xl border border-slate-200 divide-y divide-slate-100">
+                  {!quizzesLoaded ? (
+                    <div className="flex items-center justify-center py-6 text-xs text-slate-400">
+                      <Icons.Loader size={13} className="animate-spin mr-1.5" />
+                      Loading quizzes…
+                    </div>
+                  ) : quizzes.filter((q) => !quizSearch || q.title.toLowerCase().includes(quizSearch.toLowerCase())).length === 0 ? (
+                    <p className="py-6 text-center text-xs text-slate-400">No quizzes match.</p>
+                  ) : (
+                    quizzes
+                      .filter((q) => !quizSearch || q.title.toLowerCase().includes(quizSearch.toLowerCase()))
+                      .map((q) => {
+                        const r = getQuizReadiness(q.questionCount, q.incompleteQuestionCount);
+                        return (
+                          <button
+                            key={q.id}
+                            type="button"
+                            onClick={() => handleSelectQuiz(q.id)}
+                            className={cn(
+                              "flex w-full items-start gap-3 px-3 py-2.5 text-left transition hover:bg-[#E6F1FB]/40",
+                              selectedQuizId === q.id && "bg-[#E6F1FB]/60"
+                            )}
+                          >
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-semibold text-slate-800 truncate">{q.title}</p>
+                              <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                                <span className={cn(
+                                  "rounded-full px-1.5 py-0.5 text-[9px] font-bold",
+                                  r === "ready" ? "bg-emerald-100 text-emerald-700" : r === "attention" ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-600"
+                                )}>
+                                  {q.questionCount} Q
+                                </span>
+                                <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-500">
+                                  {q.shuffleQuestions ? "Shuffle" : "Fixed"}
+                                </span>
+                                {q.passingScore != null && (
+                                  <span className="text-[9px] text-slate-400">{q.passingScore}% pass</span>
+                                )}
+                                {q.timeLimitSeconds != null && (
+                                  <span className="text-[9px] text-slate-400">{Math.round(q.timeLimitSeconds / 60)} min</span>
+                                )}
+                              </div>
+                            </div>
+                            {selectedQuizId === q.id && <Icons.Check size={13} className="text-[#185FA5] shrink-0 mt-0.5" />}
+                          </button>
+                        );
+                      })
+                  )}
+                </div>
+                {selectedQuizId && showQuizPicker && (
+                  <button type="button" onClick={() => setShowQuizPicker(false)} className="text-xs text-slate-400 hover:text-slate-600 underline">
+                    Cancel
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* State B: quiz linked, picker closed */}
+            {selectedQuizId && !showQuizPicker && (() => {
               const q = quizzes.find((x) => x.id === selectedQuizId);
-              if (!q) return null;
-              const r = getQuizReadiness(q.questionCount, q.incompleteQuestionCount);
+              const r = q ? getQuizReadiness(q.questionCount, q.incompleteQuestionCount) : "empty";
               return (
-                <p className={cn(
-                  "mt-1 text-xs font-medium",
-                  r === "ready" ? "text-emerald-600" : r === "attention" ? "text-amber-600" : "text-red-500"
-                )}>
-                  {r === "ready"
-                    ? `${q.questionCount} question${q.questionCount !== 1 ? "s" : ""} — ready`
-                    : r === "attention"
-                    ? `${q.questionCount} question${q.questionCount !== 1 ? "s" : ""} — ${q.incompleteQuestionCount} incomplete`
-                    : "No questions added yet"}
-                </p>
+                <div className="space-y-3">
+                  {/* Linked quiz card */}
+                  <div className="flex items-start gap-3 rounded-xl border border-[#b8d7f0] bg-[#E6F1FB]/40 px-3 py-2.5">
+                    <Icons.ClipboardList size={16} className="text-[#185FA5] shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-slate-900 truncate">{q?.title ?? "Unknown quiz"}</p>
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                        <span className={cn(
+                          "rounded-full px-1.5 py-0.5 text-[9px] font-bold",
+                          r === "ready" ? "bg-emerald-100 text-emerald-700" : r === "attention" ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-600"
+                        )}>
+                          {q?.questionCount ?? 0} question{(q?.questionCount ?? 0) !== 1 ? "s" : ""}
+                          {r === "attention" ? ` · ${q?.incompleteQuestionCount} incomplete` : r === "ready" ? " · ready" : " · empty"}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { setShowQuizPicker(true); setQuizSearch(""); }}
+                      className="shrink-0 rounded-lg border border-slate-200 px-2.5 py-1 text-[11px] font-semibold text-slate-500 hover:border-[#185FA5] hover:text-[#185FA5] transition"
+                    >
+                      Change
+                    </button>
+                  </div>
+
+                  {/* Inline quiz settings */}
+                  <div className="rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3 space-y-3">
+                    <p className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-slate-500 flex items-center gap-1.5">
+                      <Icons.Settings size={11} />
+                      Quiz settings
+                    </p>
+                    <p className="text-[11px] text-slate-400 -mt-1">These settings apply to the quiz everywhere it&apos;s used.</p>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      {[
+                        { label: "Shuffle questions", value: quizSettingsShuffle, set: setQuizSettingsShuffle },
+                        { label: "Shuffle choices", value: quizSettingsChoiceShuffle, set: setQuizSettingsChoiceShuffle },
+                      ].map(({ label, value, set }) => (
+                        <label key={label} className={cn(
+                          "flex cursor-pointer items-center gap-2.5 rounded-lg border p-2.5 transition",
+                          value ? "border-[#185FA5]/30 bg-[#E6F1FB]/40" : "border-slate-200 bg-white hover:border-slate-300"
+                        )}>
+                          <button
+                            type="button"
+                            onClick={() => set((v) => !v)}
+                            className={cn("relative h-5 w-9 rounded-full transition-colors shrink-0", value ? "bg-emerald-500" : "bg-slate-200")}
+                          >
+                            <span className={cn("absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform", value && "translate-x-4")} />
+                          </button>
+                          <span className="text-xs font-semibold text-slate-700">{label}</span>
+                        </label>
+                      ))}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[10px] font-extrabold uppercase tracking-wide text-slate-400">Passing score (%)</label>
+                        <input
+                          type="number"
+                          min={1}
+                          max={100}
+                          className="admin-input mt-1"
+                          value={quizSettingsPassScore}
+                          onChange={(e) => setQuizSettingsPassScore(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-extrabold uppercase tracking-wide text-slate-400">Time limit (min)</label>
+                        <input
+                          type="number"
+                          min={1}
+                          className="admin-input mt-1"
+                          value={quizSettingsTimeLimit}
+                          onChange={(e) => setQuizSettingsTimeLimit(e.target.value)}
+                          placeholder="Untimed"
+                        />
+                      </div>
+                    </div>
+
+                    {quizSettingsNotice && (
+                      <div className={cn(
+                        "flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium",
+                        quizSettingsNotice.type === "success" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"
+                      )}>
+                        {quizSettingsNotice.type === "success" ? <Icons.Check size={12} /> : <Icons.X size={12} />}
+                        {quizSettingsNotice.text}
+                      </div>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={saveQuizSettings}
+                      disabled={quizSettingsBusy}
+                      className="admin-action secondary w-full flex items-center justify-center gap-1.5 text-xs"
+                    >
+                      {quizSettingsBusy ? <Icons.Loader size={12} className="animate-spin" /> : <Icons.Check size={12} />}
+                      Save quiz settings
+                    </button>
+                  </div>
+                </div>
               );
             })()}
           </div>
@@ -1953,7 +2452,11 @@ function SettingsTab({
 
       {/* Inline question bank for quiz lessons */}
       {lessonType === "quiz" && selectedQuizId && (
-        <QuizQuestionsSection quizId={selectedQuizId} onReload={onReload} />
+        <QuizQuestionsSection
+          quizId={selectedQuizId}
+          questionCount={quizzes.find((q) => q.id === selectedQuizId)?.questionCount}
+          onReload={onReload}
+        />
       )}
     </div>
   );
@@ -1961,9 +2464,11 @@ function SettingsTab({
 
 function QuizQuestionsSection({
   quizId,
+  questionCount,
   onReload,
 }: {
   quizId: string;
+  questionCount?: number;
   onReload: () => Promise<void>;
 }) {
   const [showPicker, setShowPicker] = useState(false);
@@ -1981,19 +2486,36 @@ function QuizQuestionsSection({
 
   return (
     <div className="rounded-xl border border-black/10 bg-white shadow-sm p-5 space-y-3">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
           <Icons.ClipboardList size={15} className="text-[#185FA5]" />
           Quiz questions
+          {questionCount != null && (
+            <span className={cn(
+              "rounded-full px-2 py-0.5 text-[10px] font-bold",
+              questionCount === 0 ? "bg-red-100 text-red-600" : "bg-emerald-100 text-emerald-700"
+            )}>
+              {questionCount}
+            </span>
+          )}
         </h3>
-        <button
-          type="button"
-          onClick={() => setShowPicker((v) => !v)}
-          className="admin-action secondary text-xs py-1 flex items-center gap-1"
-        >
-          <Icons.Plus size={12} />
-          Add from bank
-        </button>
+        <div className="flex items-center gap-2">
+          <a
+            href="/admin/quizzes"
+            className="flex items-center gap-1 text-[11px] font-semibold text-[#185FA5] hover:underline"
+          >
+            <Icons.ExternalLink size={11} />
+            Manage quiz
+          </a>
+          <button
+            type="button"
+            onClick={() => setShowPicker((v) => !v)}
+            className="admin-action secondary text-xs py-1 flex items-center gap-1"
+          >
+            <Icons.Plus size={12} />
+            Add from bank
+          </button>
+        </div>
       </div>
       {showPicker && (
         <QuestionBankPicker
