@@ -359,6 +359,23 @@ mutation UpdateQuizStatus($id: UUID!, $status: String!, $updatedById: String, $p
   })
 }
 
+mutation UpdateQuiz(
+  $id: UUID!
+  $shuffleQuestions: Boolean
+  $shuffleChoices: Boolean
+  $passingScore: Float
+  $timeLimitSeconds: Int
+  $updatedById: String
+) @auth(level: NO_ACCESS) {
+  quiz_update(id: $id, data: {
+    shuffleQuestions: $shuffleQuestions
+    shuffleChoices: $shuffleChoices
+    passingScore: $passingScore
+    timeLimitSeconds: $timeLimitSeconds
+    updatedBy: { id: $updatedById }
+  })
+}
+
 mutation DeleteQuizQuestionsForQuiz($quizId: UUID!) @auth(level: NO_ACCESS) {
   quizQuestion_deleteMany(where: { quiz: { id: { eq: $quizId } } })
 }

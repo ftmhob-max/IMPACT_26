@@ -17,6 +17,25 @@ import TableCell from "@tiptap/extension-table-cell";
 import TableHeader from "@tiptap/extension-table-header";
 import TableRow from "@tiptap/extension-table-row";
 import * as Icons from "@/components/ui/Icons";
+
+// Both of these must live at module scope, not inside the component.
+// TipTap's EditorInstanceManager compares ALL options by reference on each render.
+// Any new object/array reference triggers refreshEditorInstance → setEditor →
+// React store rerender → infinite loop (affects TipTap v2.5+ with React 18/19).
+const RICH_TEXT_EXTENSIONS = [
+  StarterKit,
+  Image.configure({ inline: false, allowBase64: true }),
+  Table.configure({ resizable: true }),
+  TableRow,
+  TableHeader,
+  TableCell,
+];
+
+const RICH_TEXT_EDITOR_PROPS = {
+  attributes: {
+    class: "prose prose-slate max-w-none min-h-[220px] px-5 py-4 text-sm leading-7 focus:outline-none",
+  },
+};
 import { cn } from "@/lib/utils";
 import {
   blockCategoryForType,
@@ -100,8 +119,10 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
   { lessonId, initialContent, onContentChange, onSaveStatusChange, hideAuthorTools = false }: Props,
   ref
 ) {
+  // Pass lessonId as seed so that a null initialContent always produces the same
+  // default block ID on both server and client, preventing SSR hydration mismatches.
   const [documentState, setDocumentState] = useState<StructuredLessonDocument>(() =>
-    parseStructuredLessonContent(initialContent)
+    parseStructuredLessonContent(initialContent, lessonId)
   );
   const [saveStatus, setSaveStatusRaw] = useState<SaveStatus>("saved");
   const setSaveStatus = useCallback(
@@ -120,13 +141,13 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
   const [collapsedBlockIds, setCollapsedBlockIds] = useState<Set<string>>(new Set());
   const [sidebarTab, setSidebarTab] = useState<"blocks" | "materials" | "readiness">("blocks");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const latestSerialized = useRef(stringifyStructuredLessonContent(parseStructuredLessonContent(initialContent)));
+  const latestSerialized = useRef(stringifyStructuredLessonContent(parseStructuredLessonContent(initialContent, lessonId)));
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [insertingMaterialId, setInsertingMaterialId] = useState<string | null>(null);
   const [justInsertedBlockId, setJustInsertedBlockId] = useState<string | null>(null);
 
   useEffect(() => {
-    const next = parseStructuredLessonContent(initialContent);
+    const next = parseStructuredLessonContent(initialContent, lessonId);
     setDocumentState(next);
     latestSerialized.current = stringifyStructuredLessonContent(next);
     setSaveStatus("saved");
@@ -1555,15 +1576,14 @@ function RichTextComposer({
   value: string;
   onChange: (content: string) => void;
 }) {
+  // Keep onChange in a ref so useEditor's onUpdate closure never changes between renders.
+  // This prevents TipTap's EditorInstanceManager from detecting a config change and
+  // calling refreshEditorInstance → setEditor → infinite re-render loop (React 19 + TipTap).
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
   const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Image.configure({ inline: false, allowBase64: true }),
-      Table.configure({ resizable: true }),
-      TableRow,
-      TableHeader,
-      TableCell,
-    ],
+    extensions: RICH_TEXT_EXTENSIONS,
     content: (() => {
       try {
         return JSON.parse(value);
@@ -1573,13 +1593,10 @@ function RichTextComposer({
     })(),
     immediatelyRender: false,
     onUpdate({ editor: activeEditor }) {
-      onChange(JSON.stringify(activeEditor.getJSON()));
+      // Always calls the latest onChange without the closure capturing a stale reference
+      onChangeRef.current(JSON.stringify(activeEditor.getJSON()));
     },
-    editorProps: {
-      attributes: {
-        class: "prose prose-slate max-w-none min-h-[220px] px-5 py-4 text-sm leading-7 focus:outline-none",
-      },
-    },
+    editorProps: RICH_TEXT_EDITOR_PROPS,
   });
 
   useEffect(() => {

@@ -171,7 +171,13 @@ export interface LessonReadinessIssue {
   blockId?: string;
 }
 
-export function createStructuredLessonDocument(): StructuredLessonDocument {
+export function createStructuredLessonDocument(seedId?: string): StructuredLessonDocument {
+  // When a seedId is provided (e.g. the lessonId), use it to generate a deterministic
+  // default block ID. This prevents server/client UUID mismatch during SSR hydration.
+  const defaultBlock = createDefaultLessonBlock("richText");
+  if (seedId) {
+    defaultBlock.id = `${seedId.slice(0, 12)}-default-b0`;
+  }
   return {
     version: 2,
     kind: "structured-lesson",
@@ -179,7 +185,7 @@ export function createStructuredLessonDocument(): StructuredLessonDocument {
     objectives: [""],
     estimatedDurationMinutes: null,
     completionMode: "manual",
-    blocks: [createDefaultLessonBlock("richText")],
+    blocks: [defaultBlock],
   };
 }
 
@@ -238,8 +244,8 @@ export function createDefaultLessonBlock(type: LessonBlockType): LessonBlock {
   }
 }
 
-export function parseStructuredLessonContent(contentJson: string | null | undefined): StructuredLessonDocument {
-  if (!contentJson) return createStructuredLessonDocument();
+export function parseStructuredLessonContent(contentJson: string | null | undefined, seedId?: string): StructuredLessonDocument {
+  if (!contentJson) return createStructuredLessonDocument(seedId);
 
   try {
     const parsed = JSON.parse(contentJson);

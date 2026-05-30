@@ -93,6 +93,7 @@ This README will guide you through the process of using the generated JavaScript
   - [*AddQuestionToQuiz*](#addquestiontoquiz)
   - [*UpdateQuizCalculatorSettings*](#updatequizcalculatorsettings)
   - [*UpdateQuizStatus*](#updatequizstatus)
+  - [*UpdateQuiz*](#updatequiz)
   - [*DeleteQuizQuestionsForQuiz*](#deletequizquestionsforquiz)
   - [*DeleteQuizResponsesForQuiz*](#deletequizresponsesforquiz)
   - [*DeleteQuizAttemptsForQuiz*](#deletequizattemptsforquiz)
@@ -10176,6 +10177,130 @@ const ref = updateQuizStatusRef({ id: ..., status: ..., updatedById: ..., publis
 // You can also pass in a `DataConnect` instance to the `MutationRef` function.
 const dataConnect = getDataConnect(connectorConfig);
 const ref = updateQuizStatusRef(dataConnect, updateQuizStatusVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.quiz_update);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.quiz_update);
+});
+```
+
+## UpdateQuiz
+You can execute the `UpdateQuiz` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+updateQuiz(vars: UpdateQuizVariables): MutationPromise<UpdateQuizData, UpdateQuizVariables>;
+
+interface UpdateQuizRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateQuizVariables): MutationRef<UpdateQuizData, UpdateQuizVariables>;
+}
+export const updateQuizRef: UpdateQuizRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+updateQuiz(dc: DataConnect, vars: UpdateQuizVariables): MutationPromise<UpdateQuizData, UpdateQuizVariables>;
+
+interface UpdateQuizRef {
+  ...
+  (dc: DataConnect, vars: UpdateQuizVariables): MutationRef<UpdateQuizData, UpdateQuizVariables>;
+}
+export const updateQuizRef: UpdateQuizRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the updateQuizRef:
+```typescript
+const name = updateQuizRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `UpdateQuiz` mutation requires an argument of type `UpdateQuizVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface UpdateQuizVariables {
+  id: UUIDString;
+  shuffleQuestions?: boolean | null;
+  shuffleChoices?: boolean | null;
+  passingScore?: number | null;
+  timeLimitSeconds?: number | null;
+  updatedById?: string | null;
+}
+```
+### Return Type
+Recall that executing the `UpdateQuiz` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `UpdateQuizData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface UpdateQuizData {
+  quiz_update?: Quiz_Key | null;
+}
+```
+### Using `UpdateQuiz`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, updateQuiz, UpdateQuizVariables } from '@impact26/dataconnect-sdk';
+
+// The `UpdateQuiz` mutation requires an argument of type `UpdateQuizVariables`:
+const updateQuizVars: UpdateQuizVariables = {
+  id: ..., 
+  shuffleQuestions: ..., // optional
+  shuffleChoices: ..., // optional
+  passingScore: ..., // optional
+  timeLimitSeconds: ..., // optional
+  updatedById: ..., // optional
+};
+
+// Call the `updateQuiz()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await updateQuiz(updateQuizVars);
+// Variables can be defined inline as well.
+const { data } = await updateQuiz({ id: ..., shuffleQuestions: ..., shuffleChoices: ..., passingScore: ..., timeLimitSeconds: ..., updatedById: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await updateQuiz(dataConnect, updateQuizVars);
+
+console.log(data.quiz_update);
+
+// Or, you can use the `Promise` API.
+updateQuiz(updateQuizVars).then((response) => {
+  const data = response.data;
+  console.log(data.quiz_update);
+});
+```
+
+### Using `UpdateQuiz`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, updateQuizRef, UpdateQuizVariables } from '@impact26/dataconnect-sdk';
+
+// The `UpdateQuiz` mutation requires an argument of type `UpdateQuizVariables`:
+const updateQuizVars: UpdateQuizVariables = {
+  id: ..., 
+  shuffleQuestions: ..., // optional
+  shuffleChoices: ..., // optional
+  passingScore: ..., // optional
+  timeLimitSeconds: ..., // optional
+  updatedById: ..., // optional
+};
+
+// Call the `updateQuizRef()` function to get a reference to the mutation.
+const ref = updateQuizRef(updateQuizVars);
+// Variables can be defined inline as well.
+const ref = updateQuizRef({ id: ..., shuffleQuestions: ..., shuffleChoices: ..., passingScore: ..., timeLimitSeconds: ..., updatedById: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = updateQuizRef(dataConnect, updateQuizVars);
 
 // Call `executeMutation()` on the reference to execute the mutation.
 // You can use the `await` keyword to wait for the promise to resolve.

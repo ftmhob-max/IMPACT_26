@@ -414,7 +414,11 @@ export async function PUT(request: NextRequest) {
   }
 
   // Legacy: create module + lesson in one call
-  const parsed = lessonSchema.safeParse(body);
+  // Normalize courseId before validation since DataConnect IDs may lack hyphens
+  const parsed = lessonSchema.safeParse({
+    ...body,
+    courseId: body.courseId ? formatUuid(String(body.courseId)) : body.courseId,
+  });
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
@@ -423,11 +427,15 @@ export async function PUT(request: NextRequest) {
   const moduleId = randomUUID();
   const lessonId = randomUUID();
   try {
+    // Use client-supplied position if present; fall back to Unix seconds (safe for Int32 until 2038)
+    const modulePosition = typeof body.modulePosition === "number"
+      ? Math.round(body.modulePosition)
+      : Math.floor(Date.now() / 1000);
     await adminDcMutate("CreateModule", {
       id: moduleId,
       courseId: input.courseId,
       title: input.moduleTitle,
-      position: Date.now(),
+      position: modulePosition,
     });
     await adminDcMutate("CreateLesson", {
       id: lessonId,

@@ -1811,6 +1811,10 @@ export interface UpdateQuizCalculatorSettingsVariables {
   calculatorSettingsJson?: string | null;
 }
 
+export interface UpdateQuizData {
+  quiz_update?: Quiz_Key | null;
+}
+
 export interface UpdateQuizStatusData {
   quiz_update?: Quiz_Key | null;
 }
@@ -1820,6 +1824,15 @@ export interface UpdateQuizStatusVariables {
   status: string;
   updatedById?: string | null;
   publishedAt?: DateString | null;
+}
+
+export interface UpdateQuizVariables {
+  id: UUIDString;
+  shuffleQuestions?: boolean | null;
+  shuffleChoices?: boolean | null;
+  passingScore?: number | null;
+  timeLimitSeconds?: number | null;
+  updatedById?: string | null;
 }
 
 export interface UpdateSourceMaterialData {
@@ -2423,6 +2436,18 @@ export const updateQuizStatusRef: UpdateQuizStatusRef;
 
 export function updateQuizStatus(vars: UpdateQuizStatusVariables): MutationPromise<UpdateQuizStatusData, UpdateQuizStatusVariables>;
 export function updateQuizStatus(dc: DataConnect, vars: UpdateQuizStatusVariables): MutationPromise<UpdateQuizStatusData, UpdateQuizStatusVariables>;
+
+interface UpdateQuizRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateQuizVariables): MutationRef<UpdateQuizData, UpdateQuizVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: UpdateQuizVariables): MutationRef<UpdateQuizData, UpdateQuizVariables>;
+  operationName: string;
+}
+export const updateQuizRef: UpdateQuizRef;
+
+export function updateQuiz(vars: UpdateQuizVariables): MutationPromise<UpdateQuizData, UpdateQuizVariables>;
+export function updateQuiz(dc: DataConnect, vars: UpdateQuizVariables): MutationPromise<UpdateQuizData, UpdateQuizVariables>;
 
 interface DeleteQuizQuestionsForQuizRef {
   /* Allow users to create refs without passing in DataConnect */

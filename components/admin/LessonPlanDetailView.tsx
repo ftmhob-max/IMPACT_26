@@ -118,6 +118,10 @@ export function LessonPlanDetailView({
   const [focusMode, setFocusMode] = useState(false);
   const [notice, setNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [draftContentByLessonId, setDraftContentByLessonId] = useState<Record<string, string>>({});
+  // @dnd-kit generates aria-describedby IDs using a global counter that differs between
+  // SSR and client, causing hydration mismatches. Only render DnD wrappers after mount.
+  const [isDndReady, setIsDndReady] = useState(false);
+  useEffect(() => setIsDndReady(true), []);
   const contentEditorRef = useRef<LessonBuilderEditorHandle | null>(null);
 
   const selectedLesson = modules.flatMap((m) => m.lessons).find((l) => l.id === selectedLessonId) ?? null;
@@ -205,6 +209,7 @@ export function LessonPlanDetailView({
         lessonTitle: "Untitled lesson",
         lessonType: "text",
         publish: false,
+        modulePosition: modules.length,
       }),
     });
     if (res.ok) {
@@ -212,6 +217,27 @@ export function LessonPlanDetailView({
       await reload();
     } else {
       showNotice("error", "Failed to add module.");
+    }
+  }
+
+  async function addQuizModule() {
+    const res = await fetch("/api/admin/courses", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        courseId: course.id,
+        moduleTitle: `Quiz ${modules.length + 1}`,
+        lessonTitle: "Untitled quiz",
+        lessonType: "quiz",
+        publish: false,
+        modulePosition: modules.length,
+      }),
+    });
+    if (res.ok) {
+      showNotice("success", "Quiz module added.");
+      await reload();
+    } else {
+      showNotice("error", "Failed to add quiz module.");
     }
   }
 
@@ -477,32 +503,48 @@ export function LessonPlanDetailView({
                   onChange={setOutlineFilter}
                   counts={computeFilterCounts(modules.flatMap((m) => m.lessons))}
                 />
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={handleModuleDragEnd}
-                >
-                  <SortableContext
-                    items={modules.map((m) => m.id)}
-                    strategy={verticalListSortingStrategy}
+                {isDndReady ? (
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleModuleDragEnd}
                   >
-                    {modules.map((mod) => (
-                      <SortableModuleItem
-                        key={mod.id}
-                        module={mod}
-                        compact={false}
-                        expanded={expandedModules.has(mod.id)}
-                        selectedLessonId={selectedLessonId}
-                        activeFilter={outlineFilter}
-                        onToggle={() => toggleModule(mod.id)}
-                        onSelectLesson={selectLesson}
-                        onAddLesson={() => addLesson(mod.id)}
-                        onLessonDragEnd={handleLessonDragEnd(mod.id)}
-                        sensors={sensors}
-                      />
-                    ))}
-                  </SortableContext>
-                </DndContext>
+                    <SortableContext
+                      items={modules.map((m) => m.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      {modules.map((mod) => (
+                        <SortableModuleItem
+                          key={mod.id}
+                          module={mod}
+                          compact={false}
+                          expanded={expandedModules.has(mod.id)}
+                          selectedLessonId={selectedLessonId}
+                          activeFilter={outlineFilter}
+                          onToggle={() => toggleModule(mod.id)}
+                          onSelectLesson={selectLesson}
+                          onAddLesson={() => addLesson(mod.id)}
+                          onLessonDragEnd={handleLessonDragEnd(mod.id)}
+                          sensors={sensors}
+                        />
+                      ))}
+                    </SortableContext>
+                  </DndContext>
+                ) : (
+                  modules.map((mod) => (
+                    <ModuleSidebarSection
+                      key={mod.id}
+                      module={mod}
+                      compact={false}
+                      expanded={expandedModules.has(mod.id)}
+                      selectedLessonId={selectedLessonId}
+                      activeFilter={outlineFilter}
+                      onToggle={() => toggleModule(mod.id)}
+                      onSelectLesson={selectLesson}
+                      onAddLesson={() => addLesson(mod.id)}
+                    />
+                  ))
+                )}
                 <button
                   type="button"
                   onClick={addModule}
@@ -510,6 +552,14 @@ export function LessonPlanDetailView({
                 >
                   <Icons.Plus size={12} />
                   Add module
+                </button>
+                <button
+                  type="button"
+                  onClick={addQuizModule}
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-slate-400 transition-colors hover:bg-slate-50 hover:text-[#534AB7]"
+                >
+                  <Icons.ClipboardList size={12} />
+                  Add Quiz / Test
                 </button>
               </div>
             </aside>
@@ -548,32 +598,48 @@ export function LessonPlanDetailView({
                 counts={computeFilterCounts(modules.flatMap((m) => m.lessons))}
               />
             )}
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleModuleDragEnd}
-            >
-              <SortableContext
-                items={modules.map((m) => m.id)}
-                strategy={verticalListSortingStrategy}
+            {isDndReady ? (
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleModuleDragEnd}
               >
-                {modules.map((mod) => (
-                  <SortableModuleItem
-                    key={mod.id}
-                    module={mod}
-                    compact={outlineCollapsed}
-                    expanded={expandedModules.has(mod.id)}
-                    selectedLessonId={selectedLessonId}
-                    activeFilter={outlineFilter}
-                    onToggle={() => toggleModule(mod.id)}
-                    onSelectLesson={selectLesson}
-                    onAddLesson={() => addLesson(mod.id)}
-                    onLessonDragEnd={handleLessonDragEnd(mod.id)}
-                    sensors={sensors}
-                  />
-                ))}
-              </SortableContext>
-            </DndContext>
+                <SortableContext
+                  items={modules.map((m) => m.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {modules.map((mod) => (
+                    <SortableModuleItem
+                      key={mod.id}
+                      module={mod}
+                      compact={outlineCollapsed}
+                      expanded={expandedModules.has(mod.id)}
+                      selectedLessonId={selectedLessonId}
+                      activeFilter={outlineFilter}
+                      onToggle={() => toggleModule(mod.id)}
+                      onSelectLesson={selectLesson}
+                      onAddLesson={() => addLesson(mod.id)}
+                      onLessonDragEnd={handleLessonDragEnd(mod.id)}
+                      sensors={sensors}
+                    />
+                  ))}
+                </SortableContext>
+              </DndContext>
+            ) : (
+              modules.map((mod) => (
+                <ModuleSidebarSection
+                  key={mod.id}
+                  module={mod}
+                  compact={outlineCollapsed}
+                  expanded={expandedModules.has(mod.id)}
+                  selectedLessonId={selectedLessonId}
+                  activeFilter={outlineFilter}
+                  onToggle={() => toggleModule(mod.id)}
+                  onSelectLesson={selectLesson}
+                  onAddLesson={() => addLesson(mod.id)}
+                />
+              ))
+            )}
             <button
               type="button"
               onClick={addModule}
@@ -585,6 +651,18 @@ export function LessonPlanDetailView({
             >
               <Icons.Plus size={12} />
               {!outlineCollapsed && "Add module"}
+            </button>
+            <button
+              type="button"
+              onClick={addQuizModule}
+              className={cn(
+                "flex w-full items-center gap-2 rounded-lg text-xs font-medium text-slate-400 transition-colors hover:bg-slate-50 hover:text-[#534AB7]",
+                outlineCollapsed ? "justify-center px-2 py-2" : "px-3 py-2"
+              )}
+              title="Add Quiz / Test"
+            >
+              <Icons.ClipboardList size={12} />
+              {!outlineCollapsed && "Add Quiz / Test"}
             </button>
           </div>
         </aside>
