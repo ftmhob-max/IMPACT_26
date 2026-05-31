@@ -2634,7 +2634,7 @@ function MoveToFolderDialog({
 
           <div className="space-y-4">
             <div className="rounded-xl border border-slate-200 bg-white p-4">
-              <label className="admin-label">Move to existing folder</label>
+              <label className="admin-label">Move to existing folder<FieldHint text="Select the destination folder in the library to move the selected material(s)." /></label>
               <select
                 className="admin-input"
                 value={selectedDestination}
@@ -2654,7 +2654,7 @@ function MoveToFolderDialog({
               <p className="text-sm font-bold text-slate-900">Create new folder and move</p>
               <div className="mt-3 space-y-3">
                 <div>
-                  <label className="admin-label">Folder name</label>
+                  <label className="admin-label">Folder name<FieldHint text="The name of the new folder you want to create (e.g., 'Chapter 4', 'Audio Transcripts')." /></label>
                   <input
                     className="admin-input"
                     value={newFolderName}
@@ -2666,7 +2666,7 @@ function MoveToFolderDialog({
                   />
                 </div>
                 <div>
-                  <label className="admin-label">Create inside</label>
+                  <label className="admin-label">Create inside<FieldHint text="Select the parent folder where the new folder should be created. Pick 'All Materials' to create it at the root level." /></label>
                   <select
                     className="admin-input"
                     value={newFolderParentId}

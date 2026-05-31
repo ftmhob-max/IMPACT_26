@@ -392,6 +392,25 @@ mutation DeleteQuizQuestionsForQuiz($quizId: UUID!) @auth(level: NO_ACCESS) {
   quizQuestion_deleteMany(where: { quiz: { id: { eq: $quizId } } })
 }
 
+# Remove a single question from a single quiz — non-destructive (question stays in the bank)
+mutation RemoveQuestionFromQuiz($quizId: UUID!, $questionId: UUID!) @auth(level: NO_ACCESS) {
+  quizQuestion_deleteMany(where: {
+    quiz: { id: { eq: $quizId } }
+    question: { id: { eq: $questionId } }
+  })
+}
+
+# Update the position of one question within a quiz for reordering
+mutation ReorderQuizQuestion($quizId: UUID!, $questionId: UUID!, $position: Int!) @auth(level: NO_ACCESS) {
+  quizQuestion_updateMany(
+    where: {
+      quiz: { id: { eq: $quizId } }
+      question: { id: { eq: $questionId } }
+    }
+    data: { position: $position }
+  )
+}
+
 mutation DeleteQuizResponsesForQuiz($quizId: UUID!) @auth(level: NO_ACCESS) {
   quizResponse_deleteMany(where: { attempt: { quiz: { id: { eq: $quizId } } } })
 }

@@ -3,6 +3,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase/client";
 import { isPreviewableMediaKind, type SourceMaterialKind } from "@/lib/admin/source-materials";
 import * as Icons from "@/components/ui/Icons";
+import { FieldHint } from "@/components/ui/FieldHint";
 
 interface IngestionResult {
   parser: string;
@@ -251,7 +252,7 @@ function LinkToLessonModal({ materialId, courses, onClose, onLinked }: LinkToLes
 
         <div className="space-y-3">
           <div>
-            <label className="admin-label">Course</label>
+            <label className="admin-label">Course<FieldHint text="Select the course this material belongs to. If linking to a specific lesson, pick the course first to narrow the lesson list." /></label>
             <select
               className="admin-input"
               value={selectedCourse}
@@ -266,7 +267,7 @@ function LinkToLessonModal({ materialId, courses, onClose, onLinked }: LinkToLes
 
           {course && (
             <div>
-              <label className="admin-label">Lesson</label>
+              <label className="admin-label">Lesson<FieldHint text="The specific lesson this material directly supports. Students will find it in that lesson's resource list." /></label>
               <select
                 className="admin-input"
                 value={selectedLesson}
@@ -285,7 +286,7 @@ function LinkToLessonModal({ materialId, courses, onClose, onLinked }: LinkToLes
           )}
 
           <div>
-            <label className="admin-label">Reference label (optional)</label>
+            <label className="admin-label">Reference label (optional)<FieldHint text="A short label describing how this material is used in the lesson (e.g. 'Primary reading', 'Worked example', 'Appeal packet'). Shown to students alongside the file." /></label>
             <input
               className="admin-input"
               value={label}

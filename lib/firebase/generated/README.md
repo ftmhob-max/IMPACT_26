@@ -98,6 +98,8 @@ This README will guide you through the process of using the generated JavaScript
   - [*UpdateQuizStatus*](#updatequizstatus)
   - [*UpdateQuiz*](#updatequiz)
   - [*DeleteQuizQuestionsForQuiz*](#deletequizquestionsforquiz)
+  - [*RemoveQuestionFromQuiz*](#removequestionfromquiz)
+  - [*ReorderQuizQuestion*](#reorderquizquestion)
   - [*DeleteQuizResponsesForQuiz*](#deletequizresponsesforquiz)
   - [*DeleteQuizAttemptsForQuiz*](#deletequizattemptsforquiz)
   - [*DeleteQuiz*](#deletequiz)
@@ -10752,6 +10754,233 @@ console.log(data.quizQuestion_deleteMany);
 executeMutation(ref).then((response) => {
   const data = response.data;
   console.log(data.quizQuestion_deleteMany);
+});
+```
+
+## RemoveQuestionFromQuiz
+You can execute the `RemoveQuestionFromQuiz` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+removeQuestionFromQuiz(vars: RemoveQuestionFromQuizVariables): MutationPromise<RemoveQuestionFromQuizData, RemoveQuestionFromQuizVariables>;
+
+interface RemoveQuestionFromQuizRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: RemoveQuestionFromQuizVariables): MutationRef<RemoveQuestionFromQuizData, RemoveQuestionFromQuizVariables>;
+}
+export const removeQuestionFromQuizRef: RemoveQuestionFromQuizRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+removeQuestionFromQuiz(dc: DataConnect, vars: RemoveQuestionFromQuizVariables): MutationPromise<RemoveQuestionFromQuizData, RemoveQuestionFromQuizVariables>;
+
+interface RemoveQuestionFromQuizRef {
+  ...
+  (dc: DataConnect, vars: RemoveQuestionFromQuizVariables): MutationRef<RemoveQuestionFromQuizData, RemoveQuestionFromQuizVariables>;
+}
+export const removeQuestionFromQuizRef: RemoveQuestionFromQuizRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the removeQuestionFromQuizRef:
+```typescript
+const name = removeQuestionFromQuizRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `RemoveQuestionFromQuiz` mutation requires an argument of type `RemoveQuestionFromQuizVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface RemoveQuestionFromQuizVariables {
+  quizId: UUIDString;
+  questionId: UUIDString;
+}
+```
+### Return Type
+Recall that executing the `RemoveQuestionFromQuiz` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `RemoveQuestionFromQuizData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface RemoveQuestionFromQuizData {
+  quizQuestion_deleteMany: number;
+}
+```
+### Using `RemoveQuestionFromQuiz`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, removeQuestionFromQuiz, RemoveQuestionFromQuizVariables } from '@impact26/dataconnect-sdk';
+
+// The `RemoveQuestionFromQuiz` mutation requires an argument of type `RemoveQuestionFromQuizVariables`:
+const removeQuestionFromQuizVars: RemoveQuestionFromQuizVariables = {
+  quizId: ..., 
+  questionId: ..., 
+};
+
+// Call the `removeQuestionFromQuiz()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await removeQuestionFromQuiz(removeQuestionFromQuizVars);
+// Variables can be defined inline as well.
+const { data } = await removeQuestionFromQuiz({ quizId: ..., questionId: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await removeQuestionFromQuiz(dataConnect, removeQuestionFromQuizVars);
+
+console.log(data.quizQuestion_deleteMany);
+
+// Or, you can use the `Promise` API.
+removeQuestionFromQuiz(removeQuestionFromQuizVars).then((response) => {
+  const data = response.data;
+  console.log(data.quizQuestion_deleteMany);
+});
+```
+
+### Using `RemoveQuestionFromQuiz`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, removeQuestionFromQuizRef, RemoveQuestionFromQuizVariables } from '@impact26/dataconnect-sdk';
+
+// The `RemoveQuestionFromQuiz` mutation requires an argument of type `RemoveQuestionFromQuizVariables`:
+const removeQuestionFromQuizVars: RemoveQuestionFromQuizVariables = {
+  quizId: ..., 
+  questionId: ..., 
+};
+
+// Call the `removeQuestionFromQuizRef()` function to get a reference to the mutation.
+const ref = removeQuestionFromQuizRef(removeQuestionFromQuizVars);
+// Variables can be defined inline as well.
+const ref = removeQuestionFromQuizRef({ quizId: ..., questionId: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = removeQuestionFromQuizRef(dataConnect, removeQuestionFromQuizVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.quizQuestion_deleteMany);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.quizQuestion_deleteMany);
+});
+```
+
+## ReorderQuizQuestion
+You can execute the `ReorderQuizQuestion` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [generated/index.d.ts](./index.d.ts):
+```typescript
+reorderQuizQuestion(vars: ReorderQuizQuestionVariables): MutationPromise<ReorderQuizQuestionData, ReorderQuizQuestionVariables>;
+
+interface ReorderQuizQuestionRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: ReorderQuizQuestionVariables): MutationRef<ReorderQuizQuestionData, ReorderQuizQuestionVariables>;
+}
+export const reorderQuizQuestionRef: ReorderQuizQuestionRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+reorderQuizQuestion(dc: DataConnect, vars: ReorderQuizQuestionVariables): MutationPromise<ReorderQuizQuestionData, ReorderQuizQuestionVariables>;
+
+interface ReorderQuizQuestionRef {
+  ...
+  (dc: DataConnect, vars: ReorderQuizQuestionVariables): MutationRef<ReorderQuizQuestionData, ReorderQuizQuestionVariables>;
+}
+export const reorderQuizQuestionRef: ReorderQuizQuestionRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the reorderQuizQuestionRef:
+```typescript
+const name = reorderQuizQuestionRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `ReorderQuizQuestion` mutation requires an argument of type `ReorderQuizQuestionVariables`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface ReorderQuizQuestionVariables {
+  quizId: UUIDString;
+  questionId: UUIDString;
+  position: number;
+}
+```
+### Return Type
+Recall that executing the `ReorderQuizQuestion` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `ReorderQuizQuestionData`, which is defined in [generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface ReorderQuizQuestionData {
+  quizQuestion_updateMany: number;
+}
+```
+### Using `ReorderQuizQuestion`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, reorderQuizQuestion, ReorderQuizQuestionVariables } from '@impact26/dataconnect-sdk';
+
+// The `ReorderQuizQuestion` mutation requires an argument of type `ReorderQuizQuestionVariables`:
+const reorderQuizQuestionVars: ReorderQuizQuestionVariables = {
+  quizId: ..., 
+  questionId: ..., 
+  position: ..., 
+};
+
+// Call the `reorderQuizQuestion()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await reorderQuizQuestion(reorderQuizQuestionVars);
+// Variables can be defined inline as well.
+const { data } = await reorderQuizQuestion({ quizId: ..., questionId: ..., position: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await reorderQuizQuestion(dataConnect, reorderQuizQuestionVars);
+
+console.log(data.quizQuestion_updateMany);
+
+// Or, you can use the `Promise` API.
+reorderQuizQuestion(reorderQuizQuestionVars).then((response) => {
+  const data = response.data;
+  console.log(data.quizQuestion_updateMany);
+});
+```
+
+### Using `ReorderQuizQuestion`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, reorderQuizQuestionRef, ReorderQuizQuestionVariables } from '@impact26/dataconnect-sdk';
+
+// The `ReorderQuizQuestion` mutation requires an argument of type `ReorderQuizQuestionVariables`:
+const reorderQuizQuestionVars: ReorderQuizQuestionVariables = {
+  quizId: ..., 
+  questionId: ..., 
+  position: ..., 
+};
+
+// Call the `reorderQuizQuestionRef()` function to get a reference to the mutation.
+const ref = reorderQuizQuestionRef(reorderQuizQuestionVars);
+// Variables can be defined inline as well.
+const ref = reorderQuizQuestionRef({ quizId: ..., questionId: ..., position: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = reorderQuizQuestionRef(dataConnect, reorderQuizQuestionVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.quizQuestion_updateMany);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.quizQuestion_updateMany);
 });
 ```
 

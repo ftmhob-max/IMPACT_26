@@ -294,6 +294,7 @@ export function FormulasPanel({ onSaved }: { onSaved?: () => void }) {
         });
         if (res.ok) {
           setIsDirty(false);
+          setSelectedFormula(formula);
           showNotice("Saved.");
           await loadSections();
           onSaved?.();

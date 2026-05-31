@@ -1654,6 +1654,25 @@ export interface Quiz_Key {
   __typename?: 'Quiz_Key';
 }
 
+export interface RemoveQuestionFromQuizData {
+  quizQuestion_deleteMany: number;
+}
+
+export interface RemoveQuestionFromQuizVariables {
+  quizId: UUIDString;
+  questionId: UUIDString;
+}
+
+export interface ReorderQuizQuestionData {
+  quizQuestion_updateMany: number;
+}
+
+export interface ReorderQuizQuestionVariables {
+  quizId: UUIDString;
+  questionId: UUIDString;
+  position: number;
+}
+
 export interface SourceMaterialActivity_Key {
   id: UUIDString;
   __typename?: 'SourceMaterialActivity_Key';
@@ -2523,6 +2542,30 @@ export const deleteQuizQuestionsForQuizRef: DeleteQuizQuestionsForQuizRef;
 
 export function deleteQuizQuestionsForQuiz(vars: DeleteQuizQuestionsForQuizVariables): MutationPromise<DeleteQuizQuestionsForQuizData, DeleteQuizQuestionsForQuizVariables>;
 export function deleteQuizQuestionsForQuiz(dc: DataConnect, vars: DeleteQuizQuestionsForQuizVariables): MutationPromise<DeleteQuizQuestionsForQuizData, DeleteQuizQuestionsForQuizVariables>;
+
+interface RemoveQuestionFromQuizRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: RemoveQuestionFromQuizVariables): MutationRef<RemoveQuestionFromQuizData, RemoveQuestionFromQuizVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: RemoveQuestionFromQuizVariables): MutationRef<RemoveQuestionFromQuizData, RemoveQuestionFromQuizVariables>;
+  operationName: string;
+}
+export const removeQuestionFromQuizRef: RemoveQuestionFromQuizRef;
+
+export function removeQuestionFromQuiz(vars: RemoveQuestionFromQuizVariables): MutationPromise<RemoveQuestionFromQuizData, RemoveQuestionFromQuizVariables>;
+export function removeQuestionFromQuiz(dc: DataConnect, vars: RemoveQuestionFromQuizVariables): MutationPromise<RemoveQuestionFromQuizData, RemoveQuestionFromQuizVariables>;
+
+interface ReorderQuizQuestionRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: ReorderQuizQuestionVariables): MutationRef<ReorderQuizQuestionData, ReorderQuizQuestionVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: ReorderQuizQuestionVariables): MutationRef<ReorderQuizQuestionData, ReorderQuizQuestionVariables>;
+  operationName: string;
+}
+export const reorderQuizQuestionRef: ReorderQuizQuestionRef;
+
+export function reorderQuizQuestion(vars: ReorderQuizQuestionVariables): MutationPromise<ReorderQuizQuestionData, ReorderQuizQuestionVariables>;
+export function reorderQuizQuestion(dc: DataConnect, vars: ReorderQuizQuestionVariables): MutationPromise<ReorderQuizQuestionData, ReorderQuizQuestionVariables>;
 
 interface DeleteQuizResponsesForQuizRef {
   /* Allow users to create refs without passing in DataConnect */

@@ -13,6 +13,8 @@ import { applyTheme, type ThemeMode } from "@/components/theme/ThemeController";
 
 const DESKTOP_SIDEBAR_MODE_KEY = "impact26:desktop-sidebar-mode";
 const STUDY_RHYTHM_OPEN_KEY = "impact26:study-rhythm-open";
+const STUDENT_SECTION_OPEN_KEY = "impact26:student-section-open";
+const ADMIN_TOOLS_OPEN_KEY = "impact26:admin-tools-open";
 
 type StudyRhythmData = {
   lessonsCompleted: number;
@@ -46,7 +48,6 @@ const adminItems: NavItem[] = [
   { href: "/admin/questions", label: "Question Bank", icon: Icons.FileText },
   { href: "/admin/quizzes", label: "Quizzes Editor", icon: Icons.ClipboardList },
   { href: "/admin/courses", label: "Courses Editor", icon: Icons.GraduationCap },
-  { href: "/admin/preview/courses", label: "Student Preview", icon: Icons.Eye },
   { href: "/admin/formulas", label: "Formula Editor", icon: Icons.Calculator },
   { href: "/admin/glossary", label: "Glossary Editor", icon: Icons.BookOpen },
   { href: "/admin/materials", label: "Source Materials", icon: Icons.Database },
@@ -66,6 +67,8 @@ export function Sidebar({ isAdmin }: SidebarProps) {
   const [profileRefresh, setProfileRefresh] = useState(0);
   const [desktopMode, setDesktopMode] = useState<DesktopSidebarMode>("expanded");
   const [autoReveal, setAutoReveal] = useState(false);
+  const [studentOpen, setStudentOpen] = useState(!isAdmin);
+  const [adminOpen, setAdminOpen] = useState(true);
 
   useEffect(() => {
     return onAuthStateChanged(auth, (u) => setUser(u));
@@ -87,11 +90,35 @@ export function Sidebar({ isAdmin }: SidebarProps) {
     if (storedMode === "expanded" || storedMode === "collapsed" || storedMode === "auto") {
       setDesktopMode(storedMode);
     }
+    const storedStudent = window.localStorage.getItem(STUDENT_SECTION_OPEN_KEY);
+    if (storedStudent !== null) {
+      setStudentOpen(storedStudent === "true");
+    }
+    const storedAdmin = window.localStorage.getItem(ADMIN_TOOLS_OPEN_KEY);
+    if (storedAdmin !== null) {
+      setAdminOpen(storedAdmin === "true");
+    }
   }, []);
 
   useEffect(() => {
     window.localStorage.setItem(DESKTOP_SIDEBAR_MODE_KEY, desktopMode);
   }, [desktopMode]);
+
+  const toggleStudentOpen = () => {
+    setStudentOpen((prev) => {
+      const next = !prev;
+      window.localStorage.setItem(STUDENT_SECTION_OPEN_KEY, String(next));
+      return next;
+    });
+  };
+
+  const toggleAdminOpen = () => {
+    setAdminOpen((prev) => {
+      const next = !prev;
+      window.localStorage.setItem(ADMIN_TOOLS_OPEN_KEY, String(next));
+      return next;
+    });
+  };
 
   const isCollapsed = desktopMode === "collapsed";
   const isAutoMode = desktopMode === "auto";
@@ -188,6 +215,7 @@ export function Sidebar({ isAdmin }: SidebarProps) {
                         {...item}
                         compact
                         active={matchesPath(pathname, item.href)}
+                        isAdminItem
                       />
                     ))}
                   </div>
@@ -217,6 +245,10 @@ export function Sidebar({ isAdmin }: SidebarProps) {
                   setAutoReveal(false);
                   setDesktopMode("expanded");
                 }}
+                studentOpen={studentOpen}
+                toggleStudentOpen={toggleStudentOpen}
+                adminOpen={adminOpen}
+                toggleAdminOpen={toggleAdminOpen}
               />
             </div>
           </>
@@ -234,6 +266,10 @@ export function Sidebar({ isAdmin }: SidebarProps) {
               pathname={pathname}
               compact={!isDesktopExpanded}
               onSetDesktopMode={setDesktopMode}
+              studentOpen={studentOpen}
+              toggleStudentOpen={toggleStudentOpen}
+              adminOpen={adminOpen}
+              toggleAdminOpen={toggleAdminOpen}
             />
           </div>
         )}
@@ -258,6 +294,7 @@ export function Sidebar({ isAdmin }: SidebarProps) {
                 key={item.href}
                 {...item}
                 active={matchesPath(pathname, item.href)}
+                isAdminItem
               />
             ))}
           </div>
@@ -275,6 +312,10 @@ function SidebarPanelContent({
   compact,
   onSetDesktopMode,
   onDisableAutoHide,
+  studentOpen,
+  toggleStudentOpen,
+  adminOpen,
+  toggleAdminOpen,
 }: {
   isAdmin?: boolean;
   user: FirebaseUser | null;
@@ -283,6 +324,10 @@ function SidebarPanelContent({
   compact: boolean;
   onSetDesktopMode: (mode: DesktopSidebarMode) => void;
   onDisableAutoHide?: () => void;
+  studentOpen: boolean;
+  toggleStudentOpen: () => void;
+  adminOpen: boolean;
+  toggleAdminOpen: () => void;
 }) {
   return (
     <>
@@ -351,24 +396,21 @@ function SidebarPanelContent({
         )}
       >
         <div className={cn("flex w-full flex-col", compact ? "items-center gap-1.5" : "gap-1")}>
-          {navItems.map((item) => (
-            <NavLink
-              key={item.href}
-              {...item}
-              compact={compact}
-              active={matchesPath(pathname, item.href)}
-            />
-          ))}
-        </div>
-
-        {isAdmin && (
-          <div className={cn("mt-4 flex w-full flex-col", compact ? "items-center gap-1.5" : "gap-1")}>
-            {!compact && (
-              <div className="px-3 pb-2 pt-3">
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8ebbe9]">Admin Tools</p>
-              </div>
-            )}
-            {adminItems.map((item) => (
+          {!compact && (
+            <button
+              type="button"
+              onClick={toggleStudentOpen}
+              className="flex w-full items-center justify-between px-3 pb-2 pt-3 text-[10px] font-bold uppercase tracking-[0.2em] text-[#8ebbe9] hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/20 rounded-md"
+            >
+              <span>Student Section</span>
+              <Icons.ChevronDown
+                size={12}
+                className={cn("text-[#c8e0f4] transition-transform duration-200", studentOpen && "rotate-180")}
+              />
+            </button>
+          )}
+          {(compact || studentOpen) &&
+            navItems.map((item) => (
               <NavLink
                 key={item.href}
                 {...item}
@@ -376,6 +418,33 @@ function SidebarPanelContent({
                 active={matchesPath(pathname, item.href)}
               />
             ))}
+        </div>
+
+        {isAdmin && (
+          <div className={cn("mt-4 flex w-full flex-col", compact ? "items-center gap-1.5" : "gap-1")}>
+            {!compact && (
+              <button
+                type="button"
+                onClick={toggleAdminOpen}
+                className="flex w-full items-center justify-between px-3 pb-2 pt-3 text-[10px] font-bold uppercase tracking-[0.2em] text-[#fca5a5] hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/20 rounded-md"
+              >
+                <span>Admin Tools</span>
+                <Icons.ChevronDown
+                  size={12}
+                  className={cn("text-[#fecdd3] transition-transform duration-200", adminOpen && "rotate-180")}
+                />
+              </button>
+            )}
+            {(compact || adminOpen) &&
+              adminItems.map((item) => (
+                <NavLink
+                  key={item.href}
+                  {...item}
+                  compact={compact}
+                  active={matchesPath(pathname, item.href)}
+                  isAdminItem
+                />
+              ))}
           </div>
         )}
       </nav>
@@ -433,9 +502,11 @@ function NavLink({
   icon: Icon,
   compact,
   active,
+  isAdminItem,
 }: NavItem & {
   compact?: boolean;
   active: boolean;
+  isAdminItem?: boolean;
 }) {
   return (
     <Link
@@ -445,7 +516,9 @@ function NavLink({
         "group relative flex min-h-10 shrink-0 items-center gap-3 rounded-xl border px-3 py-2 text-sm font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--sidebar-bg)]",
         compact && "justify-center px-0 lg:h-10 lg:min-h-10 lg:w-10",
         active
-          ? "border-white/[0.12] bg-[var(--sidebar-active)] text-white shadow-md shadow-[#031d35]/30"
+          ? isAdminItem
+            ? "border-white/[0.12] bg-[#8a2525] text-white shadow-md shadow-[#350303]/30"
+            : "border-white/[0.12] bg-[var(--sidebar-active)] text-white shadow-md shadow-[#031d35]/30"
           : "border-transparent text-[var(--sidebar-muted)] hover:border-white/[0.08] hover:bg-[var(--sidebar-hover)] hover:text-white"
       )}
     >
@@ -454,7 +527,9 @@ function NavLink({
           "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors",
           active
             ? "bg-white/[0.18] text-white"
-            : "bg-white/[0.05] text-[#c8e0f4] group-hover:bg-white/[0.10] group-hover:text-white"
+            : isAdminItem
+              ? "bg-white/[0.05] text-[#fca5a5] group-hover:bg-white/[0.10] group-hover:text-white"
+              : "bg-white/[0.05] text-[#c8e0f4] group-hover:bg-white/[0.10] group-hover:text-white"
         )}
       >
         <Icon size={15} />
@@ -465,7 +540,11 @@ function NavLink({
           aria-hidden="true"
           className={cn(
             "hidden h-1.5 w-1.5 shrink-0 rounded-full transition-all lg:block",
-            active ? "bg-[var(--sidebar-accent)]" : "bg-transparent group-hover:bg-white/20"
+            active
+              ? isAdminItem
+                ? "bg-[#fca5a5]"
+                : "bg-[var(--sidebar-accent)]"
+              : "bg-transparent group-hover:bg-white/20"
           )}
         />
       )}

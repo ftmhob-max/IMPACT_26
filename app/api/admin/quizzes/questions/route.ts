@@ -12,6 +12,16 @@ const addQuestionsSchema = z.object({
   pointValue: z.coerce.number().positive().default(1),
 });
 
+const removeQuestionSchema = z.object({
+  quizId: uuidSchema,
+  questionId: uuidSchema,
+});
+
+const reorderQuestionsSchema = z.object({
+  quizId: uuidSchema,
+  items: z.array(z.object({ id: uuidSchema, position: z.number().int().nonnegative() })).min(1),
+});
+
 export async function POST(request: NextRequest) {
   const auth = await requireAdminRequest(request, "instructor");
   if (!auth.ok) return auth.response;
@@ -55,5 +65,55 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("[admin/quizzes/questions]", error);
     return NextResponse.json({ error: "Unable to add questions to quiz" }, { status: 500 });
+  }
+}
+
+// Remove a single question from a quiz (non-destructive — question stays in the bank)
+export async function DELETE(request: NextRequest) {
+  const auth = await requireAdminRequest(request, "instructor");
+  if (!auth.ok) return auth.response;
+
+  const body = await request.json().catch(() => ({}));
+  const parsed = removeQuestionSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
+
+  try {
+    await adminDcMutate("RemoveQuestionFromQuiz", {
+      quizId: parsed.data.quizId,
+      questionId: parsed.data.questionId,
+    });
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("[admin/quizzes/questions DELETE]", error);
+    return NextResponse.json({ error: "Unable to remove question from quiz" }, { status: 500 });
+  }
+}
+
+// Reorder questions within a quiz by updating their positions
+export async function PATCH(request: NextRequest) {
+  const auth = await requireAdminRequest(request, "instructor");
+  if (!auth.ok) return auth.response;
+
+  const body = await request.json().catch(() => ({}));
+  const parsed = reorderQuestionsSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
+
+  const { quizId, items } = parsed.data;
+  try {
+    for (const item of items) {
+      await adminDcMutate("ReorderQuizQuestion", {
+        quizId,
+        questionId: item.id,
+        position: item.position,
+      });
+    }
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("[admin/quizzes/questions PATCH]", error);
+    return NextResponse.json({ error: "Unable to reorder questions" }, { status: 500 });
   }
 }

@@ -29,13 +29,6 @@ interface Question {
   answerChoices_on_question: AnswerChoice[];
 }
 
-interface BankQuestion {
-  id: string;
-  questionText: string;
-  domain: string;
-  difficulty: string;
-}
-
 interface QuizInfo {
   id: string;
   title: string;
@@ -45,7 +38,6 @@ interface QuizInfo {
   shuffleChoices: boolean;
 }
 
-const DOMAINS = ["math", "appraisal", "law", "philly", "admin", "ethics"] as const;
 const DIFFICULTIES = ["easy", "proficient", "expert"] as const;
 const LETTERS = ["A", "B", "C", "D"];
 
@@ -66,7 +58,7 @@ export function LessonQuizPanel({ quizId }: { quizId: string }) {
     if (res.ok) {
       const data = await res.json();
       setQuiz(data.quiz ?? null);
-      setQuestions(data.questions ?? []);
+      setQuestions((data.questions ?? []).slice().sort((a: Question, b: Question) => a.position - b.position));
     }
     setLoading(false);
   }, [quizId]);
@@ -129,11 +121,70 @@ export function LessonQuizPanel({ quizId }: { quizId: string }) {
     });
     if (res.ok) {
       showNotice("success", "Question created and added to quiz.");
-      setAddMode(null);
       await load();
+      return true;
     } else {
       const err = await res.json().catch(() => ({}));
       showNotice("error", err.error ?? "Could not create question.");
+      return false;
+    }
+  }
+
+  async function removeFromQuiz(questionId: string) {
+    // Optimistic update
+    setQuestions((prev) => prev.filter((q) => q.id !== questionId));
+    const res = await fetch("/api/admin/quizzes/questions", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ quizId, questionId }),
+    });
+    if (res.ok) {
+      showNotice("success", "Question removed from quiz.");
+    } else {
+      showNotice("error", "Could not remove question.");
+      await load(); // restore on error
+    }
+  }
+
+  async function moveQuestion(questionId: string, direction: -1 | 1) {
+    const idx = questions.findIndex((q) => q.id === questionId);
+    const target = idx + direction;
+    if (idx < 0 || target < 0 || target >= questions.length) return;
+
+    // Optimistic update
+    const next = [...questions];
+    [next[idx], next[target]] = [next[target], next[idx]];
+    setQuestions(next);
+
+    // Persist new positions
+    await fetch("/api/admin/quizzes/questions", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        quizId,
+        items: next.map((q, i) => ({ id: q.id, position: i })),
+      }),
+    }).catch(() => load()); // restore on error
+  }
+
+  async function saveQuizSettings(settings: Partial<QuizInfo>) {
+    const res = await fetch("/api/admin/quizzes", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "update-settings",
+        quizId,
+        shuffleQuestions: settings.shuffleQuestions ?? quiz?.shuffleQuestions ?? false,
+        shuffleChoices: settings.shuffleChoices ?? quiz?.shuffleChoices ?? false,
+        passingScore: settings.passingScore ?? quiz?.passingScore ?? 70,
+        timeLimitSeconds: settings.timeLimitSeconds !== undefined ? settings.timeLimitSeconds : quiz?.timeLimitSeconds ?? null,
+      }),
+    });
+    if (res.ok) {
+      setQuiz((prev) => prev ? { ...prev, ...settings } : prev);
+      showNotice("success", "Quiz settings saved.");
+    } else {
+      showNotice("error", "Could not save quiz settings.");
     }
   }
 
@@ -150,25 +201,14 @@ export function LessonQuizPanel({ quizId }: { quizId: string }) {
 
   return (
     <div className="space-y-4">
-      {/* Quiz summary bar */}
+      {/* Quiz header — editable settings */}
       {quiz && (
-        <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <div>
-              <p className="text-sm font-bold text-slate-900">{quiz.title}</p>
-              <div className="flex flex-wrap gap-3 mt-1 text-[11px] text-slate-500">
-                {quiz.passingScore != null && <span>{quiz.passingScore}% passing</span>}
-                {quiz.timeLimitSeconds != null && <span>{Math.round(quiz.timeLimitSeconds / 60)} min limit</span>}
-                {quiz.shuffleQuestions && <span>Questions shuffled</span>}
-                {quiz.shuffleChoices && <span>Choices shuffled</span>}
-              </div>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <span className="font-bold text-slate-700">{questions.length}</span>
-              <span className="text-slate-500">questions</span>
-            </div>
-          </div>
-        </div>
+        <QuizSettingsHeader
+          quiz={quiz}
+          questionCount={questions.length}
+          incompleteCount={incomplete.length}
+          onSave={saveQuizSettings}
+        />
       )}
 
       {/* Incomplete warning */}
@@ -176,7 +216,8 @@ export function LessonQuizPanel({ quizId }: { quizId: string }) {
         <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800">
           <Icons.AlertTriangle size={14} className="mt-0.5 shrink-0 text-amber-500" />
           <span>
-            <strong>{incomplete.length} question{incomplete.length !== 1 ? "s" : ""}</strong> {incomplete.length !== 1 ? "have" : "has"} no correct answer marked — fix before publishing.
+            <strong>{incomplete.length} question{incomplete.length !== 1 ? "s" : ""}</strong>{" "}
+            {incomplete.length !== 1 ? "have" : "has"} no correct answer marked — fix before publishing.
           </span>
         </div>
       )}
@@ -191,15 +232,25 @@ export function LessonQuizPanel({ quizId }: { quizId: string }) {
 
       {/* Add question controls */}
       <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-          {questions.length} question{questions.length !== 1 ? "s" : ""}
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-bold text-slate-700">
+            {questions.length} question{questions.length !== 1 ? "s" : ""}
+          </span>
+          {questions.length > 0 && (
+            <span className={cn(
+              "text-xs font-semibold",
+              incomplete.length === 0 ? "text-emerald-600" : "text-amber-600"
+            )}>
+              {questions.length - incomplete.length} / {questions.length} complete
+            </span>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => setAddMode(addMode === "bank" ? null : "bank")}
             className={cn(
-              "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors",
+              "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
               addMode === "bank"
                 ? "bg-[#185FA5] text-white"
                 : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
@@ -212,7 +263,7 @@ export function LessonQuizPanel({ quizId }: { quizId: string }) {
             type="button"
             onClick={() => setAddMode(addMode === "create" ? null : "create")}
             className={cn(
-              "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors",
+              "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
               addMode === "create"
                 ? "bg-[#185FA5] text-white"
                 : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
@@ -237,12 +288,30 @@ export function LessonQuizPanel({ quizId }: { quizId: string }) {
         />
       )}
 
-      {/* Empty state */}
+      {/* Empty state with CTAs */}
       {questions.length === 0 && addMode === null && (
-        <div className="rounded-lg border border-dashed border-slate-200 bg-white px-6 py-10 text-center">
-          <Icons.ClipboardList size={32} className="mx-auto text-slate-200 mb-2" />
-          <p className="text-sm font-semibold text-slate-600">No questions in this quiz yet</p>
-          <p className="text-xs text-slate-400 mt-1">Add from the question bank or create a new one above.</p>
+        <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-10 text-center">
+          <Icons.ClipboardList size={36} className="mx-auto text-slate-200 mb-3" />
+          <p className="text-sm font-semibold text-slate-600">No questions yet</p>
+          <p className="text-xs text-slate-400 mt-1 mb-5">Add from your question bank or write new questions from scratch.</p>
+          <div className="flex items-center justify-center gap-3 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setAddMode("bank")}
+              className="flex items-center gap-1.5 rounded-lg border border-[#185FA5] bg-[#E6F1FB]/40 px-4 py-2 text-xs font-semibold text-[#185FA5] hover:bg-[#E6F1FB] transition"
+            >
+              <Icons.Search size={12} />
+              Add from bank
+            </button>
+            <button
+              type="button"
+              onClick={() => setAddMode("create")}
+              className="flex items-center gap-1.5 rounded-lg bg-[#185FA5] px-4 py-2 text-xs font-semibold text-white hover:bg-[#185FA5]/90 transition"
+            >
+              <Icons.Plus size={12} />
+              Create first question
+            </button>
+          </div>
         </div>
       )}
 
@@ -253,7 +322,11 @@ export function LessonQuizPanel({ quizId }: { quizId: string }) {
             key={q.id}
             question={q}
             index={idx}
+            totalCount={questions.length}
             onSave={(updated) => saveQuestion(q, updated)}
+            onMoveUp={idx > 0 ? () => moveQuestion(q.id, -1) : undefined}
+            onMoveDown={idx < questions.length - 1 ? () => moveQuestion(q.id, 1) : undefined}
+            onRemove={() => removeFromQuiz(q.id)}
           />
         ))}
       </div>
@@ -261,158 +334,149 @@ export function LessonQuizPanel({ quizId }: { quizId: string }) {
   );
 }
 
-// ─── Add from Bank Panel ──────────────────────────────────────────────────────
+// ─── Quiz Settings Header ─────────────────────────────────────────────────────
 
-function AddFromBankPanel({
-  quizId,
-  existingIds,
-  onAdd,
-  onClose,
+function QuizSettingsHeader({
+  quiz,
+  questionCount,
+  incompleteCount,
+  onSave,
 }: {
-  quizId: string;
-  existingIds: Set<string>;
-  onAdd: (ids: string[]) => Promise<void>;
-  onClose: () => void;
+  quiz: QuizInfo;
+  questionCount: number;
+  incompleteCount: number;
+  onSave: (settings: Partial<QuizInfo>) => Promise<void>;
 }) {
-  const [bank, setBank] = useState<BankQuestion[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [domain, setDomain] = useState("");
-  const [difficulty, setDifficulty] = useState("");
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [open, setOpen] = useState(false);
+  const [shuffleQ, setShuffleQ] = useState(quiz.shuffleQuestions);
+  const [shuffleC, setShuffleC] = useState(quiz.shuffleChoices);
+  const [passScore, setPassScore] = useState(String(quiz.passingScore ?? 70));
+  const [timeLimit, setTimeLimit] = useState(
+    quiz.timeLimitSeconds ? String(Math.round(quiz.timeLimitSeconds / 60)) : ""
+  );
   const [busy, setBusy] = useState(false);
 
+  // Sync local state when quiz prop changes (e.g. after parent reload)
   useEffect(() => {
-    fetch("/api/admin/questions", { cache: "no-store" })
-      .then((r) => r.json())
-      .then((d) => setBank(d.questions ?? []))
-      .finally(() => setLoading(false));
-  }, []);
+    setShuffleQ(quiz.shuffleQuestions);
+    setShuffleC(quiz.shuffleChoices);
+    setPassScore(String(quiz.passingScore ?? 70));
+    setTimeLimit(quiz.timeLimitSeconds ? String(Math.round(quiz.timeLimitSeconds / 60)) : "");
+  }, [quiz]);
 
-  const available = bank.filter((q) => {
-    if (existingIds.has(q.id)) return false;
-    if (search && !q.questionText.toLowerCase().includes(search.toLowerCase())) return false;
-    if (domain && q.domain !== domain) return false;
-    if (difficulty && q.difficulty !== difficulty) return false;
-    return true;
-  });
-
-  function toggle(id: string) {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  }
-
-  function toggleAll() {
-    if (selected.size === available.length && available.length > 0) {
-      setSelected(new Set());
-    } else {
-      setSelected(new Set(available.map((q) => q.id)));
-    }
-  }
-
-  async function handleAdd() {
-    if (!selected.size) return;
+  async function handleSave() {
     setBusy(true);
-    await onAdd([...selected]);
+    await onSave({
+      shuffleQuestions: shuffleQ,
+      shuffleChoices: shuffleC,
+      passingScore: parseInt(passScore) || 70,
+      timeLimitSeconds: timeLimit ? parseInt(timeLimit) * 60 : null,
+    });
     setBusy(false);
+    setOpen(false);
   }
 
-  const allSelected = available.length > 0 && selected.size === available.length;
+  const completeCount = questionCount - incompleteCount;
 
   return (
-    <div className="rounded-xl border border-[#185FA5]/20 bg-[#E6F1FB]/10 overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-3 bg-white">
-        <div className="flex items-center gap-2">
-          <Icons.Search size={14} className="text-[#185FA5]" />
-          <span className="text-sm font-bold text-slate-900">Add from question bank</span>
-          <span className="text-xs text-slate-400">{available.length} available</span>
+    <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+      {/* Header row */}
+      <div className="flex items-center gap-3 px-4 py-3">
+        <Icons.ClipboardList size={16} className="text-[#185FA5] shrink-0" />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold text-slate-900 truncate">{quiz.title}</p>
+          <div className="flex flex-wrap items-center gap-2 mt-0.5">
+            <span className={cn(
+              "text-[11px] font-semibold",
+              incompleteCount === 0 && questionCount > 0 ? "text-emerald-600" :
+              incompleteCount > 0 ? "text-amber-600" : "text-slate-400"
+            )}>
+              {questionCount === 0 ? "No questions yet" :
+               incompleteCount === 0 ? `${questionCount} question${questionCount !== 1 ? "s" : ""} · all complete` :
+               `${completeCount} / ${questionCount} complete`}
+            </span>
+            <span className="text-[10px] text-slate-300">·</span>
+            <span className="text-[11px] text-slate-400">{quiz.passingScore ?? 70}% pass</span>
+            {quiz.shuffleQuestions && <span className="text-[11px] text-slate-400">· Shuffle on</span>}
+            {quiz.timeLimitSeconds && <span className="text-[11px] text-slate-400">· {Math.round(quiz.timeLimitSeconds / 60)} min</span>}
+          </div>
         </div>
-        <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-700">
-          <Icons.X size={15} />
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-[11px] font-semibold text-slate-600 hover:border-[#185FA5] hover:text-[#185FA5] transition"
+        >
+          <Icons.Settings size={12} />
+          Settings
+          <Icons.ChevronDown size={11} className={cn("transition-transform", open && "rotate-180")} />
         </button>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-2 px-4 py-3 bg-slate-50 border-b border-slate-100">
-        <input
-          type="search"
-          placeholder="Search questions…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="admin-input w-full text-xs sm:min-w-40 sm:flex-1"
-          autoFocus
-        />
-        <DomainCombobox value={domain} onChange={setDomain} allowClear clearLabel="All domains" className="w-36 text-xs" />
-        <select className="admin-input w-32 text-xs" value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
-          <option value="">All levels</option>
-          {DIFFICULTIES.map((d) => <option key={d} value={d}>{d}</option>)}
-        </select>
-      </div>
+      {/* Settings panel */}
+      {open && (
+        <div className="border-t border-slate-100 bg-slate-50/60 px-4 py-4 space-y-4">
+          <p className="text-[11px] text-slate-400">These settings apply to this quiz everywhere it&apos;s used.</p>
 
-      {/* Question list */}
-      <div className="max-h-72 overflow-y-auto divide-y divide-slate-100 bg-white">
-        {loading ? (
-          <div className="flex items-center gap-2 px-4 py-6 text-sm text-slate-400">
-            <Icons.Loader size={14} className="animate-spin" />
-            Loading bank…
-          </div>
-        ) : available.length === 0 ? (
-          <p className="px-4 py-6 text-center text-sm text-slate-400">
-            {search || domain || difficulty ? "No questions match your filters." : "All bank questions are already in this quiz."}
-          </p>
-        ) : (
-          <>
-            {/* Select all row */}
-            <label className="flex items-center gap-3 px-4 py-2 bg-slate-50 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={allSelected}
-                onChange={toggleAll}
-                className="h-4 w-4 rounded border-slate-300 text-[#185FA5]"
-              />
-              <span className="text-xs font-semibold text-slate-500">Select all ({available.length})</span>
-            </label>
-            {available.map((q) => (
-              <label key={q.id} className="flex items-start gap-3 px-4 py-2.5 hover:bg-slate-50 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={selected.has(q.id)}
-                  onChange={() => toggle(q.id)}
-                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-[#185FA5]"
-                />
-                <span className="flex-1 text-xs text-slate-800 leading-relaxed">{q.questionText}</span>
-                <div className="shrink-0 flex gap-1.5">
-                  <DomainBadge domain={q.domain} />
-                  <DifficultyBadge difficulty={q.difficulty} />
-                </div>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { label: "Shuffle questions", value: shuffleQ, set: setShuffleQ },
+              { label: "Shuffle choices", value: shuffleC, set: setShuffleC },
+            ].map(({ label, value, set }) => (
+              <label
+                key={label}
+                className={cn(
+                  "flex cursor-pointer items-center gap-2.5 rounded-lg border p-2.5 transition",
+                  value ? "border-[#185FA5]/30 bg-[#E6F1FB]/40" : "border-slate-200 bg-white hover:border-slate-300"
+                )}
+              >
+                <button
+                  type="button"
+                  onClick={() => set((v) => !v)}
+                  className={cn("relative h-5 w-9 shrink-0 rounded-full transition-colors", value ? "bg-emerald-500" : "bg-slate-200")}
+                >
+                  <span className={cn("absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform", value && "translate-x-4")} />
+                </button>
+                <span className="text-xs font-semibold text-slate-700">{label}</span>
               </label>
             ))}
-          </>
-        )}
-      </div>
+          </div>
 
-      {/* Footer */}
-      <div className="flex items-center justify-between gap-3 border-t border-slate-100 px-4 py-3 bg-slate-50">
-        <span className="text-xs text-slate-500">
-          {selected.size > 0 ? `${selected.size} selected` : "Select questions to add"}
-        </span>
-        <div className="flex gap-2">
-          <button type="button" onClick={onClose} className="admin-action secondary text-xs">Cancel</button>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[10px] font-extrabold uppercase tracking-wide text-slate-400">Passing score (%)</label>
+              <input
+                type="number"
+                min={1}
+                max={100}
+                className="admin-input mt-1"
+                value={passScore}
+                onChange={(e) => setPassScore(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-extrabold uppercase tracking-wide text-slate-400">Time limit (min)</label>
+              <input
+                type="number"
+                min={1}
+                className="admin-input mt-1"
+                value={timeLimit}
+                onChange={(e) => setTimeLimit(e.target.value)}
+                placeholder="Untimed"
+              />
+            </div>
+          </div>
+
           <button
             type="button"
-            onClick={handleAdd}
-            disabled={busy || selected.size === 0}
-            className="admin-action text-xs flex items-center gap-1.5"
+            onClick={handleSave}
+            disabled={busy}
+            className="admin-action flex items-center gap-1.5 text-xs"
           >
-            {busy ? <Icons.Loader size={12} className="animate-spin" /> : <Icons.Plus size={12} />}
-            Add {selected.size > 0 ? selected.size : ""} question{selected.size !== 1 ? "s" : ""}
+            {busy ? <Icons.Loader size={12} className="animate-spin" /> : <Icons.Check size={12} />}
+            Save settings
           </button>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -430,7 +494,7 @@ function CreateQuestionPanel({
   onSave,
   onClose,
 }: {
-  onSave: (payload: object) => Promise<void>;
+  onSave: (payload: object) => Promise<boolean>;
   onClose: () => void;
 }) {
   const [questionText, setQuestionText] = useState("");
@@ -445,7 +509,7 @@ function CreateQuestionPanel({
 
   const isMultiselect = questionType === "multiselect";
 
-  function updateChoice(idx: number, field: string, value: any) {
+  function updateChoice(idx: number, field: string, value: unknown) {
     setChoices((prev) => prev.map((c, i) => i === idx ? { ...c, [field]: value } : c));
   }
 
@@ -467,12 +531,8 @@ function CreateQuestionPanel({
     return errs;
   }
 
-  async function handleSave() {
-    const errs = validate();
-    if (errs.length) { setErrors(errs); return; }
-    setErrors([]);
-    setBusy(true);
-    await onSave({
+  function buildPayload() {
+    return {
       questionText: questionText.trim(),
       questionType,
       difficulty,
@@ -490,8 +550,33 @@ function CreateQuestionPanel({
           isCorrect: c.isCorrect,
           explanation: c.explanation.trim() || null,
         })),
-    });
+    };
+  }
+
+  async function handleSave() {
+    const errs = validate();
+    if (errs.length) { setErrors(errs); return; }
+    setErrors([]);
+    setBusy(true);
+    const ok = await onSave(buildPayload());
     setBusy(false);
+    if (ok) onClose();
+  }
+
+  async function handleSaveAndAnother() {
+    const errs = validate();
+    if (errs.length) { setErrors(errs); return; }
+    setErrors([]);
+    setBusy(true);
+    const ok = await onSave(buildPayload());
+    setBusy(false);
+    if (ok) {
+      // Reset form but keep difficulty + domain as smart defaults
+      setQuestionText("");
+      setRationale("");
+      setSourceRef("");
+      setChoices(DEFAULT_CHOICES.map((c) => ({ ...c })));
+    }
   }
 
   return (
@@ -501,7 +586,9 @@ function CreateQuestionPanel({
         <div className="flex items-center gap-2">
           <Icons.Plus size={14} className="text-[#185FA5]" />
           <span className="text-sm font-bold text-slate-900">Create new question</span>
-          <span className="text-[10px] font-semibold text-slate-400 bg-slate-100 rounded-full px-2 py-0.5">saves as draft + adds to quiz</span>
+          <span className="text-[10px] font-semibold text-slate-400 bg-slate-100 rounded-full px-2 py-0.5">
+            saves to bank + adds to quiz
+          </span>
         </div>
         <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-700">
           <Icons.X size={15} />
@@ -539,7 +626,7 @@ function CreateQuestionPanel({
             <label className="admin-label">Type</label>
             <select className="admin-input text-xs" value={questionType} onChange={(e) => setQuestionType(e.target.value)}>
               <option value="multiple_choice">Multiple choice</option>
-              <option value="multiselect">Multiselect</option>
+              <option value="multiselect">Multiselect (select all)</option>
             </select>
           </div>
           <div>
@@ -559,7 +646,7 @@ function CreateQuestionPanel({
           <div className="flex items-center justify-between mb-2">
             <label className="admin-label mb-0">
               Answer choices <span className="text-red-400">*</span>
-              {isMultiselect && <span className="text-slate-400 font-normal ml-1">(select all that apply)</span>}
+              {isMultiselect && <span className="text-slate-400 font-normal ml-1">(mark all that apply)</span>}
             </label>
             <span className="text-[10px] text-slate-400">Click circle to mark correct</span>
           </div>
@@ -569,15 +656,14 @@ function CreateQuestionPanel({
                 "flex items-start gap-2 rounded-lg border px-3 py-2.5 transition-colors",
                 c.isCorrect && c.choiceText ? "border-emerald-200 bg-emerald-50" : "border-slate-100 bg-slate-50"
               )}>
-                {/* Correct toggle */}
                 <button
                   type="button"
                   onClick={() => toggleCorrect(idx)}
+                  title={c.isCorrect ? "Correct answer" : "Mark as correct"}
                   className={cn(
                     "mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
                     c.isCorrect ? "border-emerald-500 bg-emerald-500 text-white" : "border-slate-300 hover:border-emerald-400"
                   )}
-                  title={c.isCorrect ? "Correct answer" : "Mark as correct"}
                 >
                   {c.isCorrect && <Icons.Check size={10} />}
                 </button>
@@ -607,7 +693,7 @@ function CreateQuestionPanel({
           </div>
         </div>
 
-        {/* Supporting info (collapsed by default, shown only if expanded) */}
+        {/* Supporting info */}
         <SupportingInfoSection
           rationale={rationale}
           onRationaleChange={setRationale}
@@ -616,7 +702,7 @@ function CreateQuestionPanel({
         />
 
         {/* Actions */}
-        <div className="flex gap-2 pt-1 border-t border-slate-100">
+        <div className="flex flex-wrap gap-2 pt-1 border-t border-slate-100">
           <button
             type="button"
             onClick={handleSave}
@@ -626,7 +712,16 @@ function CreateQuestionPanel({
             {busy ? <Icons.Loader size={13} className="animate-spin" /> : <Icons.Plus size={13} />}
             Create &amp; add to quiz
           </button>
-          <button type="button" onClick={onClose} className="admin-action secondary">
+          <button
+            type="button"
+            onClick={handleSaveAndAnother}
+            disabled={busy}
+            className="admin-action secondary flex items-center gap-1.5"
+          >
+            <Icons.RotateCcw size={13} />
+            Save &amp; add another
+          </button>
+          <button type="button" onClick={onClose} className="admin-action secondary ml-auto">
             Cancel
           </button>
         </div>
@@ -688,15 +783,25 @@ function SupportingInfoSection({
 function QuestionCard({
   question,
   index,
+  totalCount,
   onSave,
+  onMoveUp,
+  onMoveDown,
+  onRemove,
 }: {
   question: Question;
   index: number;
+  totalCount: number;
   onSave: (updated: Partial<Question>) => Promise<void>;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  onRemove: () => Promise<void>;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [removeBusy, setRemoveBusy] = useState(false);
+  const [confirmRemove, setConfirmRemove] = useState(false);
   const [draft, setDraft] = useState<Question>({ ...question });
 
   useEffect(() => { setDraft({ ...question }); setEditing(false); }, [question]);
@@ -711,7 +816,14 @@ function QuestionCard({
     setEditing(false);
   }
 
-  function updateChoice(id: string, field: keyof AnswerChoice, value: any) {
+  async function handleRemove() {
+    setRemoveBusy(true);
+    await onRemove();
+    setRemoveBusy(false);
+    setConfirmRemove(false);
+  }
+
+  function updateChoice(id: string, field: keyof AnswerChoice, value: unknown) {
     setDraft((prev) => ({
       ...prev,
       answerChoices_on_question: prev.answerChoices_on_question.map((c) =>
@@ -743,73 +855,200 @@ function QuestionCard({
   }
 
   return (
-    <div className={cn("rounded-xl border bg-white shadow-sm overflow-hidden", !hasCorrect && "border-amber-200")}>
-      <div
-        className="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors"
-        onClick={() => { setExpanded((v) => !v); if (expanded) setEditing(false); }}
-      >
+    <div className={cn("group rounded-xl border bg-white shadow-sm overflow-hidden", !hasCorrect && "border-amber-200")}>
+      {/* Card header */}
+      <div className="flex items-start gap-2 px-3 py-3">
+        {/* Reorder arrows */}
+        <div className="flex flex-col gap-0.5 mt-0.5 shrink-0">
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onMoveUp?.(); }}
+            disabled={!onMoveUp}
+            className="flex h-5 w-5 items-center justify-center rounded text-slate-300 hover:bg-slate-100 hover:text-slate-600 disabled:opacity-0 disabled:pointer-events-none transition"
+            title="Move up"
+          >
+            <Icons.ChevronUp size={12} />
+          </button>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onMoveDown?.(); }}
+            disabled={!onMoveDown}
+            className="flex h-5 w-5 items-center justify-center rounded text-slate-300 hover:bg-slate-100 hover:text-slate-600 disabled:opacity-0 disabled:pointer-events-none transition"
+            title="Move down"
+          >
+            <Icons.ChevronDown size={12} />
+          </button>
+        </div>
+
+        {/* Question number */}
         <span className="shrink-0 mt-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-[10px] font-bold text-slate-500">
           {index + 1}
         </span>
-        <div className="flex-1 min-w-0">
+
+        {/* Content — clickable to expand */}
+        <div
+          className="flex-1 min-w-0 cursor-pointer"
+          onClick={() => { setExpanded((v) => !v); if (expanded) setEditing(false); }}
+        >
           <p className="text-sm text-slate-800 leading-snug line-clamp-2">{question.questionText}</p>
-          <div className="flex flex-wrap gap-2 mt-1">
+          <div className="flex flex-wrap gap-1.5 mt-1.5">
             <DomainBadge domain={question.domain} />
             <DifficultyBadge difficulty={question.difficulty} />
-            {!hasCorrect && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">⚠ No correct answer</span>}
+            {question.isMultiselect && (
+              <span className="rounded-full bg-[#EEEDFE] px-2 py-0.5 text-[10px] font-semibold text-[#534AB7]">
+                Multiselect
+              </span>
+            )}
+            {!hasCorrect && (
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                ⚠ No correct answer
+              </span>
+            )}
           </div>
         </div>
-        <div className="shrink-0 flex items-center gap-1">
+
+        {/* Actions */}
+        <div className="shrink-0 flex items-center gap-1 ml-1">
           {expanded && (
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); setEditing((v) => !v); }}
-              className={cn("rounded p-1 transition-colors", editing ? "bg-[#185FA5] text-white" : "text-slate-400 hover:text-slate-700")}
+              className={cn("rounded-lg p-1.5 transition-colors", editing ? "bg-[#185FA5] text-white" : "text-slate-400 hover:bg-slate-100 hover:text-slate-700")}
+              title="Edit question"
             >
               <Icons.Pencil size={12} />
             </button>
           )}
-          {expanded ? <Icons.ChevronUp size={14} className="text-slate-400" /> : <Icons.ChevronDown size={14} className="text-slate-400" />}
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setConfirmRemove((v) => !v); setExpanded(false); }}
+            className="rounded-lg p-1.5 text-slate-300 hover:bg-red-50 hover:text-red-500 transition-colors"
+            title="Remove from quiz"
+          >
+            <Icons.Trash2 size={12} />
+          </button>
+          <button
+            type="button"
+            onClick={() => { setExpanded((v) => !v); if (expanded) setEditing(false); }}
+            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 transition-colors"
+          >
+            {expanded ? <Icons.ChevronUp size={13} /> : <Icons.ChevronDown size={13} />}
+          </button>
         </div>
       </div>
 
+      {/* Remove confirmation */}
+      {confirmRemove && (
+        <div className="border-t border-red-100 bg-red-50 px-4 py-3 flex items-center gap-3 flex-wrap">
+          <p className="text-xs text-red-700 flex-1">
+            Remove from this quiz? The question stays in the question bank.
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleRemove}
+              disabled={removeBusy}
+              className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-600 disabled:opacity-60 transition flex items-center gap-1.5"
+            >
+              {removeBusy ? <Icons.Loader size={11} className="animate-spin" /> : null}
+              Remove
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmRemove(false)}
+              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition"
+            >
+              Keep
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Expanded content */}
       {expanded && (
         <div className="border-t border-slate-100 px-4 py-3 space-y-3">
           {editing ? (
             <>
               <div>
                 <label className="admin-label">Question text</label>
-                <textarea className="admin-input min-h-20 text-sm leading-relaxed" value={draft.questionText} onChange={(e) => setDraft((p) => ({ ...p, questionText: e.target.value }))} />
+                <textarea
+                  className="admin-input min-h-20 text-sm leading-relaxed"
+                  value={draft.questionText}
+                  onChange={(e) => setDraft((p) => ({ ...p, questionText: e.target.value }))}
+                />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="admin-label">Difficulty</label>
-                  <select className="admin-input" value={draft.difficulty} onChange={(e) => setDraft((p) => ({ ...p, difficulty: e.target.value }))}>
-                    {DIFFICULTIES.map((d) => <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>)}
+                  <select
+                    className="admin-input"
+                    value={draft.difficulty}
+                    onChange={(e) => setDraft((p) => ({ ...p, difficulty: e.target.value }))}
+                  >
+                    {DIFFICULTIES.map((d) => (
+                      <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>
+                    ))}
                   </select>
                 </div>
                 <div>
                   <label className="admin-label">Domain</label>
-                  <DomainCombobox value={draft.domain} onChange={(val) => setDraft((p) => ({ ...p, domain: val }))} />
+                  <DomainCombobox
+                    value={draft.domain}
+                    onChange={(val) => setDraft((p) => ({ ...p, domain: val }))}
+                  />
                 </div>
               </div>
               <div>
                 <label className="admin-label">
-                  Answer choices <span className="text-slate-400 font-normal">({draft.isMultiselect ? "select all that apply" : "single correct"})</span>
+                  Answer choices{" "}
+                  <span className="text-slate-400 font-normal">
+                    ({draft.isMultiselect ? "select all that apply" : "single correct"})
+                  </span>
                 </label>
                 <div className="space-y-2">
                   {sortedChoices.map((choice, cidx) => (
                     <div key={choice.id} className="grid grid-cols-[20px_24px_1fr_auto] items-start gap-2">
                       <div className="flex flex-col gap-0.5 mt-1">
-                        <button type="button" onClick={() => moveChoice(cidx, -1)} disabled={cidx === 0} className="flex h-4 w-4 items-center justify-center rounded text-slate-300 hover:bg-slate-200 hover:text-slate-600 disabled:opacity-20"><Icons.ChevronUp size={10} /></button>
-                        <button type="button" onClick={() => moveChoice(cidx, 1)} disabled={cidx === sortedChoices.length - 1} className="flex h-4 w-4 items-center justify-center rounded text-slate-300 hover:bg-slate-200 hover:text-slate-600 disabled:opacity-20"><Icons.ChevronDown size={10} /></button>
+                        <button
+                          type="button"
+                          onClick={() => moveChoice(cidx, -1)}
+                          disabled={cidx === 0}
+                          className="flex h-4 w-4 items-center justify-center rounded text-slate-300 hover:bg-slate-200 hover:text-slate-600 disabled:opacity-20"
+                        >
+                          <Icons.ChevronUp size={10} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveChoice(cidx, 1)}
+                          disabled={cidx === sortedChoices.length - 1}
+                          className="flex h-4 w-4 items-center justify-center rounded text-slate-300 hover:bg-slate-200 hover:text-slate-600 disabled:opacity-20"
+                        >
+                          <Icons.ChevronDown size={10} />
+                        </button>
                       </div>
-                      <button type="button" onClick={() => toggleCorrect(choice.id)} className={cn("mt-1.5 flex h-5 w-5 items-center justify-center rounded-full border-2 transition-colors shrink-0", choice.isCorrect ? "border-emerald-500 bg-emerald-500 text-white" : "border-slate-300 hover:border-slate-400")}>
+                      <button
+                        type="button"
+                        onClick={() => toggleCorrect(choice.id)}
+                        className={cn(
+                          "mt-1.5 flex h-5 w-5 items-center justify-center rounded-full border-2 transition-colors shrink-0",
+                          choice.isCorrect ? "border-emerald-500 bg-emerald-500 text-white" : "border-slate-300 hover:border-slate-400"
+                        )}
+                      >
                         {choice.isCorrect && <Icons.Check size={10} />}
                       </button>
                       <div className="space-y-1">
-                        <input className="admin-input text-xs" value={choice.choiceText} onChange={(e) => updateChoice(choice.id, "choiceText", e.target.value)} placeholder={`Choice ${choice.letter}`} />
-                        <input className="admin-input text-xs text-slate-500" value={choice.explanation ?? ""} onChange={(e) => updateChoice(choice.id, "explanation", e.target.value || null)} placeholder="Explanation…" />
+                        <input
+                          className="admin-input text-xs"
+                          value={choice.choiceText}
+                          onChange={(e) => updateChoice(choice.id, "choiceText", e.target.value)}
+                          placeholder={`Choice ${choice.letter}`}
+                        />
+                        <input
+                          className="admin-input text-xs text-slate-500"
+                          value={choice.explanation ?? ""}
+                          onChange={(e) => updateChoice(choice.id, "explanation", e.target.value || null)}
+                          placeholder="Explanation…"
+                        />
                       </div>
                       <span className="mt-1.5 text-xs font-bold text-slate-400">{choice.letter}</span>
                     </div>
@@ -817,21 +1056,44 @@ function QuestionCard({
                 </div>
               </div>
               <div className="flex gap-2 pt-1">
-                <button type="button" onClick={handleSave} disabled={busy} className="admin-action flex items-center gap-1.5 text-xs">
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={busy}
+                  className="admin-action flex items-center gap-1.5 text-xs"
+                >
                   {busy ? <Icons.Loader size={12} className="animate-spin" /> : <Icons.Check size={12} />}
                   Save question
                 </button>
-                <button type="button" onClick={() => { setEditing(false); setDraft({ ...question }); }} className="admin-action secondary text-xs">Cancel</button>
+                <button
+                  type="button"
+                  onClick={() => { setEditing(false); setDraft({ ...question }); }}
+                  className="admin-action secondary text-xs"
+                >
+                  Cancel
+                </button>
               </div>
             </>
           ) : (
             <div className="space-y-1.5">
               {sortedChoices.map((choice) => (
-                <div key={choice.id} className={cn("flex items-start gap-2.5 rounded-lg px-3 py-2 text-sm", choice.isCorrect ? "bg-emerald-50 border border-emerald-200" : "bg-slate-50 border border-slate-100")}>
-                  <span className={cn("shrink-0 font-bold text-xs mt-0.5", choice.isCorrect ? "text-emerald-600" : "text-slate-400")}>{choice.letter}</span>
-                  <div className="min-w-0">
-                    <p className={cn("text-xs", choice.isCorrect ? "text-emerald-800 font-semibold" : "text-slate-700")}>{choice.choiceText}</p>
-                    {choice.isCorrect && choice.explanation && <p className="text-[11px] text-emerald-600 mt-0.5 italic">{choice.explanation}</p>}
+                <div
+                  key={choice.id}
+                  className={cn(
+                    "flex items-start gap-2.5 rounded-lg px-3 py-2 text-sm",
+                    choice.isCorrect ? "bg-emerald-50 border border-emerald-200" : "bg-slate-50 border border-slate-100"
+                  )}
+                >
+                  <span className={cn("shrink-0 font-bold text-xs mt-0.5", choice.isCorrect ? "text-emerald-600" : "text-slate-400")}>
+                    {choice.letter}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className={cn("text-xs", choice.isCorrect ? "text-emerald-800 font-semibold" : "text-slate-700")}>
+                      {choice.choiceText}
+                    </p>
+                    {choice.isCorrect && choice.explanation && (
+                      <p className="text-[11px] text-emerald-600 mt-0.5 italic">{choice.explanation}</p>
+                    )}
                   </div>
                   {choice.isCorrect && <Icons.Check size={13} className="shrink-0 mt-0.5 text-emerald-500 ml-auto" />}
                 </div>
@@ -855,7 +1117,11 @@ function DomainBadge({ domain }: { domain: string }) {
     admin: "bg-slate-100 text-slate-600",
     ethics: "bg-rose-50 text-rose-700",
   };
-  return <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize", map[domain] ?? "bg-slate-100 text-slate-500")}>{domain}</span>;
+  return (
+    <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize", map[domain] ?? "bg-slate-100 text-slate-500")}>
+      {domain}
+    </span>
+  );
 }
 
 function DifficultyBadge({ difficulty }: { difficulty: string }) {
@@ -864,5 +1130,9 @@ function DifficultyBadge({ difficulty }: { difficulty: string }) {
     proficient: "bg-yellow-50 text-yellow-700",
     expert: "bg-red-50 text-red-700",
   };
-  return <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize", map[difficulty] ?? "bg-slate-100 text-slate-500")}>{difficulty}</span>;
+  return (
+    <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize", map[difficulty] ?? "bg-slate-100 text-slate-500")}>
+      {difficulty}
+    </span>
+  );
 }

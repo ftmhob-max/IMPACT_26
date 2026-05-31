@@ -111,11 +111,11 @@ export function AdminPortal({ initialOverview = emptyOverview }: { initialOvervi
             <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr] xl:items-end">
               <div className="space-y-5">
                 <div className="flex items-start gap-4">
-                  <div className="mt-1 flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#185FA5] text-white shadow-sm">
+                  <div className="mt-1 flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#A32D2D] text-white shadow-sm">
                     <Icons.ShieldCheck size={24} />
                   </div>
                   <div>
-                    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#185FA5]">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#A32D2D]">
                       IMPACT_26 admin
                     </p>
                     <h1 className="mt-1 text-3xl font-extrabold tracking-[-0.02em] text-slate-950">
@@ -129,10 +129,6 @@ export function AdminPortal({ initialOverview = emptyOverview }: { initialOvervi
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  <a className="admin-action flex items-center gap-2" href="/admin/preview/courses">
-                    <Icons.Eye size={16} />
-                    Student Preview
-                  </a>
                   <a className="admin-action secondary flex items-center gap-2" href="/api/admin/analytics/export?kind=attempts">
                     <Icons.LogOut size={16} className="-rotate-90" />
                     Export attempts
@@ -201,13 +197,7 @@ export function AdminPortal({ initialOverview = emptyOverview }: { initialOvervi
             icon={Icons.LayoutDashboard}
             action={<span className="text-xs text-slate-500">Fast paths into the main admin jobs</span>}
           >
-            <div className="grid gap-3 md:grid-cols-2">
-              <QuickActionCard
-                href="/admin/preview/courses"
-                title="Preview learner experience"
-                description="Check published course presentation before sending learners in."
-                icon={Icons.Eye}
-              />
+            <div className="grid gap-3 md:grid-cols-3">
               <QuickActionCard
                 href="#content-workspace"
                 title="Create course or lesson"
@@ -342,7 +332,7 @@ export function AdminPortal({ initialOverview = emptyOverview }: { initialOvervi
         <section className="space-y-5">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#185FA5]">Workspace</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#A32D2D]">Workspace</p>
               <h2 className="text-xl font-extrabold tracking-[-0.02em] text-slate-950">Authoring and operations tools</h2>
               <p className="mt-1 text-sm text-slate-600">
                 The full builders are still here when you need to execute detailed work after reviewing the command center.
@@ -499,7 +489,7 @@ function Panel({
     <section className="rounded-[24px] border border-black/10 bg-white shadow-sm">
       <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
         <div className="flex items-center gap-2">
-          {Icon && <Icon size={18} className="text-[#185FA5]" />}
+          {Icon && <Icon size={18} className="text-[#A32D2D]" />}
           <h2 className="text-sm font-bold text-slate-900">{title}</h2>
         </div>
         {action}
@@ -525,7 +515,7 @@ function HeroCallout({
   href?: string;
 }) {
   const toneClasses = {
-    blue: "border-[#b8d7f0] bg-[#f8fbff] text-[#185FA5]",
+    blue: "border-rose-200 bg-rose-50/50 text-[#A32D2D]",
     green: "border-emerald-200 bg-emerald-50 text-emerald-700",
     amber: "border-amber-200 bg-amber-50 text-amber-800",
   }[tone];
@@ -565,10 +555,10 @@ function QuickActionCard({
   return (
     <a
       href={href}
-      className="group admin-quick-action rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 transition-all hover:-translate-y-0.5 hover:border-[#b8d7f0] hover:bg-white hover:shadow-sm"
+      className="group admin-quick-action rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 transition-all hover:-translate-y-0.5 hover:border-rose-200 hover:bg-white hover:shadow-sm"
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-[#185FA5] shadow-sm ring-1 ring-slate-100">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-[#A32D2D] shadow-sm ring-1 ring-slate-100">
           <Icon size={18} />
         </div>
         <Icons.ArrowRight size={16} className="text-slate-300 transition-transform group-hover:translate-x-0.5" />
@@ -593,14 +583,14 @@ function SnapshotCard({
   href?: string;
 }) {
   const toneClasses = {
-    blue: "bg-[#E6F1FB] text-[#185FA5]",
+    blue: "bg-rose-100 text-[#A32D2D]",
     green: "bg-emerald-50 text-emerald-700",
     amber: "bg-amber-50 text-amber-800",
     slate: "bg-slate-100 text-slate-700",
   }[tone];
 
   const classes =
-    "block rounded-2xl border border-slate-200 px-4 py-3 transition-all hover:-translate-y-0.5 hover:border-[#b8d7f0] hover:bg-[#f8fbff]";
+    "block rounded-2xl border border-slate-200 px-4 py-3 transition-all hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-50/30";
   const content = (
     <>
       <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] ${toneClasses}`}>
@@ -657,7 +647,7 @@ function TeamSummary({ users }: { users: any[] }) {
         <div key={user.id} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
           <p className="truncate text-sm font-semibold text-slate-900">{user.fullName ?? user.email}</p>
           <p className="truncate text-xs text-slate-500">{user.email}</p>
-          <span className="mt-3 inline-flex rounded-full bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#185FA5] ring-1 ring-[#b8d7f0]">
+          <span className="mt-3 inline-flex rounded-full bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#A32D2D] ring-1 ring-rose-200">
             {user.role}
           </span>
         </div>
@@ -676,10 +666,10 @@ function WorkspaceJump({
   description: string;
 }) {
   return (
-    <a href={href} className="rounded-2xl border border-slate-200 px-4 py-3 transition-colors hover:border-[#b8d7f0] hover:bg-[#f8fbff]">
+    <a href={href} className="rounded-2xl border border-slate-200 px-4 py-3 transition-colors hover:border-rose-200 hover:bg-rose-50/30">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-bold text-slate-900">{title}</p>
-        <Icons.ArrowRight size={15} className="text-[#185FA5]" />
+        <Icons.ArrowRight size={15} className="text-[#A32D2D]" />
       </div>
       <p className="mt-1 text-sm leading-6 text-slate-500">{description}</p>
     </a>
@@ -928,8 +918,8 @@ function MaterialsWorkflow({ materials, onSaved }: { materials: any[]; onSaved: 
   return (
     <div className="space-y-3">
       <input className="admin-input" value={title} onChange={(event) => setTitle(event.target.value)} />
-      <label className="flex min-h-28 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-[#185FA5]/50 bg-[#E6F1FB]/40 px-4 py-5 text-center text-sm text-slate-600">
-        <span className="font-bold text-[#185FA5]">{file ? file.name : "Drop or choose a source file"}</span>
+      <label className="flex min-h-28 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-[#A32D2D]/40 bg-rose-50/40 px-4 py-5 text-center text-sm text-slate-600">
+        <span className="font-bold text-[#A32D2D]">{file ? file.name : "Drop or choose a source file"}</span>
         <span className="text-xs">PDF, DOCX, CSV, TXT, Markdown, transcripts</span>
         <input className="sr-only" type="file" onChange={(event) => setFile(event.target.files?.[0] ?? null)} />
       </label>
@@ -1014,9 +1004,9 @@ function UsersTable({ users, onSaved }: { users: any[]; onSaved: () => void }) {
 function ExportLinks() {
   return (
     <div className="flex flex-wrap gap-2 text-xs">
-      <a className="font-semibold text-[#185FA5]" href="/api/admin/analytics/export?kind=attempts">Attempts</a>
-      <a className="font-semibold text-[#185FA5]" href="/api/admin/analytics/export?kind=questions">Questions</a>
-      <a className="font-semibold text-[#185FA5]" href="/api/admin/analytics/export?kind=engagement">Engagement</a>
+      <a className="font-semibold text-[#A32D2D]" href="/api/admin/analytics/export?kind=attempts">Attempts</a>
+      <a className="font-semibold text-[#A32D2D]" href="/api/admin/analytics/export?kind=questions">Questions</a>
+      <a className="font-semibold text-[#A32D2D]" href="/api/admin/analytics/export?kind=engagement">Engagement</a>
     </div>
   );
 }
