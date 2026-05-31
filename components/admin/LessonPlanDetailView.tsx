@@ -1570,8 +1570,7 @@ function formatBytes(bytes?: number) {
 
 function kindIcon(kind?: string) {
   if (kind === "video") return Icons.Video;
-  if (kind === "audio") return Icons.FileText;
-  if (kind === "image") return Icons.BookOpen;
+  if (kind === "image") return Icons.Image;
   return Icons.FileText;
 }
 
@@ -1580,22 +1579,28 @@ function kindLabel(kind?: string) {
   return kind.charAt(0).toUpperCase() + kind.slice(1);
 }
 
+function kindColor(kind?: string): string {
+  if (kind === "video") return "bg-violet-100 text-violet-700";
+  if (kind === "audio") return "bg-sky-100 text-sky-700";
+  if (kind === "image") return "bg-emerald-100 text-emerald-700";
+  return "bg-slate-100 text-slate-500";
+}
+
 function StatusBadge({ status, displayStatus }: { status?: string; displayStatus?: string }) {
   const s = displayStatus ?? status ?? "";
-  if (s === "parsed" || s === "uploaded" && !displayStatus) {
-    return null; // ready — no noise
-  }
-  if (s.includes("fail") || s.includes("error") || s.includes("ocr")) {
+  if (!s || s === "parsed") return null;
+  if (s.includes("fail") || s.includes("error") || s === "ocr_failed") {
     return (
-      <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-[9px] font-bold uppercase text-red-600">
+      <span className="inline-flex items-center gap-0.5 rounded-full bg-red-100 px-1.5 py-0.5 text-[9px] font-bold uppercase text-red-600">
         Parse failed
       </span>
     );
   }
   if (s === "uploaded" || s === "processing" || s === "pending") {
     return (
-      <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold uppercase text-amber-700">
-        Processing…
+      <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold uppercase text-amber-700">
+        <Icons.Loader size={8} className="animate-spin" />
+        Processing
       </span>
     );
   }
@@ -1614,7 +1619,8 @@ function ResourcesTab({
   // Browse library state
   const [materials, setMaterials] = useState<ResourceMaterial[]>([]);
   const [libraryLoaded, setLibraryLoaded] = useState(false);
-  const [query, setQuery] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [query, setQuery] = useState(""); // debounced
   const [kindFilter, setKindFilter] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -1623,6 +1629,14 @@ function ResourcesTab({
   // Linked materials state (ContentSourceLinks for this lesson)
   const [linkedMaterials, setLinkedMaterials] = useState<LinkedMaterialEntry[]>([]);
   const [linkedLoaded, setLinkedLoaded] = useState(false);
+
+  // Per-row attaching state
+  const [attachingIds, setAttachingIds] = useState<Set<string>>(new Set());
+
+  // Inline reference label editing
+  const [editingLinkId, setEditingLinkId] = useState<string | null>(null);
+  const [editingLabel, setEditingLabel] = useState("");
+  const [savingLabelId, setSavingLabelId] = useState<string | null>(null);
 
   // Upload state
   const [file, setFile] = useState<File | null>(null);
@@ -1633,7 +1647,14 @@ function ResourcesTab({
   // Hover snippet state
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
+  const uploadRef = useRef<HTMLDivElement>(null);
   const LIMIT = 30;
+
+  // Debounce search input → query
+  useEffect(() => {
+    const t = setTimeout(() => { setQuery(searchInput); setPage(1); }, 300);
+    return () => clearTimeout(t);
+  }, [searchInput]);
 
   function loadLinked() {
     if (!lesson.id) return;
@@ -1661,6 +1682,7 @@ function ResourcesTab({
   }
 
   function loadLibrary(pageNum: number, q: string, kind: string) {
+    setLibraryLoaded(false);
     const params = new URLSearchParams({ limit: String(LIMIT), page: String(pageNum) });
     if (q.trim()) params.set("q", q.trim());
     if (kind) params.set("kind", kind);
@@ -1694,7 +1716,6 @@ function ResourcesTab({
   }, [lesson.id]);
 
   useEffect(() => {
-    setLibraryLoaded(false);
     loadLibrary(page, query, kindFilter);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, query, kindFilter]);
@@ -1704,21 +1725,36 @@ function ResourcesTab({
   }
 
   async function addLink(materialId: string) {
-    const res = await fetch("/api/admin/materials/link", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ materialId, lessonId: lesson.id }),
-    });
-    if (res.ok) {
-      loadLinked();
+    setAttachingIds((prev) => new Set(prev).add(materialId));
+    try {
+      const res = await fetch("/api/admin/materials/link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ materialId, lessonId: lesson.id }),
+      });
+      if (res.ok) loadLinked();
+    } finally {
+      setAttachingIds((prev) => { const s = new Set(prev); s.delete(materialId); return s; });
     }
   }
 
   async function removeLink(linkId: string) {
-    const res = await fetch(`/api/admin/materials/link?id=${linkId}`, { method: "DELETE" });
-    if (res.ok) {
-      setLinkedMaterials((prev) => prev.filter((entry) => entry.linkId !== linkId));
-    }
+    setLinkedMaterials((prev) => prev.filter((e) => e.linkId !== linkId));
+    await fetch(`/api/admin/materials/link?id=${linkId}`, { method: "DELETE" });
+  }
+
+  async function saveLinkLabel(entry: LinkedMaterialEntry) {
+    const newLabel = editingLabel.trim() || null;
+    setSavingLabelId(entry.linkId);
+    setEditingLinkId(null);
+    await fetch(`/api/admin/materials/link?id=${entry.linkId}`, { method: "DELETE" });
+    await fetch("/api/admin/materials/link", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ materialId: entry.materialId, lessonId: lesson.id, referenceLabel: newLabel }),
+    });
+    setSavingLabelId(null);
+    loadLinked();
   }
 
   async function uploadAndLink() {
@@ -1734,7 +1770,6 @@ function ResourcesTab({
       setFile(null);
       setUploadTitle("");
       setShowUpload(false);
-      setLibraryLoaded(false);
       loadLibrary(1, query, kindFilter);
     } else {
       const text = await res.text();
@@ -1752,100 +1787,197 @@ function ResourcesTab({
 
   const alreadyLinkedIds = new Set(linkedMaterials.map((entry) => entry.materialId));
   const primaryId = lesson.sourceMaterial?.id;
+  const attachedCount = linkedMaterials.length + (primaryId ? 1 : 0);
 
   return (
-    <div className="space-y-4">
-      {/* Linked materials */}
-      <div className="rounded-xl border border-black/10 bg-white shadow-sm p-5 space-y-3">
-        <div className="flex items-center justify-between gap-2">
+    <div id="lesson-resources-section" className="space-y-4 scroll-mt-24">
+
+      {/* ── Attached materials ─────────────────────────────────────────────── */}
+      <div className="resources-card rounded-xl border border-black/10 bg-white shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between gap-2 px-5 pt-4 pb-3 border-b border-slate-100">
           <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
             <Icons.Database size={15} className="text-[#185FA5]" />
             Attached materials
+            {attachedCount > 0 && (
+              <span className="rounded-full bg-[#185FA5] px-2 py-0.5 text-[10px] font-bold text-white leading-none">
+                {attachedCount}
+              </span>
+            )}
           </h3>
           <a
             href="/admin/materials"
+            target="_blank"
+            rel="noopener noreferrer"
             className="flex items-center gap-1 text-[11px] font-semibold text-[#185FA5] hover:underline"
           >
             <Icons.ExternalLink size={11} />
-            Manage library
+            Open library
           </a>
         </div>
 
-        {!linkedLoaded ? (
-          <div className="flex items-center gap-2 py-2 text-xs text-slate-400">
-            <Icons.Loader size={13} className="animate-spin" />
-            Loading…
-          </div>
-        ) : linkedMaterials.length === 0 && !lesson.sourceMaterial ? (
-          <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center">
-            <Icons.Database size={22} className="mx-auto text-slate-300 mb-2" />
-            <p className="text-xs text-slate-500 font-medium">No materials attached yet.</p>
-            <p className="text-[11px] text-slate-400 mt-0.5">
-              Search the library below to attach an existing file, or upload a new one and it will be linked automatically.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {lesson.sourceMaterial && (
-              <div className="rounded-xl border border-[#b8d7f0] bg-[#E6F1FB]/40 px-4 py-3">
-                <div className="flex items-start gap-3">
-                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#E6F1FB] text-[#185FA5]">
-                    <Icons.Database size={15} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-slate-900 truncate">{lesson.sourceMaterial.title}</p>
-                    <p className="text-[10px] text-[#185FA5] font-medium mt-0.5">Primary attachment</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setPrimaryMaterial("")}
-                    className="text-xs text-red-500 hover:text-red-700 font-semibold shrink-0"
-                  >
-                    Remove
-                  </button>
-                </div>
-              </div>
-            )}
-            {linkedMaterials.map((entry) => {
-              const Icon = kindIcon(entry.kind);
-              return (
-                <div key={entry.linkId} className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-                  <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-500">
-                    <Icon size={13} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-slate-800 truncate">{entry.title}</p>
-                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                      <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold uppercase text-slate-500">
-                        {kindLabel(entry.kind)}
+        <div className="p-4 space-y-2">
+          {!linkedLoaded ? (
+            <div className="flex items-center gap-2 py-3 text-xs text-slate-400">
+              <Icons.Loader size={13} className="animate-spin" />
+              Loading…
+            </div>
+          ) : attachedCount === 0 ? (
+            <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center">
+              <Icons.Database size={22} className="mx-auto text-slate-300 mb-2" />
+              <p className="text-xs text-slate-500 font-medium">No materials attached yet.</p>
+              <p className="text-[11px] text-slate-400 mt-0.5 mb-3">
+                Search the library below to attach a file, or upload a new one.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowUpload(true);
+                  setTimeout(() => uploadRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+                }}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-[#185FA5]/10 px-3 py-1.5 text-[11px] font-semibold text-[#185FA5] hover:bg-[#185FA5]/20 transition"
+              >
+                <Icons.Upload size={11} />
+                Upload new file
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* Primary attachment */}
+              {lesson.sourceMaterial && (
+                <div className="resources-primary-card rounded-xl border border-[#b8d7f0] bg-[#E6F1FB]/40 px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#185FA5]/15 text-[#185FA5]">
+                      <Icons.Database size={14} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-slate-900 truncate">{lesson.sourceMaterial.title}</p>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-[#185FA5]/15 px-1.5 py-0.5 text-[9px] font-bold text-[#185FA5] mt-0.5">
+                        <Icons.Check size={8} />
+                        Primary
                       </span>
-                      <StatusBadge status={entry.status} displayStatus={entry.displayStatus} />
-                      {entry.referenceLabel && (
-                        <span className="text-[10px] text-slate-400 italic truncate max-w-[120px]">{entry.referenceLabel}</span>
-                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setPrimaryMaterial("")}
+                      className="shrink-0 rounded-lg border border-red-200 px-2 py-1 text-[10px] font-semibold text-red-500 hover:bg-red-50 hover:border-red-300 transition"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* ContentSourceLink entries */}
+              {linkedMaterials.map((entry) => {
+                const Icon = kindIcon(entry.kind);
+                const isEditing = editingLinkId === entry.linkId;
+                const isSaving = savingLabelId === entry.linkId;
+                const colors = kindColor(entry.kind);
+                return (
+                  <div
+                    key={entry.linkId}
+                    className="resources-linked-card group rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3 transition hover:border-slate-300"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-lg", colors.split(" ")[0])}>
+                        <Icon size={13} className={colors.split(" ")[1]} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-slate-800 truncate">{entry.title}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                          <span className={cn("rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase", colors)}>
+                            {kindLabel(entry.kind)}
+                          </span>
+                          <StatusBadge status={entry.status} displayStatus={entry.displayStatus} />
+                        </div>
+                        {/* Reference label row */}
+                        {isEditing ? (
+                          <div className="flex items-center gap-1.5 mt-1.5">
+                            <input
+                              autoFocus
+                              value={editingLabel}
+                              onChange={(e) => setEditingLabel(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") saveLinkLabel(entry);
+                                if (e.key === "Escape") setEditingLinkId(null);
+                              }}
+                              placeholder="e.g. Chapter 3 reference…"
+                              className="h-6 flex-1 rounded border border-slate-300 bg-white px-2 text-[10px] text-slate-700 outline-none focus:border-[#185FA5] focus:ring-1 focus:ring-[#185FA5]/30"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => saveLinkLabel(entry)}
+                              className="flex h-6 w-6 items-center justify-center rounded bg-[#185FA5] text-white hover:bg-[#1452a0]"
+                            >
+                              <Icons.Check size={10} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditingLinkId(null)}
+                              className="flex h-6 w-6 items-center justify-center rounded border border-slate-200 text-slate-400 hover:text-slate-600"
+                            >
+                              <Icons.X size={10} />
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => { setEditingLinkId(entry.linkId); setEditingLabel(entry.referenceLabel ?? ""); }}
+                            className="mt-1 flex items-center gap-1 text-[10px] text-slate-400 hover:text-[#185FA5] transition"
+                            title="Add or edit reference label"
+                          >
+                            {isSaving ? (
+                              <Icons.Loader size={9} className="animate-spin" />
+                            ) : (
+                              <Icons.Pencil size={9} />
+                            )}
+                            <span className="truncate max-w-[180px]">
+                              {isSaving ? "Saving…" : entry.referenceLabel ? entry.referenceLabel : "Add label"}
+                            </span>
+                          </button>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {entry.materialId !== primaryId && (
+                          <button
+                            type="button"
+                            title="Set as primary"
+                            onClick={() => setPrimaryMaterial(entry.materialId)}
+                            className="rounded-lg border border-slate-200 px-2 py-1 text-[10px] font-semibold text-slate-500 hover:border-[#185FA5] hover:text-[#185FA5] transition"
+                          >
+                            Set primary
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          title="Unlink"
+                          onClick={() => removeLink(entry.linkId)}
+                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-red-200 text-red-400 hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition"
+                        >
+                          <Icons.X size={11} />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => removeLink(entry.linkId)}
-                    className="text-xs text-red-500 hover:text-red-700 font-semibold shrink-0"
-                  >
-                    Unlink
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                );
+              })}
+            </>
+          )}
+        </div>
       </div>
 
-      {/* Browse library */}
-      <div className="rounded-xl border border-black/10 bg-white shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-100 space-y-3">
-          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <Icons.Link size={15} className="text-[#185FA5]" />
-            Attach from library
-          </h3>
+      {/* ── Attach from library ────────────────────────────────────────────── */}
+      <div className="resources-card rounded-xl border border-black/10 bg-white shadow-sm overflow-hidden">
+        <div className="px-5 pt-4 pb-3 border-b border-slate-100 space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <Icons.Search size={14} className="text-[#185FA5]" />
+              Attach from library
+            </h3>
+            {libraryLoaded && totalItems > 0 && (
+              <span className="text-[10px] text-slate-400">{totalItems} file{totalItems !== 1 ? "s" : ""}</span>
+            )}
+          </div>
           {/* Kind filter strip */}
           <div className="flex gap-1 flex-wrap">
             {KIND_FILTERS.map((f) => (
@@ -1864,79 +1996,122 @@ function ResourcesTab({
               </button>
             ))}
           </div>
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => { setQuery(e.target.value); setPage(1); }}
-            placeholder="Search materials…"
-            className="admin-input"
-          />
+          {/* Search with icon + clear */}
+          <div className="relative">
+            <Icons.Search size={13} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search materials…"
+              className="admin-input pl-8 pr-8"
+            />
+            {searchInput && (
+              <button
+                type="button"
+                onClick={() => { setSearchInput(""); setQuery(""); setPage(1); }}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                <Icons.X size={13} />
+              </button>
+            )}
+          </div>
         </div>
-        <div className="divide-y divide-slate-100">
+
+        <div>
           {!libraryLoaded ? (
-            <div className="flex items-center justify-center py-10 text-xs text-slate-400">
-              <Icons.Loader size={14} className="animate-spin mr-2" />
+            <div className="flex flex-col items-center justify-center gap-2 py-10 text-xs text-slate-400">
+              <Icons.Loader size={18} className="animate-spin text-[#185FA5]/40" />
               Loading library…
             </div>
           ) : materials.length === 0 ? (
             <div className="py-8 text-center text-xs text-slate-400">
-              {query ? "No materials match your search." : "No materials in your library yet."}
+              {query ? (
+                <>No materials match <span className="font-semibold text-slate-500">"{query}"</span>.</>
+              ) : (
+                "No materials in your library yet."
+              )}
             </div>
           ) : (
             <>
-              <div className="max-h-72 overflow-y-auto divide-y divide-slate-100">
+              <div className="max-h-80 overflow-y-auto divide-y divide-slate-100/80">
                 {materials.map((material) => {
                   const Icon = kindIcon(material.kind);
+                  const colors = kindColor(material.kind);
                   const isLinked = alreadyLinkedIds.has(material.id);
                   const isPrimary = primaryId === material.id;
+                  const isAttached = isLinked || isPrimary;
+                  const isAttaching = attachingIds.has(material.id);
                   const isHovered = hoveredId === material.id;
                   return (
                     <div
                       key={material.id}
                       className={cn(
-                        "relative flex items-start gap-3 px-5 py-3 transition",
-                        isLinked || isPrimary ? "bg-[#E6F1FB]/30" : "hover:bg-slate-50"
+                        "group relative flex items-start gap-3 px-5 py-3 transition-colors",
+                        isAttached ? "bg-[#E6F1FB]/25" : "hover:bg-slate-50/80"
                       )}
                       onMouseEnter={() => setHoveredId(material.id)}
                       onMouseLeave={() => setHoveredId(null)}
                     >
-                      <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+                      <div className={cn(
+                        "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg",
+                        isAttached ? "bg-[#185FA5]/10 text-[#185FA5]" : colors
+                      )}>
                         <Icon size={13} />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-slate-800 truncate">{material.title}</p>
+                      <div className="flex-1 min-w-0 py-0.5">
+                        <p className="text-xs font-semibold text-slate-800 truncate leading-4">{material.title}</p>
                         <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                          <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold uppercase text-slate-500">
+                          <span className={cn("rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase", colors)}>
                             {kindLabel(material.kind)}
                           </span>
-                          {material.pages ? <span className="text-[10px] text-slate-400">{material.pages}p</span> : null}
+                          {material.pages ? (
+                            <span className="text-[10px] text-slate-400">{material.pages}p</span>
+                          ) : null}
                           <StatusBadge status={material.status} displayStatus={material.displayStatus} />
                         </div>
-                        {/* Snippet preview on hover */}
-                        {isHovered && material.previewSnippet && (
-                          <p className="mt-1.5 text-[10px] text-slate-500 leading-4 line-clamp-2">
-                            {material.previewSnippet}
-                          </p>
-                        )}
-                        {isHovered && (material.sizeBytes || material.characters) && (
-                          <div className="flex items-center gap-2 mt-0.5">
-                            {material.sizeBytes ? <span className="text-[10px] text-slate-400">{formatBytes(material.sizeBytes)}</span> : null}
-                            {material.characters ? <span className="text-[10px] text-slate-400">{material.characters.toLocaleString()} chars</span> : null}
-                          </div>
-                        )}
+                        {/* Hover snippet — fades without layout shift */}
+                        <div className={cn(
+                          "overflow-hidden transition-all duration-150",
+                          isHovered && (material.previewSnippet || material.sizeBytes || material.characters)
+                            ? "max-h-16 opacity-100 mt-1.5"
+                            : "max-h-0 opacity-0"
+                        )}>
+                          {material.previewSnippet && (
+                            <p className="text-[10px] text-slate-500 leading-[1.5] line-clamp-2">{material.previewSnippet}</p>
+                          )}
+                          {(material.sizeBytes || material.characters) && (
+                            <div className="flex items-center gap-2 mt-0.5">
+                              {material.sizeBytes ? <span className="text-[10px] text-slate-400">{formatBytes(material.sizeBytes)}</span> : null}
+                              {material.characters ? <span className="text-[10px] text-slate-400">{material.characters.toLocaleString()} chars</span> : null}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      {isLinked || isPrimary ? (
-                        <span className="flex items-center gap-1 text-[11px] font-semibold text-[#185FA5] shrink-0">
+                      {/* Action column */}
+                      {isAttached ? (
+                        <span className="mt-0.5 flex items-center gap-1 text-[11px] font-semibold text-[#185FA5] shrink-0">
                           <Icons.Check size={12} />
                           Attached
                         </span>
                       ) : (
                         <button
                           type="button"
+                          disabled={isAttaching}
                           onClick={() => addLink(material.id)}
-                          className="shrink-0 rounded-lg border border-slate-200 px-2.5 py-1 text-[11px] font-semibold text-slate-600 transition hover:border-[#185FA5] hover:text-[#185FA5]"
+                          className={cn(
+                            "mt-0.5 shrink-0 flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition",
+                            isAttaching
+                              ? "border-[#185FA5]/30 bg-[#E6F1FB]/50 text-[#185FA5]/60 cursor-not-allowed"
+                              : "border-slate-200 text-slate-600 hover:border-[#185FA5] hover:bg-[#E6F1FB]/30 hover:text-[#185FA5]"
+                          )}
                         >
-                          Attach
+                          {isAttaching ? (
+                            <Icons.Loader size={10} className="animate-spin" />
+                          ) : (
+                            <Icons.Plus size={10} />
+                          )}
+                          {isAttaching ? "Attaching…" : "Attach"}
                         </button>
                       )}
                     </div>
@@ -1945,25 +2120,27 @@ function ResourcesTab({
               </div>
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between px-5 py-2.5 bg-slate-50 border-t border-slate-100">
+                <div className="flex items-center justify-between px-5 py-2.5 bg-slate-50/60 border-t border-slate-100">
                   <span className="text-[10px] text-slate-400">{totalItems} materials</span>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
                     <button
                       type="button"
                       onClick={() => setPage((p) => Math.max(1, p - 1))}
                       disabled={page === 1}
-                      className="text-[11px] font-semibold text-slate-500 disabled:opacity-40 hover:text-[#185FA5]"
+                      className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 disabled:opacity-30 hover:text-[#185FA5] transition"
                     >
-                      ← Prev
+                      <Icons.ChevronLeft size={12} />
+                      Prev
                     </button>
                     <span className="text-[10px] text-slate-400">{page} / {totalPages}</span>
                     <button
                       type="button"
                       onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                       disabled={page === totalPages}
-                      className="text-[11px] font-semibold text-slate-500 disabled:opacity-40 hover:text-[#185FA5]"
+                      className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 disabled:opacity-30 hover:text-[#185FA5] transition"
                     >
-                      Next →
+                      Next
+                      <Icons.ChevronRight size={12} />
                     </button>
                   </div>
                 </div>
@@ -1973,16 +2150,19 @@ function ResourcesTab({
         </div>
       </div>
 
-      {/* Upload new */}
-      <div className="rounded-xl border border-black/10 bg-white shadow-sm overflow-hidden">
+      {/* ── Upload new file ────────────────────────────────────────────────── */}
+      <div ref={uploadRef} className="resources-card rounded-xl border border-black/10 bg-white shadow-sm overflow-hidden">
         <button
           type="button"
           onClick={() => setShowUpload((v) => !v)}
-          className="flex w-full items-center gap-2 px-5 py-4 text-left"
+          className="flex w-full items-center gap-2.5 px-5 py-4 text-left"
         >
           <Icons.Upload size={15} className="text-[#185FA5]" />
           <span className="text-sm font-bold text-slate-900 flex-1">Upload new file</span>
-          <Icons.ChevronDown size={14} className={cn("text-slate-400 transition-transform", showUpload && "rotate-180")} />
+          <Icons.ChevronDown
+            size={14}
+            className={cn("text-slate-400 transition-transform duration-200", showUpload && "rotate-180")}
+          />
         </button>
         {showUpload && (
           <div className="border-t border-slate-100 px-5 py-4 space-y-3">
@@ -1992,10 +2172,10 @@ function ResourcesTab({
               onChange={(e) => setUploadTitle(e.target.value)}
               placeholder="File title…"
             />
-            <label className="flex min-h-20 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-[#185FA5]/40 bg-[#E6F1FB]/30 text-center text-xs text-slate-500 px-4 py-3">
-              <Icons.Upload size={18} className="text-[#185FA5] mb-1.5" />
+            <label className="flex min-h-[88px] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#185FA5]/30 bg-[#E6F1FB]/20 text-center text-xs text-slate-500 px-4 py-4 transition hover:border-[#185FA5]/60 hover:bg-[#E6F1FB]/40">
+              <Icons.Upload size={20} className="text-[#185FA5]/60 mb-2" />
               <span className="font-semibold text-[#185FA5]">{file ? file.name : "Drop or choose file"}</span>
-              <span>PDF, DOCX, CSV, MP3, MP4, TXT</span>
+              {!file && <span className="text-[10px] mt-0.5 text-slate-400">PDF, DOCX, CSV, MP3, MP4, TXT</span>}
               <input
                 type="file"
                 className="sr-only"
@@ -2006,6 +2186,16 @@ function ResourcesTab({
                 }}
               />
             </label>
+            {file && (
+              <div className="flex items-center gap-2 rounded-lg bg-slate-50 border border-slate-200 px-3 py-2">
+                <Icons.FileCheck size={13} className="text-emerald-500 shrink-0" />
+                <span className="text-[11px] font-medium text-slate-700 flex-1 truncate">{file.name}</span>
+                <span className="text-[10px] text-slate-400 shrink-0">{formatBytes(file.size)}</span>
+                <button type="button" onClick={() => setFile(null)} className="text-slate-400 hover:text-red-500 transition shrink-0">
+                  <Icons.X size={12} />
+                </button>
+              </div>
+            )}
             <button
               type="button"
               onClick={uploadAndLink}
@@ -2013,7 +2203,7 @@ function ResourcesTab({
               className="admin-action w-full flex items-center justify-center gap-2 text-sm"
             >
               {busy ? <Icons.Loader size={13} className="animate-spin" /> : <Icons.Upload size={13} />}
-              Upload and attach
+              {busy ? "Uploading…" : "Upload and attach"}
             </button>
           </div>
         )}

@@ -1025,6 +1025,52 @@ select.h-8 {
   background-color: #1d2b3a !important;
 }
 
+/* ─── Lesson editor — Resources tab ───────────────────────────────────────── */
+
+.resources-card {
+  background-color: #ffffff;
+}
+.dark .resources-card {
+  background-color: #111923 !important;
+  border-color: rgba(226, 232, 240, 0.14) !important;
+}
+.dark .resources-card .border-b,
+.dark .resources-card .border-t {
+  border-color: rgba(226, 232, 240, 0.12) !important;
+}
+.dark .resources-primary-card {
+  background-color: rgba(45, 127, 211, 0.12) !important;
+  border-color: rgba(110, 182, 255, 0.28) !important;
+}
+.dark .resources-linked-card {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+  border-color: rgba(226, 232, 240, 0.12) !important;
+}
+.dark .resources-linked-card:hover {
+  border-color: rgba(226, 232, 240, 0.22) !important;
+}
+.dark .resources-card input[type="text"],
+.dark .resources-card input[type="search"] {
+  background-color: #192232 !important;
+  border-color: rgba(226, 232, 240, 0.18) !important;
+  color: #e2e8f0 !important;
+}
+.dark .resources-card input::placeholder {
+  color: #4e6278 !important;
+}
+.dark .resources-card [class*="border-dashed"] {
+  background-color: rgba(255, 255, 255, 0.02) !important;
+  border-color: rgba(226, 232, 240, 0.16) !important;
+}
+.dark .resources-card label[class*="border-dashed"] {
+  background-color: rgba(45, 127, 211, 0.05) !important;
+  border-color: rgba(110, 182, 255, 0.25) !important;
+}
+.dark .resources-card label[class*="border-dashed"]:hover {
+  border-color: rgba(110, 182, 255, 0.45) !important;
+  background-color: rgba(45, 127, 211, 0.1) !important;
+}
+
 /* Focus mode — hide admin nav sidebar for distraction-free editing */
 @media (min-width: 1024px) {
   body[data-focus-mode] > div > aside {

@@ -245,6 +245,26 @@ export function CurriculumTree({
     showNotice("error", err.error ?? "Failed to delete lessons.");
   }
 
+  async function deleteCourse(courseId: string, courseTitle: string) {
+    const confirmed = window.confirm(
+      `Permanently delete "${courseTitle}"?\n\nThis will remove all modules, lessons, and learner progress for this course. This cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    const res = await adminFetch("/api/admin/courses", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "delete-course", courseId }),
+    });
+    if (res.ok) {
+      showNotice("success", `"${courseTitle}" deleted.`);
+      await load();
+    } else {
+      const err = await res.json().catch(() => ({}));
+      showNotice("error", err.error ?? "Failed to delete course.");
+    }
+  }
+
   async function deleteModule(moduleId: string, moduleTitle: string) {
     const confirmed = window.confirm(`Delete module "${moduleTitle}" and all of its lessons? This cannot be undone.`);
     if (!confirmed) return;
@@ -487,6 +507,7 @@ export function CurriculumTree({
               onUnpublishLesson={unpublishLesson}
               onDeleteLessons={deleteLessons}
               onDeleteModule={deleteModule}
+              onDeleteCourse={() => deleteCourse(course.id, course.title)}
               onPublishModule={(mod) => publishModule(mod, course.id, course.isPublished)}
               onPublishCourse={(publish) => publishCourse(course.id, publish)}
               onReorder={reorderItems}
@@ -528,6 +549,7 @@ function CourseNode({
   onUnpublishLesson,
   onDeleteLessons,
   onDeleteModule,
+  onDeleteCourse,
   onPublishModule,
   onPublishCourse,
   onReorder,
@@ -547,6 +569,7 @@ function CourseNode({
   onUnpublishLesson: (lessonId: string) => void;
   onDeleteLessons: (lessonIds: string[]) => void;
   onDeleteModule: (moduleId: string, moduleTitle: string) => void;
+  onDeleteCourse: () => void;
   onPublishModule: (mod: Module) => void;
   onPublishCourse: (publish: boolean) => void;
   onReorder: (type: "module" | "lesson", items: Array<{ id: string; position: number }>) => void;
@@ -591,11 +614,19 @@ function CourseNode({
           >
             {course.isPublished ? "Published" : "Publish"}
           </button>
-          <button type="button" onClick={() => onEdit({ type: "course", item: course })} className="course-tree-icon-button p-1.5 text-slate-400 hover:text-[#185FA5] transition-colors rounded">
+          <button type="button" onClick={() => onEdit({ type: "course", item: course })} className="course-tree-icon-button p-1.5 text-slate-400 hover:text-[#185FA5] transition-colors rounded" title="Edit course">
             <Icons.Pencil size={13} />
           </button>
           <button type="button" onClick={onAddModule} className="course-tree-icon-button p-1.5 text-slate-400 hover:text-[#185FA5] transition-colors rounded" title="Add module">
             <Icons.Plus size={13} />
+          </button>
+          <button
+            type="button"
+            onClick={onDeleteCourse}
+            className="course-tree-icon-button p-1.5 text-slate-400 hover:text-red-500 transition-colors rounded"
+            title="Delete course permanently"
+          >
+            <Icons.Trash2 size={13} />
           </button>
         </div>
       </div>

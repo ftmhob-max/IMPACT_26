@@ -77,6 +77,7 @@ interface MaterialLibraryItem {
   hasAsset?: boolean;
   hasExtractedText?: boolean;
   characters?: number;
+  createdAt?: string;
 }
 
 
@@ -182,6 +183,7 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
             hasAsset: material.hasAsset,
             hasExtractedText: material.hasExtractedText,
             characters: material.characters,
+            createdAt: material.createdAt,
           }))
         );
         setQuizzes((overviewData.quizzes ?? []) as QuizLibraryItem[]);
@@ -917,6 +919,74 @@ function BlockLibraryGroup({
   );
 }
 
+// ── MaterialPickerField helpers ─────────────────────────────────────────────
+
+const PICKER_KIND_ICONS: Record<string, React.ComponentType<any>> = {
+  video:    Icons.Video,
+  image:    Icons.Image,
+  audio:    Icons.FileText,
+  document: Icons.FileText,
+};
+
+const PICKER_KIND_COLORS: Record<string, { bg: string; text: string; badge: string }> = {
+  video:    { bg: "bg-violet-100", text: "text-violet-700", badge: "bg-violet-100 text-violet-700" },
+  audio:    { bg: "bg-sky-100",    text: "text-sky-700",    badge: "bg-sky-100 text-sky-700" },
+  image:    { bg: "bg-emerald-100", text: "text-emerald-700", badge: "bg-emerald-100 text-emerald-700" },
+  document: { bg: "bg-slate-100",  text: "text-slate-500",  badge: "bg-slate-100 text-slate-500" },
+};
+
+function pickerKindColors(kind?: string) {
+  return PICKER_KIND_COLORS[kind ?? "document"] ?? PICKER_KIND_COLORS.document;
+}
+
+function pickerKindIcon(kind?: string): React.ComponentType<any> {
+  return PICKER_KIND_ICONS[kind ?? "document"] ?? Icons.FileText;
+}
+
+function pickerKindLabel(kind?: string) {
+  if (!kind) return "Doc";
+  return kind.charAt(0).toUpperCase() + kind.slice(1);
+}
+
+function PickerStatusBadge({ status }: { status?: string }) {
+  if (!status || status === "parsed") return null;
+  if (status.includes("fail") || status.includes("error")) {
+    return (
+      <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-[9px] font-bold uppercase text-red-600">
+        Failed
+      </span>
+    );
+  }
+  if (status === "uploaded" || status === "processing" || status === "pending") {
+    return (
+      <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold uppercase text-amber-700">
+        <Icons.Loader size={8} className="animate-spin" />
+        Processing
+      </span>
+    );
+  }
+  return null;
+}
+
+type PickerSortKey = "az" | "za" | "newest" | "pages";
+const PICKER_SORT_OPTIONS: { value: PickerSortKey; label: string }[] = [
+  { value: "az",     label: "A–Z" },
+  { value: "za",     label: "Z–A" },
+  { value: "newest", label: "Newest" },
+  { value: "pages",  label: "Most pages" },
+];
+
+function sortMaterials(items: MaterialLibraryItem[], key: PickerSortKey): MaterialLibraryItem[] {
+  return [...items].sort((a, b) => {
+    switch (key) {
+      case "az":     return a.title.localeCompare(b.title);
+      case "za":     return b.title.localeCompare(a.title);
+      case "newest": return (b.createdAt ?? "").localeCompare(a.createdAt ?? "");
+      case "pages":  return (b.pages ?? 0) - (a.pages ?? 0);
+    }
+  });
+}
+
 function MaterialPickerField({
   materials,
   value,
@@ -927,34 +997,69 @@ function MaterialPickerField({
   onChange: (id: string, title: string) => void;
 }) {
   const [query, setQuery] = useState("");
-  const selected = materials.find((m) => m.id === value);
-  const filtered = query.trim()
-    ? materials.filter((m) => m.title.toLowerCase().includes(query.toLowerCase()))
-    : materials;
+  const [kindFilter, setKindFilter] = useState<string>("");
+  const [sortKey, setSortKey] = useState<PickerSortKey>("az");
+  const [showSortMenu, setShowSortMenu] = useState(false);
+  const sortMenuRef = useRef<HTMLDivElement>(null);
 
-  function kindLabel(kind?: string) {
-    if (!kind) return "Doc";
-    return kind.charAt(0).toUpperCase() + kind.slice(1);
-  }
+  const selected = materials.find((m) => m.id === value);
+
+  // Distinct kinds present in this list (show filter strip only when >1 kind)
+  const presentKinds = Array.from(new Set(materials.map((m) => m.kind ?? "document")));
+  const showKindFilter = presentKinds.length > 1;
+
+  // Apply search + kind filter + sort
+  const visible = sortMaterials(
+    materials.filter((m) => {
+      const matchesQuery = !query.trim() || m.title.toLowerCase().includes(query.toLowerCase());
+      const matchesKind = !kindFilter || (m.kind ?? "document") === kindFilter;
+      return matchesQuery && matchesKind;
+    }),
+    sortKey
+  );
+
+  // Close sort menu on outside click
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (sortMenuRef.current && !sortMenuRef.current.contains(e.target as Node)) {
+        setShowSortMenu(false);
+      }
+    }
+    if (showSortMenu) document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showSortMenu]);
+
+  const showList = !!query.trim() || !selected || !!kindFilter;
+  const currentSortLabel = PICKER_SORT_OPTIONS.find((o) => o.value === sortKey)?.label ?? "A–Z";
 
   return (
     <div className="space-y-2">
+      {/* Selected material card */}
       {selected ? (
         <div className="flex items-center gap-3 rounded-xl border border-[#b8d7f0] bg-[#E6F1FB]/60 px-3 py-2.5">
-          <Icons.Database size={15} className="text-[#185FA5] shrink-0" />
+          {(() => {
+            const Icon = pickerKindIcon(selected.kind);
+            const colors = pickerKindColors(selected.kind);
+            return (
+              <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg", colors.bg)}>
+                <Icon size={14} className={colors.text} />
+              </div>
+            );
+          })()}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-[#185FA5] truncate">{selected.title}</p>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className="rounded-full bg-[#E6F1FB] px-1.5 py-0.5 text-[9px] font-bold uppercase text-[#185FA5]">
-                {kindLabel(selected.kind)}
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className={cn("rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase", pickerKindColors(selected.kind).badge)}>
+                {pickerKindLabel(selected.kind)}
               </span>
               {selected.pages ? <span className="text-[10px] text-slate-400">{selected.pages}p</span> : null}
+              <PickerStatusBadge status={selected.status} />
             </div>
           </div>
           <button
             type="button"
             onClick={() => onChange("", "")}
-            className="text-xs text-slate-400 hover:text-red-500 font-semibold shrink-0"
+            className="shrink-0 rounded-lg border border-slate-200 px-2 py-1 text-[10px] font-semibold text-slate-500 hover:border-red-300 hover:text-red-500 transition"
           >
             Change
           </button>
@@ -962,43 +1067,160 @@ function MaterialPickerField({
       ) : (
         <p className="text-xs text-slate-400 italic">No material linked yet.</p>
       )}
-      <input
-        type="search"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search materials to link…"
-        className="admin-input"
-      />
-      {(query || !selected) && (
-        <div className="max-h-48 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 divide-y divide-slate-100">
-          {filtered.length === 0 ? (
-            <p className="px-3 py-4 text-center text-xs text-slate-400">No materials match.</p>
-          ) : (
-            filtered.map((material) => (
-              <button
-                key={material.id}
-                type="button"
-                onClick={() => {
-                  onChange(material.id, material.title);
-                  setQuery("");
-                }}
-                className={cn(
-                  "flex w-full items-start gap-2.5 px-3 py-2.5 text-left text-xs transition hover:bg-white",
-                  material.id === value && "bg-[#E6F1FB]/50"
-                )}
-              >
-                <Icons.FileText size={13} className="text-slate-400 shrink-0 mt-0.5" />
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-slate-800 truncate">{material.title}</p>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="text-[9px] font-bold uppercase text-slate-400">{kindLabel(material.kind)}</span>
-                    {material.pages ? <span className="text-[10px] text-slate-400">{material.pages}p</span> : null}
-                  </div>
-                </div>
-                {material.id === value && <Icons.Check size={12} className="text-[#185FA5] shrink-0 mt-0.5" />}
-              </button>
-            ))
+
+      {/* Search + sort row */}
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Icons.Search size={12} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search materials to link…"
+            className="admin-input pl-7 pr-7 text-xs"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery("")}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            >
+              <Icons.X size={12} />
+            </button>
           )}
+        </div>
+        {/* Sort dropdown */}
+        <div className="relative shrink-0" ref={sortMenuRef}>
+          <button
+            type="button"
+            onClick={() => setShowSortMenu((v) => !v)}
+            className={cn(
+              "flex items-center gap-1 rounded-lg border px-2 py-1.5 text-[10px] font-semibold transition",
+              showSortMenu
+                ? "border-[#185FA5] bg-[#E6F1FB]/60 text-[#185FA5]"
+                : "border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700"
+            )}
+            title="Sort"
+          >
+            <Icons.ArrowUp size={10} />
+            {currentSortLabel}
+          </button>
+          {showSortMenu && (
+            <div className="absolute right-0 top-full z-20 mt-1 w-36 rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden">
+              {PICKER_SORT_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => { setSortKey(opt.value); setShowSortMenu(false); }}
+                  className={cn(
+                    "flex w-full items-center justify-between px-3 py-2 text-xs transition hover:bg-slate-50",
+                    sortKey === opt.value ? "font-bold text-[#185FA5]" : "text-slate-700"
+                  )}
+                >
+                  {opt.label}
+                  {sortKey === opt.value && <Icons.Check size={11} className="text-[#185FA5]" />}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Kind filter pills — only when multiple kinds exist */}
+      {showKindFilter && (
+        <div className="flex gap-1 flex-wrap">
+          <button
+            type="button"
+            onClick={() => setKindFilter("")}
+            className={cn(
+              "rounded-full px-2.5 py-0.5 text-[10px] font-bold transition",
+              !kindFilter ? "bg-[#185FA5] text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+            )}
+          >
+            All
+          </button>
+          {presentKinds.map((k) => (
+            <button
+              key={k}
+              type="button"
+              onClick={() => setKindFilter(kindFilter === k ? "" : k)}
+              className={cn(
+                "rounded-full px-2.5 py-0.5 text-[10px] font-bold transition",
+                kindFilter === k
+                  ? "bg-[#185FA5] text-white"
+                  : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+              )}
+            >
+              {pickerKindLabel(k)}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Material list */}
+      {showList && (
+        <div className="rounded-xl border border-slate-200 bg-slate-50 overflow-hidden">
+          {/* Count bar */}
+          <div className="flex items-center justify-between px-3 py-1.5 border-b border-slate-100 bg-white/60">
+            <span className="text-[10px] text-slate-400">
+              {visible.length} material{visible.length !== 1 ? "s" : ""}
+              {(query || kindFilter) ? " found" : ""}
+            </span>
+          </div>
+          <div className="max-h-52 overflow-y-auto divide-y divide-slate-100">
+            {visible.length === 0 ? (
+              <p className="px-3 py-4 text-center text-xs text-slate-400">
+                {query ? `No results for "${query}".` : "No materials available."}
+              </p>
+            ) : (
+              visible.map((material) => {
+                const Icon = pickerKindIcon(material.kind);
+                const colors = pickerKindColors(material.kind);
+                const isSelected = material.id === value;
+                return (
+                  <button
+                    key={material.id}
+                    type="button"
+                    onClick={() => {
+                      onChange(material.id, material.title);
+                      setQuery("");
+                      setKindFilter("");
+                    }}
+                    className={cn(
+                      "group flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-xs transition",
+                      isSelected ? "bg-[#E6F1FB]/60" : "hover:bg-white"
+                    )}
+                  >
+                    <div className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-lg", colors.bg)}>
+                      <Icon size={13} className={colors.text} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className={cn("font-semibold truncate", isSelected ? "text-[#185FA5]" : "text-slate-800")}>
+                        {material.title}
+                      </p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className={cn("rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase", colors.badge)}>
+                          {pickerKindLabel(material.kind)}
+                        </span>
+                        {material.pages ? (
+                          <span className="text-[10px] text-slate-400">{material.pages}p</span>
+                        ) : null}
+                        {material.characters ? (
+                          <span className="text-[10px] text-slate-400">{material.characters.toLocaleString()} ch</span>
+                        ) : null}
+                        <PickerStatusBadge status={material.status} />
+                      </div>
+                    </div>
+                    {isSelected ? (
+                      <Icons.Check size={13} className="text-[#185FA5] shrink-0" />
+                    ) : (
+                      <Icons.Plus size={13} className="text-slate-300 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    )}
+                  </button>
+                );
+              })
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -1022,18 +1244,6 @@ function MaterialsBrowserPanel({
   const filtered = query.trim()
     ? materials.filter((m) => m.title.toLowerCase().includes(query.toLowerCase()))
     : materials;
-
-  function kindIcon(kind?: string) {
-    if (kind === "video") return Icons.Video;
-    if (kind === "audio") return Icons.FileText;
-    if (kind === "image") return Icons.BookOpen;
-    return Icons.FileText;
-  }
-
-  function kindLabel(kind?: string) {
-    if (!kind) return "Doc";
-    return kind.charAt(0).toUpperCase() + kind.slice(1);
-  }
 
   return (
     <>
@@ -1062,7 +1272,8 @@ function MaterialsBrowserPanel({
         ) : (
           <div className="space-y-2">
             {filtered.map((material) => {
-              const Icon = kindIcon(material.kind);
+              const Icon = pickerKindIcon(material.kind);
+              const colors = pickerKindColors(material.kind);
               const isExpanded = expandedMaterialId === material.id;
               return (
                 <div
@@ -1070,14 +1281,14 @@ function MaterialsBrowserPanel({
                   className="rounded-xl border border-slate-200 bg-white p-3 transition hover:border-[#185FA5] hover:bg-[#f8fbff]"
                 >
                   <div className="flex items-start gap-2.5">
-                    <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#E6F1FB] text-[#185FA5]">
-                      <Icon size={13} />
+                    <div className={cn("mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg", colors.bg)}>
+                      <Icon size={13} className={colors.text} />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-xs font-semibold leading-5 text-slate-800 truncate">{material.title}</p>
                       <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold uppercase text-slate-500">
-                          {kindLabel(material.kind)}
+                        <span className={cn("rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase", colors.badge)}>
+                          {pickerKindLabel(material.kind)}
                         </span>
                         {material.pages ? (
                           <span className="text-[10px] text-slate-400">{material.pages}p</span>

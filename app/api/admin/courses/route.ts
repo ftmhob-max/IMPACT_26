@@ -83,6 +83,11 @@ const courseUpdateSchema = z.object({
   thumbnailUrl: z.string().url().optional().nullable(),
 });
 
+const deleteCourseSchema = z.object({
+  action: z.literal("delete-course"),
+  courseId: uuidSchema,
+});
+
 function withDefinedFields<T extends Record<string, unknown>>(fields: T) {
   return Object.fromEntries(Object.entries(fields).filter(([, value]) => value !== undefined));
 }
@@ -96,11 +101,35 @@ async function deleteLessonsCascade(lessonIds: string[]) {
   }
 }
 
+async function deleteCourseCascade(courseId: string) {
+  const courseData = await adminDcQuery<{ courses: Array<{ id: string; modules_on_course?: Array<{ id: string; lessons_on_module?: Array<{ id: string }> }> }> }>(
+    "AdminListCourses"
+  ).catch(() => ({ courses: [] }));
+
+  const course = courseData.courses.find((c) => formatUuid(c.id) === courseId);
+  const modules = course?.modules_on_course ?? [];
+
+  for (const mod of modules) {
+    const lessonIds = (mod.lessons_on_module ?? []).map((l) => formatUuid(l.id));
+    await deleteLessonsCascade(lessonIds);
+    await adminDcMutate("DeleteModule", { id: formatUuid(mod.id) });
+  }
+
+  await adminDcMutate("DeleteSourceLinksForCourse", { courseId }).catch(() => null);
+  await adminDcMutate("DeleteUserCourseProgressForCourse", { courseId }).catch(() => null);
+  await adminDcMutate("DeleteCourse", { id: courseId });
+}
+
 export async function GET(request: NextRequest) {
-  const auth = await requireAdminRequest(request, "viewer");
-  if (!auth.ok) return auth.response;
-  const data = await adminDcQuery<{ courses: any[] }>("AdminListCourses").catch(() => ({ courses: [] }));
-  return NextResponse.json({ courses: data.courses });
+  try {
+    const auth = await requireAdminRequest(request, "viewer");
+    if (!auth.ok) return auth.response;
+    const data = await adminDcQuery<{ courses: any[] }>("AdminListCourses").catch(() => ({ courses: [] }));
+    return NextResponse.json({ courses: data.courses });
+  } catch (err: any) {
+    console.error("[admin/courses:GET]", err);
+    return NextResponse.json({ error: err?.message ?? String(err) }, { status: 500 });
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -365,6 +394,20 @@ export async function PUT(request: NextRequest) {
     } catch (err) {
       console.error("[admin/courses:delete-module]", err);
       return NextResponse.json({ error: "Unable to delete module" }, { status: 500 });
+    }
+  }
+
+  if (body.action === "delete-course") {
+    const parsed = deleteCourseSchema.safeParse(body);
+    if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+
+    const { courseId } = parsed.data;
+    try {
+      await deleteCourseCascade(courseId);
+      return NextResponse.json({ ok: true });
+    } catch (err) {
+      console.error("[admin/courses:delete-course]", err);
+      return NextResponse.json({ error: "Unable to delete course" }, { status: 500 });
     }
   }
 

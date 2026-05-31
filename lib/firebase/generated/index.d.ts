@@ -755,6 +755,14 @@ export interface DeleteContentSourceLinkVariables {
   id: UUIDString;
 }
 
+export interface DeleteCourseData {
+  course_delete?: Course_Key | null;
+}
+
+export interface DeleteCourseVariables {
+  id: UUIDString;
+}
+
 export interface DeleteFormulaData {
   formula_delete?: Formula_Key | null;
 }
@@ -891,6 +899,14 @@ export interface DeleteQuizVariables {
   id: UUIDString;
 }
 
+export interface DeleteSourceLinksForCourseData {
+  contentSourceLink_deleteMany: number;
+}
+
+export interface DeleteSourceLinksForCourseVariables {
+  courseId: UUIDString;
+}
+
 export interface DeleteSourceLinksForLessonData {
   contentSourceLink_deleteMany: number;
 }
@@ -937,6 +953,14 @@ export interface DeleteTagAssignmentsForMaterialData {
 
 export interface DeleteTagAssignmentsForMaterialVariables {
   sourceMaterialId: UUIDString;
+}
+
+export interface DeleteUserCourseProgressForCourseData {
+  userCourseProgress_deleteMany: number;
+}
+
+export interface DeleteUserCourseProgressForCourseVariables {
+  courseId: UUIDString;
 }
 
 export interface DeleteUserFavoriteData {
@@ -2079,6 +2103,42 @@ export const deleteModuleRef: DeleteModuleRef;
 
 export function deleteModule(vars: DeleteModuleVariables): MutationPromise<DeleteModuleData, DeleteModuleVariables>;
 export function deleteModule(dc: DataConnect, vars: DeleteModuleVariables): MutationPromise<DeleteModuleData, DeleteModuleVariables>;
+
+interface DeleteCourseRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteCourseVariables): MutationRef<DeleteCourseData, DeleteCourseVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteCourseVariables): MutationRef<DeleteCourseData, DeleteCourseVariables>;
+  operationName: string;
+}
+export const deleteCourseRef: DeleteCourseRef;
+
+export function deleteCourse(vars: DeleteCourseVariables): MutationPromise<DeleteCourseData, DeleteCourseVariables>;
+export function deleteCourse(dc: DataConnect, vars: DeleteCourseVariables): MutationPromise<DeleteCourseData, DeleteCourseVariables>;
+
+interface DeleteSourceLinksForCourseRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteSourceLinksForCourseVariables): MutationRef<DeleteSourceLinksForCourseData, DeleteSourceLinksForCourseVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteSourceLinksForCourseVariables): MutationRef<DeleteSourceLinksForCourseData, DeleteSourceLinksForCourseVariables>;
+  operationName: string;
+}
+export const deleteSourceLinksForCourseRef: DeleteSourceLinksForCourseRef;
+
+export function deleteSourceLinksForCourse(vars: DeleteSourceLinksForCourseVariables): MutationPromise<DeleteSourceLinksForCourseData, DeleteSourceLinksForCourseVariables>;
+export function deleteSourceLinksForCourse(dc: DataConnect, vars: DeleteSourceLinksForCourseVariables): MutationPromise<DeleteSourceLinksForCourseData, DeleteSourceLinksForCourseVariables>;
+
+interface DeleteUserCourseProgressForCourseRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteUserCourseProgressForCourseVariables): MutationRef<DeleteUserCourseProgressForCourseData, DeleteUserCourseProgressForCourseVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteUserCourseProgressForCourseVariables): MutationRef<DeleteUserCourseProgressForCourseData, DeleteUserCourseProgressForCourseVariables>;
+  operationName: string;
+}
+export const deleteUserCourseProgressForCourseRef: DeleteUserCourseProgressForCourseRef;
+
+export function deleteUserCourseProgressForCourse(vars: DeleteUserCourseProgressForCourseVariables): MutationPromise<DeleteUserCourseProgressForCourseData, DeleteUserCourseProgressForCourseVariables>;
+export function deleteUserCourseProgressForCourse(dc: DataConnect, vars: DeleteUserCourseProgressForCourseVariables): MutationPromise<DeleteUserCourseProgressForCourseData, DeleteUserCourseProgressForCourseVariables>;
 
 interface DeleteLessonVersionsForLessonRef {
   /* Allow users to create refs without passing in DataConnect */

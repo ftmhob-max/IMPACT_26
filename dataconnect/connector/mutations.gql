@@ -105,6 +105,18 @@ mutation DeleteModule($id: UUID!) @auth(level: NO_ACCESS) {
   module_delete(id: $id)
 }
 
+mutation DeleteCourse($id: UUID!) @auth(level: NO_ACCESS) {
+  course_delete(id: $id)
+}
+
+mutation DeleteSourceLinksForCourse($courseId: UUID!) @auth(level: NO_ACCESS) {
+  contentSourceLink_deleteMany(where: { course: { id: { eq: $courseId } } })
+}
+
+mutation DeleteUserCourseProgressForCourse($courseId: UUID!) @auth(level: NO_ACCESS) {
+  userCourseProgress_deleteMany(where: { course: { id: { eq: $courseId } } })
+}
+
 mutation DeleteLessonVersionsForLesson($lessonId: UUID!) @auth(level: NO_ACCESS) {
   lessonVersion_deleteMany(where: { lesson: { id: { eq: $lessonId } } })
 }

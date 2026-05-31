@@ -1657,14 +1657,6 @@ input Formula_Data {
   """
   examplesJson_expr: String_Expr @fdc_forbiddenInVariables
   """
-  ✨ Generated from Field `Formula`.`symbolsJson` of type `String`
-  """
-  symbolsJson: String
-  """
-  ✨ `_expr` server value variant of `symbolsJson` (✨ Generated from Field `Formula`.`symbolsJson` of type `String`)
-  """
-  symbolsJson_expr: String_Expr @fdc_forbiddenInVariables
-  """
   ✨ Generated from Field `Formula`.`expression` of type `String!`
   """
   expression: String
