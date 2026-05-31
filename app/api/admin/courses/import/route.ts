@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAdminRequest } from "@/lib/admin/auth";
 import { adminDcMutate } from "@/lib/firebase/admin-dc";
-import { parseLessonCsv, type CsvLessonRow } from "@/lib/admin/csv-lesson";
+import { parseLessonCsv, type CsvLessonRow, type ParsedQuizQuestion, type ParsedGlossaryRow } from "@/lib/admin/csv-lesson";
 import { z } from "zod";
 
 // Accepts either raw csvText or a pre-parsed modules array (from DOCX upload)
@@ -42,9 +42,13 @@ function slugify(title: string): string {
     .slice(0, 80) + "-" + Date.now().toString(36);
 }
 
+type LessonWithExtras = Pick<CsvLessonRow, "lesson_title" | "lesson_type" | "content_summary" | "learning_objectives" | "position" | "asc_reference" | "est_duration_min"> & {
+  quiz_questions?: ParsedQuizQuestion[];
+};
+
 async function importModules(
   courseId: string,
-  modules: Array<{ title: string; lessons: Pick<CsvLessonRow, "lesson_title" | "lesson_type" | "content_summary" | "learning_objectives" | "position">[] }>,
+  modules: Array<{ title: string; lessons: LessonWithExtras[] }>,
   publish: boolean,
   updatedById: string
 ): Promise<{ modulesCreated: number; lessonsCreated: number }> {
@@ -73,7 +77,14 @@ async function importModules(
         lessonType: lesson.lesson_type ?? "text",
       });
 
-      if (lesson.content_summary || lesson.learning_objectives) {
+      // Build content JSON
+      let quizId: string | null = null;
+
+      if (lesson.lesson_type === "quiz" && lesson.quiz_questions && lesson.quiz_questions.length > 0) {
+        quizId = await createQuizFromQuestions(lessonId, lesson.lesson_title, lesson.quiz_questions, updatedById);
+      }
+
+      if (lesson.content_summary || lesson.learning_objectives || lesson.asc_reference || quizId !== null) {
         const content: unknown[] = [];
         if (lesson.content_summary) {
           content.push({ type: "paragraph", content: [{ type: "text", text: lesson.content_summary }] });
@@ -87,13 +98,20 @@ async function importModules(
             ],
           });
         }
+        if (lesson.asc_reference) {
+          content.push({
+            type: "paragraph",
+            content: [{ type: "text", text: `Reference: ${lesson.asc_reference}`, marks: [{ type: "bold" }] }],
+          });
+        }
+
         await adminDcMutate("UpdateLesson", {
           id: lessonId,
-          contentJson: JSON.stringify({ type: "doc", content }),
+          contentJson: content.length > 0 ? JSON.stringify({ type: "doc", content }) : null,
           videoPlaybackId: null,
-          quizId: null,
+          quizId,
           sourceMaterialId: null,
-          durationSeconds: null,
+          durationSeconds: lesson.est_duration_min ? lesson.est_duration_min * 60 : null,
           status: publish ? "published" : "draft",
           isPublished: publish,
           updatedById,
@@ -105,6 +123,92 @@ async function importModules(
   }
 
   return { modulesCreated, lessonsCreated };
+}
+
+async function createQuizFromQuestions(
+  lessonId: string,
+  lessonTitle: string,
+  questions: ParsedQuizQuestion[],
+  createdById: string
+): Promise<string> {
+  const quizId = randomUUID();
+  await adminDcMutate("CreateQuiz", {
+    id: quizId,
+    title: lessonTitle,
+    shuffleQuestions: false,
+    shuffleChoices: false,
+    status: "draft",
+    createdById,
+  });
+
+  const letters = ["A", "B", "C", "D"] as const;
+  const optionKeys = ["optionA", "optionB", "optionC", "optionD"] as const;
+
+  for (let qi = 0; qi < questions.length; qi++) {
+    const q = questions[qi];
+    const questionId = randomUUID();
+    await adminDcMutate("CreateQuestion", {
+      id: questionId,
+      questionText: q.questionText,
+      questionType: "multiple_choice",
+      difficulty: normalizeDifficulty(q.difficulty),
+      domain: "general",
+      status: "draft",
+      isMultiselect: false,
+      sourceRef: q.sourceRef ?? null,
+      createdById,
+    });
+
+    for (let li = 0; li < letters.length; li++) {
+      const letter = letters[li];
+      const choiceText = q[optionKeys[li]];
+      if (!choiceText) continue;
+      await adminDcMutate("CreateAnswerChoice", {
+        questionId,
+        letter,
+        choiceText,
+        isCorrect: letter === q.correctAnswer.toUpperCase(),
+        position: li,
+      });
+    }
+
+    await adminDcMutate("AddQuestionToQuiz", {
+      quizId,
+      questionId,
+      position: qi,
+      pointValue: 1,
+    });
+  }
+
+  return quizId;
+}
+
+function normalizeDifficulty(raw: string): string {
+  const lower = raw.toLowerCase();
+  if (lower === "easy" || lower === "proficient" || lower === "expert") return lower;
+  return "easy";
+}
+
+async function importGlossaryTerms(
+  rows: ParsedGlossaryRow[],
+  createdById: string
+): Promise<number> {
+  const now = new Date().toISOString();
+  let count = 0;
+  for (const row of rows) {
+    await adminDcMutate("CreateGlossaryTerm", {
+      id: randomUUID(),
+      term: row.term,
+      definition: row.definition,
+      domain: row.domain ?? null,
+      sourceDocument: row.sourceDocument ?? null,
+      isPublished: false,
+      updatedAt: now,
+      createdById,
+    });
+    count++;
+  }
+  return count;
 }
 
 export async function POST(request: NextRequest) {
@@ -120,7 +224,8 @@ export async function POST(request: NextRequest) {
   const { courseTitle, description, publish } = parsed.data;
 
   // Resolve modules — either parse CSV or use pre-parsed array
-  let modules: Array<{ title: string; lessons: Pick<CsvLessonRow, "lesson_title" | "lesson_type" | "content_summary" | "learning_objectives" | "position">[] }>;
+  let modules: Array<{ title: string; lessons: LessonWithExtras[] }>;
+  let glossaryTerms: ParsedGlossaryRow[] = [];
 
   if ("csvText" in parsed.data) {
     const preview = parseLessonCsv(parsed.data.csvText);
@@ -128,6 +233,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "CSV has validation errors", errors: preview.errors }, { status: 400 });
     }
     modules = preview.modules;
+    glossaryTerms = preview.glossaryTerms;
   } else {
     modules = parsed.data.modules;
   }
@@ -159,7 +265,9 @@ export async function POST(request: NextRequest) {
 
     const { modulesCreated, lessonsCreated } = await importModules(courseId, modules, publish, auth.session.uid);
 
-    return NextResponse.json({ courseId, modulesCreated, lessonsCreated }, { status: 201 });
+    const glossaryTermsImported = await importGlossaryTerms(glossaryTerms, auth.session.uid);
+
+    return NextResponse.json({ courseId, modulesCreated, lessonsCreated, glossaryTermsImported }, { status: 201 });
   } catch (error) {
     console.error("[courses/import]", error);
     return NextResponse.json({ error: "Unable to import course" }, { status: 500 });

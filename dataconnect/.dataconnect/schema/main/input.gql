@@ -1657,6 +1657,14 @@ input Formula_Data {
   """
   examplesJson_expr: String_Expr @fdc_forbiddenInVariables
   """
+  ✨ Generated from Field `Formula`.`symbolsJson` of type `String`
+  """
+  symbolsJson: String
+  """
+  ✨ `_expr` server value variant of `symbolsJson` (✨ Generated from Field `Formula`.`symbolsJson` of type `String`)
+  """
+  symbolsJson_expr: String_Expr @fdc_forbiddenInVariables
+  """
   ✨ Generated from Field `Formula`.`expression` of type `String!`
   """
   expression: String
@@ -1692,6 +1700,14 @@ input Formula_Data {
   ✨ `_update` server value variant of `position` (✨ Generated from Field `Formula`.`position` of type `Int!`)
   """
   position_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Formula`.`symbolsJson` of type `String`
+  """
+  symbolsJson: String
+  """
+  ✨ `_expr` server value variant of `symbolsJson` (✨ Generated from Field `Formula`.`symbolsJson` of type `String`)
+  """
+  symbolsJson_expr: String_Expr @fdc_forbiddenInVariables
 }
 """
 ✨ Generated filter input type for table 'Formula'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
@@ -1749,6 +1765,10 @@ input Formula_Filter {
   ✨ Generated from Field `Formula`.`position` of type `Int!`
   """
   position: Int_Filter
+  """
+  ✨ Generated from Field `Formula`.`symbolsJson` of type `String`
+  """
+  symbolsJson: String_Filter
 }
 """
 ✨ Generated first-row input type for table 'Formula'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
@@ -1823,6 +1843,10 @@ input Formula_Having {
   ✨ Generated from Field `Formula`.`sectionId_count` of type `Int!`
   """
   sectionId_count: Int_Filter
+  """
+  ✨ Generated from Field `Formula`.`symbolsJson_count` of type `Int!`
+  """
+  symbolsJson_count: Int_Filter
   """
   ✨ Generated from Field `Formula`.`position_sum` of type `Int`
   """
@@ -1911,6 +1935,10 @@ input Formula_Order {
   """
   position: OrderDirection
   """
+  ✨ Generated from Field `Formula`.`symbolsJson` of type `String`
+  """
+  symbolsJson: OrderDirection
+  """
   ✨ Generated from Field `Formula`.`_count` of type `Int!`
   """
   _count: OrderDirection
@@ -1950,6 +1978,10 @@ input Formula_Order {
   ✨ Generated from Field `Formula`.`sectionId_count` of type `Int!`
   """
   sectionId_count: OrderDirection
+  """
+  ✨ Generated from Field `Formula`.`symbolsJson_count` of type `Int!`
+  """
+  symbolsJson_count: OrderDirection
   """
   ✨ Generated from Field `Formula`.`position_sum` of type `Int`
   """

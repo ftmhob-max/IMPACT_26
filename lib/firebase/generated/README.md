@@ -1684,6 +1684,7 @@ export interface GetFormulaSectionsData {
       notes?: string | null;
       calcMetaJson?: string | null;
       examplesJson?: string | null;
+      symbolsJson?: string | null;
     } & Formula_Key)[];
   } & FormulaSection_Key)[];
 }
@@ -11619,6 +11620,7 @@ export interface CreateFormulaVariables {
   position: number;
   calcMetaJson?: string | null;
   examplesJson?: string | null;
+  symbolsJson?: string | null;
 }
 ```
 ### Return Type
@@ -11646,13 +11648,14 @@ const createFormulaVars: CreateFormulaVariables = {
   position: ..., 
   calcMetaJson: ..., // optional
   examplesJson: ..., // optional
+  symbolsJson: ..., // optional
 };
 
 // Call the `createFormula()` function to execute the mutation.
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await createFormula(createFormulaVars);
 // Variables can be defined inline as well.
-const { data } = await createFormula({ sectionId: ..., code: ..., name: ..., expression: ..., notes: ..., position: ..., calcMetaJson: ..., examplesJson: ..., });
+const { data } = await createFormula({ sectionId: ..., code: ..., name: ..., expression: ..., notes: ..., position: ..., calcMetaJson: ..., examplesJson: ..., symbolsJson: ..., });
 
 // You can also pass in a `DataConnect` instance to the action shortcut function.
 const dataConnect = getDataConnect(connectorConfig);
@@ -11683,12 +11686,13 @@ const createFormulaVars: CreateFormulaVariables = {
   position: ..., 
   calcMetaJson: ..., // optional
   examplesJson: ..., // optional
+  symbolsJson: ..., // optional
 };
 
 // Call the `createFormulaRef()` function to get a reference to the mutation.
 const ref = createFormulaRef(createFormulaVars);
 // Variables can be defined inline as well.
-const ref = createFormulaRef({ sectionId: ..., code: ..., name: ..., expression: ..., notes: ..., position: ..., calcMetaJson: ..., examplesJson: ..., });
+const ref = createFormulaRef({ sectionId: ..., code: ..., name: ..., expression: ..., notes: ..., position: ..., calcMetaJson: ..., examplesJson: ..., symbolsJson: ..., });
 
 // You can also pass in a `DataConnect` instance to the `MutationRef` function.
 const dataConnect = getDataConnect(connectorConfig);
@@ -11748,6 +11752,7 @@ export interface UpdateFormulaVariables {
   notes?: string | null;
   calcMetaJson?: string | null;
   examplesJson?: string | null;
+  symbolsJson?: string | null;
   position?: number | null;
 }
 ```
@@ -11775,6 +11780,7 @@ const updateFormulaVars: UpdateFormulaVariables = {
   notes: ..., // optional
   calcMetaJson: ..., // optional
   examplesJson: ..., // optional
+  symbolsJson: ..., // optional
   position: ..., // optional
 };
 
@@ -11782,7 +11788,7 @@ const updateFormulaVars: UpdateFormulaVariables = {
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await updateFormula(updateFormulaVars);
 // Variables can be defined inline as well.
-const { data } = await updateFormula({ id: ..., code: ..., name: ..., expression: ..., notes: ..., calcMetaJson: ..., examplesJson: ..., position: ..., });
+const { data } = await updateFormula({ id: ..., code: ..., name: ..., expression: ..., notes: ..., calcMetaJson: ..., examplesJson: ..., symbolsJson: ..., position: ..., });
 
 // You can also pass in a `DataConnect` instance to the action shortcut function.
 const dataConnect = getDataConnect(connectorConfig);
@@ -11812,13 +11818,14 @@ const updateFormulaVars: UpdateFormulaVariables = {
   notes: ..., // optional
   calcMetaJson: ..., // optional
   examplesJson: ..., // optional
+  symbolsJson: ..., // optional
   position: ..., // optional
 };
 
 // Call the `updateFormulaRef()` function to get a reference to the mutation.
 const ref = updateFormulaRef(updateFormulaVars);
 // Variables can be defined inline as well.
-const ref = updateFormulaRef({ id: ..., code: ..., name: ..., expression: ..., notes: ..., calcMetaJson: ..., examplesJson: ..., position: ..., });
+const ref = updateFormulaRef({ id: ..., code: ..., name: ..., expression: ..., notes: ..., calcMetaJson: ..., examplesJson: ..., symbolsJson: ..., position: ..., });
 
 // You can also pass in a `DataConnect` instance to the `MutationRef` function.
 const dataConnect = getDataConnect(connectorConfig);

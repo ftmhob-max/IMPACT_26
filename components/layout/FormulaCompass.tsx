@@ -19,6 +19,7 @@ interface Formula {
   notes?: string | null;
   calcMetaJson?: string | null;
   examplesJson?: string | null;
+  symbolsJson?: string | null;
 }
 
 type ExampleDifficulty = "easy" | "proficient" | "expert";
@@ -35,9 +36,22 @@ interface FormulaExamplesData {
   expert?: FormulaExample;
 }
 
+interface FormulaSymbolRow {
+  symbol: string;
+  description: string;
+}
+
 function parseExamples(json: string | null | undefined): FormulaExamplesData | null {
   if (!json) return null;
   try { return JSON.parse(json) as FormulaExamplesData; } catch { return null; }
+}
+
+function parseSymbols(json: string | null | undefined): FormulaSymbolRow[] | null {
+  if (!json) return null;
+  try {
+    const parsed = JSON.parse(json);
+    return Array.isArray(parsed) ? (parsed as FormulaSymbolRow[]) : null;
+  } catch { return null; }
 }
 
 const EXAMPLE_DIFFICULTY_CONFIG: Array<{
@@ -645,6 +659,14 @@ function DrillView({
                 <p className="text-[13px] leading-relaxed text-slate-500 italic">{formula.notes}</p>
               )}
 
+              {/* Symbol definition table */}
+              {(() => {
+                const symbols = parseSymbols(formula.symbolsJson);
+                return symbols && symbols.length > 0
+                  ? <FormulaSymbolTable symbols={symbols} />
+                  : null;
+              })()}
+
               {/* Tiered examples (drill mode inline) */}
               <DrillExamplesPanel formula={formula} />
 
@@ -771,6 +793,33 @@ function DrillView({
 
 // ─── Browse mode formula card ─────────────────────────────────────────────────
 
+// ─── Symbol definition table ─────────────────────────────────────────────────
+
+function FormulaSymbolTable({ symbols }: { symbols: FormulaSymbolRow[] }) {
+  return (
+    <div className="overflow-hidden rounded-xl border border-slate-200">
+      <div className="flex items-center gap-1.5 border-b border-slate-200 bg-slate-50 px-3 py-2">
+        <Icons.BookOpen size={11} className="text-slate-400" />
+        <span className="text-[11px] font-semibold text-slate-500">Definition Table</span>
+      </div>
+      <table className="w-full text-[12px]">
+        <tbody>
+          {symbols.map((row, i) => (
+            <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-slate-50/60"}>
+              <td className="w-[28%] border-r border-slate-100 px-3 py-2 font-mono font-semibold text-[#185FA5] align-top whitespace-nowrap">
+                {row.symbol}
+              </td>
+              <td className="px-3 py-2 leading-relaxed text-slate-700 align-top">
+                {row.description}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 // ─── Drill examples panel ─────────────────────────────────────────────────────
 
 function DrillExamplesPanel({ formula }: { formula: Formula }) {
@@ -856,6 +905,8 @@ function FormulaCard({
   const [activeDifficulty, setActiveDifficulty] = useState<ExampleDifficulty>("easy");
   const examplesData = parseExamples(formula.examplesJson);
   const availableDifficulties = EXAMPLE_DIFFICULTY_CONFIG.filter((d) => examplesData?.[d.key]);
+  const symbolsData = parseSymbols(formula.symbolsJson);
+  const hasDetails = availableDifficulties.length > 0 || (symbolsData && symbolsData.length > 0);
 
   return (
     <article className="formula-compass-card border-b border-slate-100 px-5 py-4 transition-colors hover:bg-[#fbfcfd]">
@@ -911,7 +962,7 @@ function FormulaCard({
             Calculator
           </button>
         )}
-        {availableDifficulties.length > 0 && (
+        {hasDetails && (
           <button
             type="button"
             onClick={() => {
@@ -923,54 +974,64 @@ function FormulaCard({
             className="inline-flex items-center gap-1.5 rounded text-xs font-semibold text-slate-500 hover:text-[#185FA5] hover:underline focus-visible:outline-none"
           >
             <Icons.GraduationCap size={12} />
-            {examplesOpen ? "Hide examples" : "View examples"}
+            {examplesOpen ? "Hide details" : "View details"}
           </button>
         )}
       </div>
 
-      {/* Examples panel */}
-      {examplesOpen && availableDifficulties.length > 0 && (
-        <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 overflow-hidden">
-          {/* Difficulty tabs */}
-          <div className="flex border-b border-slate-200">
-            {availableDifficulties.map((d) => (
-              <button
-                key={d.key}
-                type="button"
-                onClick={() => setActiveDifficulty(d.key)}
-                className={cn(
-                  "flex-1 py-2 text-[11px] font-bold transition-colors",
-                  activeDifficulty === d.key
-                    ? cn(d.activeBg, d.activeText)
-                    : cn("bg-white text-slate-500 hover:bg-slate-50", d.inactiveText)
-                )}
-              >
-                {d.label}
-              </button>
-            ))}
-          </div>
-          {/* Steps */}
-          {availableDifficulties.map((d) => {
-            if (d.key !== activeDifficulty) return null;
-            const ex = examplesData![d.key]!;
-            return (
-              <div key={d.key} className="px-4 py-3 space-y-2">
-                <ol className="space-y-2">
-                  {ex.steps.map((step, i) => (
-                    <li key={i} className="flex gap-2.5 text-xs text-slate-700 leading-relaxed">
-                      <span className="shrink-0 mt-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-slate-200 text-[10px] font-bold text-slate-600">
-                        {i + 1}
-                      </span>
-                      <span>{step}</span>
-                    </li>
-                  ))}
-                </ol>
-                {ex.summary && (
-                  <p className="text-[11px] italic text-slate-500 border-t border-slate-200 pt-2">{ex.summary}</p>
-                )}
+      {/* Details panel (symbol table + tiered examples) */}
+      {examplesOpen && hasDetails && (
+        <div className="mt-3 space-y-3">
+          {/* Symbol definition table */}
+          {symbolsData && symbolsData.length > 0 && (
+            <FormulaSymbolTable symbols={symbolsData} />
+          )}
+
+          {/* Tiered examples */}
+          {availableDifficulties.length > 0 && (
+            <div className="rounded-xl border border-slate-200 bg-slate-50 overflow-hidden">
+              {/* Difficulty tabs */}
+              <div className="flex border-b border-slate-200">
+                {availableDifficulties.map((d) => (
+                  <button
+                    key={d.key}
+                    type="button"
+                    onClick={() => setActiveDifficulty(d.key)}
+                    className={cn(
+                      "flex-1 py-2 text-[11px] font-bold transition-colors",
+                      activeDifficulty === d.key
+                        ? cn(d.activeBg, d.activeText)
+                        : cn("bg-white text-slate-500 hover:bg-slate-50", d.inactiveText)
+                    )}
+                  >
+                    {d.label}
+                  </button>
+                ))}
               </div>
-            );
-          })}
+              {/* Steps */}
+              {availableDifficulties.map((d) => {
+                if (d.key !== activeDifficulty) return null;
+                const ex = examplesData![d.key]!;
+                return (
+                  <div key={d.key} className="px-4 py-3 space-y-2">
+                    <ol className="space-y-2">
+                      {ex.steps.map((step, i) => (
+                        <li key={i} className="flex gap-2.5 text-xs text-slate-700 leading-relaxed">
+                          <span className="shrink-0 mt-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-slate-200 text-[10px] font-bold text-slate-600">
+                            {i + 1}
+                          </span>
+                          <span>{step}</span>
+                        </li>
+                      ))}
+                    </ol>
+                    {ex.summary && (
+                      <p className="text-[11px] italic text-slate-500 border-t border-slate-200 pt-2">{ex.summary}</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
     </article>

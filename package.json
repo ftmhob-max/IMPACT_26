@@ -65,5 +65,8 @@
     "tailwindcss": "^4.1.5",
     "typescript": "^5.8.3",
     "wait-on": "^9.0.5"
+  },
+  "overrides": {
+    "@google-cloud/cloud-sql-connector": "1.6.0"
   }
 }

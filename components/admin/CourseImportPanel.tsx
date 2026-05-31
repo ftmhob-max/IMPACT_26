@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import Link from "next/link";
 import * as Icons from "@/components/ui/Icons";
 import { cn } from "@/lib/utils";
+import { FieldHint } from "@/components/ui/FieldHint";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -12,6 +13,7 @@ interface ParsedLesson {
   lesson_type: string;
   content_summary?: string | null;
   learning_objectives?: string | null;
+  quiz_questions?: Array<{ questionText: string }>;
 }
 
 interface ParsedModule {
@@ -23,12 +25,15 @@ interface PreviewResult {
   modules: ParsedModule[];
   errors: Array<{ row: number; field: string; message: string }>;
   totalLessons: number;
+  glossaryTerms?: Array<{ term: string }>;
+  whoBenefits?: Array<{ roleTitle: string }>;
 }
 
 interface ImportResult {
   courseId: string;
   modulesCreated: number;
   lessonsCreated: number;
+  glossaryTermsImported?: number;
 }
 
 type Tab = "csv" | "docx";
@@ -132,6 +137,11 @@ function PreviewAccordion({ modules }: { modules: ParsedModule[] }) {
                   <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-slate-500">
                     {lessonTypeLabel(lesson.lesson_type)}
                   </span>
+                  {lesson.quiz_questions && lesson.quiz_questions.length > 0 && (
+                    <span className="rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] font-bold text-violet-600">
+                      {lesson.quiz_questions.length}q
+                    </span>
+                  )}
                 </div>
               ))}
             </div>
@@ -368,6 +378,16 @@ export function CourseImportPanel({
               <span className="rounded-full bg-[#E6F1FB] px-3 py-1 text-xs font-bold text-[#185FA5]">
                 {preview.totalLessons} lesson{preview.totalLessons !== 1 ? "s" : ""}
               </span>
+              {(preview.glossaryTerms?.length ?? 0) > 0 && (
+                <span className="rounded-full bg-teal-100 px-3 py-1 text-xs font-bold text-teal-700">
+                  {preview.glossaryTerms!.length} glossary term{preview.glossaryTerms!.length !== 1 ? "s" : ""}
+                </span>
+              )}
+              {(preview.whoBenefits?.length ?? 0) > 0 && (
+                <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-700">
+                  {preview.whoBenefits!.length} role{preview.whoBenefits!.length !== 1 ? "s" : ""}
+                </span>
+              )}
               {preview.errors.length > 0 && (
                 <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700">
                   {preview.errors.length} error{preview.errors.length !== 1 ? "s" : ""}
@@ -419,7 +439,7 @@ export function CourseImportPanel({
 
             <div>
               <label className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-slate-500">
-                Course title <span className="text-red-400">*</span>
+                Course title <span className="text-red-400">*</span><FieldHint text="The name of the course as it will appear to students. Be specific (e.g. 'Assessment Calculations Review')." />
               </label>
               <input
                 className="admin-input mt-2"
@@ -430,7 +450,7 @@ export function CourseImportPanel({
             </div>
 
             <div>
-              <label className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-slate-500">Description (optional)</label>
+              <label className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-slate-500">Description (optional)<FieldHint text="A brief 1–3 sentence overview of what students will learn. This appears on the course listing page as a summary." /></label>
               <textarea
                 className="admin-input mt-2 min-h-[72px]"
                 rows={3}
@@ -448,7 +468,7 @@ export function CourseImportPanel({
                 className="mt-0.5 h-4 w-4 rounded accent-[#185FA5]"
               />
               <div>
-                <p className="text-sm font-semibold text-slate-800">Publish all lessons immediately</p>
+                <p className="text-sm font-semibold text-slate-800">Publish all lessons immediately<FieldHint text="If checked, all imported lessons go live immediately after import. Leave unchecked to review and publish each lesson individually first." /></p>
                 <p className="mt-0.5 text-xs text-slate-500">Otherwise lessons are created as drafts.</p>
               </div>
             </label>
@@ -490,7 +510,7 @@ export function CourseImportPanel({
               <div>
                 <p className="text-sm font-bold text-emerald-800">Course imported successfully!</p>
                 <p className="mt-0.5 text-xs text-emerald-700">
-                  {importResult.modulesCreated} module{importResult.modulesCreated !== 1 ? "s" : ""} · {importResult.lessonsCreated} lesson{importResult.lessonsCreated !== 1 ? "s" : ""} created
+                  {importResult.modulesCreated} module{importResult.modulesCreated !== 1 ? "s" : ""} · {importResult.lessonsCreated} lesson{importResult.lessonsCreated !== 1 ? "s" : ""}{(importResult.glossaryTermsImported ?? 0) > 0 ? ` · ${importResult.glossaryTermsImported} glossary term${importResult.glossaryTermsImported !== 1 ? "s" : ""} created` : " created"}
                 </p>
               </div>
             </div>

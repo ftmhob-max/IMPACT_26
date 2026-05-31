@@ -1582,6 +1582,12 @@ function RichTextComposer({
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
 
+  // useCallback with empty deps gives a stable function reference across renders.
+  // Without this, TipTap sees a new onUpdate on every render and loops via refreshEditorInstance.
+  const onUpdateStable = useCallback(({ editor: activeEditor }: { editor: import("@tiptap/react").Editor }) => {
+    onChangeRef.current(JSON.stringify(activeEditor.getJSON()));
+  }, []);
+
   const editor = useEditor({
     extensions: RICH_TEXT_EXTENSIONS,
     content: (() => {
@@ -1592,10 +1598,7 @@ function RichTextComposer({
       }
     })(),
     immediatelyRender: false,
-    onUpdate({ editor: activeEditor }) {
-      // Always calls the latest onChange without the closure capturing a stale reference
-      onChangeRef.current(JSON.stringify(activeEditor.getJSON()));
-    },
+    onUpdate: onUpdateStable,
     editorProps: RICH_TEXT_EDITOR_PROPS,
   });
 

@@ -8,7 +8,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const { id } = await params;
   const body = await req.json();
-  const { code, name, expression, notes, calcMetaJson, examplesJson, position } = body;
+  const { code, name, expression, notes, calcMetaJson, examplesJson, symbolsJson, position } = body;
 
   try {
     await adminDcMutate("UpdateFormula", {
@@ -19,6 +19,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       notes: notes != null ? notes.trim() : undefined,
       calcMetaJson: calcMetaJson !== undefined ? (calcMetaJson ?? null) : undefined,
       examplesJson: examplesJson !== undefined ? (examplesJson ?? null) : undefined,
+      symbolsJson: symbolsJson !== undefined ? (symbolsJson ?? null) : undefined,
       position: typeof position === "number" ? position : undefined,
     });
     return NextResponse.json({ ok: true });

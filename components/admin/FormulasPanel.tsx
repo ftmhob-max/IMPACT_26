@@ -6,6 +6,7 @@ import { validateExpression, evalExpression } from "@/lib/admin/formula-eval";
 import { getFormulaCalculator, formatValue } from "@/lib/formula-calculator";
 import * as Icons from "@/components/ui/Icons";
 import { cn } from "@/lib/utils";
+import { FieldHint } from "@/components/ui/FieldHint";
 import { StatusBadge } from "@/components/ui/LearnerPrimitives";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -50,6 +51,7 @@ interface AdminFormula {
   notes?: string | null;
   calcMetaJson?: string | null;
   examplesJson?: string | null;
+  symbolsJson?: string | null;
   position: number;
 }
 
@@ -97,12 +99,13 @@ function parseMeta(json: string | null | undefined): CalcMeta | null {
   try { return JSON.parse(json) as CalcMeta; } catch { return null; }
 }
 
-function SmallField({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) {
+function SmallField({ label, children, hint, tooltip }: { label: string; children: React.ReactNode; hint?: string; tooltip?: string }) {
   return (
     <div>
       <label className="mb-1 block text-xs font-semibold text-slate-600">
         {label}
         {hint && <span className="ml-1 font-normal text-slate-400">{hint}</span>}
+        {tooltip && <FieldHint text={tooltip} />}
       </label>
       {children}
     </div>
@@ -137,7 +140,7 @@ function ActionBtn({ onClick, children, tone = "primary", disabled, small }: {
 
 // ─── Panel tabs ───────────────────────────────────────────────────────────────
 
-type EditorTab = "fields" | "calc" | "verify" | "preview" | "examples";
+type EditorTab = "fields" | "calc" | "symbols" | "examples" | "verify" | "preview";
 type PanelTab = "manage" | "import" | "templates";
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -207,7 +210,7 @@ export function FormulasPanel({ onSaved }: { onSaved?: () => void }) {
     const section = sections.find((s) => s.id === sectionId);
     const nextPos = (section?.formulas.length ?? 0);
     setSelectedFormula({
-      id: "__new__", code: "", name: "", expression: "", notes: "", calcMetaJson: null, examplesJson: null, position: nextPos,
+      id: "__new__", code: "", name: "", expression: "", notes: "", calcMetaJson: null, examplesJson: null, symbolsJson: null, position: nextPos,
     });
     setSelectedSectionId(sectionId);
     setEditorTab("fields");
@@ -229,6 +232,7 @@ export function FormulasPanel({ onSaved }: { onSaved?: () => void }) {
       notes: formula.notes ?? "",
       calcMetaJson: formula.calcMetaJson ?? null,
       examplesJson: formula.examplesJson ?? null,
+      symbolsJson: formula.symbolsJson ?? null,
       position: nextPos,
     });
     setSelectedSectionId(sectionId);
@@ -258,6 +262,7 @@ export function FormulasPanel({ onSaved }: { onSaved?: () => void }) {
             position: formula.position,
             calcMetaJson: formula.calcMetaJson ?? null,
             examplesJson: formula.examplesJson ?? null,
+            symbolsJson: formula.symbolsJson ?? null,
           }),
         });
         if (res.ok) {
@@ -281,6 +286,7 @@ export function FormulasPanel({ onSaved }: { onSaved?: () => void }) {
             notes: formula.notes || null,
             calcMetaJson: formula.calcMetaJson,
             examplesJson: formula.examplesJson,
+            symbolsJson: formula.symbolsJson,
             position: formula.position,
             // #5 Section move support
             sectionId: selectedSectionId ?? undefined,
@@ -734,6 +740,7 @@ function ManageTab({
               {([
                 ["fields", "Formula"],
                 ["calc", "Calculator"],
+                ["symbols", "Symbols"],
                 ["examples", "Examples"],
                 ["verify", "Verify"],
                 ["preview", "Preview"],
@@ -788,6 +795,18 @@ function ManageTab({
               <VerifyPanel key={selectedFormula.id} formula={selectedFormula} />
             )}
 
+            {editorTab === "symbols" && (
+              <SymbolsEditor
+                key={selectedFormula.id}
+                formula={selectedFormula}
+                savingBusy={savingBusy}
+                onSaveWithSymbols={(symbolsJson) => {
+                  const updated: AdminFormula = { ...selectedFormula, symbolsJson };
+                  saveFormula(updated);
+                }}
+              />
+            )}
+
             {editorTab === "examples" && (
               <ExamplesEditor
                 key={selectedFormula.id}
@@ -828,7 +847,7 @@ function FieldsEditor({
   return (
     <div className="space-y-3">
       <div className="grid gap-3 sm:grid-cols-2">
-        <SmallField label="Formula Code">
+        <SmallField label="Formula Code" tooltip="Short unique identifier (e.g. S1.F9). The prefix is the section code and the suffix is the formula number within that section.">
           <input
             value={formula.code}
             onChange={(e) => onChange({ code: e.target.value })}
@@ -837,7 +856,7 @@ function FieldsEditor({
           />
         </SmallField>
         {/* #5 Section is now editable to support moving formulas */}
-        <SmallField label="Section">
+        <SmallField label="Section" tooltip="The appraisal section this formula belongs to. This determines how it is grouped in the Formula Compass.">
           <select
             value={selectedSectionId ?? ""}
             onChange={(e) => onSectionChange(e.target.value)}
@@ -849,7 +868,7 @@ function FieldsEditor({
         </SmallField>
       </div>
 
-      <SmallField label="Formula Name">
+      <SmallField label="Formula Name" tooltip="The full display name students see (e.g. 'Trending Forward'). Use title case and match how it appears in the source material.">
         <input
           value={formula.name}
           onChange={(e) => onChange({ name: e.target.value })}
@@ -858,7 +877,7 @@ function FieldsEditor({
         />
       </SmallField>
 
-      <SmallField label="Display Expression">
+      <SmallField label="Display Expression" tooltip="The human-readable mathematical expression shown to students (e.g. 'Adjusted = Sale × (1+r)^n'). Use × and ^ for readability — this is for display only, not calculation.">
         <textarea
           value={formula.expression}
           onChange={(e) => onChange({ expression: e.target.value })}
@@ -868,7 +887,7 @@ function FieldsEditor({
         />
       </SmallField>
 
-      <SmallField label="Notes" hint="(optional — shown below the formula card)">
+      <SmallField label="Notes" hint="(optional — shown below the formula card)" tooltip="A short plain-English explanation of when and why this formula is used. Shown as supplemental context below the formula card.">
         <textarea
           value={formula.notes ?? ""}
           onChange={(e) => onChange({ notes: e.target.value })}
@@ -989,7 +1008,7 @@ function CalcSetupEditor({
       {/* #8 Improved variable builder */}
       <div>
         <div className="mb-2 flex items-center justify-between">
-          <label className="text-xs font-semibold text-slate-600">Input Variables</label>
+          <label className="text-xs font-semibold text-slate-600">Input Variables<FieldHint text="Each variable is a value the student enters in the calculator. Define a key (used in the expression), a human-readable label, and its format type." /></label>
           <ActionBtn small tone="ghost" onClick={addVariable}><Icons.Plus size={11} /> Add variable</ActionBtn>
         </div>
         {variables.length === 0 ? (
@@ -1003,7 +1022,7 @@ function CalcSetupEditor({
                 {/* Row 1: key + label + type + required + actions */}
                 <div className="grid gap-2 sm:grid-cols-[120px_1fr_120px_auto_auto]">
                   <div>
-                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-400">Key</label>
+                    <label className="mb-1 flex items-center gap-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">Key<FieldHint text="Lowercase identifier used in the calculation expression (e.g. 'sale'). Only letters and numbers — no spaces." /></label>
                     <input
                       value={v.key}
                       onChange={(e) => updateVariable(i, { key: e.target.value.replace(/\W/g, "").toLowerCase() })}
@@ -1013,7 +1032,7 @@ function CalcSetupEditor({
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-400">Label</label>
+                    <label className="mb-1 flex items-center gap-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">Label<FieldHint text="The human-readable name shown to students in the calculator input field (e.g. 'Sale Price')." /></label>
                     <input
                       value={v.label}
                       onChange={(e) => updateVariable(i, { label: e.target.value })}
@@ -1022,13 +1041,13 @@ function CalcSetupEditor({
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-400">Type</label>
+                    <label className="mb-1 flex items-center gap-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">Type<FieldHint text="How the value is formatted: Currency ($), Percentage (%), Number (plain), Ratio (decimal), Integer (whole number)." /></label>
                     <select value={v.type} onChange={(e) => updateVariable(i, { type: e.target.value as InputType })} className={inputClass()}>
                       {INPUT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
                     </select>
                   </div>
                   <div className="flex flex-col items-center justify-end gap-1 pb-0.5">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Req.</label>
+                    <label className="flex items-center gap-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">Req.<FieldHint text="If checked, the student must provide this value before the calculator will run." /></label>
                     <input type="checkbox" checked={v.required} onChange={(e) => updateVariable(i, { required: e.target.checked })} className="h-4 w-4 cursor-pointer" />
                   </div>
                   <div className="flex flex-col items-center justify-end gap-1 pb-0.5">
@@ -1048,11 +1067,11 @@ function CalcSetupEditor({
                 {/* Row 2: placeholder + helperText with explicit labels */}
                 <div className="mt-2 grid gap-2 sm:grid-cols-2">
                   <div>
-                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-400">Placeholder</label>
+                    <label className="mb-1 flex items-center gap-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">Placeholder<FieldHint text="Example value shown inside the input before the student types (e.g. '250000'). Helps students understand the expected format." /></label>
                     <input value={v.placeholder ?? ""} onChange={(e) => updateVariable(i, { placeholder: e.target.value })} placeholder="e.g. 250000" className={cn(inputClass(), "text-xs")} />
                   </div>
                   <div>
-                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-400">Helper text</label>
+                    <label className="mb-1 flex items-center gap-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">Helper text<FieldHint text="Guidance shown below the input (e.g. 'Enter as a decimal, e.g. 0.05 for 5%'). Clarifies the expected format or units." /></label>
                     <input value={v.helperText ?? ""} onChange={(e) => updateVariable(i, { helperText: e.target.value })} placeholder="e.g. Enter as a decimal e.g. 0.05" className={cn(inputClass(), "text-xs")} />
                   </div>
                 </div>
@@ -1063,7 +1082,7 @@ function CalcSetupEditor({
       </div>
 
       {/* Calc expression */}
-      <SmallField label="Calculation Expression" hint="(use variable keys, +,-,*,/,^, sqrt(), etc.)">
+      <SmallField label="Calculation Expression" hint="(use variable keys, +,-,*,/,^, sqrt(), etc.)" tooltip="JavaScript-style math using your variable keys (e.g. 'sale * (1 + rate) ^ periods'). Reference each variable by its key exactly. Supported operators: + − * / ^ and functions sqrt(), abs().">
         <div className="relative">
           <input
             value={calcExpr}
@@ -1083,17 +1102,17 @@ function CalcSetupEditor({
 
       {/* Output */}
       <div className="grid gap-3 sm:grid-cols-2">
-        <SmallField label="Output Label">
+        <SmallField label="Output Label" tooltip="The name of the calculated result shown to students (e.g. 'Adjusted Sale Price'). Keep it short and descriptive.">
           <input value={outputLabel} onChange={(e) => setOutputLabel(e.target.value)} placeholder="Adjusted Sale Price" className={inputClass()} />
         </SmallField>
-        <SmallField label="Output Type">
+        <SmallField label="Output Type" tooltip="How the result is formatted for display: Currency ($), Percentage (%), Number (plain decimal), Ratio, or Integer (whole number).">
           <select value={outputType} onChange={(e) => setOutputType(e.target.value as InputType)} className={inputClass()}>
             {INPUT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
         </SmallField>
       </div>
 
-      <SmallField label="Explanation" hint="(shown in italic inside the calculator panel)">
+      <SmallField label="Explanation" hint="(shown in italic inside the calculator panel)" tooltip="A brief note shown below the result in italic, explaining what the output represents or how to interpret it.">
         <textarea value={explanation} onChange={(e) => setExplanation(e.target.value)} placeholder="Brief explanation…" rows={2} className={cn(inputClass(), "resize-none text-xs")} />
       </SmallField>
 
@@ -1324,6 +1343,34 @@ function FormulaPreviewCard({ formula }: { formula: AdminFormula }) {
             </div>
           )}
         </div>
+
+        {/* Symbol table preview */}
+        {(() => {
+          const syms = parseSymbols(formula.symbolsJson);
+          if (!syms || syms.length === 0) return null;
+          return (
+            <div className="border-t border-slate-100">
+              <div className="flex items-center gap-1.5 border-b border-slate-100 bg-slate-50 px-5 py-2">
+                <Icons.BookOpen size={11} className="text-slate-400" />
+                <span className="text-[11px] font-semibold text-slate-500">Definition Table</span>
+              </div>
+              <table className="w-full text-[12px]">
+                <tbody>
+                  {syms.map((row, i) => (
+                    <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-slate-50/60"}>
+                      <td className="w-[28%] border-r border-slate-100 px-5 py-2 font-mono font-semibold text-[#185FA5] align-top whitespace-nowrap">
+                        {row.symbol}
+                      </td>
+                      <td className="px-5 py-2 leading-relaxed text-slate-700 align-top text-xs">
+                        {row.description}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          );
+        })()}
       </article>
 
       {/* Drill mode flash card preview */}
@@ -1536,6 +1583,166 @@ function ImportTab({ onDone }: { onDone: () => void }) {
   );
 }
 
+// ─── Symbols Editor ───────────────────────────────────────────────────────────
+
+interface FormulaSymbolRow {
+  symbol: string;
+  description: string;
+}
+
+function parseSymbols(json: string | null | undefined): FormulaSymbolRow[] {
+  if (!json) return [];
+  try {
+    const parsed = JSON.parse(json);
+    return Array.isArray(parsed) ? (parsed as FormulaSymbolRow[]) : [];
+  } catch { return []; }
+}
+
+function SymbolsEditor({
+  formula, savingBusy, onSaveWithSymbols,
+}: {
+  formula: AdminFormula;
+  savingBusy: boolean;
+  onSaveWithSymbols: (symbolsJson: string | null) => void;
+}) {
+  const [rows, setRows] = useState<FormulaSymbolRow[]>(() => parseSymbols(formula.symbolsJson));
+  const [parseText, setParseText] = useState("");
+  const [showParse, setShowParse] = useState(false);
+
+  function addRow() {
+    setRows((prev) => [...prev, { symbol: "", description: "" }]);
+  }
+
+  function updateRow(idx: number, patch: Partial<FormulaSymbolRow>) {
+    setRows((prev) => prev.map((r, i) => i === idx ? { ...r, ...patch } : r));
+  }
+
+  function removeRow(idx: number) {
+    setRows((prev) => prev.filter((_, i) => i !== idx));
+  }
+
+  function moveRow(idx: number, dir: "up" | "down") {
+    const next = [...rows];
+    const j = dir === "up" ? idx - 1 : idx + 1;
+    if (j < 0 || j >= next.length) return;
+    [next[idx], next[j]] = [next[j], next[idx]];
+    setRows(next);
+  }
+
+  function handleSave() {
+    const cleaned = rows.filter((r) => r.symbol.trim() || r.description.trim());
+    onSaveWithSymbols(cleaned.length > 0 ? JSON.stringify(cleaned) : null);
+  }
+
+  // Parse definition table text: lines like "Symbol — Description" or "Symbol\tDescription"
+  function handleParseText() {
+    if (!parseText.trim()) return;
+    const parsed: FormulaSymbolRow[] = [];
+    const lines = parseText.split("\n").map((l) => l.trim()).filter(Boolean);
+    for (const line of lines) {
+      // Try tab, em-dash, long dash, or double-space separators
+      const match = line.match(/^(.+?)(?:\t|—|–|\s{2,})(.+)$/);
+      if (match) {
+        const symbol = match[1].trim();
+        const description = match[2].trim();
+        if (symbol && description) parsed.push({ symbol, description });
+      }
+    }
+    if (parsed.length > 0) {
+      setRows((prev) => [...prev, ...parsed]);
+      setShowParse(false);
+      setParseText("");
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-slate-500">
+          Define each symbol or variable used in this formula. These are shown to students as a definition table.
+        </p>
+        <button
+          type="button"
+          onClick={() => setShowParse((v) => !v)}
+          className="shrink-0 rounded-lg border border-slate-200 px-2.5 py-1 text-[11px] font-semibold text-slate-500 transition hover:border-[#185FA5] hover:text-[#185FA5]"
+        >
+          Parse from text
+        </button>
+      </div>
+
+      {/* Parse from document text */}
+      {showParse && (
+        <div className="space-y-2 rounded-xl border border-[#E6F1FB] bg-[#f5f9ff] p-3">
+          <p className="text-[11px] font-semibold text-[#185FA5]">
+            Paste the definition table from the Assessment Formula Compass document. Each line should be: Symbol — Description
+          </p>
+          <textarea
+            value={parseText}
+            onChange={(e) => setParseText(e.target.value)}
+            rows={8}
+            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 font-mono text-[11px] text-slate-700 outline-none focus:border-[#185FA5] resize-y"
+            placeholder={"Sale\tThe original recorded sale price of the comparable property.\nr\tThe periodic rate of price change (monthly or annual, expressed as a decimal).\nn\tThe number of periods between the sale date and the effective date of value."}
+          />
+          <div className="flex gap-2">
+            <ActionBtn small onClick={handleParseText} disabled={!parseText.trim()}>Parse & Append</ActionBtn>
+            <ActionBtn small tone="ghost" onClick={() => { setShowParse(false); setParseText(""); }}>Cancel</ActionBtn>
+          </div>
+        </div>
+      )}
+
+      {/* Symbol rows */}
+      <div className="space-y-2">
+        {rows.length > 0 && (
+          <div className="flex items-center gap-2 px-0.5">
+            <span className="flex w-28 shrink-0 items-center gap-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">Symbol<FieldHint text="The mathematical symbol as it appears in the formula (e.g. 'r', 'GRM', 'Vᵢ'). Use the exact character students will see." /></span>
+            <span className="flex flex-1 items-center gap-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">Description<FieldHint text="Plain-English meaning of this symbol (e.g. 'Adjustment rate as a decimal'). Keep it concise and precise." /></span>
+          </div>
+        )}
+        {rows.length === 0 ? (
+          <p className="text-[11px] text-slate-400">No symbols yet — click "Add row" or "Parse from text" to begin.</p>
+        ) : (
+          rows.map((row, i) => (
+            <div key={i} className="flex items-start gap-2">
+              <input
+                value={row.symbol}
+                onChange={(e) => updateRow(i, { symbol: e.target.value })}
+                placeholder="Symbol"
+                className="w-28 shrink-0 rounded-lg border border-slate-200 bg-white px-2 py-1.5 font-mono text-xs text-slate-700 outline-none focus:border-[#185FA5] focus:ring-1 focus:ring-[#E6F1FB]"
+              />
+              <input
+                value={row.description}
+                onChange={(e) => updateRow(i, { description: e.target.value })}
+                placeholder="Description"
+                className="flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 outline-none focus:border-[#185FA5] focus:ring-1 focus:ring-[#E6F1FB]"
+              />
+              <div className="flex flex-col gap-0.5 shrink-0">
+                <button type="button" onClick={() => moveRow(i, "up")} disabled={i === 0} className="h-5 w-5 flex items-center justify-center rounded text-slate-300 hover:text-[#185FA5] disabled:opacity-0">
+                  <Icons.ChevronUp size={11} />
+                </button>
+                <button type="button" onClick={() => moveRow(i, "down")} disabled={i === rows.length - 1} className="h-5 w-5 flex items-center justify-center rounded text-slate-300 hover:text-[#185FA5] disabled:opacity-0">
+                  <Icons.ChevronDown size={11} />
+                </button>
+                <button type="button" onClick={() => removeRow(i)} className="h-5 w-5 flex items-center justify-center rounded text-slate-300 hover:text-red-500">
+                  <Icons.Trash2 size={10} />
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      <div className="flex items-center gap-3 pt-1 border-t border-slate-100">
+        <ActionBtn small tone="ghost" onClick={addRow}>
+          <Icons.Plus size={10} /> Add row
+        </ActionBtn>
+        <ActionBtn onClick={handleSave} disabled={savingBusy}>
+          {savingBusy ? "Saving…" : rows.length > 0 ? `Save ${rows.length} symbol${rows.length !== 1 ? "s" : ""}` : "Save (clear symbols)"}
+        </ActionBtn>
+      </div>
+    </div>
+  );
+}
+
 // ─── Examples Editor ──────────────────────────────────────────────────────────
 
 const DIFFICULTY_CONFIG: Array<{ key: ExampleDifficulty; label: string; color: string; bg: string; border: string }> = [
@@ -1672,7 +1879,7 @@ function ExamplesEditor({
         return (
           <div key={key} className={cn("rounded-xl border p-3 space-y-2", hasEx ? `${border} ${bg}` : "border-slate-200 bg-white")}>
             <div className="flex items-center justify-between">
-              <span className={cn("text-xs font-bold", hasEx ? color : "text-slate-400")}>{label}</span>
+              <span className={cn("flex items-center gap-1 text-xs font-bold", hasEx ? color : "text-slate-400")}>{label}<FieldHint text="Each step shows one line of the worked solution with substituted values (e.g. '125,000 ÷ 950 = 131.58'). Use numbered steps to walk students through the calculation." /></span>
               <div className="flex gap-1.5">
                 {hasEx && (
                   <button type="button" onClick={() => clearDifficulty(key)} className="text-[10px] font-semibold text-slate-400 hover:text-red-500">
@@ -1710,7 +1917,7 @@ function ExamplesEditor({
                   </div>
                 ))}
                 {/* Summary line */}
-                <SmallField label="Summary / interpretation" hint="(optional — shown after steps)">
+                <SmallField label="Summary / interpretation" hint="(optional — shown after steps)" tooltip="A one-sentence interpretation of the final result (e.g. 'The comp trends forward to $132,000'). Helps students understand what the answer means in context.">
                   <input
                     value={ex.summary ?? ""}
                     onChange={(e) => updateExample(key, { summary: e.target.value || undefined })}

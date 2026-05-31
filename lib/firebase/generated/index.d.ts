@@ -515,6 +515,7 @@ export interface CreateFormulaVariables {
   position: number;
   calcMetaJson?: string | null;
   examplesJson?: string | null;
+  symbolsJson?: string | null;
 }
 
 export interface CreateGlossaryNoteData {
@@ -1120,6 +1121,7 @@ export interface GetFormulaSectionsData {
       notes?: string | null;
       calcMetaJson?: string | null;
       examplesJson?: string | null;
+      symbolsJson?: string | null;
     } & Formula_Key)[];
   } & FormulaSection_Key)[];
 }
@@ -1703,6 +1705,7 @@ export interface UpdateFormulaVariables {
   notes?: string | null;
   calcMetaJson?: string | null;
   examplesJson?: string | null;
+  symbolsJson?: string | null;
   position?: number | null;
 }
 

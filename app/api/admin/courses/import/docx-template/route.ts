@@ -24,13 +24,15 @@ const HEADERS = [
   "difficulty",
   "domain",
   "topic_tags",
+  "asc_reference",
+  "est_duration_min",
 ];
 
 const SAMPLE_ROWS = [
-  ["Introduction to USPAP", "What is USPAP?", "text", "Overview of the Uniform Standards of Professional Appraisal Practice", "Understand purpose and scope of USPAP", "easy", "law", "USPAP|standards"],
-  ["Introduction to USPAP", "Ethics Rule", "text", "Conduct, Management, Confidentiality, and Record Keeping rules", "Apply the four sections of the Ethics Rule", "proficient", "ethics", "ethics|conduct"],
-  ["Valuation Methods", "Sales Comparison Approach", "text", "Adjusting comparable sales for market conditions", "Select and adjust comparables appropriately", "proficient", "appraisal", "comparable sales|adjustments"],
-  ["Valuation Methods", "Income Capitalization", "text", "Direct and yield capitalization techniques", "Calculate value via direct capitalization", "expert", "math", "cap rate|NOI|GRM"],
+  ["Introduction to USPAP", "What is USPAP?", "text", "Overview of the Uniform Standards of Professional Appraisal Practice", "Understand purpose and scope of USPAP", "easy", "law", "USPAP|standards", "", "12"],
+  ["Introduction to USPAP", "Ethics Rule", "text", "Conduct, Management, Confidentiality, and Record Keeping rules", "Apply the four sections of the Ethics Rule", "proficient", "ethics", "ethics|conduct", "", "10"],
+  ["Valuation Methods", "Sales Comparison Approach", "text", "Adjusting comparable sales for market conditions", "Select and adjust comparables appropriately", "proficient", "appraisal", "comparable sales|adjustments", "", "15"],
+  ["Valuation Methods", "Income Capitalization", "text", "Direct and yield capitalization techniques", "Calculate value via direct capitalization", "expert", "math", "cap rate|NOI|GRM", "", "20"],
 ];
 
 function headerCell(text: string): TableCell {
@@ -127,8 +129,8 @@ export async function GET(request: NextRequest) {
           }),
           new Paragraph({
             children: [
-              new TextRun({ text: "domain options: ", bold: true }),
-              new TextRun("math | appraisal | law | philly | admin | ethics"),
+              new TextRun({ text: "domain: ", bold: true }),
+              new TextRun("Free-form text (e.g. finance, compliance, law, ethics, operations, …)"),
             ],
           }),
         ],

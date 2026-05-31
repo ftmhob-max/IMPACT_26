@@ -2,6 +2,7 @@
 
 import { type DragEvent, type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import * as Icons from "@/components/ui/Icons";
+import { FieldHint } from "@/components/ui/FieldHint";
 import { adminFetch } from "@/lib/admin/client-fetch";
 import { cn } from "@/lib/utils";
 import { DomainCombobox } from "@/components/admin/DomainCombobox";
@@ -320,21 +321,24 @@ export function QuizManagementPanel({
               <div className="grid gap-2 sm:grid-cols-4">
                 <div className="flex items-center gap-1.5">
                   <input type="number" className="admin-input w-16" value={form.passingScore} min={0} max={100} onChange={(e) => setField("passingScore", Number(e.target.value))} />
-                  <span className="text-xs text-slate-500">% pass</span>
+                  <span className="flex items-center gap-0.5 text-xs text-slate-500">% pass<FieldHint text="Minimum percentage (0–100) required to pass. Typical threshold is 70." /></span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <input type="number" className="admin-input w-16" value={form.timeLimitMinutes} min={1} onChange={(e) => setField("timeLimitMinutes", e.target.value)} placeholder="—" />
-                  <span className="text-xs text-slate-500">min</span>
+                  <span className="flex items-center gap-0.5 text-xs text-slate-500">min<FieldHint text="Maximum minutes allowed to complete the quiz. Leave blank for no time limit." /></span>
                 </div>
                 <label className="flex items-center gap-1.5 text-xs text-slate-600">
                   <input type="checkbox" checked={form.shuffleQuestions} onChange={(e) => setField("shuffleQuestions", e.target.checked)} />
-                  Shuffle Q
+                  Shuffle Q<FieldHint text="Randomizes question order on each attempt to discourage answer sharing between students." />
                 </label>
-                <select className="admin-input text-xs" value={form.status} onChange={(e) => setField("status", e.target.value)}>
-                  <option value="draft">Draft</option>
-                  <option value="review">Review</option>
-                  <option value="published">Published</option>
-                </select>
+                <div className="flex items-center gap-1">
+                  <select className="admin-input text-xs" value={form.status} onChange={(e) => setField("status", e.target.value)}>
+                    <option value="draft">Draft</option>
+                    <option value="review">Review</option>
+                    <option value="published">Published</option>
+                  </select>
+                  <FieldHint text="Draft: not visible to students. Review: internal review only. Published: live and accessible." />
+                </div>
               </div>
               <div className="flex gap-2">
                 <button type="button" className="admin-action" onClick={createQuiz} disabled={busy || !form.title.trim()}>
@@ -769,7 +773,7 @@ function QuizDetailPanel({
             {/* Score / time */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="admin-label">Passing score (%)</label>
+                <label className="admin-label">Passing score (%)<FieldHint text="The minimum percentage (0–100) a student must score to pass this quiz. A typical threshold is 70." /></label>
                 <input
                   type="number"
                   min={0}
@@ -780,7 +784,7 @@ function QuizDetailPanel({
                 />
               </div>
               <div>
-                <label className="admin-label">Time limit (minutes, blank = untimed)</label>
+                <label className="admin-label">Time limit (minutes, blank = untimed)<FieldHint text="Maximum minutes a student has to complete the quiz. Leave blank to allow unlimited time." /></label>
                 <input
                   type="number"
                   min={1}
@@ -1044,7 +1048,7 @@ function QuizQuestionCard({
           {editing ? (
             <>
               <div>
-                <label className="admin-label">Question text</label>
+                <label className="admin-label">Question text<FieldHint text="Write the full question clearly and specifically. Avoid double negatives or ambiguous wording that could confuse students." /></label>
                 <textarea
                   className="admin-input min-h-20 text-sm leading-relaxed"
                   value={draft.questionText}
@@ -1053,7 +1057,7 @@ function QuizQuestionCard({
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="admin-label">Difficulty</label>
+                  <label className="admin-label">Difficulty<FieldHint text="Easy: foundational recall. Proficient: applied understanding. Expert: complex analysis or multi-step reasoning." /></label>
                   <select className="admin-input" value={draft.difficulty} onChange={(e) => setDraft((p) => ({ ...p, difficulty: e.target.value }))}>
                     <option value="easy">Easy</option>
                     <option value="proficient">Proficient</option>
@@ -1061,13 +1065,13 @@ function QuizQuestionCard({
                   </select>
                 </div>
                 <div>
-                  <label className="admin-label">Domain</label>
+                  <label className="admin-label">Domain<FieldHint text="The appraisal domain this question tests. Used for domain-level reporting and filtering questions in the bank." /></label>
                   <DomainCombobox value={draft.domain} onChange={(val) => setDraft((p) => ({ ...p, domain: val }))} />
                 </div>
               </div>
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="admin-label mb-0">Answer choices</label>
+                  <label className="admin-label mb-0">Answer choices<FieldHint text="Enter each answer option. Click the circle to mark correct answer(s). Add an explanation per choice to give students feedback after answering." /></label>
                   <button
                     type="button"
                     onClick={doShuffleChoices}

@@ -6,6 +6,7 @@ import { auth } from "@/lib/firebase/client";
 import { cn } from "@/lib/utils";
 import { FileDropZone } from "./FileDropZone";
 import * as Icons from "@/components/ui/Icons";
+import { FieldHint } from "@/components/ui/FieldHint";
 
 type MaterialKind = "document" | "audio" | "video" | "image";
 type PreviewTab = "preview" | "content" | "links" | "details";
@@ -1284,7 +1285,7 @@ export function MaterialsPanel() {
                             </button>
                           </div>
                           <div className="mt-3">
-                            <label className="admin-label">Library title</label>
+                            <label className="admin-label">Library title<FieldHint text="The display name for this material in the library. Make it descriptive so it's easy to find later (e.g. 'Chapter 3 – Trending Forward Worked Examples')." /></label>
                             <input
                               className="admin-input"
                               value={item.title}
@@ -1350,7 +1351,7 @@ export function MaterialsPanel() {
                 </p>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
                   <div>
-                    <label className="admin-label">Folder</label>
+                    <label className="admin-label">Folder<FieldHint text="Organize this material into a folder for easier browsing. You can move it to a different folder later from the detail panel." /></label>
                     <select className="admin-input" value={uploadFolderId || selectedFolderId || ""} onChange={(event) => setUploadFolderId(event.target.value)}>
                       <option value="">All Materials</option>
                       {folderOptions.map((opt) => (
@@ -1359,7 +1360,7 @@ export function MaterialsPanel() {
                     </select>
                   </div>
                   <div>
-                    <label className="admin-label">Tags</label>
+                    <label className="admin-label">Tags<FieldHint text="Keywords that make this material discoverable when searching. Type a tag and press Enter or comma to add. Use consistent naming (e.g. 'chapter-3', 'worked-example')." /></label>
                     {/* Chip-based tag editor */}
                     <div className="admin-input flex flex-wrap items-center gap-1 min-h-[2rem] h-auto py-1 cursor-text" onClick={(e) => (e.currentTarget.querySelector("input") as HTMLInputElement | null)?.focus()}>
                       {uploadTags.map((tag) => (
@@ -1400,7 +1401,7 @@ export function MaterialsPanel() {
                     <p className="mt-1 text-[10px] text-slate-400">Type a tag and press Enter or comma to add</p>
                   </div>
                   <div>
-                    <label className="admin-label">Link to course</label>
+                    <label className="admin-label">Link to course<FieldHint text="Associate this material with a course so it appears in that course's resource list. Students in the course can access it directly." /></label>
                     <select className="admin-input" value={uploadCourseId} onChange={(event) => { setUploadCourseId(event.target.value); setUploadLessonId(""); }}>
                       <option value="">No course link</option>
                       {courses.map((course) => (
@@ -1409,7 +1410,7 @@ export function MaterialsPanel() {
                     </select>
                   </div>
                   <div>
-                    <label className="admin-label">Link to lesson</label>
+                    <label className="admin-label">Link to lesson<FieldHint text="Associate this material with a specific lesson. Useful for primary readings or worked examples tied to a lesson's content." /></label>
                     <select className="admin-input" value={uploadLessonId} onChange={(event) => setUploadLessonId(event.target.value)}>
                       <option value="">No lesson link</option>
                       {allLessonsForUpload
@@ -3514,7 +3515,7 @@ function ContentTabPanel({
       <div className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
           <div>
-            <p className="text-sm font-semibold text-slate-800">Edit transcript</p>
+            <p className="flex items-center gap-1 text-sm font-semibold text-slate-800">Edit transcript<FieldHint text="Paste or type the full transcript text. This is used for search indexing and student reading. Upload a .txt file to replace the entire transcript at once." /></p>
             <p className="text-xs text-slate-500">
               Paste or type the transcript directly, or upload a .txt file below.
             </p>
@@ -3734,7 +3735,7 @@ function DetailsTabPanel({
         <DetailCard label="MIME type" value={material.fileType} />
         <DetailCard label="Original asset" value={material.hasAsset ? "Available" : "Unavailable"} />
         <div className="rounded-xl border border-slate-200 bg-white px-3 py-3">
-          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-400">Folder</p>
+          <p className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-400">Folder<FieldHint text="Move this material to a different folder. The change takes effect immediately." /></p>
           <select
             className="mt-1 w-full rounded-lg border-0 bg-transparent p-0 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-0"
             value={material.folder?.id ?? "__root"}
@@ -3752,7 +3753,7 @@ function DetailsTabPanel({
       </div>
 
       <div className="rounded-xl border border-slate-200 bg-white p-4">
-        <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-400">Tags</p>
+        <p className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-400">Tags<FieldHint text="Add or remove tags to keep this material discoverable. Tags help filter and group materials across the library." /></p>
         <div className="mt-3 flex flex-wrap gap-2">
           {currentTags.map((name) => (
             <span key={name} className="inline-flex items-center gap-1 rounded-full bg-slate-100 pl-2.5 pr-1.5 py-0.5 text-[10px] font-semibold text-slate-600">
@@ -3931,7 +3932,7 @@ function LinkToLessonModal({ materialId, courses, onClose, onLinked }: LinkToLes
         <div className="space-y-4 px-5 py-5">
           {/* Link target toggle */}
           <div>
-            <label className="admin-label">Link to</label>
+            <label className="admin-label">Link to<FieldHint text="Choose whether to link this material to the whole course (all lessons) or to a specific lesson within the course." /></label>
             <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 w-fit">
               <button
                 type="button"
@@ -3957,7 +3958,7 @@ function LinkToLessonModal({ materialId, courses, onClose, onLinked }: LinkToLes
           </div>
 
           <div>
-            <label className="admin-label">Course</label>
+            <label className="admin-label">Course<FieldHint text="Select the course this material belongs to. If linking to a specific lesson, pick the course first to narrow the lesson list." /></label>
             <select
               className="admin-input"
               value={selectedCourse}
@@ -3975,7 +3976,7 @@ function LinkToLessonModal({ materialId, courses, onClose, onLinked }: LinkToLes
 
           {linkTarget === "lesson" && course && (
             <div>
-              <label className="admin-label">Lesson</label>
+              <label className="admin-label">Lesson<FieldHint text="The specific lesson this material directly supports. Students will find it in that lesson's resource list." /></label>
               <select
                 className="admin-input"
                 value={selectedLesson}
@@ -3994,7 +3995,7 @@ function LinkToLessonModal({ materialId, courses, onClose, onLinked }: LinkToLes
           )}
 
           <div>
-            <label className="admin-label">Reference label (optional)</label>
+            <label className="admin-label">Reference label (optional)<FieldHint text="A short label describing how this material is used in the lesson (e.g. 'Primary reading', 'Worked example', 'Appeal packet'). Shown to students alongside the file." /></label>
             <input
               className="admin-input"
               value={label}

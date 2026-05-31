@@ -245,6 +245,7 @@ query GetFormulaSections @auth(level: NO_ACCESS) {
       notes
       calcMetaJson
       examplesJson
+      symbolsJson
     }
   }
 }

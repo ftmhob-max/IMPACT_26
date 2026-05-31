@@ -5,6 +5,7 @@ import * as Icons from "@/components/ui/Icons";
 import { cn } from "@/lib/utils";
 import { GlossaryImportPanel } from "@/components/admin/GlossaryImportPanel";
 import { DomainCombobox } from "@/components/admin/DomainCombobox";
+import { FieldHint } from "@/components/ui/FieldHint";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -605,12 +606,12 @@ function TermForm({
       )}
 
       <div>
-        <label className="admin-label">Term <span className="text-red-400">*</span></label>
+        <label className="admin-label">Term <span className="text-red-400">*</span><FieldHint text="The exact word or phrase as students will search for it (e.g. 'Assessed Value'). Use title case." /></label>
         <input className="admin-input" value={term} onChange={(e) => setTerm(e.target.value)} placeholder="e.g. Assessed Value" autoFocus={!initial} />
       </div>
 
       <div>
-        <label className="admin-label">Definition <span className="text-red-400">*</span></label>
+        <label className="admin-label">Definition <span className="text-red-400">*</span><FieldHint text="A concise one-sentence definition. This is the primary text shown in collapsed glossary cards and in inline tooltips throughout lessons." /></label>
         <textarea
           className="admin-input min-h-16 leading-relaxed"
           value={definition}
@@ -620,7 +621,7 @@ function TermForm({
       </div>
 
       <div>
-        <label className="admin-label">Full definition (optional)</label>
+        <label className="admin-label">Full definition (optional)<FieldHint text="Extended explanation shown when a student expands the term. Include context, nuance, and how it's applied in appraisal practice." /></label>
         <textarea
           className="admin-input min-h-24 leading-relaxed"
           value={fullDefinition}
@@ -631,17 +632,17 @@ function TermForm({
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
-          <label className="admin-label">Domain (optional)</label>
+          <label className="admin-label">Domain (optional)<FieldHint text="The appraisal domain this term belongs to. Used for filtering the glossary and domain-specific reporting." /></label>
           <DomainCombobox value={domain ?? ""} onChange={(val) => setDomain(val)} />
         </div>
         <div>
-          <label className="admin-label">Category (optional)</label>
+          <label className="admin-label">Category (optional)<FieldHint text="A finer grouping within the domain (e.g. 'USPAP', 'Ratio Study'). Helps students filter and browse related terms." /></label>
           <input className="admin-input" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="e.g. USPAP, Ratio Study" />
         </div>
       </div>
 
       <div>
-        <label className="admin-label">Example (optional)</label>
+        <label className="admin-label">Example (optional)<FieldHint text="A sample sentence showing the term used in context. Helps students understand practical application in appraisal work." /></label>
         <textarea
           className="admin-input min-h-16"
           value={example}
@@ -651,7 +652,7 @@ function TermForm({
       </div>
 
       <div>
-        <label className="admin-label">Related terms (comma-separated)</label>
+        <label className="admin-label">Related terms (comma-separated)<FieldHint text="Other glossary terms that are closely related. Displayed as links in the expanded card so students can explore connected concepts." /></label>
         <input
           className="admin-input"
           value={relatedText}
@@ -661,7 +662,7 @@ function TermForm({
       </div>
 
       <div>
-        <label className="admin-label">Source document (optional)</label>
+        <label className="admin-label">Source document (optional)<FieldHint text="The reference document this definition comes from (e.g. 'Master Reference Glossary IMPACT 26V'). Shown as a citation for accuracy." /></label>
         <input
           className="admin-input"
           value={sourceDocument}
@@ -671,7 +672,7 @@ function TermForm({
       </div>
 
       <div>
-        <label className="admin-label">Visibility</label>
+        <label className="admin-label">Visibility<FieldHint text="Published: the term is visible to all enrolled students. Draft: the term is hidden while you're still editing or reviewing it." /></label>
         <div className="flex items-center gap-3 mt-1">
           <button
             type="button"

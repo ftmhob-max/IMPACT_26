@@ -14,6 +14,8 @@ export async function parseDocxLessons(buffer: Buffer): Promise<LessonCsvPreview
       modules: [],
       errors: [{ row: 0, field: "file", message: "No table found in document. Make sure the Word document contains a formatted table." }],
       totalLessons: 0,
+      glossaryTerms: [],
+      whoBenefits: [],
     };
   }
 
@@ -23,6 +25,8 @@ export async function parseDocxLessons(buffer: Buffer): Promise<LessonCsvPreview
       modules: [],
       errors: [{ row: 0, field: "file", message: "Table must have a header row and at least one data row." }],
       totalLessons: 0,
+      glossaryTerms: [],
+      whoBenefits: [],
     };
   }
 
@@ -64,5 +68,5 @@ export async function parseDocxLessons(buffer: Buffer): Promise<LessonCsvPreview
   const modules = [...moduleMap.entries()].map(([title, lessons]) => ({ title, lessons }));
   const totalLessons = modules.reduce((sum, m) => sum + m.lessons.length, 0);
 
-  return { modules, errors, totalLessons };
+  return { modules, errors, totalLessons, glossaryTerms: [], whoBenefits: [] };
 }
