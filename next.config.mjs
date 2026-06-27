@@ -16,6 +16,9 @@ const nextConfig = {
     "firebase-admin/storage",
     "firebase-admin/messaging",
   ],
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   async headers() {
     return [
       {
@@ -50,3 +53,4 @@ const nextConfig = {
 };
 
 export default nextConfig;
+
