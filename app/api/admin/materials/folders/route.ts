@@ -3,7 +3,6 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { requireAdminRequest } from "@/lib/admin/auth";
 import { fetchAdminMaterialFolders, fetchAdminMaterialLibrary } from "@/lib/admin/material-library";
-import { createStoredMaterialFolder } from "@/lib/admin/material-folder-store";
 import { adminDcMutate } from "@/lib/firebase/admin-dc";
 
 const folderSchema = z.object({
@@ -48,6 +47,7 @@ export async function POST(request: NextRequest) {
 
   const id = randomUUID();
   const { name, parentFolderId, folderType, courseId, lessonId } = parsed.data;
+
   try {
     await adminDcMutate("CreateSourceMaterialFolder", {
       id,
@@ -69,19 +69,7 @@ export async function POST(request: NextRequest) {
     }).catch(() => null);
     return NextResponse.json({ id, name }, { status: 201 });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    if (!message.includes("operation \"CreateSourceMaterialFolder\" not found")) {
-      console.error("[admin/materials/folders:POST]", error);
-      return NextResponse.json({ error: "Unable to create folder" }, { status: 500 });
-    }
-
-    const folder = await createStoredMaterialFolder({
-      id,
-      name,
-      parentFolderId: parentFolderId ?? null,
-      folderType,
-      createdBy: { id: auth.session.uid },
-    });
-    return NextResponse.json({ id: folder.id, name: folder.name, compatibility: true }, { status: 201 });
+    console.error("[admin/materials/folders:POST]", error);
+    return NextResponse.json({ error: "Unable to create folder" }, { status: 500 });
   }
 }

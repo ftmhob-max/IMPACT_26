@@ -55,11 +55,6 @@ export interface QuestionBankContext {
   siblingQuizIds: string[];
 }
 
-export interface QuestionBankResponse {
-  context: QuestionBankContext;
-  candidates: QuestionBankCandidate[];
-}
-
 export function parseTopicTags(topicTags?: string | null): string[] {
   if (!topicTags) return [];
   try {

@@ -16,7 +16,7 @@ import { getLearnerSession } from "@/lib/firebase/learner-session";
 import { adminDcQuery } from "@/lib/firebase/admin-dc";
 import { DEV_FORMULA_SECTIONS } from "@/lib/dev-content";
 import { listUserFavorites } from "@/lib/firebase/favorites";
-import { dedupeFormulaSections } from "@/lib/formula-sections";
+import { dedupeFormulaSections } from "@/lib/utils";
 import { DOMAINS, type Domain } from "@/lib/utils";
 import { ProfileSection } from "@/components/profile/ProfileSection";
 import { LessonNotesPanel } from "@/components/profile/LessonNotesPanel";

@@ -7,14 +7,13 @@ import { Scoreboard } from "./Scoreboard";
 import { ProgressBar } from "./ProgressBar";
 import { FilterPanel } from "./FilterPanel";
 import { FormulaQuickRef, type FormulaSectionData } from "./FormulaQuickRef";
-import { ScrollToTop } from "./ScrollToTop";
 import { FormulaCalculatorPopup } from "./FormulaCalculatorPopup";
-import { QuizCalculatorLauncher } from "./QuizCalculatorLauncher";
 import { FormulaCalculatorProvider, useFormulaCalc } from "@/components/layout/FormulaCalculatorProvider";
 import type { SafeQuestion } from "@/lib/quiz-engine/sanitize";
 import type { EvaluationResult } from "@/lib/quiz-engine/evaluate";
 import { getIdToken } from "@/lib/firebase/auth";
-import { shuffleArray } from "@/lib/utils";
+import { cn, shuffleArray } from "@/lib/utils";
+import * as Icons from "@/components/ui/Icons";
 import type { GlossaryTermData } from "@/components/lessons/GlossaryTooltip";
 import { buildTermsMap } from "@/components/lessons/GlossaryTooltip";
 
@@ -303,7 +302,7 @@ function QuizEngineInner({ session, onComplete, onBack }: QuizEngineProps) {
         isCompleting={isCompleting}
         calculatorLauncher={
           calculatorSettings?.enabled !== false ? (
-            <QuizCalculatorLauncher
+            <QuizCalculatorLauncherButton
               isOpen={isOpen}
               isMinimized={isMinimized}
               onClick={() => (isOpen ? (isMinimized ? restore() : undefined) : open())}
@@ -358,11 +357,73 @@ function QuizEngineInner({ session, onComplete, onBack }: QuizEngineProps) {
         </div>
       </div>
 
-      <ScrollToTop />
+      <QuizScrollToTopButton />
 
       {/* Global quiz calculator popup — persists across question navigation */}
       {calculatorSettings?.enabled !== false && <FormulaCalculatorPopup />}
     </div>
+  );
+}
+
+function QuizScrollToTopButton() {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    function onScroll() {
+      setVisible(window.scrollY > 300);
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  if (!visible) return null;
+
+  return (
+    <button
+      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      className="scroll-top fixed bottom-5 right-5 z-[100] w-10 h-10 rounded-full text-white flex items-center justify-center text-base transition-all duration-150 hover:-translate-y-0.5"
+      style={{ background: "#185FA5", boxShadow: "0 2px 10px rgba(0,0,0,0.2)" }}
+      aria-label="Scroll to top"
+    >
+      ↑
+    </button>
+  );
+}
+
+function QuizCalculatorLauncherButton({
+  isOpen,
+  isMinimized,
+  onClick,
+}: {
+  isOpen: boolean;
+  isMinimized: boolean;
+  onClick: () => void;
+}) {
+  const isActive = isOpen && !isMinimized;
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={isActive ? "Calculator open" : "Open formula calculator"}
+      aria-pressed={isActive}
+      className={cn(
+        "inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-[12px] font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-1",
+        isActive
+          ? "border-[#185FA5] bg-[#185FA5] text-white shadow-sm"
+          : isOpen && isMinimized
+          ? "border-[#185FA5] bg-[#E6F1FB] text-[#185FA5]"
+          : "border-slate-200 bg-white text-slate-600 hover:border-[#185FA5] hover:text-[#185FA5]"
+      )}
+    >
+      <Icons.Calculator size={14} />
+      <span className="hidden sm:inline">Calculator</span>
+      {isOpen && isMinimized && (
+        <span className="ml-0.5 rounded-full bg-[#185FA5] px-1.5 py-0.5 text-[9px] font-extrabold text-white leading-none">
+          MIN
+        </span>
+      )}
+    </button>
   );
 }
 

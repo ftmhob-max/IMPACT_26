@@ -142,6 +142,7 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
   const [collapsedBlockIds, setCollapsedBlockIds] = useState<Set<string>>(new Set());
   const [sidebarTab, setSidebarTab] = useState<"blocks" | "materials" | "readiness">("blocks");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [blockSearch, setBlockSearch] = useState("");
   const latestSerialized = useRef(stringifyStructuredLessonContent(parseStructuredLessonContent(initialContent, lessonId)));
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [insertingMaterialId, setInsertingMaterialId] = useState<string | null>(null);
@@ -277,14 +278,18 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
     }),
     [documentState.blocks]
   );
-  const groupedLibrary = useMemo(
-    () => ({
-      core: BLOCK_LIBRARY.filter((entry) => entry.category === "core"),
-      practice: BLOCK_LIBRARY.filter((entry) => entry.category === "practice"),
-      support: BLOCK_LIBRARY.filter((entry) => entry.category === "support"),
-    }),
-    []
-  );
+  const groupedLibrary = useMemo(() => {
+    const query = blockSearch.trim().toLowerCase();
+    const matches = (entry: (typeof BLOCK_LIBRARY)[number]) =>
+      !query ||
+      entry.label.toLowerCase().includes(query) ||
+      entry.description.toLowerCase().includes(query);
+    return {
+      core: BLOCK_LIBRARY.filter((entry) => entry.category === "core" && matches(entry)),
+      practice: BLOCK_LIBRARY.filter((entry) => entry.category === "practice" && matches(entry)),
+      support: BLOCK_LIBRARY.filter((entry) => entry.category === "support" && matches(entry)),
+    };
+  }, [blockSearch]);
 
   function addBlock(type: LessonBlockType) {
     updateDocument((current) => ({
@@ -585,6 +590,7 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
                 materials={materials}
                 quizzes={quizzes}
                 collapsed={collapsedBlockIds.has(block.id)}
+                justInserted={justInsertedBlockId === block.id}
                 onToggleCollapsed={() =>
                   setCollapsedBlockIds((current) => {
                     const next = new Set(current);
@@ -616,7 +622,7 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
                   type="button"
                   onClick={() => setSidebarTab("blocks")}
                   className={cn(
-                    "flex-1 py-3 text-[11px] font-extrabold uppercase tracking-[0.1em] transition-colors",
+                    "flex-1 py-3 text-[11px] font-extrabold uppercase tracking-[0.1em] transition-colors duration-200 cursor-pointer",
                     sidebarTab === "blocks" ? "border-b-2 border-[#185FA5] text-[#185FA5]" : "text-slate-400 hover:text-slate-700"
                   )}
                 >
@@ -626,7 +632,7 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
                   type="button"
                   onClick={() => setSidebarTab("materials")}
                   className={cn(
-                    "flex-1 py-3 text-[11px] font-extrabold uppercase tracking-[0.1em] transition-colors",
+                    "flex-1 py-3 text-[11px] font-extrabold uppercase tracking-[0.1em] transition-colors duration-200 cursor-pointer",
                     sidebarTab === "materials" ? "border-b-2 border-[#185FA5] text-[#185FA5]" : "text-slate-400 hover:text-slate-700"
                   )}
                 >
@@ -636,7 +642,7 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
                   type="button"
                   onClick={() => setSidebarTab("readiness")}
                   className={cn(
-                    "flex-1 py-3 text-[11px] font-extrabold uppercase tracking-[0.1em] transition-colors flex items-center justify-center gap-1.5",
+                    "flex flex-1 cursor-pointer items-center justify-center gap-1.5 py-3 text-[11px] font-extrabold uppercase tracking-[0.1em] transition-colors duration-200",
                     sidebarTab === "readiness" ? "border-b-2 border-[#185FA5] text-[#185FA5]" : "text-slate-400 hover:text-slate-700"
                   )}
                 >
@@ -664,15 +670,35 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
 
             {sidebarTab === "blocks" && (
               <>
-                <div className="border-b border-slate-100 px-5 py-4">
+                <div className="border-b border-slate-100 px-5 py-4 space-y-3">
                   <p className="text-sm leading-6 text-slate-600">
                     Add blocks by teaching intent instead of one long flat list.
                   </p>
+                  <input
+                    type="search"
+                    value={blockSearch}
+                    onChange={(e) => setBlockSearch(e.target.value)}
+                    placeholder="Search blocks…"
+                    className="admin-input w-full text-sm"
+                    aria-label="Search block library"
+                  />
                 </div>
                 <div className="space-y-4 px-4 py-4">
-                  <BlockLibraryGroup title="Core learning" description="Teach, explain, and model." items={groupedLibrary.core} onAdd={addBlock} />
-                  <BlockLibraryGroup title="Practice" description="Check understanding and create reflection moments." items={groupedLibrary.practice} onAdd={addBlock} />
-                  <BlockLibraryGroup title="Support" description="Add references, downloads, and learning aids." items={groupedLibrary.support} onAdd={addBlock} />
+                  {groupedLibrary.core.length === 0 && groupedLibrary.practice.length === 0 && groupedLibrary.support.length === 0 ? (
+                    <p className="px-1 text-xs text-slate-400">No blocks match your search.</p>
+                  ) : (
+                    <>
+                      {groupedLibrary.core.length > 0 && (
+                        <BlockLibraryGroup title="Core learning" description="Teach, explain, and model." items={groupedLibrary.core} onAdd={addBlock} />
+                      )}
+                      {groupedLibrary.practice.length > 0 && (
+                        <BlockLibraryGroup title="Practice" description="Check understanding and create reflection moments." items={groupedLibrary.practice} onAdd={addBlock} />
+                      )}
+                      {groupedLibrary.support.length > 0 && (
+                        <BlockLibraryGroup title="Support" description="Add references, downloads, and learning aids." items={groupedLibrary.support} onAdd={addBlock} />
+                      )}
+                    </>
+                  )}
                 </div>
               </>
             )}
@@ -706,13 +732,13 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
                         type="button"
                         onClick={() => focusIssue(issue)}
                         className={cn(
-                          "block w-full rounded-xl border px-4 py-3 text-left text-sm transition hover:shadow-sm",
+                          "block w-full cursor-pointer rounded-xl border px-4 py-3 text-left text-sm transition-colors duration-200 hover:shadow-sm",
                           issue.severity === "required" && "border-amber-200 bg-amber-50 text-amber-900",
                           issue.severity === "recommended" && "border-sky-200 bg-sky-50 text-sky-900",
                           issue.severity === "polish" && "border-slate-200 bg-slate-50 text-slate-700"
                         )}
                       >
-                        <div className="flex items-center gap-2 animate-pulse">
+                        <div className="flex items-center gap-2">
                           <SeverityBadge severity={issue.severity} />
                           <span className="font-semibold">{issue.message}</span>
                         </div>
@@ -741,6 +767,13 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
   );
 });
 
+function blockCategoryBorderClass(type: LessonBlockType): string {
+  const category = blockCategoryForType(type);
+  if (category === "core") return "border-l-4 border-l-[#185FA5]";
+  if (category === "practice") return "border-l-4 border-l-amber-500";
+  return "border-l-4 border-l-slate-400";
+}
+
 function BlockEditorCard({
   block,
   index,
@@ -750,6 +783,7 @@ function BlockEditorCard({
   materials,
   quizzes,
   collapsed,
+  justInserted = false,
   onToggleCollapsed,
   onChange,
   onMoveUp,
@@ -766,6 +800,7 @@ function BlockEditorCard({
   materials: MaterialLibraryItem[];
   quizzes: QuizLibraryItem[];
   collapsed: boolean;
+  justInserted?: boolean;
   onToggleCollapsed: () => void;
   onChange: (block: LessonBlock) => void;
   onMoveUp: () => void;
@@ -775,7 +810,14 @@ function BlockEditorCard({
   onInsertAfter: (type: LessonBlockType) => void;
 }) {
   return (
-    <div id={`lesson-block-editor-${block.id}`} className="rounded-2xl border border-black/10 bg-white shadow-sm scroll-mt-24">
+    <div
+      id={`lesson-block-editor-${block.id}`}
+      className={cn(
+        "lesson-block-card rounded-2xl border border-black/10 bg-white shadow-sm scroll-mt-24 transition-shadow",
+        blockCategoryBorderClass(block.type),
+        justInserted && "ring-2 ring-[#185FA5]/35"
+      )}
+    >
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -902,7 +944,7 @@ function BlockLibraryGroup({
               key={block.type}
               type="button"
               onClick={() => onAdd(block.type)}
-              className="flex w-full items-start gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3 text-left transition hover:border-[#185FA5] hover:bg-[#f8fbff]"
+              className="flex w-full cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3 text-left transition hover:border-[#185FA5] hover:bg-[#f8fbff]"
             >
               <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-[#E6F1FB] text-[#185FA5]">
                 <Icon size={16} />
@@ -1453,16 +1495,24 @@ function InlineInsertRail({
   const quickActions = BLOCK_LIBRARY.slice(0, compact ? 4 : 6);
 
   return (
-    <div className={cn("rounded-2xl border border-dashed border-slate-300 bg-slate-50/80", compact ? "p-3" : "px-4 py-3")}>
+    <div
+      className={cn(
+        "group rounded-2xl border border-dashed border-slate-300 bg-slate-50/80 transition-colors hover:border-[#185FA5]/40",
+        compact ? "px-3 py-2" : "px-4 py-2"
+      )}
+    >
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-500">{label}</span>
+        <span className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-500">
+          <Icons.Plus size={12} className="opacity-50 transition-opacity group-hover:opacity-100" aria-hidden />
+          {label}
+        </span>
         <div className="flex flex-wrap gap-2">
           {quickActions.map((item) => (
             <button
               key={item.type}
               type="button"
               onClick={() => onInsert(item.type)}
-              className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-[#185FA5] hover:text-[#185FA5]"
+              className="cursor-pointer rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 opacity-80 transition hover:border-[#185FA5] hover:text-[#185FA5] hover:opacity-100"
             >
               + {item.label}
             </button>

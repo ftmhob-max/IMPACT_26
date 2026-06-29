@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { adminAuth } from "./admin";
+import { verifySessionCookieValue } from "./session-cookie";
 
 export interface LearnerSession {
   uid: string;
@@ -14,7 +15,7 @@ export async function getLearnerSession(): Promise<LearnerSession | null> {
   const sessionCookie = cookieStore.get("__session")?.value;
   if (!sessionCookie) return null;
   try {
-    const decoded = await adminAuth.verifySessionCookie(sessionCookie, false);
+    const decoded = await verifySessionCookieValue(sessionCookie);
     const user = await adminAuth.getUser(decoded.uid).catch(() => null);
     return {
       uid: decoded.uid,

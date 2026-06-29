@@ -6,7 +6,6 @@ const PUBLIC_PATHS = [
   "/sign-up",
   "/reset-password",
   "/api/auth/sync-user",
-  "/api/ai/chat",
 ];
 
 const ADMIN_PATHS = ["/admin"];

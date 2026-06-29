@@ -14,15 +14,6 @@ export function getAdminFirestore() {
   return _db;
 }
 
-export function tryGetAdminFirestore() {
-  try {
-    return getAdminFirestore();
-  } catch (error) {
-    console.warn("[firebase-admin] Firestore unavailable", error);
-    return null;
-  }
-}
-
 // Lazy FieldValue — resolved at runtime, not bundled
 export const FieldValue: typeof import("firebase-admin/firestore").FieldValue =
   new Proxy({} as any, {

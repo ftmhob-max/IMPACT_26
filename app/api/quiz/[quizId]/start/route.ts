@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { verifyIdToken } from "@/lib/firebase/auth-server";
 import { adminDcQuery, adminDcMutate } from "@/lib/firebase/admin-dc";
-import { shuffle } from "@/lib/quiz-engine/evaluate";
+import { shuffleArray } from "@/lib/utils";
 import { sanitizeQuestion } from "@/lib/quiz-engine/sanitize";
 import { formatUuid } from "@/lib/utils";
 import { isAdminRole } from "@/lib/admin/auth";
@@ -113,9 +113,9 @@ export async function POST(
       answerChoices: qq.question.answerChoices_on_question ?? [],
     }));
 
-    if (shuffleQuestions) questionList = shuffle(questionList);
+    if (shuffleQuestions) questionList = shuffleArray(questionList);
     if (shuffleChoices) {
-      questionList = questionList.map((q: any) => ({ ...q, answerChoices: shuffle(q.answerChoices) }));
+      questionList = questionList.map((q: any) => ({ ...q, answerChoices: shuffleArray(q.answerChoices) }));
     }
 
     const questionOrder = questionList.map((q: any) => formatUuid(q.id));

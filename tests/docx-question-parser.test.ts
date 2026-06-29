@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { parseDocxHtml } from "@/lib/admin/docx-question-parser";
-import { docxParseResultToCsvPreview } from "@/lib/admin/docx-question-adapter";
+import { docxParseResultToCsvPreview } from "@/lib/admin/docx-question-table-parser";
 
 test("parses split-cell DOCX question tables across multiple table segments", () => {
   const html = `

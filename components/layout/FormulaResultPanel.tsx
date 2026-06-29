@@ -4,7 +4,6 @@ import { useState } from "react";
 import * as Icons from "@/components/ui/Icons";
 import { cn } from "@/lib/utils";
 import { formatValue, type FormulaCalculatorConfig } from "@/lib/formula-calculator";
-import { FormulaStepBreakdown } from "./FormulaStepBreakdown";
 import type { CalcEngineResult } from "@/lib/hooks/useFormulaCalculationEngine";
 
 interface FormulaResultPanelProps {
@@ -148,7 +147,29 @@ export function FormulaResultPanel({
           <p className="mb-2.5 text-[10px] font-extrabold uppercase tracking-[0.09em] text-slate-400">
             How it was calculated
           </p>
-          <FormulaStepBreakdown steps={workSteps} />
+          <ol className="space-y-2.5" aria-label="Calculation steps">
+            {workSteps.map((step, i) => (
+              <li
+                key={i}
+                className="grid grid-cols-[1.25rem_1fr_auto] items-baseline gap-x-2 gap-y-0.5"
+              >
+                <span className="rounded-full bg-[#E6F1FB] text-center text-[10px] font-extrabold text-[#185FA5] leading-[1.25rem] h-5 w-5 shrink-0">
+                  {i + 1}
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-[11.5px] font-semibold text-slate-700">{step.label}</span>
+                  <span className="font-calc text-[10.5px] text-slate-400">= {step.expression}</span>
+                </span>
+                {step.value !== undefined && (
+                  <span className="shrink-0 font-mono text-[12px] font-bold text-slate-800 tabular-nums">
+                    {isFinite(step.value)
+                      ? step.value.toLocaleString("en-US", { maximumFractionDigits: 6 })
+                      : "∞"}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ol>
         </div>
       )}
 

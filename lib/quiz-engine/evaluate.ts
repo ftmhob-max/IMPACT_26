@@ -6,8 +6,6 @@
  * NEVER import this file in a client component.
  */
 
-import { scoreAnswer } from "./scoring";
-
 export interface AnswerChoiceRecord {
   id: string;
   letter: string;
@@ -41,6 +39,59 @@ export interface EvaluationResult {
   sourceRef: string | null;
 }
 
+interface ScoreResult {
+  pointsEarned: number;
+  pointsPossible: number;
+  isCorrect: boolean;
+}
+
+/**
+ * Single-select: full credit if the one selected letter matches the one correct letter.
+ * Multi-select: partial credit with a guessing penalty.
+ */
+function scoreAnswer(
+  selectedLetters: string[],
+  correctLetters: string[],
+  pointValue: number
+): ScoreResult {
+  if (correctLetters.length === 0) {
+    return { pointsEarned: 0, pointsPossible: pointValue, isCorrect: false };
+  }
+
+  const correctSet = new Set(correctLetters);
+  const selectedSet = new Set(selectedLetters);
+
+  if (correctLetters.length === 1) {
+    const isCorrect = selectedSet.size === 1 && selectedSet.has(correctLetters[0]);
+    return {
+      pointsEarned: isCorrect ? pointValue : 0,
+      pointsPossible: pointValue,
+      isCorrect,
+    };
+  }
+
+  let correctHits = 0;
+  let incorrectHits = 0;
+
+  for (const letter of selectedSet) {
+    if (correctSet.has(letter)) {
+      correctHits++;
+    } else {
+      incorrectHits++;
+    }
+  }
+
+  const raw = Math.max(0, correctHits - incorrectHits);
+  const pointsEarned = pointValue * (raw / correctLetters.length);
+  const isCorrect = raw === correctLetters.length && incorrectHits === 0;
+
+  return {
+    pointsEarned: Math.round(pointsEarned * 100) / 100,
+    pointsPossible: pointValue,
+    isCorrect,
+  };
+}
+
 export function evaluateAnswer(
   question: QuestionRecord,
   selectedLetters: string[],
@@ -61,7 +112,6 @@ export function evaluateAnswer(
     pointsEarned,
     pointsPossible,
     correctLetters,
-    // Full choice data — safe to return because the question has already been answered
     choices: question.answerChoices
       .sort((a, b) => a.position - b.position)
       .map((c) => ({
@@ -74,14 +124,4 @@ export function evaluateAnswer(
     calculation: question.calculation,
     sourceRef: question.sourceRef,
   };
-}
-
-/** Fisher-Yates shuffle — used for question and choice ordering */
-export function shuffle<T>(arr: T[]): T[] {
-  const result = [...arr];
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
 }

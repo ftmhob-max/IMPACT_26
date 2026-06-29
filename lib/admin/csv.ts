@@ -1,6 +1,7 @@
 import { parse } from "csv-parse/sync";
+import { stringify } from "csv-stringify/sync";
 import { csvQuestionRowSchema, type CsvQuestionRow } from "@/lib/validations/admin";
-import { normalizeQuestionTextForDedup } from "./question-dedup";
+import { previewQuestionRows } from "./preview-question-rows";
 
 export interface CsvPreviewResult {
   validRows: CsvQuestionRow[];
@@ -85,7 +86,7 @@ function normalizeCorrectAnswers(values: string[]): string[] {
   return values.map((value) => (/^[a-h]$/i.test(value) ? value.toUpperCase() : value));
 }
 
-export function parseDelimitedList(value: unknown): string[] {
+function parseDelimitedList(value: unknown): string[] {
   if (Array.isArray(value)) return value.map(String).map((item) => item.trim()).filter(Boolean);
   const raw = String(value ?? "").trim();
   if (!raw) return [];
@@ -118,20 +119,15 @@ export function previewAssessmentCsv(csvText: string, existingQuestionMap?: Map<
     return normalized;
   });
 
-  const errors: CsvPreviewResult["errors"] = [];
-  const validRows: CsvQuestionRow[] = [];
-  const seen = new Map<string, number>();
-  const duplicates: CsvPreviewResult["duplicates"] = [];
-  const errorRows: CsvPreviewResult["errorRows"] = [];
-
+  const columnErrors: CsvPreviewResult["errors"] = [];
   const columns = records[0] ? Object.keys(records[0]) : [];
   for (const column of REQUIRED_COLUMNS) {
     if (!columns.includes(column)) {
-      errors.push({ row: 1, field: column, message: "Missing required column" });
+      columnErrors.push({ row: 1, field: column, message: "Missing required column" });
     }
   }
 
-  records.forEach((record, index) => {
+  const previewInputs = records.map((record, index) => {
     const normalized = {
       ...record,
       question_type: normalizeQuestionTypeForCsv(record.question_type),
@@ -143,53 +139,18 @@ export function previewAssessmentCsv(csvText: string, existingQuestionMap?: Map<
     if (normalized.question_type === "short_answer" && normalized.choices.length === 0) {
       normalized.choices = normalized.correct_answers;
     }
-    const parsed = csvQuestionRowSchema.safeParse(normalized);
-    const rowNumber = index + 2;
-
-    if (!parsed.success) {
-      const fieldErrors: string[] = [];
-      for (const issue of parsed.error.issues) {
-        const field = issue.path.join(".") || "row";
-        errors.push({ row: rowNumber, field, message: issue.message });
-        fieldErrors.push(`${field}: ${issue.message}`);
-      }
-      errorRows.push({ row: rowNumber, rawData: normalized, fieldErrors });
-      return;
-    }
-
-    const duplicateKey = normalizeQuestionTextForDedup(parsed.data.question_text);
-
-    // Check against the bank first (when map is provided)
-    if (existingQuestionMap && existingQuestionMap.has(duplicateKey)) {
-      duplicates.push({
-        row: rowNumber,
-        questionText: parsed.data.question_text,
-        existingQuestionId: existingQuestionMap.get(duplicateKey)!,
-      });
-      return; // exclude from validRows — already in the bank
-    }
-
-    // Check intra-file duplicate
-    if (seen.has(duplicateKey)) {
-      duplicates.push({ row: rowNumber, questionText: parsed.data.question_text, existingQuestionId: "" });
-    } else {
-      seen.set(duplicateKey, rowNumber);
-    }
-    validRows.push(parsed.data);
+    return { rowNumber: index + 2, rawData: normalized };
   });
 
-  return { validRows, errors, duplicates, errorRows };
+  const preview = previewQuestionRows(previewInputs, existingQuestionMap);
+  return {
+    ...preview,
+    errors: [...columnErrors, ...preview.errors],
+  };
 }
 
 export function rowsToCsv(rows: Array<Record<string, unknown>>) {
   if (!rows.length) return "";
   const headers = Object.keys(rows[0]);
-  const escapeCell = (value: unknown) => {
-    const raw = value == null ? "" : String(value);
-    return /[",\n]/.test(raw) ? `"${raw.replace(/"/g, '""')}"` : raw;
-  };
-  return [
-    headers.join(","),
-    ...rows.map((row) => headers.map((header) => escapeCell(row[header])).join(",")),
-  ].join("\n");
+  return stringify(rows, { header: true, columns: headers });
 }

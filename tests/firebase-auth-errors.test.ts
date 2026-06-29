@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { AuthFlowError, buildGoogleSignInError } from "@/lib/firebase/auth-errors";
+import { AuthFlowError, buildGoogleSignInError } from "@/lib/firebase/auth";
 
 test("buildGoogleSignInError annotates unauthorized domain failures with the active host", () => {
   const error = buildGoogleSignInError(

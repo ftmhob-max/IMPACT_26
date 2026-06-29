@@ -1,8 +1,7 @@
 import { randomUUID } from "crypto";
 import { NextResponse, type NextRequest } from "next/server";
-import { getAdminStorage } from "@/lib/firebase/admin-storage";
+import { getAdminStorage } from "@/lib/firebase/admin";
 import { requireAdminRequest } from "@/lib/admin/auth";
-import { assignStoredMaterialsToFolder } from "@/lib/admin/material-folder-store";
 import { adminDcMutate, adminDcQuery } from "@/lib/firebase/admin-dc";
 import { fetchAdminMaterialFolders, fetchAdminMaterialLibrary, findMaterialById } from "@/lib/admin/material-library";
 import { ingestBuffer } from "@/lib/admin/ingestion";
@@ -190,10 +189,6 @@ export async function PATCH(
           status: body.status ?? selected.status,
         });
       });
-
-      if (body.folderId !== undefined) {
-        await assignStoredMaterialsToFolder([selected.id, materialId], body.folderId ?? null);
-      }
 
       if (Array.isArray(body.tags)) {
         await adminDcMutate("DeleteTagAssignmentsForMaterial", { sourceMaterialId: materialId }).catch(() => null);

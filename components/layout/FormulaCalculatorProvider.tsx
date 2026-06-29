@@ -10,12 +10,11 @@ import {
   useState,
 } from "react";
 import {
-  getFormulaCalculator,
   normalizeCode,
   formatValue,
+  parseFormulaCalculatorConfig,
   type FormulaCalculatorConfig,
 } from "@/lib/formula-calculator";
-import { evalExpression } from "@/lib/admin/formula-eval";
 
 // ─── Shared types ─────────────────────────────────────────────────────────────
 
@@ -130,27 +129,7 @@ function ssWrite(key: string, value: unknown): void {
 
 function resolveConfig(formula: FormulaItem | null): FormulaCalculatorConfig | null {
   if (!formula) return null;
-  const staticConfig = getFormulaCalculator(formula.code);
-  if (staticConfig) return staticConfig;
-  if (formula.calcMetaJson) {
-    try {
-      const meta = JSON.parse(formula.calcMetaJson) as {
-        variables: FormulaCalculatorConfig["variables"];
-        expression: string;
-        output: FormulaCalculatorConfig["output"];
-        explanation?: string;
-      };
-      return {
-        variables: meta.variables,
-        output: meta.output,
-        explanation: meta.explanation,
-        compute: (vars) => {
-          try { return evalExpression(meta.expression, vars); } catch { return null; }
-        },
-      };
-    } catch { return null; }
-  }
-  return null;
+  return parseFormulaCalculatorConfig(formula.calcMetaJson);
 }
 
 // ─── Provider ─────────────────────────────────────────────────────────────────

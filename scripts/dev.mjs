@@ -1,44 +1,13 @@
-import { readFileSync, existsSync } from "node:fs";
+import { existsSync } from "node:fs";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import net from "node:net";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 
+const execFileAsync = promisify(execFile);
 const cwd = process.cwd();
 const envPath = path.join(cwd, ".env");
-
-function readDotEnv(filePath) {
-  if (!existsSync(filePath)) return {};
-
-  const env = {};
-  for (const line of readFileSync(filePath, "utf8").split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) continue;
-
-    const separatorIndex = trimmed.indexOf("=");
-    if (separatorIndex === -1) continue;
-
-    const key = trimmed.slice(0, separatorIndex).trim();
-    let value = trimmed.slice(separatorIndex + 1).trim();
-
-    if (
-      (value.startsWith('"') && value.endsWith('"')) ||
-      (value.startsWith("'") && value.endsWith("'"))
-    ) {
-      value = value.slice(1, -1);
-    }
-
-    env[key] = value;
-  }
-
-  return env;
-}
-
-function resolveEnv() {
-  return {
-    ...readDotEnv(envPath),
-    ...process.env,
-  };
-}
 
 function shouldUseEmulator(env) {
   if (env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR === "true") return true;
@@ -105,8 +74,66 @@ async function findAvailablePort(startPort, host) {
   return port;
 }
 
+async function waitForHttp(url, timeoutMs = 120_000) {
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    try {
+      const response = await fetch(url, { method: "GET" });
+      if (response.ok || response.status < 500) return;
+    } catch {
+      // Keep polling until the dev server is ready.
+    }
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+  throw new Error(`Timed out waiting for ${url}`);
+}
+
+async function waitForPort(port, host = "127.0.0.1", timeoutMs = 120_000) {
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    if (await isPortListening(port, host)) return;
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+  throw new Error(`Timed out waiting for ${host}:${port}`);
+}
+
+async function openBrowser(url) {
+  if (process.platform === "darwin") {
+    await execFileAsync("open", [url]);
+    return;
+  }
+  if (process.platform === "win32") {
+    await execFileAsync("cmd", ["/c", "start", "", url]);
+    return;
+  }
+  await execFileAsync("xdg-open", [url]);
+}
+
+function spawnLogged(label, command, args, env) {
+  const child = spawn(command, args, {
+    cwd,
+    env,
+    stdio: "inherit",
+    shell: process.platform === "win32",
+  });
+  child.on("exit", (code, signal) => {
+    if (signal) {
+      console.log(`[dev:${label}] exited via ${signal}`);
+      return;
+    }
+    if (code && code !== 0) {
+      console.log(`[dev:${label}] exited with code ${code}`);
+    }
+  });
+  return child;
+}
+
 async function main() {
-  const env = resolveEnv();
+  if (!existsSync(envPath)) {
+    console.warn("[dev] No .env file found; continuing with process environment only.");
+  }
+
+  const env = process.env;
   const useEmulator = shouldUseEmulator(env);
   const emulatorPort = getEmulatorPort(env);
   const emulatorRunning = useEmulator && (await isPortListening(emulatorPort));
@@ -114,33 +141,10 @@ async function main() {
     Number.parseInt(env.PORT ?? env.NEXT_PORT ?? "3000", 10) || 3000
   );
 
-  const labels = ["next"];
-  const colors = ["cyan"];
-  const commands = [`next dev --webpack --port ${appPort}`];
-  const waitTargets = [`http://localhost:${appPort}`];
-
-  if (useEmulator) {
-    waitTargets.push(`tcp:127.0.0.1:${emulatorPort}`);
-
-    if (!emulatorRunning) {
-      labels.push("firebase");
-      colors.push("yellow");
-      commands.push("firebase emulators:start --only dataconnect");
-    }
-  }
-
-  labels.push("browser");
-  colors.push("green");
-  commands.push(`wait-on ${waitTargets.join(" ")} && open-cli http://localhost:${appPort}`);
-
-  const args = [
-    "concurrently",
-    "-n",
-    labels.join(","),
-    "-c",
-    colors.join(","),
-    ...commands,
-  ];
+  const sharedEnv = {
+    ...process.env,
+    NODE_PATH: path.join(cwd, "node_modules"),
+  };
 
   if (appPort !== 3000) {
     console.log(`[dev] Port 3000 is busy, using ${appPort} instead.`);
@@ -152,25 +156,23 @@ async function main() {
     console.log("[dev] Firebase emulator disabled by NEXT_PUBLIC_USE_FIREBASE_EMULATOR=false.");
   }
 
-  const cmd = process.platform === "win32" ? "npx.cmd" : "npx";
-  const child = spawn(cmd, args, {
-    cwd,
-    env: {
-      ...process.env,
-      NODE_PATH: path.join(cwd, "node_modules"),
-    },
-    stdio: "inherit",
-    shell: process.platform === "win32",
+  const children = [];
+  const nextCmd = process.platform === "win32" ? "npx.cmd" : "npx";
+  children.push(spawnLogged("next", nextCmd, ["next", "dev", "--webpack", "--port", String(appPort)], sharedEnv));
+
+  if (useEmulator && !emulatorRunning) {
+    children.push(spawnLogged("firebase", nextCmd, ["firebase", "emulators:start", "--only", "dataconnect"], sharedEnv));
+    await waitForPort(emulatorPort);
+  }
+
+  const appUrl = `http://localhost:${appPort}`;
+  await waitForHttp(appUrl);
+  await openBrowser(appUrl).catch((error) => {
+    console.warn(`[dev] Could not open browser automatically: ${error instanceof Error ? error.message : error}`);
+    console.log(`[dev] Open ${appUrl} manually.`);
   });
 
-  child.on("exit", (code, signal) => {
-    if (signal) {
-      process.kill(process.pid, signal);
-      return;
-    }
-
-    process.exit(code ?? 0);
-  });
+  await Promise.race(children.map((child) => new Promise((resolve) => child.on("exit", resolve))));
 }
 
 main().catch((error) => {

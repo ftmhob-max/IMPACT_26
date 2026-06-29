@@ -5,6 +5,11 @@ import * as Icons from "@/components/ui/Icons";
 import { cn } from "@/lib/utils";
 import type { GlossaryImportRow } from "@/lib/admin/csv-glossary";
 import type { PreviewResult, DuplicateEntry, IntraFileDuplicate } from "@/app/api/admin/glossary/import/preview/route";
+import {
+  ImportCollapsibleSection,
+  ImportStepPill,
+  ImportSummaryCard,
+} from "@/components/admin/import/ImportUiPrimitives";
 
 type Resolution = "skip" | "overwrite" | "keep_both";
 
@@ -147,7 +152,11 @@ export function GlossaryImportPanel({ onImported, onClose }: Props) {
         <div className="flex items-center gap-2">
           <Icons.Upload size={15} className="text-[#185FA5]" />
           <span className="text-sm font-bold text-slate-900">Import glossary terms</span>
-          <StepPill current={step} />
+          <ImportStepPill
+            current={step}
+            steps={["upload", "preview", "done"]}
+            labels={{ upload: "Upload", preview: "Review", done: "Done" }}
+          />
         </div>
         <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-700 rounded p-1">
           <Icons.X size={15} />
@@ -202,7 +211,7 @@ export function GlossaryImportPanel({ onImported, onClose }: Props) {
                 Preview import
               </button>
               <a
-                href="/api/admin/glossary/template"
+                href="/api/admin/templates?kind=glossary"
                 download
                 className="flex items-center gap-1.5 text-xs font-semibold text-[#185FA5] hover:underline"
               >
@@ -220,15 +229,15 @@ export function GlossaryImportPanel({ onImported, onClose }: Props) {
           <div className="space-y-5">
             {/* Summary bar */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <SummaryCard label="Parsed" value={preview.rows.length} />
-              <SummaryCard label="Errors" value={preview.errors.length} warn={preview.errors.length > 0} />
-              <SummaryCard label="Duplicates" value={preview.duplicates.length} warn={preview.duplicates.length > 0} />
-              <SummaryCard label="Will import" value={Math.max(0, importableCount)} />
+              <ImportSummaryCard label="Parsed" value={preview.rows.length} />
+              <ImportSummaryCard label="Errors" value={preview.errors.length} warn={preview.errors.length > 0} />
+              <ImportSummaryCard label="Duplicates" value={preview.duplicates.length} warn={preview.duplicates.length > 0} />
+              <ImportSummaryCard label="Will import" value={Math.max(0, importableCount)} />
             </div>
 
             {/* Parse errors */}
             {preview.errors.length > 0 && (
-              <CollapsibleSection title={`${preview.errors.length} parse error${preview.errors.length !== 1 ? "s" : ""}`} defaultOpen variant="error">
+              <ImportCollapsibleSection title={`${preview.errors.length} parse error${preview.errors.length !== 1 ? "s" : ""}`} defaultOpen variant="error">
                 <div className="space-y-1">
                   {preview.errors.map((e, i) => (
                     <p key={i} className="text-xs text-red-700 flex items-start gap-1.5">
@@ -237,12 +246,12 @@ export function GlossaryImportPanel({ onImported, onClose }: Props) {
                     </p>
                   ))}
                 </div>
-              </CollapsibleSection>
+              </ImportCollapsibleSection>
             )}
 
             {/* Intra-file duplicates */}
             {preview.intraFileDuplicates.length > 0 && (
-              <CollapsibleSection
+              <ImportCollapsibleSection
                 title={`${preview.intraFileDuplicates.length} term${preview.intraFileDuplicates.length !== 1 ? "s" : ""} appear multiple times in this file`}
                 defaultOpen
                 variant="warning"
@@ -272,12 +281,12 @@ export function GlossaryImportPanel({ onImported, onClose }: Props) {
                     </div>
                   ))}
                 </div>
-              </CollapsibleSection>
+              </ImportCollapsibleSection>
             )}
 
             {/* Cross-file duplicates */}
             {preview.duplicates.length > 0 && (
-              <CollapsibleSection
+              <ImportCollapsibleSection
                 title={`${preview.duplicates.length} term${preview.duplicates.length !== 1 ? "s" : ""} already exist in the glossary`}
                 defaultOpen
                 variant="warning"
@@ -294,12 +303,12 @@ export function GlossaryImportPanel({ onImported, onClose }: Props) {
                     />
                   ))}
                 </div>
-              </CollapsibleSection>
+              </ImportCollapsibleSection>
             )}
 
             {/* Valid rows preview */}
             {validRowCount > 0 && (
-              <CollapsibleSection title={`${validRowCount} valid row${validRowCount !== 1 ? "s" : ""} ready`} defaultOpen={false} variant="success">
+              <ImportCollapsibleSection title={`${validRowCount} valid row${validRowCount !== 1 ? "s" : ""} ready`} defaultOpen={false} variant="success">
                 <div className="space-y-1 max-h-48 overflow-y-auto">
                   {preview.rows.map((row, i) => {
                     const isDup = preview.duplicates.some((d) => d.row === i);
@@ -316,7 +325,7 @@ export function GlossaryImportPanel({ onImported, onClose }: Props) {
                     );
                   })}
                 </div>
-              </CollapsibleSection>
+              </ImportCollapsibleSection>
             )}
 
             {/* Actions */}
@@ -452,64 +461,6 @@ function FormatGuide() {
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-// ─── Small helpers ────────────────────────────────────────────────────────────
-
-function StepPill({ current }: { current: Step }) {
-  const steps: Step[] = ["upload", "preview", "done"];
-  const labels: Record<Step, string> = { upload: "Upload", preview: "Review", done: "Done" };
-  return (
-    <div className="flex items-center gap-1">
-      {steps.map((s, i) => (
-        <span key={s} className="flex items-center gap-1">
-          {i > 0 && <span className="text-slate-300 text-[10px]">›</span>}
-          <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold", current === s ? "bg-[#185FA5] text-white" : steps.indexOf(current) > i ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-400")}>
-            {labels[s]}
-          </span>
-        </span>
-      ))}
-    </div>
-  );
-}
-
-function SummaryCard({ label, value, warn }: { label: string; value: number; warn?: boolean }) {
-  return (
-    <div className={cn("rounded-lg border px-3 py-2.5 text-center", warn && value > 0 ? "border-amber-200 bg-amber-50" : "border-slate-200 bg-slate-50")}>
-      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}</p>
-      <p className={cn("text-xl font-extrabold", warn && value > 0 ? "text-amber-700" : "text-slate-900")}>{value}</p>
-    </div>
-  );
-}
-
-function CollapsibleSection({
-  title, defaultOpen, variant, children,
-}: {
-  title: string;
-  defaultOpen: boolean;
-  variant: "error" | "warning" | "success" | "neutral";
-  children: React.ReactNode;
-}) {
-  const [open, setOpen] = useState(defaultOpen);
-  const colors = {
-    error: "border-red-200 bg-red-50 text-red-800",
-    warning: "border-amber-200 bg-amber-50 text-amber-800",
-    success: "border-emerald-200 bg-emerald-50 text-emerald-800",
-    neutral: "border-slate-200 bg-slate-50 text-slate-700",
-  }[variant];
-  return (
-    <div className={cn("rounded-xl border overflow-hidden", colors.split(" ")[0])}>
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className={cn("flex w-full items-center gap-2 px-4 py-3 text-xs font-bold text-left transition-colors", colors)}
-      >
-        <span className="flex-1">{title}</span>
-        {open ? <Icons.ChevronUp size={13} /> : <Icons.ChevronDown size={13} />}
-      </button>
-      {open && <div className="px-4 pb-4 pt-2 bg-white">{children}</div>}
     </div>
   );
 }

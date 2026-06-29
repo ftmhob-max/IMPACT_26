@@ -262,10 +262,6 @@ export function stringifyStructuredLessonContent(document: StructuredLessonDocum
   return JSON.stringify(normalizeStructuredLessonDocument(document));
 }
 
-export function getLessonReadinessIssues(document: StructuredLessonDocument): string[] {
-  return getLessonReadinessReport(document).map((issue) => issue.message);
-}
-
 export function getLessonReadinessReport(document: StructuredLessonDocument): LessonReadinessIssue[] {
   const issues: string[] = [];
   const detailed: LessonReadinessIssue[] = [];

@@ -2,17 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { IconTile, SectionPanel, StatusBadge } from "@/components/ui/LearnerPrimitives";
+import { IconTile, SectionPanel } from "@/components/ui/LearnerPrimitives";
 import * as Icons from "@/components/ui/Icons";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { applyTheme, type ThemeMode } from "@/components/theme/ThemeController";
 
 type LearnerProfileSettings = {
-  studyReminderEnabled: boolean;
-  studyReminderTime: string;
-  emailStudyReminders: boolean;
-  emailProgressSummary: boolean;
-  emailProductUpdates: boolean;
   defaultStudyGoal: string;
   defaultSessionLength: number;
   compactSidebar: boolean;
@@ -20,15 +15,9 @@ type LearnerProfileSettings = {
   theme: ThemeMode;
   formulaHelperDefaultOpen: boolean;
   calculatorPrecision: string;
-  profileVisibility: string;
 };
 
 const DEFAULT_SETTINGS: LearnerProfileSettings = {
-  studyReminderEnabled: true,
-  studyReminderTime: "18:00",
-  emailStudyReminders: true,
-  emailProgressSummary: true,
-  emailProductUpdates: false,
   defaultStudyGoal: "Complete one lesson or quiz",
   defaultSessionLength: 30,
   compactSidebar: false,
@@ -36,7 +25,6 @@ const DEFAULT_SETTINGS: LearnerProfileSettings = {
   theme: "light",
   formulaHelperDefaultOpen: true,
   calculatorPrecision: "2",
-  profileVisibility: "private",
 };
 
 export function SettingsClient() {
@@ -120,21 +108,7 @@ export function SettingsClient() {
         <div className="space-y-6">
           <SectionPanel title="Study rhythm" description="Choose the defaults that shape each study session.">
             <div className="space-y-5 p-5">
-              <ToggleRow
-                label="Study reminders"
-                detail="Keep a daily prompt available for your preferred study time."
-                checked={settings.studyReminderEnabled}
-                onChange={(checked) => update("studyReminderEnabled", checked)}
-              />
               <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Reminder time">
-                  <input
-                    type="time"
-                    value={settings.studyReminderTime}
-                    onChange={(event) => update("studyReminderTime", event.target.value)}
-                    className="profile-input"
-                  />
-                </Field>
                 <Field label="Session length">
                   <select
                     value={settings.defaultSessionLength}
@@ -158,29 +132,6 @@ export function SettingsClient() {
                   className="profile-input"
                 />
               </Field>
-            </div>
-          </SectionPanel>
-
-          <SectionPanel title="Notifications" description="Control the learning emails this platform sends.">
-            <div className="divide-y divide-slate-100">
-              <ToggleRow
-                label="Reminder emails"
-                detail="Receive a study reminder when reminders are enabled."
-                checked={settings.emailStudyReminders}
-                onChange={(checked) => update("emailStudyReminders", checked)}
-              />
-              <ToggleRow
-                label="Progress summaries"
-                detail="Get occasional recaps of attempt history and focus areas."
-                checked={settings.emailProgressSummary}
-                onChange={(checked) => update("emailProgressSummary", checked)}
-              />
-              <ToggleRow
-                label="Product updates"
-                detail="Hear about new platform capabilities and course improvements."
-                checked={settings.emailProductUpdates}
-                onChange={(checked) => update("emailProductUpdates", checked)}
-              />
             </div>
           </SectionPanel>
 
@@ -240,16 +191,6 @@ export function SettingsClient() {
         <aside className="space-y-6">
           <SectionPanel title="Privacy" description="Your learner profile is private by default.">
             <div className="space-y-4 p-5">
-              <Field label="Profile visibility">
-                <select
-                  value={settings.profileVisibility}
-                  onChange={(event) => update("profileVisibility", event.target.value)}
-                  className="profile-input"
-                >
-                  <option value="private">Private to you and admins</option>
-                  <option value="team">Visible to instructors</option>
-                </select>
-              </Field>
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
                 <div className="flex items-center gap-3">
                   <IconTile icon={Icons.Shield} tone="blue" />
@@ -278,28 +219,22 @@ export function SettingsClient() {
                 className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
               >
                 <Icons.User size={15} />
-                Edit profile
+                Back to profile
               </Link>
             </div>
           </SectionPanel>
-
-          <SectionPanel>
-            <div className="p-5">
-              <StatusBadge tone="blue">Ready to save</StatusBadge>
-              <p className="mt-3 text-sm leading-6 text-slate-600">
-                Changes apply to your learner account and can be adjusted any time.
-              </p>
-              <button
-                type="submit"
-                disabled={saving}
-                className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#185FA5] px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#0d3d6e] disabled:cursor-not-allowed disabled:opacity-55"
-              >
-                {saving ? <Icons.Loader size={15} className="animate-spin" /> : <Icons.Check size={15} />}
-                {saving ? "Saving..." : "Save settings"}
-              </button>
-            </div>
-          </SectionPanel>
         </aside>
+      </div>
+
+      <div className="flex justify-end">
+        <button
+          type="submit"
+          disabled={saving}
+          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-[#185FA5] px-5 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-[#134d88] disabled:opacity-60"
+        >
+          {saving ? <Icons.Loader size={15} className="animate-spin" /> : <Icons.Check size={15} />}
+          Save settings
+        </button>
       </div>
     </form>
   );
@@ -307,8 +242,8 @@ export function SettingsClient() {
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label className="block">
-      <span className="mb-1.5 block text-sm font-bold text-slate-700">{label}</span>
+    <label className="block space-y-1.5">
+      <span className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">{label}</span>
       {children}
     </label>
   );
@@ -326,17 +261,22 @@ function ToggleRow({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <label className="flex cursor-pointer items-center justify-between gap-4 px-5 py-4">
-      <span className="min-w-0">
-        <span className="block text-sm font-extrabold text-slate-900">{label}</span>
-        <span className="mt-1 block text-xs leading-5 text-slate-500">{detail}</span>
-      </span>
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(event) => onChange(event.target.checked)}
-        className="h-5 w-5 rounded border-slate-300 text-[#185FA5] accent-[#185FA5]"
-      />
-    </label>
+    <div className="flex items-start justify-between gap-4">
+      <div>
+        <p className="text-sm font-extrabold text-slate-900">{label}</p>
+        <p className="mt-1 text-xs leading-5 text-slate-500">{detail}</p>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        onClick={() => onChange(!checked)}
+        className={`relative h-6 w-11 shrink-0 rounded-full transition ${checked ? "bg-[#185FA5]" : "bg-slate-300"}`}
+      >
+        <span
+          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition ${checked ? "left-5" : "left-0.5"}`}
+        />
+      </button>
+    </div>
   );
 }

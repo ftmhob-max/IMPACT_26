@@ -2,7 +2,6 @@ import { randomUUID } from "crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { requireAdminRequest } from "@/lib/admin/auth";
-import { assignStoredMaterialsToFolder } from "@/lib/admin/material-folder-store";
 import { fetchAdminMaterialFolders, fetchAdminMaterialLibrary, findMaterialById } from "@/lib/admin/material-library";
 import { adminDcMutate } from "@/lib/firebase/admin-dc";
 import { formatUuid } from "@/lib/utils";
@@ -139,10 +138,6 @@ export async function POST(request: NextRequest) {
       metadataJson: JSON.stringify(body),
     }).catch(() => null);
     updated.push(material.id, id);
-  }
-
-  if (body.action === "move") {
-    await assignStoredMaterialsToFolder([...new Set(updated)], body.folderId ?? null);
   }
 
   return NextResponse.json({ ok: true, updated: body.ids.length, ids: [...new Set(updated)] });

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import * as Icons from "@/components/ui/Icons";
 import { cn, DOMAINS } from "@/lib/utils";
+import { DomainBadge } from "@/components/ui/DomainBadge";
 import { CsvImportPanel } from "@/components/admin/CsvImportPanel";
 import { useDomains } from "@/lib/hooks/useDomains";
 
@@ -55,10 +56,6 @@ function DiffBadge({ diff }: { diff: string }) {
       {diff}
     </span>
   );
-}
-
-function DomainBadge({ domain }: { domain: string }) {
-  return <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-500">{domain}</span>;
 }
 
 // ─── Duplicate include section ────────────────────────────────────────────────
@@ -904,7 +901,7 @@ function CsvWithDuplicateLinking({ onImported }: { onImported: (msg: string, qui
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <a
-          href="/api/admin/assessments/csv-template"
+          href="/api/admin/templates?kind=assessment"
           className="inline-flex items-center gap-1.5 rounded-lg border border-[#185FA5]/30 bg-[#E6F1FB]/50 px-3 py-2 text-xs font-semibold text-[#185FA5] hover:bg-[#E6F1FB] transition"
         >
           <Icons.ArrowDown size={13} />

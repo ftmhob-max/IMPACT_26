@@ -1,40 +1,67 @@
 import { NextResponse } from "next/server";
-import { getFormulaSections } from "@/lib/firebase/generated";
+import { adminDcQuery } from "@/lib/firebase/admin-dc";
 import { DEV_FORMULA_SECTIONS } from "@/lib/dev-content";
 import { ensureDevDataSeeded } from "@/lib/dev-seed";
-import { dedupeFormulaSections } from "@/lib/formula-sections";
-import { getPlatformDataConnect } from "@/lib/firebase/dataconnect";
+import { isDevelopmentEnvironment } from "@/lib/dev-gate";
+import { dedupeFormulaSections } from "@/lib/utils";
+
+type FormulaSectionsData = {
+  formulaSections: Array<{
+    id: string;
+    code: string;
+    title: string;
+    position: number;
+    formulas_on_section: Array<{
+      id: string;
+      code: string;
+      name: string;
+      expression: string;
+      notes?: string | null;
+      calcMetaJson?: string | null;
+      position?: number;
+    }>;
+  }>;
+};
+
+function mapFormulaSections(data: FormulaSectionsData) {
+  return dedupeFormulaSections(
+    data.formulaSections.map((section) => ({
+      id: section.id,
+      code: section.code,
+      title: section.title,
+      position: section.position,
+      formulas: section.formulas_on_section.map((formula) => ({
+        id: formula.id,
+        code: formula.code,
+        name: formula.name,
+        expression: formula.expression,
+        notes: formula.notes ?? null,
+        position: formula.position ?? 0,
+        calcMetaJson: formula.calcMetaJson ?? null,
+      })),
+    })),
+  );
+}
 
 export async function GET() {
   try {
-    const dc = getPlatformDataConnect();
-    let { data } = await getFormulaSections(dc);
-    if (data.formulaSections.length === 0) {
+    let data = await adminDcQuery<FormulaSectionsData>("GetFormulaSections");
+    if (data.formulaSections.length === 0 && isDevelopmentEnvironment()) {
       await ensureDevDataSeeded().catch(() => null);
-      ({ data } = await getFormulaSections(dc).catch(() => ({ data: { formulaSections: [] } })));
+      data = await adminDcQuery<FormulaSectionsData>("GetFormulaSections").catch(() => ({ formulaSections: [] }));
+      if (data.formulaSections.length === 0) {
+        return NextResponse.json(DEV_FORMULA_SECTIONS, {
+          headers: { "Cache-Control": "public, max-age=3600" },
+        });
+      }
     }
-    const sections = dedupeFormulaSections(data.formulaSections.map((s) => ({
-      id: s.id,
-      code: s.code,
-      title: s.title,
-      position: s.position,
-      formulas: s.formulas_on_section.map((f) => {
-        const formula = f as typeof f & { position?: number };
-        return {
-        id: f.id,
-        code: f.code,
-        name: f.name,
-        expression: f.expression,
-        notes: f.notes ?? null,
-          position: formula.position ?? 0,
-          calcMetaJson: (f as typeof f & { calcMetaJson?: string | null }).calcMetaJson ?? null,
-        };
-      }),
-    })));
-    return NextResponse.json(sections.length > 0 ? sections : DEV_FORMULA_SECTIONS, {
+    return NextResponse.json(mapFormulaSections(data), {
       headers: { "Cache-Control": "public, max-age=3600" },
     });
   } catch {
-    return NextResponse.json(DEV_FORMULA_SECTIONS, { status: 200 });
+    if (isDevelopmentEnvironment()) {
+      return NextResponse.json(DEV_FORMULA_SECTIONS, { status: 200 });
+    }
+    return NextResponse.json([], { status: 200 });
   }
 }

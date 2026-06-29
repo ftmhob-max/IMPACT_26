@@ -2,7 +2,6 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { requireAdminRequest } from "@/lib/admin/auth";
 import { fetchAdminMaterialFolders } from "@/lib/admin/material-library";
-import { deleteStoredMaterialFolder } from "@/lib/admin/material-folder-store";
 import { adminDcMutate } from "@/lib/firebase/admin-dc";
 import { formatUuid } from "@/lib/utils";
 
@@ -74,13 +73,8 @@ export async function DELETE(
     } catch {
       await adminDcMutate("DeleteSourceMaterialFolder", { id: folderId });
     }
-    await deleteStoredMaterialFolder(folderId);
     return NextResponse.json({ ok: true });
   } catch (error) {
-    const deletedIds = await deleteStoredMaterialFolder(folderId);
-    if (deletedIds) {
-      return NextResponse.json({ ok: true, compatibility: true, deletedFolderIds: deletedIds });
-    }
     console.error("[admin/materials/folders/[id]:DELETE]", error);
     return NextResponse.json({ error: "Unable to delete folder" }, { status: 500 });
   }

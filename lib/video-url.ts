@@ -151,14 +151,3 @@ export function isEmbeddableVideoUrl(raw: string): boolean {
   const meta = parseVideoUrl(raw);
   return meta !== null && meta.provider !== "unknown" && meta.embedUrl !== "";
 }
-
-/** Icon name per provider for UI display */
-export const PROVIDER_ICONS: Record<VideoProvider, string> = {
-  youtube: "▶ YouTube",
-  vimeo: "▶ Vimeo",
-  loom: "▶ Loom",
-  "google-drive": "▶ Google Drive",
-  wistia: "▶ Wistia",
-  direct: "▶ Direct file",
-  unknown: "? Unknown",
-};

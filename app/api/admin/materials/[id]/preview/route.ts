@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { parse as parseCsv } from "csv-parse/sync";
-import { getAdminStorage } from "@/lib/firebase/admin-storage";
+import { getAdminStorage } from "@/lib/firebase/admin";
 import { parse as parseHtml } from "node-html-parser";
 import { requireAdminRequest } from "@/lib/admin/auth";
 import { fetchAdminMaterialLibrary, findMaterialById } from "@/lib/admin/material-library";

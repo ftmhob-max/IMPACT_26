@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { adminAuth } from "@/lib/firebase/admin";
 import { adminDcMutate } from "@/lib/firebase/admin-dc";
+import { verifySessionCookieValue } from "@/lib/firebase/session-cookie";
 import { adminRoles, type AdminRole } from "@/lib/validations/admin";
 
 export interface AdminSession {
@@ -25,36 +26,12 @@ function canAccess(role: AdminRole, minimum: AdminRole) {
   return ROLE_RANK[role] >= ROLE_RANK[minimum];
 }
 
-export function isElevatedRole(role: unknown): role is AdminRole {
-  return isAdminRole(role);
-}
-
 function resolveAdminRole(role: unknown): AdminRole | null {
   return isAdminRole(role) ? role : null;
 }
 
 async function decodeSessionCookieValue(sessionCookie: string) {
-  return adminAuth.verifySessionCookie(sessionCookie, false);
-}
-
-export async function getSessionFromCookie(): Promise<AdminSession | null> {
-  const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get("__session")?.value;
-  if (!sessionCookie) return null;
-
-  try {
-    const decoded = await decodeSessionCookieValue(sessionCookie);
-    const role = resolveAdminRole(decoded.role);
-    if (!role) return null;
-    return {
-      uid: decoded.uid,
-      email: decoded.email ?? "",
-      fullName: decoded.name,
-      role,
-    };
-  } catch (e) {
-    return null;
-  }
+  return verifySessionCookieValue(sessionCookie);
 }
 
 export async function requireAdminPage(minimumRole: AdminRole = "viewer") {

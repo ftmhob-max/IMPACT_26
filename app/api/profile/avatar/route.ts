@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import { cookies } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
 import { adminAuth } from "@/lib/firebase/admin";
-import { getAdminStorage } from "@/lib/firebase/admin-storage";
+import { getAdminStorage } from "@/lib/firebase/admin";
 import { getUserProfileSettings, updateUserAvatarStoragePath } from "@/lib/profile-settings";
 
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024;

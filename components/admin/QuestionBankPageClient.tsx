@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { adminFetch } from "@/lib/admin/client-fetch";
-import { QuestionBuilderClient } from "@/components/admin/QuestionBuilderClient";
+import { ManualQuestionPanel } from "@/components/admin/ManualQuestionPanel";
 import { QuestionBankClient } from "@/components/admin/QuestionBankClient";
 import { DocxImportClient } from "@/components/admin/DocxImportClient";
 import * as Icons from "@/components/ui/Icons";
@@ -112,7 +112,7 @@ export function QuestionBankPageClient({
           </button>
           {manualOpen && (
             <div className="p-4">
-              <QuestionBuilderClient mode="manual" quizzes={quizzes} onChanged={refreshPageData} />
+              <ManualQuestionPanel quizzes={quizzes} onSaved={() => void refreshPageData()} />
             </div>
           )}
         </div>

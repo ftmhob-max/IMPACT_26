@@ -48,15 +48,6 @@ export function getAdminApp() {
   return buildAdminApp();
 }
 
-// Lazy proxy — defers initialization to first use, never throws at import time
-export const adminApp = new Proxy({} as any, {
-  get(_, key: string) {
-    const app = buildAdminApp();
-    const val = (app as any)[key];
-    return typeof val === "function" ? val.bind(app) : val;
-  },
-});
-
 export const adminAuth = new Proxy({} as any, {
   get(_, key: string) {
     const { getAuth } = loadAdminAuthModule();
@@ -66,8 +57,7 @@ export const adminAuth = new Proxy({} as any, {
   },
 });
 
-export async function getAdminAccessToken(): Promise<string> {
-  // @ts-ignore — internal Firebase Admin credential API
-  const tok = await buildAdminApp().options.credential.getAccessToken();
-  return tok.access_token;
+export function getAdminStorage() {
+  const { getStorage } = eval("require")("firebase-admin/storage");
+  return getStorage(buildAdminApp());
 }

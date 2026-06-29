@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import * as Icons from "@/components/ui/Icons";
 import { adminFetch } from "@/lib/admin/client-fetch";
 import { cn } from "@/lib/utils";
@@ -90,6 +91,11 @@ export function CurriculumTree({
     results: Array<{ lessonId: string; title: string; lessonType: string; blockers: string[]; warnings: string[]; isReady: boolean }>;
     onConfirm: (publishAll: boolean) => void;
   } | null>(null);
+  const [preflightAcknowledged, setPreflightAcknowledged] = useState(false);
+
+  useEffect(() => {
+    if (preflightDialog) setPreflightAcknowledged(false);
+  }, [preflightDialog]);
 
   async function load() {
     setLoading(true);
@@ -412,24 +418,53 @@ export function CurriculumTree({
                 <div key={r.lessonId} className={`rounded-lg border p-3 text-xs ${r.isReady ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50"}`}>
                   <p className="font-semibold text-slate-800 mb-1">{r.title}</p>
                   {r.blockers.map((b) => (
-                    <p key={b} className="text-red-700">✕ {b}</p>
+                    <p key={b} className="flex items-start gap-1.5 text-red-700">
+                      <Icons.X size={12} className="mt-0.5 shrink-0" aria-hidden />
+                      {b}
+                    </p>
                   ))}
                   {r.warnings.map((w) => (
-                    <p key={w} className="text-amber-700">⚠ {w}</p>
+                    <p key={w} className="flex items-start gap-1.5 text-amber-700">
+                      <Icons.AlertTriangle size={12} className="mt-0.5 shrink-0" aria-hidden />
+                      {w}
+                    </p>
                   ))}
-                  {r.isReady && <p className="text-emerald-700">✓ Ready to publish</p>}
+                  {r.isReady && (
+                    <p className="flex items-center gap-1.5 text-emerald-700">
+                      <Icons.Check size={12} aria-hidden />
+                      Ready to publish
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
-            <div className="flex gap-2 pt-1">
+            {preflightDialog.blockedIds.length > 0 && (
+              <label className="flex items-start gap-2 text-xs text-slate-600 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={preflightAcknowledged}
+                  onChange={(e) => setPreflightAcknowledged(e.target.checked)}
+                  className="mt-0.5 h-3.5 w-3.5 rounded border-slate-300"
+                />
+                I understand these lessons have blockers and may be incomplete for students
+              </label>
+            )}
+            <div className="flex flex-wrap gap-2 pt-1">
               {preflightDialog.readyIds.length > 0 && (
                 <button type="button" onClick={() => preflightDialog.onConfirm(false)} className="admin-action text-xs">
                   Publish {preflightDialog.readyIds.length} ready
                 </button>
               )}
-              <button type="button" onClick={() => preflightDialog.onConfirm(true)} className="admin-action secondary text-xs">
-                Publish all anyway
-              </button>
+              {preflightDialog.blockedIds.length > 0 && (
+                <button
+                  type="button"
+                  disabled={!preflightAcknowledged}
+                  onClick={() => preflightDialog.onConfirm(true)}
+                  className="admin-action secondary text-xs disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Publish all anyway
+                </button>
+              )}
               <button type="button" onClick={() => setPreflightDialog(null)} className="admin-action secondary text-xs">
                 Cancel
               </button>
@@ -439,9 +474,12 @@ export function CurriculumTree({
       )}
 
       {/* Tree */}
-      <div className="flex-1 min-w-0 space-y-4">
+      <div className={cn("flex-1 min-w-0 space-y-4", selectedLessonIds.size > 0 && "pb-20")}>
         {notice && (
-          <div className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium ${notice.type === "success" ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+          <div
+            role={notice.type === "error" ? "alert" : undefined}
+            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium ${notice.type === "success" ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}
+          >
             {notice.type === "success" ? <Icons.Check size={13} /> : <Icons.X size={13} />}
             {notice.text}
           </div>
@@ -527,7 +565,105 @@ export function CurriculumTree({
           onClose={() => setEditTarget(null)}
         />
       )}
+
+      {selectedLessonIds.size > 0 && (
+        <div className="fixed bottom-4 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2 rounded-xl border border-black/10 bg-white/95 px-4 py-2.5 shadow-lg backdrop-blur-sm">
+          <span className="text-xs font-semibold text-slate-600">
+            {selectedLessonIds.size} lesson{selectedLessonIds.size !== 1 ? "s" : ""} selected
+          </span>
+          <button
+            type="button"
+            onClick={() => void publishLessons([...selectedLessonIds])}
+            className="admin-action text-xs"
+          >
+            Publish
+          </button>
+          <button
+            type="button"
+            onClick={() => void deleteLessons([...selectedLessonIds])}
+            className="admin-action secondary text-xs text-red-600"
+          >
+            Delete
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedLessonIds(new Set())}
+            className="admin-action secondary text-xs"
+          >
+            Clear
+          </button>
+        </div>
+      )}
     </div>
+  );
+}
+
+// ponytail: minimal overflow menu — no dropdown lib
+function TreeRowMenu({ label, children }: { label: string; children: (close: () => void) => ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const close = () => setOpen(false);
+
+  return (
+    <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        className={cn(
+          "flex h-7 w-7 cursor-pointer items-center justify-center rounded border transition-colors duration-200",
+          open
+            ? "border-[#185FA5] bg-[#E6F1FB] text-[#185FA5]"
+            : "border-slate-200 text-slate-500 hover:border-[#185FA5] hover:text-[#185FA5]"
+        )}
+        aria-label={label}
+        aria-expanded={open}
+        aria-haspopup="menu"
+      >
+        <Icons.AlignJustify size={14} />
+      </button>
+      {open && (
+        <>
+          <button
+            type="button"
+            className="fixed inset-0 z-10 cursor-default"
+            onClick={close}
+            aria-label="Close menu"
+          />
+          <div
+            role="menu"
+            className="absolute right-0 top-full z-20 mt-1 min-w-[168px] rounded-lg border border-slate-200 bg-white py-1 shadow-lg"
+          >
+            {children(close)}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function TreeRowMenuItem({
+  onClick,
+  children,
+  destructive = false,
+}: {
+  onClick: () => void;
+  children: ReactNode;
+  destructive?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+      className={cn(
+        "flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium transition-colors duration-200 hover:bg-slate-50 cursor-pointer",
+        destructive ? "text-red-600 hover:bg-red-50" : "text-slate-700"
+      )}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -752,33 +888,37 @@ function ModuleNode({
               <button
                 type="button"
                 onClick={() => onPublishLessons(selectedIds)}
-                className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700 hover:bg-emerald-100"
+                className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700 hover:bg-emerald-100 cursor-pointer"
               >
                 Publish ({selectedIds.length})
               </button>
               <button
                 type="button"
                 onClick={() => onDeleteLessons(selectedIds)}
-                className="rounded-md border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-semibold text-red-700 hover:bg-red-100"
+                className="rounded-md border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-semibold text-red-700 hover:bg-red-100 cursor-pointer"
               >
                 Delete ({selectedIds.length})
               </button>
             </>
           )}
-          <button type="button" onClick={() => onEdit({ type: "module", item: module, courseId })} className="course-tree-icon-button p-1 text-slate-300 hover:text-slate-600 transition-colors rounded">
-            <Icons.Pencil size={12} />
-          </button>
-          <button
-            type="button"
-            onClick={() => onDeleteModule(module.id, module.title)}
-            className="course-tree-icon-button p-1 text-slate-300 hover:text-red-600 transition-colors rounded"
-            title="Delete module"
-          >
-            <Icons.Trash2 size={12} />
-          </button>
-          <button type="button" onClick={onAddLesson} className="course-tree-icon-button p-1 text-slate-300 hover:text-slate-600 transition-colors rounded" title="Add lesson">
-            <Icons.Plus size={12} />
-          </button>
+          <TreeRowMenu label={`Actions for module ${module.title}`}>
+            {(close) => (
+              <>
+                <TreeRowMenuItem onClick={() => { onEdit({ type: "module", item: module, courseId }); close(); }}>
+                  <Icons.Pencil size={12} />
+                  Edit metadata
+                </TreeRowMenuItem>
+                <TreeRowMenuItem onClick={() => { onAddLesson(); close(); }}>
+                  <Icons.Plus size={12} />
+                  Add lesson
+                </TreeRowMenuItem>
+                <TreeRowMenuItem onClick={() => { onDeleteModule(module.id, module.title); close(); }} destructive>
+                  <Icons.Trash2 size={12} />
+                  Delete module
+                </TreeRowMenuItem>
+              </>
+            )}
+          </TreeRowMenu>
         </div>
       </div>
 
@@ -838,67 +978,75 @@ function LessonRow({
     source: Icons.Database,
   };
   const TypeIcon = typeIcons[lesson.lessonType] ?? Icons.FileText;
+  const router = useRouter();
+  const editorHref = `/admin/courses/${courseId}?lesson=${lesson.id}`;
 
   return (
-    <div className="course-tree-lesson-row flex items-center gap-2 px-3 py-2 group hover:bg-slate-50 transition-colors">
+    <div
+      className="course-tree-lesson-row group flex cursor-pointer items-center gap-2 px-3 py-2 transition-colors duration-200 hover:bg-slate-50"
+      onClick={(event) => {
+        const target = event.target as HTMLElement;
+        if (target.closest("input, button, a, [role='menu'], [role='menuitem']")) return;
+        router.push(editorHref);
+      }}
+    >
       <input
         type="checkbox"
         checked={selected}
         onChange={(e) => onToggleSelected(e.target.checked)}
+        onClick={(e) => e.stopPropagation()}
         aria-label={`Select lesson ${lesson.title}`}
-        className="h-3.5 w-3.5 rounded border-slate-300"
+        className="h-3.5 w-3.5 rounded border-slate-300 cursor-pointer"
       />
-      <Icons.GripVertical size={12} className="text-slate-200 shrink-0" />
-      <TypeIcon size={13} className="text-slate-400 shrink-0" />
+      <Icons.GripVertical size={12} className="text-slate-200 shrink-0" aria-hidden />
+      <TypeIcon size={13} className="text-slate-400 shrink-0" aria-hidden />
       <Link
-        href={`/admin/courses/${courseId}?lesson=${lesson.id}`}
-        className="flex-1 min-w-0 text-xs text-slate-600 truncate hover:text-[#185FA5] transition-colors"
+        href={editorHref}
+        className="flex-1 min-w-0 truncate text-xs font-medium text-slate-600 transition-colors duration-200 hover:text-[#185FA5]"
         title="Open in lesson editor"
       >
         {lesson.title}
       </Link>
-      <div className="flex items-center gap-1.5 shrink-0">
+      <div className="flex shrink-0 items-center gap-1.5">
         <LessonTypeBadge type={lesson.lessonType} />
-        {/* Quick publish toggle */}
-        <button
-          type="button"
-          title={lesson.isPublished ? "Click to unpublish (hide from students)" : "Click to publish (make visible to students)"}
-          onClick={onTogglePublish}
+        <span
           className={cn(
-            "rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider transition-colors",
-            lesson.isPublished
-              ? "bg-emerald-100 text-emerald-700 hover:bg-red-50 hover:text-red-600"
-              : "bg-slate-100 text-slate-400 hover:bg-emerald-50 hover:text-emerald-700"
+            "rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider",
+            lesson.isPublished ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-400"
           )}
         >
           {lesson.isPublished ? "Live" : "Draft"}
-        </button>
-        {lesson.durationSeconds && (
+        </span>
+        {lesson.durationSeconds ? (
           <span className="text-[10px] text-slate-400">{Math.ceil(lesson.durationSeconds / 60)}m</span>
-        )}
-        <Link
-          href={`/admin/courses/${courseId}?lesson=${lesson.id}`}
-          className="course-tree-icon-button p-1 text-slate-200 hover:text-[#185FA5] transition-colors rounded opacity-0 group-hover:opacity-100"
-          title="Open in lesson editor"
-        >
-          <Icons.ArrowRight size={12} />
-        </Link>
-        <button
-          type="button"
-          onClick={() => onEdit({ type: "lesson", item: lesson, moduleId, courseId })}
-          className="course-tree-icon-button p-1 text-slate-200 hover:text-slate-600 transition-colors rounded opacity-0 group-hover:opacity-100"
-          title="Edit metadata"
-        >
-          <Icons.Pencil size={12} />
-        </button>
-        <button
-          type="button"
-          onClick={onDelete}
-          className="course-tree-icon-button p-1 text-slate-200 hover:text-red-600 transition-colors rounded opacity-0 group-hover:opacity-100"
-          title="Delete lesson"
-        >
-          <Icons.Trash2 size={12} />
-        </button>
+        ) : null}
+        <TreeRowMenu label={`Actions for lesson ${lesson.title}`}>
+          {(close) => (
+            <>
+              <Link
+                href={editorHref}
+                onClick={close}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors duration-200 hover:bg-slate-50"
+                role="menuitem"
+              >
+                <Icons.ArrowRight size={12} />
+                Open lesson editor
+              </Link>
+              <TreeRowMenuItem onClick={() => { onEdit({ type: "lesson", item: lesson, moduleId, courseId }); close(); }}>
+                <Icons.Pencil size={12} />
+                Quick metadata
+              </TreeRowMenuItem>
+              <TreeRowMenuItem onClick={() => { onTogglePublish(); close(); }}>
+                {lesson.isPublished ? <Icons.EyeOff size={12} /> : <Icons.Eye size={12} />}
+                {lesson.isPublished ? "Unpublish" : "Publish"}
+              </TreeRowMenuItem>
+              <TreeRowMenuItem onClick={() => { onDelete(); close(); }} destructive>
+                <Icons.Trash2 size={12} />
+                Delete
+              </TreeRowMenuItem>
+            </>
+          )}
+        </TreeRowMenu>
       </div>
     </div>
   );
@@ -923,9 +1071,14 @@ function EditPanel({
 }) {
   return (
     <div className="w-full shrink-0 self-start rounded-xl border border-black/10 bg-white shadow-sm lg:sticky lg:top-6 lg:w-80">
-      <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
-        <p className="text-sm font-bold text-slate-900 capitalize">Edit {target.type}</p>
-        <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-700">
+      <div className="flex items-start justify-between gap-2 border-b border-slate-100 px-4 py-3">
+        <div>
+          <p className="text-sm font-bold text-slate-900">Quick metadata</p>
+          <p className="mt-0.5 text-[11px] leading-5 text-slate-500">
+            Titles, types, and links. Open the lesson editor for block content.
+          </p>
+        </div>
+        <button type="button" onClick={onClose} className="shrink-0 text-slate-400 transition-colors duration-200 hover:text-slate-700 cursor-pointer" aria-label="Close metadata panel">
           <Icons.X size={16} />
         </button>
       </div>
@@ -938,6 +1091,17 @@ function EditPanel({
           <LessonEditForm lesson={target.item} moduleId={target.moduleId} quizzes={quizzes} materials={materials} onSaved={onSaved} />
         )}
       </div>
+      {target.type === "lesson" && (
+        <div className="border-t border-slate-100 px-4 py-3">
+          <Link
+            href={`/admin/courses/${target.courseId}?lesson=${target.item.id}`}
+            className="admin-action flex w-full items-center justify-center gap-2 text-xs"
+          >
+            Open lesson editor
+            <Icons.ArrowRight size={13} />
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

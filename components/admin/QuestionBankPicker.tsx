@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import * as Icons from "@/components/ui/Icons";
 import { cn, DIFFICULTIES, DOMAINS } from "@/lib/utils";
+import { DomainBadge } from "@/components/ui/DomainBadge";
+import { DifficultyBadge } from "@/components/ui/DifficultyBadge";
 import { useDomains } from "@/lib/hooks/useDomains";
 import {
   type QuestionBankCandidate,
@@ -512,23 +514,5 @@ function UsageChip({ label, tone }: { label: string; tone: "slate" | "amber" | "
       {label}
     </span>
   );
-}
-
-function DomainBadge({ domain }: { domain: string }) {
-  const domainConfig = DOMAINS[domain as keyof typeof DOMAINS];
-  return (
-    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">
-      {domainConfig?.label ?? domain}
-    </span>
-  );
-}
-
-function DifficultyBadge({ difficulty }: { difficulty: string }) {
-  const map: Record<string, string> = {
-    easy: "bg-green-50 text-green-700",
-    proficient: "bg-yellow-50 text-yellow-700",
-    expert: "bg-red-50 text-red-700",
-  };
-  return <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize", map[difficulty] ?? "bg-slate-100 text-slate-500")}>{difficulty}</span>;
 }
 

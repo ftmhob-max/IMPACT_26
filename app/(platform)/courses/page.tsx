@@ -3,6 +3,7 @@ import { EmptyState, LearnerPage, PageHeader, PrimaryAction, StatusBadge } from 
 import { adminDcQuery } from "@/lib/firebase/admin-dc";
 import { getDevPublishedCourses } from "@/lib/dev-content";
 import { ensureDevDataSeeded } from "@/lib/dev-seed";
+import { isDevelopmentEnvironment } from "@/lib/dev-gate";
 import * as Icons from "@/components/ui/Icons";
 
 async function getCourses() {
@@ -12,13 +13,15 @@ async function getCourses() {
     };
 
     let data = await adminDcQuery<CoursesData>("ListPublishedCourses");
-    if (data.courses.length === 0) {
+    if (data.courses.length === 0 && isDevelopmentEnvironment()) {
       await ensureDevDataSeeded().catch(() => null);
       data = await adminDcQuery<CoursesData>("ListPublishedCourses").catch((): CoursesData => ({ courses: [] }));
+      if (data.courses.length > 0) return data.courses;
+      return getDevPublishedCourses();
     }
-    return data.courses.length > 0 ? data.courses : getDevPublishedCourses();
+    return data.courses;
   } catch {
-    return getDevPublishedCourses();
+    return isDevelopmentEnvironment() ? getDevPublishedCourses() : [];
   }
 }
 

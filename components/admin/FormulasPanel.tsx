@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { adminFetch } from "@/lib/admin/client-fetch";
 import { validateExpression, evalExpression } from "@/lib/admin/formula-eval";
-import { getFormulaCalculator, formatValue } from "@/lib/formula-calculator";
+import { formatValue, hasFormulaCalculatorConfig, parseFormulaCalculatorConfig } from "@/lib/formula-calculator";
 import * as Icons from "@/components/ui/Icons";
 import { cn } from "@/lib/utils";
 import { FieldHint } from "@/components/ui/FieldHint";
@@ -619,7 +619,7 @@ function ManageTab({
                     <div className="border-t border-slate-100">
                       {section.formulas.map((formula, fIdx) => {
                         const isSelected = selectedFormula?.id === formula.id && !isCreating;
-                        const hasCalc = !!formula.calcMetaJson || !!getFormulaCalculator(formula.code);
+                        const hasCalc = hasFormulaCalculatorConfig(formula);
                         return (
                           <div
                             key={formula.id}
@@ -936,13 +936,11 @@ function CalcSetupEditor({
   // #1 Bug fix: accepts the built meta JSON directly so caller can pass it to saveFormula
   onSaveWithMeta: (metaJson: string | null) => void;
 }) {
-  const staticConfig = getFormulaCalculator(formula.code);
   const existingMeta = parseMeta(formula.calcMetaJson);
-  const hasStatic = Boolean(staticConfig);
   const hasDb = Boolean(existingMeta);
 
   const [variables, setVariables] = useState<CalcVariable[]>(
-    existingMeta?.variables ?? (staticConfig ? staticConfig.variables as CalcVariable[] : [])
+    existingMeta?.variables ?? []
   );
   const [calcExpr, setCalcExpr] = useState(existingMeta?.expression ?? "");
   const [outputLabel, setOutputLabel] = useState(existingMeta?.output.label ?? "Result");
@@ -995,16 +993,9 @@ function CalcSetupEditor({
     <div className="space-y-4">
       {/* Status */}
       <div className="flex flex-wrap gap-2">
-        {hasStatic && <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-bold text-emerald-700"><Icons.Check size={10} /> Built-in config active</span>}
         {hasDb && <span className="inline-flex items-center gap-1 rounded-full bg-[#E6F1FB] px-2.5 py-1 text-[10px] font-bold text-[#185FA5]"><Icons.Calculator size={10} /> DB config saved</span>}
-        {!hasStatic && !hasDb && <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-500">No calculator config</span>}
+        {!hasDb && <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-500">No calculator config</span>}
       </div>
-
-      {hasStatic && !hasDb && (
-        <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-700">
-          This formula has a built-in calculator. Define a DB config below only to override it.
-        </p>
-      )}
 
       {/* #8 Improved variable builder */}
       <div>
@@ -1134,14 +1125,8 @@ function CalcSetupEditor({
 // ─── Verify Panel ──────────────────────────────────────────────────────────────
 
 function VerifyPanel({ formula }: { formula: AdminFormula }) {
-  const staticConfig = getFormulaCalculator(formula.code);
   const dbMeta = parseMeta(formula.calcMetaJson);
-  const meta = dbMeta ?? (staticConfig ? {
-    variables: staticConfig.variables as CalcVariable[],
-    expression: "__static__",
-    output: staticConfig.output,
-    explanation: staticConfig.explanation,
-  } : null);
+  const meta = dbMeta;
 
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [result, setResult] = useState<number | null>(null);
@@ -1178,17 +1163,6 @@ function VerifyPanel({ formula }: { formula: AdminFormula }) {
             value: formatValue(computed, meta.output.type),
           });
         }
-      } else if (staticConfig) {
-        computed = staticConfig.compute(numVars);
-        // #16 Show steps from static config if available
-        if (staticConfig.showWork) {
-          const workSteps = staticConfig.showWork(numVars, computed ?? 0);
-          newSteps = workSteps.map((s) => ({
-            label: s.label,
-            expression: s.expression ?? "",
-            value: String(s.value ?? ""),
-          }));
-        }
       }
 
       if (computed === null || !isFinite(computed)) {
@@ -1214,7 +1188,7 @@ function VerifyPanel({ formula }: { formula: AdminFormula }) {
   }
 
   const checks = [
-    { label: "Expression defined", pass: dbMeta ? Boolean(dbMeta.expression.trim()) : Boolean(staticConfig) },
+    { label: "Expression defined", pass: Boolean(dbMeta?.expression.trim()) },
     { label: "Variables defined", pass: meta.variables.length > 0 },
     { label: "All required inputs provided", pass: ran && !error?.startsWith("Missing") },
     { label: "Result is a valid finite number", pass: ran && result !== null },
@@ -1305,7 +1279,7 @@ function VerifyPanel({ formula }: { formula: AdminFormula }) {
 // ─── #7 Live student-portal preview ──────────────────────────────────────────
 
 function FormulaPreviewCard({ formula }: { formula: AdminFormula }) {
-  const hasCalc = Boolean(formula.calcMetaJson || getFormulaCalculator(formula.code));
+  const hasCalc = hasFormulaCalculatorConfig(formula);
 
   return (
     <div className="space-y-4">

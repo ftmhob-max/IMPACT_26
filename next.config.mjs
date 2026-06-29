@@ -12,13 +12,8 @@ const nextConfig = {
     "firebase-admin/app",
     "firebase-admin/auth",
     "firebase-admin/firestore",
-    "firebase-admin/database",
     "firebase-admin/storage",
-    "firebase-admin/messaging",
   ],
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   async headers() {
     return [
       {

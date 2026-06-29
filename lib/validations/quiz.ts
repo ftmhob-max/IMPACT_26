@@ -1,9 +1,5 @@
 import { z } from "zod";
 
-export const startAttemptSchema = z.object({
-  quizId: z.string().min(32),
-});
-
 export const submitAnswerSchema = z.object({
   questionId: z.string().min(32),
   selectedLetters: z
@@ -17,6 +13,5 @@ export const saveProgressSchema = z.object({
   selectedLetters: z.array(z.string().length(1)),
 });
 
-export type StartAttemptInput = z.infer<typeof startAttemptSchema>;
 export type SubmitAnswerInput = z.infer<typeof submitAnswerSchema>;
 export type SaveProgressInput = z.infer<typeof saveProgressSchema>;

@@ -5,6 +5,7 @@ import * as Icons from "@/components/ui/Icons";
 import { cn } from "@/lib/utils";
 import { GlossaryImportPanel } from "@/components/admin/GlossaryImportPanel";
 import { DomainCombobox } from "@/components/admin/DomainCombobox";
+import { DomainBadge } from "@/components/ui/DomainBadge";
 import { FieldHint } from "@/components/ui/FieldHint";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -730,14 +731,4 @@ function PublishBadge({ published }: { published: boolean }) {
       {published ? "Published" : "Draft"}
     </span>
   );
-}
-
-function DomainBadge({ domain }: { domain: string }) {
-  const map: Record<string, string> = {
-    math: "bg-blue-50 text-blue-700", appraisal: "bg-purple-50 text-purple-700",
-    law: "bg-amber-50 text-amber-700", philly: "bg-emerald-50 text-emerald-700",
-    admin: "bg-slate-100 text-slate-600", ethics: "bg-rose-50 text-rose-700",
-    general: "bg-slate-100 text-slate-500",
-  };
-  return <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize shrink-0", map[domain] ?? "bg-slate-100 text-slate-500")}>{domain}</span>;
 }

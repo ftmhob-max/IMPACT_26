@@ -1,12 +1,15 @@
 import { getAdminApp } from "./admin";
-import { getDataConnectEmulatorHost, getDataConnectEmulatorPort, shouldUseDataConnectEmulator } from "./dataconnect-emulator";
+import {
+  getDataConnectEmulatorEndpoint,
+  getDataConnectEmulatorHost,
+  getDataConnectEmulatorPort,
+  shouldUseDataConnectEmulator,
+} from "./emulator-config";
 
 const DC_SERVICE = "impact26-dataconnect";
 const DC_CONNECTOR = "impact26-connector";
 const DC_LOCATION = "us-central1";
 const DEFAULT_PROJECT_ID = "impact26-aa59b";
-
-let _dc: any = null;
 
 function getAdminAppForDataConnect() {
   if (!shouldUseDataConnectEmulator()) return getAdminApp();
@@ -27,12 +30,13 @@ function getAdminAppForDataConnect() {
   }
 }
 
+let _dc: any = null;
+
 function getAdminDc() {
   if (_dc) return _dc;
 
   if (shouldUseDataConnectEmulator()) {
-    process.env.FIREBASE_DATACONNECT_EMULATOR_HOST ??=
-      `${getDataConnectEmulatorHost()}:${getDataConnectEmulatorPort()}`;
+    process.env.FIREBASE_DATACONNECT_EMULATOR_HOST ??= getDataConnectEmulatorEndpoint();
   }
 
   const { getDataConnect } = eval("require")("firebase-admin/data-connect");
@@ -43,34 +47,33 @@ function getAdminDc() {
   return _dc;
 }
 
-export async function adminDcQuery<T = Record<string, unknown>>(
+async function adminDcExecute<T>(
+  mode: "query" | "mutation",
   operation: string,
-  variables: Record<string, unknown> = {}
+  variables: Record<string, unknown> = {},
 ): Promise<T> {
   try {
     const dc = getAdminDc();
-    const result = await (Object.keys(variables).length
-      ? dc.executeQuery(operation, variables)
-      : dc.executeQuery(operation));
+    const executor = mode === "query" ? dc.executeQuery.bind(dc) : dc.executeMutation.bind(dc);
+    const result = await (Object.keys(variables).length ? executor(operation, variables) : executor(operation));
     return result.data as T;
   } catch (err: any) {
-    throw new Error(`[DC:Query:${operation}] ${err.message ?? err}`);
+    throw new Error(`[DC:${mode === "query" ? "Query" : "Mutate"}:${operation}] ${err.message ?? err}`);
   }
+}
+
+export async function adminDcQuery<T = Record<string, unknown>>(
+  operation: string,
+  variables: Record<string, unknown> = {},
+): Promise<T> {
+  return adminDcExecute("query", operation, variables);
 }
 
 export async function adminDcMutate<T = Record<string, unknown>>(
   operation: string,
-  variables: Record<string, unknown> = {}
+  variables: Record<string, unknown> = {},
 ): Promise<T> {
-  try {
-    const dc = getAdminDc();
-    const result = await (Object.keys(variables).length
-      ? dc.executeMutation(operation, variables)
-      : dc.executeMutation(operation));
-    return result.data as T;
-  } catch (err: any) {
-    throw new Error(`[DC:Mutate:${operation}] ${err.message ?? err}`);
-  }
+  return adminDcExecute("mutation", operation, variables);
 }
 
 // Sends raw GQL to the service's executeGraphql endpoint, bypassing the
@@ -78,7 +81,7 @@ export async function adminDcMutate<T = Record<string, unknown>>(
 // in schema.gql but aren't yet reflected in a running emulator's named ops.
 export async function adminDcRawMutate<T = Record<string, unknown>>(
   query: string,
-  variables: Record<string, unknown> = {}
+  variables: Record<string, unknown> = {},
 ): Promise<T> {
   try {
     const dc = getAdminDc();
@@ -88,3 +91,5 @@ export async function adminDcRawMutate<T = Record<string, unknown>>(
     throw new Error(`[DC:RawMutate] ${err.message ?? err}`);
   }
 }
+
+export { getDataConnectEmulatorHost, getDataConnectEmulatorPort, shouldUseDataConnectEmulator };

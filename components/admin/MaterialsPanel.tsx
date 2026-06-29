@@ -1,6 +1,9 @@
 "use client";
 
+// components/admin/MaterialsPanel.tsx — Teacher Portal source materials library (front-end)
+
 import { type CSSProperties, type ReactNode, useDeferredValue, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase/client";
 import { cn } from "@/lib/utils";
@@ -18,6 +21,7 @@ type LibraryView =
   | "linked"
   | "unlinked"
   | "failed"
+  | "queue"
   | "archived"
   | "trash"
   | "media"
@@ -26,6 +30,36 @@ type LibraryView =
   | "transcripts"
   | "source-links";
 type CollectionViewMode = "list" | "grid";
+
+interface MaterialLibraryCounts {
+  total: number;
+  queue: number;
+  failed: number;
+  unlinked: number;
+}
+
+const LIBRARY_VIEWS: LibraryView[] = [
+  "all",
+  "recent",
+  "starred",
+  "mine",
+  "linked",
+  "unlinked",
+  "failed",
+  "queue",
+  "archived",
+  "trash",
+  "media",
+  "pdfs",
+  "audio",
+  "transcripts",
+  "source-links",
+];
+
+function parseLibraryView(value: string | null): LibraryView | null {
+  if (!value) return null;
+  return LIBRARY_VIEWS.includes(value as LibraryView) ? (value as LibraryView) : null;
+}
 
 interface MaterialFolder {
   id: string;
@@ -115,6 +149,7 @@ interface MaterialListResponse {
   sort: string;
   direction: "asc" | "desc";
   query: string;
+  counts?: MaterialLibraryCounts;
 }
 
 interface MaterialLinkSummary {
@@ -194,6 +229,9 @@ interface UploadQueueItem {
 }
 
 const PREVIEW_SIZES: Record<"sm" | "md" | "lg", number> = { sm: 320, md: 380, lg: 500 };
+
+const INTERACTIVE_FOCUS =
+  "cursor-pointer transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5]/40 focus-visible:ring-offset-1";
 
 const SORT_OPTIONS = [
   { value: "relevance", label: "Relevance" },
@@ -495,10 +533,21 @@ function RenderedDocumentHtml({
 }
 
 export function MaterialsPanel() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialView = parseLibraryView(searchParams.get("view"));
+  const initialUploadOpen = searchParams.get("upload") === "1";
+
   const [materials, setMaterials] = useState<MaterialListItem[]>([]);
   const [folders, setFolders] = useState<MaterialFolder[]>([]);
   const [tags, setTags] = useState<MaterialTag[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
+  const [libraryCounts, setLibraryCounts] = useState<MaterialLibraryCounts>({
+    total: 0,
+    queue: 0,
+    failed: 0,
+    unlinked: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [pagination, setPagination] = useState<MaterialListResponse["pagination"]>({
@@ -515,9 +564,9 @@ export function MaterialsPanel() {
   const [uploadItems, setUploadItems] = useState<UploadQueueItem[]>([]);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
-  const [uploadOpen, setUploadOpen] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(initialUploadOpen);
   const [linkingMaterialId, setLinkingMaterialId] = useState<string | null>(null);
-  const [view, setView] = useState<LibraryView>("all");
+  const [view, setView] = useState<LibraryView>(initialView ?? "all");
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<CollectionViewMode>("list");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -558,6 +607,22 @@ export function MaterialsPanel() {
   // Prevents a redundant full list refetch every time the user clicks a material row.
   const selectedIdRef = useRef(selectedId);
   useEffect(() => { selectedIdRef.current = selectedId; }, [selectedId]);
+
+  function syncViewToUrl(nextView: LibraryView) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (nextView === "all") params.delete("view");
+    else params.set("view", nextView);
+    const query = params.toString();
+    router.replace(query ? `/admin/materials?${query}` : "/admin/materials", { scroll: false });
+  }
+
+  function applyView(nextView: LibraryView) {
+    setView(nextView);
+    setSelectedFolderId(null);
+    setPage(1);
+    setSelectedIds(new Set());
+    syncViewToUrl(nextView);
+  }
 
   useEffect(() => {
     const savedViewMode = window.localStorage.getItem("impact-material-view-mode");
@@ -653,6 +718,7 @@ export function MaterialsPanel() {
         setMaterials(data.materials ?? []);
         setFolders(data.folders ?? []);
         setTags(data.tags ?? []);
+        if (data.counts) setLibraryCounts(data.counts);
         setPagination(data.pagination ?? pagination);
         setSelectedIds((current) => new Set([...current].filter((id) => data.materials.some((material) => material.id === id))));
 
@@ -876,9 +942,7 @@ export function MaterialsPanel() {
     if (res.ok) {
       setNotice({ type: "success", text: `Folder "${folder.name}" deleted. Materials were kept in All Materials.` });
       if (selectedFolderId && isFolderWithin(folders, selectedFolderId, folder.id)) {
-        setSelectedFolderId(null);
-        setView("all");
-        setPage(1);
+        applyView("all");
       }
       setSelectedIds(new Set());
       setFolderMenu(null);
@@ -1037,8 +1101,9 @@ export function MaterialsPanel() {
   }
 
   function openFolder(folderId: string) {
-    setSelectedFolderId(folderId);
     setView("all");
+    syncViewToUrl("all");
+    setSelectedFolderId(folderId);
     setPage(1);
     setSelectedIds(new Set());
     setFolderMenu(null);
@@ -1059,8 +1124,7 @@ export function MaterialsPanel() {
     setLinked("all");
     setHasAsset("all");
     setHasText("all");
-    setView("all");
-    setSelectedFolderId(null);
+    applyView("all");
     setSort("newest");
     setDirection("desc");
     setPage(1);
@@ -1119,12 +1183,8 @@ export function MaterialsPanel() {
         <MaterialLibrarySidebar
           view={view}
           collapsed={sidebarCollapsed}
-          onViewChange={(nextView) => {
-            setView(nextView);
-            setSelectedFolderId(null);
-            setPage(1);
-            setSelectedIds(new Set());
-          }}
+          viewCounts={libraryCounts}
+          onViewChange={applyView}
           folders={folders}
           selectedFolderId={selectedFolderId}
           onFolderSelect={openFolder}
@@ -1145,32 +1205,49 @@ export function MaterialsPanel() {
               <Icons.ChevronRight size={12} />
             </button>
           )}
-        <div className="border-b border-slate-100 bg-[linear-gradient(180deg,#fdfefe_0%,#f6f9fc_100%)] px-4 py-2.5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex min-w-0 items-center gap-2.5">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#E6F1FB] text-[#185FA5]">
-                <Icons.Database size={15} />
+        <div className="border-b border-slate-100 bg-[linear-gradient(180deg,#fdfefe_0%,#f6f9fc_100%)] px-4 py-3">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div className="flex min-w-0 items-start gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#185FA5] text-white shadow-sm">
+                <Icons.Database size={22} />
               </div>
               <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-1 text-[11px] font-semibold text-slate-400">
-                  <button type="button" onClick={() => { setSelectedFolderId(null); setView("all"); }} className="transition hover:text-[#185FA5]">
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#185FA5]">Teacher Portal</p>
+                <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">Source Materials</h1>
+                  <span className="text-[11px] font-semibold text-slate-500">
+                    {pagination.total.toLocaleString()} items
+                  </span>
+                </div>
+                <div className="mt-1 flex flex-wrap items-center gap-1 text-[11px] font-semibold text-slate-500">
+                  <button type="button" onClick={() => applyView("all")} className={cn(INTERACTIVE_FOCUS, "rounded px-0.5 hover:text-[#185FA5]")}>
                     All Materials
                   </button>
                   {breadcrumbs.map((crumb) => (
                     <span key={crumb.id} className="inline-flex items-center gap-1">
                       <Icons.ChevronRight size={10} />
-                      <button type="button" onClick={() => openFolder(crumb.id)} className="max-w-[160px] truncate transition hover:text-[#185FA5]">
+                      <button type="button" onClick={() => openFolder(crumb.id)} className={cn(INTERACTIVE_FOCUS, "max-w-[160px] truncate rounded px-0.5 hover:text-[#185FA5]")}>
                         {crumb.name}
                       </button>
                     </span>
                   ))}
+                  {selectedFolder && (
+                    <>
+                      <Icons.ChevronRight size={10} />
+                      <span className="max-w-[160px] truncate text-slate-600">{selectedFolder.name}</span>
+                    </>
+                  )}
+                  {!selectedFolder && view !== "all" && (
+                    <>
+                      <Icons.ChevronRight size={10} />
+                      <span className="text-slate-600">{DRIVE_VIEW_LABELS[view]}</span>
+                    </>
+                  )}
                 </div>
-                <div className="flex items-center gap-2">
-                  <h2 className="truncate text-sm font-bold text-slate-900">
-                    {selectedFolder?.name ?? DRIVE_VIEW_LABELS[view] ?? "Source Material Library"}
-                  </h2>
-                  <span className="shrink-0 text-[11px] font-semibold text-slate-400">{pagination.total.toLocaleString()} items</span>
-                </div>
+                <a href="/admin" className={cn(INTERACTIVE_FOCUS, "mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#185FA5] hover:underline")}>
+                  <Icons.ArrowLeft size={12} />
+                  Back to dashboard
+                </a>
               </div>
             </div>
 
@@ -1233,6 +1310,41 @@ export function MaterialsPanel() {
                 {uploadOpen ? "Hide" : "Add material"}
               </button>
             </div>
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            <LibraryStatChip
+              label="Total"
+              value={libraryCounts.total}
+              active={view === "all" && !selectedFolderId}
+              onClick={() => applyView("all")}
+            />
+            {libraryCounts.queue > 0 && (
+              <LibraryStatChip
+                label="In queue"
+                value={libraryCounts.queue}
+                active={view === "queue"}
+                tone="amber"
+                onClick={() => applyView("queue")}
+              />
+            )}
+            {libraryCounts.failed > 0 && (
+              <LibraryStatChip
+                label="Failed"
+                value={libraryCounts.failed}
+                active={view === "failed"}
+                tone="red"
+                onClick={() => applyView("failed")}
+              />
+            )}
+            {libraryCounts.unlinked > 0 && (
+              <LibraryStatChip
+                label="Unlinked"
+                value={libraryCounts.unlinked}
+                active={view === "unlinked"}
+                onClick={() => applyView("unlinked")}
+              />
+            )}
           </div>
         </div>
 
@@ -1421,10 +1533,9 @@ export function MaterialsPanel() {
                     </select>
                   </div>
                 </div>
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  <InsightCard title="Background processing" body="Files enter the library immediately with parser status and retry actions available in the inspector." />
-                  <InsightCard title="Learning context" body="Apply tags and course or lesson links while uploading so source usage is traceable from day one." />
-                </div>
+                <p className="mt-3 text-xs text-slate-500">
+                  Files appear in the library immediately; parser status and retry live in the preview pane.
+                </p>
               </div>
             </div>
           </div>
@@ -1432,10 +1543,14 @@ export function MaterialsPanel() {
 
         {notice && (
           <div className="border-b border-slate-100 bg-white px-5 py-3">
-            <p className={cn(
-              "flex items-center gap-2 text-sm",
-              notice.type === "success" ? "text-emerald-700" : "text-red-700"
-            )}>
+            <p
+              role={notice.type === "error" ? "alert" : "status"}
+              aria-live="polite"
+              className={cn(
+                "flex items-center gap-2 text-sm",
+                notice.type === "success" ? "text-emerald-700" : "text-red-700"
+              )}
+            >
               {notice.type === "success" ? <Icons.Check size={14} /> : <Icons.X size={14} />}
               {notice.text}
             </p>
@@ -1565,7 +1680,7 @@ export function MaterialsPanel() {
                   {linked !== "all" && <FilterChip label={linked} onRemove={() => startTransition(() => { setLinked("all"); setPage(1); })} />}
                   {hasAsset !== "all" && <FilterChip label={hasAsset === "yes" ? "Has asset" : "No asset"} onRemove={() => startTransition(() => { setHasAsset("all"); setPage(1); })} />}
                   {hasText !== "all" && <FilterChip label={hasText === "yes" ? "Has text" : "No text"} onRemove={() => startTransition(() => { setHasText("all"); setPage(1); })} />}
-                  {view !== "all" && <FilterChip label={DRIVE_VIEW_LABELS[view]} onRemove={() => { setView("all"); setPage(1); }} />}
+                  {view !== "all" && <FilterChip label={DRIVE_VIEW_LABELS[view]} onRemove={() => applyView("all")} />}
                   {selectedFolderId && <FilterChip label={selectedFolder?.name ?? "Folder"} onRemove={() => { setSelectedFolderId(null); setPage(1); }} />}
                   {sort !== "newest" && <FilterChip label={SORT_OPTIONS.find((o) => o.value === sort)?.label ?? sort} onRemove={() => { setSort("newest"); setPage(1); }} />}
                   <button type="button" onClick={resetFilters} className="text-[11px] font-semibold text-slate-400 transition hover:text-red-600">
@@ -1944,6 +2059,7 @@ const DRIVE_VIEW_LABELS: Record<LibraryView, string> = {
   linked: "Linked to Lessons",
   unlinked: "Unlinked Materials",
   failed: "Failed Processing",
+  queue: "In Queue",
   archived: "Archived",
   trash: "Trash",
   media: "Media Assets",
@@ -2020,6 +2136,7 @@ function isFolderWithin(folders: MaterialFolder[], folderId: string, ancestorId:
 function MaterialLibrarySidebar({
   view,
   collapsed,
+  viewCounts,
   onViewChange,
   folders,
   selectedFolderId,
@@ -2030,6 +2147,7 @@ function MaterialLibrarySidebar({
 }: {
   view: LibraryView;
   collapsed: boolean;
+  viewCounts: MaterialLibraryCounts;
   onViewChange: (view: LibraryView) => void;
   folders: MaterialFolder[];
   selectedFolderId: string | null;
@@ -2070,7 +2188,13 @@ function MaterialLibrarySidebar({
             key={entry}
             active={!selectedFolderId && view === entry}
             label={DRIVE_VIEW_LABELS[entry]}
-            count={entry === "all" ? undefined : null}
+            count={
+              entry === "failed" && viewCounts.failed > 0
+                ? viewCounts.failed
+                : entry === "unlinked" && viewCounts.unlinked > 0
+                  ? viewCounts.unlinked
+                  : undefined
+            }
             onClick={() => onViewChange(entry)}
             onDrop={entry === "all" ? (event) => onDropMaterials(event, null) : undefined}
           />
@@ -2809,12 +2933,40 @@ function MaterialGrid({
   );
 }
 
-function InsightCard({ title, body }: { title: string; body: string }) {
+function LibraryStatChip({
+  label,
+  value,
+  active,
+  tone = "slate",
+  onClick,
+}: {
+  label: string;
+  value: number;
+  active?: boolean;
+  tone?: "slate" | "amber" | "red";
+  onClick: () => void;
+}) {
+  const toneClasses = {
+    slate: active ? "border-[#185FA5] bg-[#E6F1FB] text-[#185FA5]" : "border-slate-200 bg-white text-slate-700 hover:border-[#b8d7f0]",
+    amber: active ? "border-amber-300 bg-amber-50 text-amber-800" : "border-amber-200 bg-amber-50/70 text-amber-800 hover:border-amber-300",
+    red: active ? "border-red-300 bg-red-50 text-red-700" : "border-red-200 bg-red-50/70 text-red-700 hover:border-red-300",
+  }[tone];
+
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-      <p className="text-sm font-semibold text-slate-800">{title}</p>
-      <p className="mt-1 text-xs leading-5 text-slate-500">{body}</p>
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      aria-label={`${label}: ${value.toLocaleString()} materials`}
+      className={cn(
+        INTERACTIVE_FOCUS,
+        "inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-left",
+        toneClasses
+      )}
+    >
+      <span className="text-[11px] font-bold uppercase tracking-[0.08em] opacity-80">{label}</span>
+      <span className="text-lg font-extrabold tabular-nums">{value.toLocaleString()}</span>
+    </button>
   );
 }
 

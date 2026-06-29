@@ -44,7 +44,7 @@ const navItems: NavItem[] = [
 ];
 
 const adminItems: NavItem[] = [
-  { href: "/admin", label: "Admin Home", icon: Icons.ShieldCheck },
+  { href: "/admin", label: "Teacher Portal", icon: Icons.ShieldCheck },
   { href: "/admin/questions", label: "Question Bank", icon: Icons.FileText },
   { href: "/admin/quizzes", label: "Quizzes Editor", icon: Icons.ClipboardList },
   { href: "/admin/courses", label: "Courses Editor", icon: Icons.GraduationCap },
@@ -123,6 +123,8 @@ export function Sidebar({ isAdmin }: SidebarProps) {
   const isCollapsed = desktopMode === "collapsed";
   const isAutoMode = desktopMode === "auto";
   const isDesktopExpanded = desktopMode === "expanded" || (desktopMode === "auto" && autoReveal);
+  const primaryItems = isAdmin ? adminItems : navItems;
+  const secondaryItems = isAdmin ? navItems : [];
 
   return (
     <aside
@@ -198,24 +200,24 @@ export function Sidebar({ isAdmin }: SidebarProps) {
               </div>
 
               <nav className="flex min-h-0 flex-1 flex-col items-center gap-2 overflow-y-auto px-2.5 py-5">
-                {navItems.map((item) => (
+                {primaryItems.map((item) => (
                   <NavLink
                     key={item.href}
                     {...item}
                     compact
                     active={matchesPath(pathname, item.href)}
+                    isAdminItem={isAdmin}
                   />
                 ))}
 
-                {isAdmin && (
+                {!!secondaryItems.length && (
                   <div className="mt-5 flex w-full flex-col items-center gap-2">
-                    {adminItems.map((item) => (
+                    {secondaryItems.map((item) => (
                       <NavLink
                         key={item.href}
                         {...item}
                         compact
                         active={matchesPath(pathname, item.href)}
-                        isAdminItem
                       />
                     ))}
                   </div>
@@ -249,6 +251,8 @@ export function Sidebar({ isAdmin }: SidebarProps) {
                 toggleStudentOpen={toggleStudentOpen}
                 adminOpen={adminOpen}
                 toggleAdminOpen={toggleAdminOpen}
+                primaryItems={primaryItems}
+                secondaryItems={secondaryItems}
               />
             </div>
           </>
@@ -270,6 +274,8 @@ export function Sidebar({ isAdmin }: SidebarProps) {
               toggleStudentOpen={toggleStudentOpen}
               adminOpen={adminOpen}
               toggleAdminOpen={toggleAdminOpen}
+              primaryItems={primaryItems}
+              secondaryItems={secondaryItems}
             />
           </div>
         )}
@@ -278,23 +284,23 @@ export function Sidebar({ isAdmin }: SidebarProps) {
       {/* Mobile bottom nav scroll */}
       <nav className="flex gap-2 overflow-x-auto px-3 py-3 sm:px-4 lg:hidden">
         <div className="flex gap-2">
-          {navItems.map((item) => (
+          {primaryItems.map((item) => (
             <NavLink
               key={item.href}
               {...item}
               active={matchesPath(pathname, item.href)}
+              isAdminItem={isAdmin}
             />
           ))}
         </div>
 
-        {isAdmin && (
+        {!!secondaryItems.length && (
           <div className="flex gap-2">
-            {adminItems.map((item) => (
+            {secondaryItems.map((item) => (
               <NavLink
                 key={item.href}
                 {...item}
                 active={matchesPath(pathname, item.href)}
-                isAdminItem
               />
             ))}
           </div>
@@ -316,6 +322,8 @@ function SidebarPanelContent({
   toggleStudentOpen,
   adminOpen,
   toggleAdminOpen,
+  primaryItems,
+  secondaryItems,
 }: {
   isAdmin?: boolean;
   user: FirebaseUser | null;
@@ -328,6 +336,8 @@ function SidebarPanelContent({
   toggleStudentOpen: () => void;
   adminOpen: boolean;
   toggleAdminOpen: () => void;
+  primaryItems: NavItem[];
+  secondaryItems: NavItem[];
 }) {
   return (
     <>
@@ -399,50 +409,53 @@ function SidebarPanelContent({
           {!compact && (
             <button
               type="button"
-              onClick={toggleStudentOpen}
-              className="flex w-full items-center justify-between px-3 pb-2 pt-3 text-[10px] font-bold uppercase tracking-[0.2em] text-[#8ebbe9] hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/20 rounded-md"
+              onClick={toggleAdminOpen}
+              className={cn(
+                "flex w-full items-center justify-between px-3 pb-2 pt-3 text-[10px] font-bold uppercase tracking-[0.2em] hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/20 rounded-md",
+                isAdmin ? "text-[#fca5a5]" : "text-[#8ebbe9]"
+              )}
             >
-              <span>Student Section</span>
+              <span>{isAdmin ? "Teacher Portal" : "Student Section"}</span>
               <Icons.ChevronDown
                 size={12}
-                className={cn("text-[#c8e0f4] transition-transform duration-200", studentOpen && "rotate-180")}
+                className={cn(isAdmin ? "text-[#fecdd3]" : "text-[#c8e0f4]", "transition-transform duration-200", adminOpen && "rotate-180")}
               />
             </button>
           )}
-          {(compact || studentOpen) &&
-            navItems.map((item) => (
+          {(compact || adminOpen) &&
+            primaryItems.map((item) => (
               <NavLink
                 key={item.href}
                 {...item}
                 compact={compact}
                 active={matchesPath(pathname, item.href)}
+                isAdminItem={isAdmin}
               />
             ))}
         </div>
 
-        {isAdmin && (
+        {!!secondaryItems.length && (
           <div className={cn("mt-4 flex w-full flex-col", compact ? "items-center gap-1.5" : "gap-1")}>
             {!compact && (
               <button
                 type="button"
-                onClick={toggleAdminOpen}
-                className="flex w-full items-center justify-between px-3 pb-2 pt-3 text-[10px] font-bold uppercase tracking-[0.2em] text-[#fca5a5] hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/20 rounded-md"
+                onClick={toggleStudentOpen}
+                className="flex w-full items-center justify-between px-3 pb-2 pt-3 text-[10px] font-bold uppercase tracking-[0.2em] text-[#8ebbe9] hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/20 rounded-md"
               >
-                <span>Admin Tools</span>
+                <span>Learner View</span>
                 <Icons.ChevronDown
                   size={12}
-                  className={cn("text-[#fecdd3] transition-transform duration-200", adminOpen && "rotate-180")}
+                  className={cn("text-[#c8e0f4] transition-transform duration-200", studentOpen && "rotate-180")}
                 />
               </button>
             )}
-            {(compact || adminOpen) &&
-              adminItems.map((item) => (
+            {(compact || studentOpen) &&
+              secondaryItems.map((item) => (
                 <NavLink
                   key={item.href}
                   {...item}
                   compact={compact}
                   active={matchesPath(pathname, item.href)}
-                  isAdminItem
                 />
               ))}
           </div>

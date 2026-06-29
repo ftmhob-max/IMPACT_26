@@ -11,7 +11,6 @@ export const adminRoles = ["admin", "instructor", "viewer"] as const;
 export type AdminRole = (typeof adminRoles)[number];
 
 export const contentStatusSchema = z.enum(["draft", "review", "published", "archived"]);
-export const sourceStatusSchema = z.enum(["uploaded", "parsed", "failed"]);
 export const questionTypeSchema = z.enum([
   "multiple_choice",
   "multiselect",
@@ -148,12 +147,6 @@ export const csvImportSchema = z.object({
       status: contentStatusSchema.default("draft"),
     })
     .optional(),
-});
-
-export const sourceMaterialUploadSchema = z.object({
-  title: z.string().trim().min(2),
-  storagePath: z.string().trim().min(1),
-  downloadUrl: z.string().url().optional().or(z.literal("")).nullable(),
 });
 
 export const analyticsExportSchema = z.object({

@@ -2,7 +2,8 @@ import { IconTile, LearnerPage, PageHeader, SectionPanel } from "@/components/ui
 import { adminDcQuery } from "@/lib/firebase/admin-dc";
 import { getDevLessonById } from "@/lib/dev-content";
 import { ensureDevDataSeeded } from "@/lib/dev-seed";
-import { StartExamButton } from "./StartExamButton";
+import { isDevelopmentEnvironment } from "@/lib/dev-gate";
+import { StartQuizButton } from "@/components/quiz/StartQuizButton";
 import { parseVideoUrl } from "@/lib/video-url";
 import { LessonMuxPlayer } from "@/components/platform/LessonMuxPlayer";
 import { LessonExternalVideo } from "@/components/platform/LessonExternalVideo";
@@ -39,15 +40,16 @@ async function fetchLesson(id: string) {
     };
 
     let data = await adminDcQuery<LessonData>("GetLesson", { id });
-    if (!data.lesson) {
+    if (!data.lesson && isDevelopmentEnvironment()) {
       await ensureDevDataSeeded().catch(() => null);
       data = await adminDcQuery<LessonData>("GetLesson", { id }).catch(
         (): LessonData => ({ lesson: null })
       );
+      return data.lesson ?? getDevLessonById(id);
     }
-    return data.lesson ?? getDevLessonById(id);
+    return data.lesson ?? null;
   } catch {
-    return getDevLessonById(id);
+    return isDevelopmentEnvironment() ? getDevLessonById(id) : null;
   }
 }
 
@@ -193,7 +195,7 @@ export default async function LessonPage({
               />
             </div>
             <div className="mt-6 border-t border-slate-100 pt-5">
-              <StartExamButton
+              <StartQuizButton
                 quizId={lesson.quiz.id}
                 timeLimitSeconds={lesson.quiz.timeLimitSeconds ?? null}
                 shuffleQuestions={lesson.quiz.shuffleQuestions}

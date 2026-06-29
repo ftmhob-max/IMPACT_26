@@ -1,4 +1,5 @@
 import { adminAuth } from "./admin";
+import { extractSessionCookieValue, verifySessionCookieValue } from "./session-cookie";
 
 export interface VerifiedToken {
   uid: string;
@@ -19,13 +20,13 @@ export async function verifyIdToken(authHeader: string | null): Promise<Verified
 export async function requireLearnerRequest(request: Request) {
   const authHeader = request.headers.get("Authorization");
   const bearer = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
-  const sessionCookie = request.headers.get("Cookie")?.match(/(?:^|;\s*)__session=([^;]+)/)?.[1];
+  const sessionCookie = extractSessionCookieValue(request.headers.get("Cookie"));
 
   try {
     const decoded = bearer
       ? await adminAuth.verifyIdToken(bearer)
       : sessionCookie
-        ? await adminAuth.verifySessionCookie(decodeURIComponent(sessionCookie), false)
+        ? await verifySessionCookieValue(sessionCookie)
         : null;
 
     if (!decoded) throw new Error("Unauthorized");
@@ -45,11 +46,6 @@ export async function requireLearnerRequest(request: Request) {
       response: Response.json({ error: "Unauthorized" }, { status: 401 }),
     };
   }
-}
-
-export async function getUserRole(uid: string): Promise<string> {
-  const user = await adminAuth.getUser(uid);
-  return (user.customClaims?.role as string) ?? "learner";
 }
 
 export async function setUserRole(uid: string, role: string): Promise<void> {

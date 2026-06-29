@@ -2,7 +2,7 @@ import { spawn } from "child_process";
 import { mkdtemp, readFile, rm, writeFile } from "fs/promises";
 import { tmpdir } from "os";
 import path from "path";
-import { getAdminStorage } from "@/lib/firebase/admin-storage";
+import { getAdminStorage } from "@/lib/firebase/admin";
 import { previewAssessmentCsv } from "./csv";
 import { getFileExtension, getSourceMaterialKind } from "./source-materials";
 

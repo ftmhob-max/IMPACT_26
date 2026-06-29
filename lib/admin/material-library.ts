@@ -1,6 +1,5 @@
 import { adminDcQuery } from "@/lib/firebase/admin-dc";
 import { formatUuid } from "@/lib/utils";
-import { listStoredMaterialFolderAssignments, listStoredMaterialFolders } from "./material-folder-store";
 import { getSourceMaterialKind, type SourceMaterialKind } from "./source-materials";
 
 export type MaterialSort =
@@ -28,6 +27,7 @@ export type MaterialLibraryView =
   | "linked"
   | "unlinked"
   | "failed"
+  | "queue"
   | "archived"
   | "trash"
   | "media"
@@ -35,6 +35,13 @@ export type MaterialLibraryView =
   | "audio"
   | "transcripts"
   | "source-links";
+
+export interface MaterialLibraryCounts {
+  total: number;
+  queue: number;
+  failed: number;
+  unlinked: number;
+}
 
 export interface MaterialFolderSummary {
   id: string;
@@ -426,24 +433,6 @@ function deriveDisplayStatus(material: {
   return material.status || "uploaded";
 }
 
-let fallbackFolderCache: MaterialFolderSummary[] = [];
-let fallbackFolderAssignments: Record<string, string | null> = {};
-
-function getMetadataFolder(materialId: string, metadata: Record<string, unknown>) {
-  const assignedFolderId = fallbackFolderAssignments[materialId] ?? fallbackFolderAssignments[formatUuid(materialId)];
-  const folderId = assignedFolderId
-    || (typeof metadata.libraryFolderId === "string" ? metadata.libraryFolderId : "");
-  if (!folderId) return null;
-  return fallbackFolderCache.find((folder) => folder.id === folderId) ?? {
-    id: folderId,
-    name: typeof metadata.libraryFolderName === "string" ? metadata.libraryFolderName : "Folder",
-    folderType: "custom",
-    parentFolder: null,
-    archivedAt: null,
-    trashedAt: null,
-  };
-}
-
 export function normalizeMaterialRecord(material: RawSourceMaterial, query = ""): MaterialLibraryRecord {
   const metadata = parseMetadataJson(material.metadataJson);
   const kind = getSourceMaterialKind(
@@ -465,7 +454,7 @@ export function normalizeMaterialRecord(material: RawSourceMaterial, query = "")
 
   const tags = extractTags(material, metadata);
   const activities = extractActivities(material);
-  const folder = material.folder && !material.folder.trashedAt ? material.folder : getMetadataFolder(material.id, metadata);
+  const folder = material.folder && !material.folder.trashedAt ? material.folder : null;
   const duplicateKey = `${material.fileName.toLowerCase()}::${typeof metadata.sizeBytes === "number" ? metadata.sizeBytes : 0}`;
   const hasAsset = Boolean(material.storagePath);
   const hasExtractedText = Boolean(extractedText.trim());
@@ -517,10 +506,6 @@ export function normalizeMaterialRecord(material: RawSourceMaterial, query = "")
 }
 
 export async function fetchAdminMaterialLibrary(query = "") {
-  [fallbackFolderCache, fallbackFolderAssignments] = await Promise.all([
-    listStoredMaterialFolders(),
-    listStoredMaterialFolderAssignments(),
-  ]);
   const data = await adminDcQuery<{ sourceMaterials: RawSourceMaterial[] }>("AdminListSourceMaterialsRich")
     .catch(() => adminDcQuery<{ sourceMaterials: RawSourceMaterial[] }>("AdminListSourceMaterials"))
     .catch((error) => {
@@ -542,11 +527,7 @@ export async function fetchAdminMaterialFolders() {
   const data = await adminDcQuery<{ sourceMaterialFolders: MaterialFolderSummary[] }>("AdminListSourceMaterialFolders").catch(() => ({
     sourceMaterialFolders: [],
   }));
-  const stored = await listStoredMaterialFolders();
-  const byId = new Map<string, MaterialFolderSummary>();
-  for (const folder of stored) byId.set(folder.id, folder);
-  for (const folder of data.sourceMaterialFolders ?? []) byId.set(folder.id, folder);
-  return Array.from(byId.values());
+  return data.sourceMaterialFolders ?? [];
 }
 
 export async function fetchAdminMaterialTags() {
@@ -602,6 +583,7 @@ export function listAdminMaterials(materials: MaterialLibraryRecord[], params: M
   if (view === "linked") filtered = filtered.filter((material) => material.linkCount > 0);
   if (view === "unlinked") filtered = filtered.filter((material) => material.linkCount === 0);
   if (view === "failed") filtered = filtered.filter((material) => material.displayStatus === "failed" || material.status === "failed" || material.displayStatus === "needs-ocr" || material.status === "needs-ocr");
+  if (view === "queue") filtered = filtered.filter((material) => material.status !== "parsed");
   if (view === "archived") filtered = filtered.filter((material) => Boolean(material.archivedAt));
   if (view === "trash") filtered = filtered.filter((material) => Boolean(material.trashedAt));
   if (view === "media") filtered = filtered.filter((material) => material.kind === "audio" || material.kind === "video" || material.kind === "image");
@@ -677,6 +659,21 @@ export function listAdminMaterials(materials: MaterialLibraryRecord[], params: M
     sort,
     direction,
     query,
+  };
+}
+
+export function computeMaterialLibraryCounts(materials: MaterialLibraryRecord[]): MaterialLibraryCounts {
+  const active = materials.filter((material) => !material.trashedAt && !material.archivedAt);
+  return {
+    total: active.length,
+    queue: active.filter((material) => material.status !== "parsed").length,
+    failed: active.filter(
+      (material) =>
+        material.displayStatus === "failed"
+        || material.status === "failed"
+        || material.displayStatus === "needs-ocr"
+    ).length,
+    unlinked: active.filter((material) => (material.linkCount ?? 0) === 0).length,
   };
 }
 

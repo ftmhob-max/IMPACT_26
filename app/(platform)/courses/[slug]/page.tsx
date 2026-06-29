@@ -3,6 +3,7 @@ import { CourseEnrollmentClient } from "@/components/platform/CourseEnrollmentCl
 import { adminDcQuery } from "@/lib/firebase/admin-dc";
 import { getDevCourseBySlug } from "@/lib/dev-content";
 import { ensureDevDataSeeded } from "@/lib/dev-seed";
+import { isDevelopmentEnvironment } from "@/lib/dev-gate";
 import * as Icons from "@/components/ui/Icons";
 
 async function getCourse(slug: string) {
@@ -34,15 +35,16 @@ async function getCourse(slug: string) {
     };
 
     let data = await adminDcQuery<CourseData>("GetCourseBySlug", { slug });
-    if (!data.courses[0]) {
+    if (!data.courses[0] && isDevelopmentEnvironment()) {
       await ensureDevDataSeeded().catch(() => null);
       data = await adminDcQuery<CourseData>("GetCourseBySlug", { slug }).catch(
         (): CourseData => ({ courses: [] })
       );
+      return data.courses[0] ?? getDevCourseBySlug(slug);
     }
-    return data.courses[0] ?? getDevCourseBySlug(slug);
+    return data.courses[0] ?? null;
   } catch {
-    return getDevCourseBySlug(slug);
+    return isDevelopmentEnvironment() ? getDevCourseBySlug(slug) : null;
   }
 }
 

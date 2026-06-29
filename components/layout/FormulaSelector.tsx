@@ -4,7 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import * as Icons from "@/components/ui/Icons";
 import { cn } from "@/lib/utils";
 import { useFormulaCalc } from "./FormulaCalculatorProvider";
-import { getFormulaCalculator } from "@/lib/formula-calculator";
+import { hasFormulaCalculatorConfig } from "@/lib/formula-calculator";
 
 /**
  * Formula switching / search panel.
@@ -70,7 +70,7 @@ export function FormulaSelector() {
     return pool;
   }, [allFormulas, q, selectedSection]);
 
-  const hasConfig = (code: string) => Boolean(getFormulaCalculator(code));
+  const hasConfig = (formula: (typeof allFormulas)[0]) => hasFormulaCalculatorConfig(formula);
 
   function FormulaRow({
     formula,
@@ -103,7 +103,7 @@ export function FormulaSelector() {
                 {badge}
               </span>
             )}
-            {hasConfig(formula.code) && (
+            {hasConfig(formula) && (
               <span title="Calculator available" className="ml-auto">
                 <Icons.Calculator size={10} className="text-emerald-500 shrink-0" />
               </span>

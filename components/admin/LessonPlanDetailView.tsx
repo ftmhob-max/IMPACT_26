@@ -356,118 +356,135 @@ export function LessonPlanDetailView({
 
   return (
     <div className="lesson-plan-editor flex min-h-screen flex-col bg-[#f0efe9] lg:h-full lg:min-h-0">
-      {/* Top bar */}
-      <header className="lesson-editor-topbar flex flex-wrap items-center gap-3 border-b border-black/10 bg-white px-4 py-3 shadow-sm sm:px-5">
-        <button
-          type="button"
-          onClick={() => setMobileOutlineOpen(true)}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-[#185FA5] hover:text-[#185FA5] lg:hidden"
-          title="Open curriculum outline"
-          aria-label="Open curriculum outline"
-        >
-          <Icons.List size={15} />
-        </button>
-        <button
-          type="button"
-          onClick={() => setOutlineCollapsed((value) => !value)}
-          className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-[#185FA5] hover:text-[#185FA5] lg:flex"
-          title={outlineCollapsed ? "Expand curriculum outline" : "Collapse curriculum outline"}
-          aria-label={outlineCollapsed ? "Expand curriculum outline" : "Collapse curriculum outline"}
-        >
-          {outlineCollapsed ? <Icons.PanelRight size={15} /> : <Icons.PanelLeft size={15} />}
-        </button>
-        <Link
-          href="/admin/courses"
-          className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-slate-700 transition-colors shrink-0"
-        >
-          <Icons.ArrowLeft size={13} />
-          All courses
-        </Link>
-        <span className="text-slate-200">/</span>
-        <div className="flex items-center gap-2 min-w-0">
-          <Icons.GraduationCap size={16} className="text-[#185FA5] shrink-0" />
-          <span className="font-bold text-slate-900 text-sm truncate">{course.title}</span>
-          <PublishBadge isPublished={course.isPublished} />
-        </div>
-        <div className="min-w-6 flex-1" />
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setShowReadinessSummary((v) => !v)}
-            className="flex items-center gap-1.5 text-[11px] text-slate-400 hover:text-slate-700 transition-colors"
-            title="Course readiness summary"
-          >
-            <Icons.BarChart3 size={13} />
-            <span>{publishedLessons}/{totalLessons} published</span>
-            {readinessSummaryCounts.blocked > 0 && (
-              <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-[9px] font-bold text-red-600">
-                {readinessSummaryCounts.blocked} blocked
-              </span>
-            )}
-          </button>
-          {showReadinessSummary && (
-            <>
+      {/* Top bar — row 1: nav; row 2 on mobile: mode + readiness */}
+      <header className="lesson-editor-topbar border-b border-black/10 bg-white shadow-sm">
+        <div className="flex flex-col gap-2 px-4 py-3 sm:px-5 lg:flex-row lg:items-center lg:gap-3">
+          <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+            <button
+              type="button"
+              onClick={() => setMobileOutlineOpen(true)}
+              className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-[#185FA5] hover:text-[#185FA5] lg:hidden"
+              title="Open curriculum outline"
+              aria-label="Open curriculum outline"
+            >
+              <Icons.List size={15} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setOutlineCollapsed((value) => !value)}
+              className="hidden h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-[#185FA5] hover:text-[#185FA5] lg:flex"
+              title={outlineCollapsed ? "Expand curriculum outline" : "Collapse curriculum outline"}
+              aria-label={outlineCollapsed ? "Expand curriculum outline" : "Collapse curriculum outline"}
+            >
+              {outlineCollapsed ? <Icons.PanelRight size={15} /> : <Icons.PanelLeft size={15} />}
+            </button>
+            <Link
+              href="/admin/courses"
+              className="flex shrink-0 items-center gap-1.5 text-xs font-semibold text-slate-400 transition-colors hover:text-slate-700"
+            >
+              <Icons.ArrowLeft size={13} />
+              <span className="hidden min-[400px]:inline">All courses</span>
+            </Link>
+            <span className="hidden text-slate-200 sm:inline">/</span>
+            <div className="flex min-w-0 items-center gap-2">
+              <Icons.GraduationCap size={16} className="shrink-0 text-[#185FA5]" aria-hidden />
+              <span className="truncate text-sm font-bold text-slate-900">{course.title}</span>
+              <PublishBadge isPublished={course.isPublished} />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+            <div className="relative">
               <button
                 type="button"
-                className="fixed inset-0 z-20"
-                onClick={() => setShowReadinessSummary(false)}
-                aria-label="Close readiness summary"
-              />
-              <div className="absolute right-0 top-full z-30 mt-2 w-64 rounded-xl border border-black/10 bg-white shadow-xl p-4 space-y-2">
-                <p className="text-xs font-bold text-slate-800">Course readiness</p>
-                {(["published", "ready", "blocked", "draft"] as OutlineFilter[]).map((f) => (
+                onClick={() => setShowReadinessSummary((v) => !v)}
+                className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-[11px] text-slate-500 transition hover:border-[#185FA5] hover:text-slate-700"
+                title="Course readiness summary"
+                aria-label="Course readiness summary"
+              >
+                <Icons.BarChart3 size={13} />
+                {readinessSummaryCounts.blocked > 0 ? (
+                  <>
+                    <span className="font-semibold text-red-600 lg:hidden">{readinessSummaryCounts.blocked} blocked</span>
+                    <span className="hidden lg:inline">{publishedLessons}/{totalLessons} published</span>
+                    <span className="hidden rounded-full bg-red-100 px-1.5 py-0.5 text-[9px] font-bold text-red-600 lg:inline">
+                      {readinessSummaryCounts.blocked} blocked
+                    </span>
+                  </>
+                ) : (
+                  <span>{publishedLessons}/{totalLessons} published</span>
+                )}
+              </button>
+              {showReadinessSummary && (
+                <>
                   <button
-                    key={f}
                     type="button"
-                    onClick={() => { setOutlineFilter(f); setShowReadinessSummary(false); }}
-                    className="flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-xs hover:bg-slate-50 transition-colors"
-                  >
-                    <span className={cn("capitalize font-medium", f === "blocked" ? "text-red-600" : f === "ready" ? "text-emerald-600" : "text-slate-600")}>{f}</span>
-                    <span className="font-bold text-slate-700">{readinessSummaryCounts[f]}</span>
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-        {/* Mode toggle */}
-        <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 text-xs font-semibold">
-          {(["edit", "review", "preview"] as const).map((m) => (
-            <button
-              key={m}
-              type="button"
-              onClick={() => void handleModeChange(m)}
-              className={cn(
-                "flex items-center gap-1.5 rounded px-3 py-1.5 transition-colors",
-                mode === m
-                  ? "bg-white text-slate-900 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
+                    className="fixed inset-0 z-20"
+                    onClick={() => setShowReadinessSummary(false)}
+                    aria-label="Close readiness summary"
+                  />
+                  <div className="absolute right-0 top-full z-30 mt-2 w-64 space-y-2 rounded-xl border border-black/10 bg-white p-4 shadow-xl">
+                    <p className="text-xs font-bold text-slate-800">Course readiness</p>
+                    {(["published", "ready", "blocked", "draft"] as OutlineFilter[]).map((f) => (
+                      <button
+                        key={f}
+                        type="button"
+                        onClick={() => { setOutlineFilter(f); setShowReadinessSummary(false); }}
+                        className="flex w-full cursor-pointer items-center justify-between rounded-lg px-2 py-1.5 text-xs transition-colors hover:bg-slate-50"
+                      >
+                        <span className={cn("font-medium capitalize", f === "blocked" ? "text-red-600" : f === "ready" ? "text-emerald-600" : "text-slate-600")}>{f}</span>
+                        <span className="font-bold text-slate-700">{readinessSummaryCounts[f]}</span>
+                      </button>
+                    ))}
+                  </div>
+                </>
               )}
-            >
-              {m === "edit" ? <Icons.Pencil size={12} /> : m === "review" ? <Icons.LayoutDashboard size={12} /> : <Icons.Eye size={12} />}
-              {m === "edit" ? "Edit" : m === "review" ? "Review" : "Preview"}
-            </button>
-          ))}
-        </div>
-        {mode === "edit" && (
-          <button
-            type="button"
-            onClick={() => setFocusMode((v) => !v)}
-            title={focusMode ? "Exit focus mode" : "Focus mode — hide navigation"}
-            className={cn(
-              "hidden lg:flex h-8 w-8 items-center justify-center rounded-lg border transition-colors",
-              focusMode
-                ? "border-[#185FA5] bg-[#E6F1FB] text-[#185FA5]"
-                : "border-slate-200 text-slate-400 hover:border-[#185FA5] hover:text-[#185FA5]"
+            </div>
+            <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 text-xs font-semibold">
+              {(["edit", "review", "preview"] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => void handleModeChange(m)}
+                  title={m === "edit" ? "Edit lesson blocks" : m === "review" ? "Review validation issues" : "Preview as student"}
+                  aria-label={m === "edit" ? "Edit mode" : m === "review" ? "Review mode" : "Preview mode"}
+                  className={cn(
+                    "flex cursor-pointer items-center gap-1.5 rounded px-2.5 py-1.5 transition-colors sm:px-3",
+                    mode === m
+                      ? "bg-white text-slate-900 shadow-sm"
+                      : "text-slate-500 hover:text-slate-700"
+                  )}
+                >
+                  {m === "edit" ? <Icons.Pencil size={12} /> : m === "review" ? <Icons.LayoutDashboard size={12} /> : <Icons.Eye size={12} />}
+                  <span className="hidden min-[480px]:inline">{m === "edit" ? "Edit" : m === "review" ? "Review" : "Preview"}</span>
+                </button>
+              ))}
+            </div>
+            {mode === "edit" && (
+              <button
+                type="button"
+                onClick={() => setFocusMode((v) => !v)}
+                title={focusMode ? "Exit focus mode" : "Focus mode — hide navigation"}
+                aria-label={focusMode ? "Exit focus mode" : "Enter focus mode"}
+                className={cn(
+                  "flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border transition-colors",
+                  focusMode
+                    ? "border-[#185FA5] bg-[#E6F1FB] text-[#185FA5]"
+                    : "border-slate-200 text-slate-400 hover:border-[#185FA5] hover:text-[#185FA5]"
+                )}
+              >
+                {focusMode ? <Icons.Minimize2 size={14} /> : <Icons.Maximize2 size={14} />}
+              </button>
             )}
-          >
-            {focusMode ? <Icons.Minimize2 size={14} /> : <Icons.Maximize2 size={14} />}
-          </button>
-        )}
+          </div>
+        </div>
       </header>
 
       {notice && (
-        <div className={`flex items-center gap-2 px-5 py-2 text-xs font-medium ${notice.type === "success" ? "bg-emerald-50 text-emerald-800 border-b border-emerald-200" : "bg-red-50 text-red-700 border-b border-red-200"}`}>
+        <div
+          role={notice.type === "error" ? "alert" : undefined}
+          className={`flex items-center gap-2 px-5 py-2 text-xs font-medium ${notice.type === "success" ? "bg-emerald-50 text-emerald-800 border-b border-emerald-200" : "bg-red-50 text-red-700 border-b border-red-200"}`}
+        >
           {notice.type === "success" ? <Icons.Check size={13} /> : <Icons.X size={13} />}
           {notice.text}
         </div>
@@ -1010,9 +1027,9 @@ function LessonSidebarButton({
         onClick={onSelect}
         title={`${lesson.title} - ${insight.readinessLabel}`}
         className={cn(
-          "flex h-10 w-full items-center justify-center rounded-xl border transition-colors",
+          "flex h-10 w-full cursor-pointer items-center justify-center rounded-xl border transition-colors",
           selected
-            ? "border-[#b8d7f0] bg-[#E6F1FB] text-[#185FA5]"
+            ? "border-l-2 border-l-[#185FA5] border-[#b8d7f0] bg-[#E6F1FB] text-[#185FA5]"
             : "border-transparent text-slate-400 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-700"
         )}
       >
@@ -1026,7 +1043,7 @@ function LessonSidebarButton({
       "group flex items-stretch gap-0 rounded-xl border transition-colors",
       isDragging ? "border-[#185FA5]/40 bg-[#E6F1FB]/30 shadow-md" :
       selected
-        ? "border-[#b8d7f0] bg-[#E6F1FB] text-[#185FA5]"
+        ? "border-l-2 border-l-[#185FA5] border-[#b8d7f0] bg-[#E6F1FB] text-[#185FA5]"
         : "border-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900"
     )}>
       {/* Drag handle */}
@@ -1044,7 +1061,7 @@ function LessonSidebarButton({
       <button
         type="button"
         onClick={onSelect}
-        className="min-w-0 flex-1 py-2 pr-2.5 text-left"
+        className="min-w-0 flex-1 cursor-pointer py-2 pr-2.5 text-left transition-colors duration-200"
       >
       <div className="flex items-start gap-2">
         <LessonStatusDot lesson={lesson} />
@@ -1220,9 +1237,11 @@ type SaveStatusCombined = "saved" | "unsaved" | "saving" | "error";
 function LessonSaveStatusBar({
   contentStatus,
   metaStatus,
+  savedAt,
 }: {
   contentStatus: SaveStatusCombined;
   metaStatus: SaveStatusCombined;
+  savedAt?: Date | null;
 }) {
   const combined: SaveStatusCombined =
     contentStatus === "error" || metaStatus === "error" ? "error" :
@@ -1236,11 +1255,18 @@ function LessonSaveStatusBar({
     combined === "unsaved" ? "border-amber-400" :
     "border-red-400";
 
+  const savedTimeLabel = savedAt
+    ? savedAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+    : null;
+
   const label =
-    combined === "saved" ? "All changes saved" :
-    combined === "saving" ? "Saving…" :
-    combined === "unsaved" ? "Unsaved changes" :
-    "Save error — try again";
+    combined === "saved"
+      ? (savedTimeLabel ? `Saved · ${savedTimeLabel}` : "Saved")
+      : combined === "saving"
+      ? "Saving…"
+      : combined === "unsaved"
+      ? "Unsaved changes"
+      : "Save error — retry";
 
   const textColor =
     combined === "saved" ? "text-emerald-600" :
@@ -1285,6 +1311,15 @@ function LessonDetailPanel({
 }) {
   const [contentSaveStatus, setContentSaveStatus] = useState<SaveStatusCombined>("saved");
   const [metaSaveStatus, setMetaSaveStatus] = useState<SaveStatusCombined>("saved");
+  const [contentSavedAt, setContentSavedAt] = useState<Date | null>(null);
+  const prevContentStatus = useRef<SaveStatusCombined>("saved");
+
+  useEffect(() => {
+    if (contentSaveStatus === "saved" && prevContentStatus.current !== "saved") {
+      setContentSavedAt(new Date());
+    }
+    prevContentStatus.current = contentSaveStatus;
+  }, [contentSaveStatus]);
 
   const tabs: { id: TabId; label: string; icon: React.ComponentType<any>; show: boolean }[] = [
     { id: "content", label: "Structure", icon: Icons.FileText, show: true },
@@ -1323,7 +1358,7 @@ function LessonDetailPanel({
           <LessonTypeIcon type={lesson.lessonType} size={18} className="text-[#185FA5]" />
           <h1 className="min-w-0 flex-1 truncate text-lg font-extrabold text-slate-900">{lesson.title}</h1>
           <div className="flex items-center gap-3">
-            <LessonSaveStatusBar contentStatus={contentSaveStatus} metaStatus={metaSaveStatus} />
+            <LessonSaveStatusBar contentStatus={contentSaveStatus} metaStatus={metaSaveStatus} savedAt={contentSavedAt} />
             <PublishBadge isPublished={lesson.isPublished} />
             <ReadinessDot lesson={lesson} />
           </div>
@@ -1339,7 +1374,7 @@ function LessonDetailPanel({
                 type="button"
                 onClick={() => onTabChange(tab.id)}
                 className={cn(
-                  "flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-2.5 text-xs font-semibold transition-colors sm:px-4",
+                  "flex shrink-0 cursor-pointer items-center gap-1.5 border-b-2 px-3 py-2.5 text-xs font-semibold transition-colors duration-200 sm:px-4",
                   activeTab === tab.id
                     ? "border-[#185FA5] text-[#185FA5]"
                     : "border-transparent text-slate-500 hover:text-slate-800"

@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { requireAdminRequest } from "@/lib/admin/auth";
 import { ingestBuffer, uploadSourceBuffer } from "@/lib/admin/ingestion";
 import {
+  computeMaterialLibraryCounts,
   fetchAdminMaterialFolders,
   fetchAdminMaterialLibrary,
   fetchAdminMaterialTags,
@@ -290,6 +291,7 @@ export async function GET(request: NextRequest) {
     sort: result.sort,
     direction: result.direction,
     query: result.query,
+    counts: computeMaterialLibraryCounts(materials),
   });
 }
 

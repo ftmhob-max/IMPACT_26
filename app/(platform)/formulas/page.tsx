@@ -4,7 +4,8 @@ import { FormulaCalculatorProvider } from "@/components/layout/FormulaCalculator
 import { adminDcQuery } from "@/lib/firebase/admin-dc";
 import { DEV_FORMULA_SECTIONS } from "@/lib/dev-content";
 import { ensureDevDataSeeded } from "@/lib/dev-seed";
-import { dedupeFormulaSections } from "@/lib/formula-sections";
+import { isDevelopmentEnvironment } from "@/lib/dev-gate";
+import { dedupeFormulaSections } from "@/lib/utils";
 import { listUserFavorites } from "@/lib/firebase/favorites";
 import { getLearnerSession } from "@/lib/firebase/learner-session";
 import * as Icons from "@/components/ui/Icons";
@@ -31,19 +32,24 @@ async function getFormulaSectionsData() {
     };
 
     let data = await adminDcQuery<FormulaSectionsData>("GetFormulaSections");
-    if (data.formulaSections.length === 0) {
+    if (data.formulaSections.length === 0 && isDevelopmentEnvironment()) {
       await ensureDevDataSeeded().catch(() => null);
       data = await adminDcQuery<FormulaSectionsData>("GetFormulaSections").catch(
         (): FormulaSectionsData => ({ formulaSections: [] })
       );
+      const sections = dedupeFormulaSections(data.formulaSections.map((s) => ({
+        ...s,
+        formulas: s.formulas_on_section,
+      })));
+      return sections.length > 0 ? sections : DEV_FORMULA_SECTIONS;
     }
     const sections = dedupeFormulaSections(data.formulaSections.map((s) => ({
       ...s,
       formulas: s.formulas_on_section,
     })));
-    return sections.length > 0 ? sections : DEV_FORMULA_SECTIONS;
+    return sections;
   } catch {
-    return DEV_FORMULA_SECTIONS;
+    return isDevelopmentEnvironment() ? DEV_FORMULA_SECTIONS : [];
   }
 }
 

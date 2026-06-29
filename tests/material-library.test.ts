@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { listAdminMaterials, normalizeMaterialRecord } from "@/lib/admin/material-library";
+import { computeMaterialLibraryCounts, listAdminMaterials, normalizeMaterialRecord } from "@/lib/admin/material-library";
 
 function rawMaterial(overrides: Record<string, unknown> = {}) {
   return {
@@ -78,4 +78,32 @@ test("listAdminMaterials filters by folder, tags, views, and status intelligence
   assert.equal(listAdminMaterials([ready, failed], { view: "linked" }).materials[0].id, ready.id);
   assert.equal(listAdminMaterials([ready, failed], { view: "failed" }).materials[0].id, failed.id);
   assert.equal(listAdminMaterials([ready, failed], { status: "failed" }).materials[0].displayStatus, "failed");
+});
+
+test("computeMaterialLibraryCounts and queue view align with dashboard ingestion queue", () => {
+  const ready = normalizeMaterialRecord(rawMaterial({
+    contentSourceLinks_on_sourceMaterial: [{ id: crypto.randomUUID(), referenceLabel: "Primary", createdAt: "2026-05-02", lesson: { id: crypto.randomUUID(), title: "Appeals", module: null } }],
+  }));
+  const queued = normalizeMaterialRecord(rawMaterial({
+    id: crypto.randomUUID(),
+    title: "Pending PDF",
+    status: "uploaded",
+  }));
+  const failed = normalizeMaterialRecord(rawMaterial({
+    id: crypto.randomUUID(),
+    title: "Failed Audio",
+    fileName: "failed-audio.mp3",
+    fileType: "audio/mpeg",
+    status: "failed",
+    metadataJson: JSON.stringify({ sizeBytes: 2048, kind: "audio" }),
+    folder: null,
+    ingestionJobs_on_sourceMaterial: [{ id: crypto.randomUUID(), status: "failed", parser: "whisper", extractedCharacters: 0, errorMessage: "missing ffmpeg" }],
+  }));
+
+  const counts = computeMaterialLibraryCounts([ready, queued, failed]);
+  assert.equal(counts.total, 3);
+  assert.equal(counts.queue, 2);
+  assert.equal(counts.failed, 1);
+  assert.equal(counts.unlinked, 2);
+  assert.equal(listAdminMaterials([ready, queued, failed], { view: "queue" }).materials.length, 2);
 });

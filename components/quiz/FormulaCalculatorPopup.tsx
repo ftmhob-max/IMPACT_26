@@ -4,14 +4,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import * as Icons from "@/components/ui/Icons";
 import { cn } from "@/lib/utils";
 import { useFormulaCalc } from "@/components/layout/FormulaCalculatorProvider";
-import { useFormulaCalculationEngine } from "@/lib/hooks/useFormulaCalculationEngine";
-import { FormulaVariableHelper } from "@/components/layout/FormulaVariableHelper";
-import { FormulaResultPanel } from "@/components/layout/FormulaResultPanel";
-import { FormulaSelector } from "@/components/layout/FormulaSelector";
-import { BasicCalculator } from "@/components/layout/BasicCalculator";
-import type { CalculationHistoryEntry } from "@/components/layout/FormulaCalculatorProvider";
-
-type CalcMode = "formula" | "basic" | "scientific";
+import {
+  FormulaCalculatorBody,
+  FormulaCalculatorModeTabs,
+  useFormulaCalculatorShell,
+  type CalcMode,
+} from "@/components/layout/FormulaCalculatorBody";
 
 // ── Sizing constants ───────────────────────────────────────────────────────────
 
@@ -64,22 +62,21 @@ export function FormulaCalculatorPopup({
     isOpen,
     isMinimized,
     activeFormula,
-    activeConfig,
-    activeFormulaCode,
     showSelectorPane,
-    getValues,
-    setValues,
-    setResult,
-    addToHistory,
     minimize,
     restore,
     close,
     toggleSelectorPane,
-    calculatorSettings,
   } = useFormulaCalc();
 
-  // ── Calculator mode ────────────────────────────────────────────────────────
-  const [calcMode, setCalcMode] = useState<CalcMode>("formula");
+  const {
+    calcMode,
+    setCalcMode,
+    engine,
+    showSteps,
+    activeConfig,
+    activeFormulaCode,
+  } = useFormulaCalculatorShell();
 
   // ── Popup size ─────────────────────────────────────────────────────────────
   const [popupWidth, setPopupWidth] = useState(384);
@@ -178,37 +175,6 @@ export function FormulaCalculatorPopup({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isResizing]);
 
-  // ── Calculation engine ────────────────────────────────────────────────────
-  const initialValues = activeFormulaCode ? getValues(activeFormulaCode) : {};
-  const engine = useFormulaCalculationEngine(activeConfig, initialValues);
-
-  useEffect(() => {
-    if (!activeFormulaCode) return;
-    setValues(activeFormulaCode, engine.values);
-  }, [engine.values, activeFormulaCode, setValues]);
-
-  useEffect(() => {
-    if (!activeFormulaCode) return;
-    setResult(activeFormulaCode, engine.result?.value ?? null);
-  }, [engine.result, activeFormulaCode, setResult]);
-
-  useEffect(() => {
-    if (!engine.result || !activeFormula || !activeConfig) return;
-    const entry: CalculationHistoryEntry = {
-      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-      timestamp: Date.now(),
-      formulaCode: activeFormula.code,
-      formulaName: activeFormula.name,
-      expressionText: activeFormula.expression,
-      values: { ...engine.values },
-      result: engine.result.value,
-      formattedResult: engine.result.formatted,
-      outputLabel: activeConfig.output.label,
-    };
-    addToHistory(entry);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [engine.result]);
-
   useEffect(() => {
     if (!isOpen) return;
     function onKey(e: KeyboardEvent) { if (e.key === "Escape") close(); }
@@ -217,11 +183,6 @@ export function FormulaCalculatorPopup({
   }, [isOpen, close]);
 
   if (!isOpen) return null;
-
-  const showSteps =
-    !calculatorSettings ||
-    calculatorSettings.showSteps === "always" ||
-    (calculatorSettings.showSteps === "after" && engine.hasCalculated);
 
   // ── Mobile: bottom sheet ──────────────────────────────────────────────────
   const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
@@ -258,7 +219,7 @@ export function FormulaCalculatorPopup({
             onToggleSelector={toggleSelectorPane}
           />
           {!isMinimized && (
-            <PopupBody
+            <FormulaCalculatorBody
               engine={engine}
               activeFormula={activeFormula}
               activeConfig={activeConfig}
@@ -267,6 +228,7 @@ export function FormulaCalculatorPopup({
               calcMode={calcMode}
               onAttachToAnswer={onAttachToAnswer}
               onToggleSelector={toggleSelectorPane}
+              variant="popup"
             />
           )}
         </div>
@@ -343,7 +305,7 @@ export function FormulaCalculatorPopup({
         onToggleSelector={toggleSelectorPane}
       />
       {!isMinimized && (
-        <PopupBody
+        <FormulaCalculatorBody
           engine={engine}
           activeFormula={activeFormula}
           activeConfig={activeConfig}
@@ -352,6 +314,7 @@ export function FormulaCalculatorPopup({
           calcMode={calcMode}
           onAttachToAnswer={onAttachToAnswer}
           onToggleSelector={toggleSelectorPane}
+          variant="popup"
         />
       )}
     </div>
@@ -458,148 +421,12 @@ function PopupHeader({
 
       {/* Mode tabs (hidden when minimized) */}
       {!isMinimized && (
-        <div className="flex border-t border-slate-100">
-          {(["formula", "basic", "scientific"] as CalcMode[]).map((mode) => (
-            <button
-              key={mode}
-              type="button"
-              onClick={() => onSetCalcMode(mode)}
-              title={compact ? (mode === "formula" ? "Formula" : mode === "basic" ? "Basic" : "Scientific") : undefined}
-              className={cn(
-                "flex-1 py-1.5 transition border-b-2",
-                compact ? "text-[9px] font-bold uppercase tracking-wider px-1" : "text-[10px] font-bold capitalize",
-                calcMode === mode
-                  ? "border-[#185FA5] text-[#185FA5]"
-                  : "border-transparent text-slate-400 hover:text-slate-600"
-              )}
-            >
-              {compact
-                ? (mode === "formula" ? "F" : mode === "basic" ? "B" : "S")
-                : (mode === "formula" ? "Formula" : mode === "basic" ? "Basic" : "Scientific")}
-            </button>
-          ))}
-        </div>
+        <FormulaCalculatorModeTabs
+          calcMode={calcMode}
+          onSetCalcMode={onSetCalcMode}
+          compact={compact}
+        />
       )}
-    </div>
-  );
-}
-
-function PopupBody({
-  engine,
-  activeFormula,
-  activeConfig,
-  showSelectorPane,
-  showSteps,
-  calcMode,
-  onAttachToAnswer,
-  onToggleSelector,
-}: {
-  engine: ReturnType<typeof useFormulaCalculationEngine>;
-  activeFormula: ReturnType<typeof useFormulaCalc>["activeFormula"];
-  activeConfig: ReturnType<typeof useFormulaCalc>["activeConfig"];
-  showSelectorPane: boolean;
-  showSteps: boolean;
-  calcMode: CalcMode;
-  onAttachToAnswer?: (formatted: string) => void;
-  onToggleSelector: () => void;
-}) {
-  if (calcMode !== "formula") {
-    return (
-      <div className="flex-1 overflow-y-auto p-3">
-        <BasicCalculator isScientific={calcMode === "scientific"} isVisible />
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex min-h-0 flex-1 overflow-hidden">
-      {showSelectorPane && (
-        <div className="w-52 shrink-0 overflow-y-auto border-r border-slate-100 p-3">
-          <FormulaSelector />
-        </div>
-      )}
-
-      <div className="min-w-0 flex-1 overflow-y-auto p-4 space-y-4">
-        {!activeFormula ? (
-          <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
-            <Icons.Calculator size={28} className="text-slate-300" />
-            <p className="text-sm font-semibold text-slate-500">No formula selected</p>
-            <button
-              type="button"
-              onClick={onToggleSelector}
-              className="rounded-lg bg-[#185FA5] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#134d88] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5]"
-            >
-              Pick a Formula
-            </button>
-          </div>
-        ) : (
-          <>
-            <div>
-              <p className="font-calc rounded-lg border border-[#b8d7f0] bg-[#f8fbff] px-2.5 py-2 text-[12px] text-slate-700">
-                {activeFormula.expression}
-              </p>
-            </div>
-
-            {!activeConfig ? (
-              <p className="text-xs text-slate-400 text-center py-4">
-                No interactive calculator for this formula yet.
-              </p>
-            ) : (
-              <>
-                <div className="space-y-3">
-                  {activeConfig.variables.map((variable) => (
-                    <FormulaVariableHelper
-                      key={variable.key}
-                      variable={variable}
-                      value={engine.values[variable.key] ?? ""}
-                      onChange={(val) => engine.handleChange(variable.key, val)}
-                      onBlur={() => engine.handleBlurValidate(variable.key)}
-                      onEnter={engine.handleCalculate}
-                      error={engine.errors[variable.key]}
-                    />
-                  ))}
-                </div>
-
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={engine.handleCalculate}
-                    className="flex-1 rounded-lg bg-[#185FA5] py-2 text-sm font-bold text-white hover:bg-[#134d88] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5]"
-                  >
-                    Calculate
-                  </button>
-                  <button
-                    type="button"
-                    onClick={engine.handleReset}
-                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold text-slate-600 hover:border-[#185FA5] hover:text-[#185FA5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5]"
-                  >
-                    Reset
-                  </button>
-                </div>
-
-                {engine.hasCalculated && engine.calcError && (
-                  <div className="flex items-start gap-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">
-                    <Icons.AlertCircle size={13} className="mt-0.5 shrink-0" />
-                    {engine.calcError}
-                  </div>
-                )}
-
-                {engine.hasCalculated && engine.result && (
-                  <FormulaResultPanel
-                    config={activeConfig}
-                    values={engine.values}
-                    engineResult={engine.result}
-                    showStepsDefault={showSteps}
-                    copyState={engine.copyState}
-                    onCopy={engine.handleCopy}
-                    onAttachToAnswer={onAttachToAnswer}
-                  />
-                )}
-              </>
-            )}
-          </>
-        )}
-      </div>
     </div>
   );
 }

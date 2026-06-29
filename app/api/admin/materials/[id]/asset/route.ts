@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getAdminStorage } from "@/lib/firebase/admin-storage";
+import { getAdminStorage } from "@/lib/firebase/admin";
 import { adminAuth } from "@/lib/firebase/admin";
 import { adminDcQuery } from "@/lib/firebase/admin-dc";
 import { parseGsPath } from "@/lib/admin/source-materials";

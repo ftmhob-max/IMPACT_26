@@ -5,7 +5,7 @@ import { FileDropZone } from "./FileDropZone";
 import * as Icons from "@/components/ui/Icons";
 import { DomainCombobox } from "@/components/admin/DomainCombobox";
 
-const TEMPLATE_URL = "/api/admin/assessments/csv-template";
+const TEMPLATE_URL = "/api/admin/templates?kind=assessment";
 
 interface PreviewRow {
   question_text: string;

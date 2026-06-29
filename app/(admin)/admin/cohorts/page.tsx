@@ -1,4 +1,6 @@
 import { adminDcQuery } from "@/lib/firebase/admin-dc";
+import { DomainBadge } from "@/components/ui/DomainBadge";
+import { DifficultyBadge } from "@/components/ui/DifficultyBadge";
 
 async function getCohortStats() {
   const data = await adminDcQuery<{ quizAttempts: any[] }>("AdminCohortStats").catch(() => ({
@@ -357,16 +359,6 @@ function Section({ title, description, headerRight, children }: { title: string;
       {children}
     </div>
   );
-}
-
-function DomainBadge({ domain }: { domain: string }) {
-  const map: Record<string, string> = { math: "bg-blue-50 text-blue-700", appraisal: "bg-purple-50 text-purple-700", law: "bg-amber-50 text-amber-700", philly: "bg-emerald-50 text-emerald-700", admin: "bg-slate-100 text-slate-600", ethics: "bg-rose-50 text-rose-700" };
-  return <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${map[domain] ?? "bg-slate-100 text-slate-500"}`}>{domain}</span>;
-}
-
-function DifficultyBadge({ difficulty }: { difficulty: string }) {
-  const map: Record<string, string> = { easy: "bg-green-50 text-green-700", proficient: "bg-yellow-50 text-yellow-700", expert: "bg-red-50 text-red-700" };
-  return <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${map[difficulty] ?? "bg-slate-100 text-slate-500"}`}>{difficulty}</span>;
 }
 
 function CalibrationBadge({ calibration }: { calibration: "too-easy" | "calibrated" | "too-hard" }) {

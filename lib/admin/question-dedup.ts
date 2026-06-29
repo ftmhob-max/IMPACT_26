@@ -32,6 +32,33 @@ export function createQuestionDedupSet(questionTexts: Iterable<string>): Set<str
   return seen;
 }
 
+async function loadExistingQuestions() {
+  const countData = await adminDcQuery<{ questions: Array<{ id: string }> }>("AdminCountQuestions").catch(() => ({
+    questions: [],
+  }));
+  const total = countData.questions?.length ?? 0;
+  const questionTexts: string[] = [];
+  const textToIdMap = new Map<string, string>();
+
+  if (total === 0) {
+    return { dedupSet: new Set<string>(), textToIdMap };
+  }
+
+  for (let offset = 0; offset < total; offset += PAGE_SIZE) {
+    const page = await adminDcQuery<{ questions: ExistingQuestionRecord[] }>("AdminListQuestionsPage", {
+      limit: PAGE_SIZE,
+      offset,
+    }).catch(() => ({ questions: [] }));
+    for (const question of page.questions ?? []) {
+      questionTexts.push(question.questionText);
+      const normalized = normalizeQuestionTextForDedup(question.questionText);
+      if (normalized) textToIdMap.set(normalized, question.id);
+    }
+  }
+
+  return { dedupSet: createQuestionDedupSet(questionTexts), textToIdMap };
+}
+
 export function isDuplicateQuestionText(questionText: string, seen: Set<string>): boolean {
   return seen.has(normalizeQuestionTextForDedup(questionText));
 }
@@ -42,46 +69,11 @@ export function rememberQuestionText(questionText: string, seen: Set<string>) {
 }
 
 export async function loadExistingQuestionDedupSet(): Promise<Set<string>> {
-  const countData = await adminDcQuery<{ questions: Array<{ id: string }> }>("AdminCountQuestions").catch(() => ({
-    questions: [],
-  }));
-  const total = countData.questions?.length ?? 0;
-
-  if (total === 0) return new Set<string>();
-
-  const questionTexts: string[] = [];
-  for (let offset = 0; offset < total; offset += PAGE_SIZE) {
-    const page = await adminDcQuery<{ questions: ExistingQuestionRecord[] }>("AdminListQuestionsPage", {
-      limit: PAGE_SIZE,
-      offset,
-    }).catch(() => ({ questions: [] }));
-    for (const question of page.questions ?? []) {
-      questionTexts.push(question.questionText);
-    }
-  }
-
-  return createQuestionDedupSet(questionTexts);
+  const { dedupSet } = await loadExistingQuestions();
+  return dedupSet;
 }
 
 export async function loadExistingQuestionMap(): Promise<Map<string, string>> {
-  const countData = await adminDcQuery<{ questions: Array<{ id: string }> }>("AdminCountQuestions").catch(() => ({
-    questions: [],
-  }));
-  const total = countData.questions?.length ?? 0;
-
-  const map = new Map<string, string>();
-  if (total === 0) return map;
-
-  for (let offset = 0; offset < total; offset += PAGE_SIZE) {
-    const page = await adminDcQuery<{ questions: ExistingQuestionRecord[] }>("AdminListQuestionsPage", {
-      limit: PAGE_SIZE,
-      offset,
-    }).catch(() => ({ questions: [] }));
-    for (const question of page.questions ?? []) {
-      const normalized = normalizeQuestionTextForDedup(question.questionText);
-      if (normalized) map.set(normalized, question.id);
-    }
-  }
-
-  return map;
+  const { textToIdMap } = await loadExistingQuestions();
+  return textToIdMap;
 }

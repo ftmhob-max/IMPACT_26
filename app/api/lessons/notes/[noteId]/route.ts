@@ -1,11 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { verifyIdToken } from "@/lib/firebase/auth-server";
 import { adminDcQuery, adminDcMutate } from "@/lib/firebase/admin-dc";
-import {
-  deleteLessonNote,
-  listLessonNotes,
-  updateLessonNote,
-} from "@/lib/lesson-notes";
 import { z } from "zod";
 
 const updateSchema = z.object({
@@ -13,25 +8,12 @@ const updateSchema = z.object({
   lessonTitle: z.string().trim().optional(),
 });
 
-function shouldUseFirestoreFallback(err: unknown) {
-  return err instanceof Error && /operation ".+" not found/.test(err.message);
-}
-
-async function verifyOwnership(
-  uid: string,
-  noteId: string
-): Promise<"dataconnect" | "firestore" | null> {
-  try {
-    const data = await adminDcQuery<{ lessonNotes: Array<{ id: string }> }>(
-      "GetLessonNotesForUser",
-      { userId: uid }
-    );
-    return (data.lessonNotes ?? []).some((n) => n.id === noteId) ? "dataconnect" : null;
-  } catch (err) {
-    if (!shouldUseFirestoreFallback(err)) throw err;
-    const notes = await listLessonNotes(uid);
-    return notes.some((n) => n.id === noteId) ? "firestore" : null;
-  }
+async function verifyOwnership(uid: string, noteId: string) {
+  const data = await adminDcQuery<{ lessonNotes: Array<{ id: string }> }>(
+    "GetLessonNotesForUser",
+    { userId: uid }
+  );
+  return (data.lessonNotes ?? []).some((n) => n.id === noteId);
 }
 
 export async function PUT(
@@ -47,26 +29,16 @@ export async function PUT(
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
 
-    const ownerSource = await verifyOwnership(uid, noteId);
-    if (!ownerSource) {
+    if (!(await verifyOwnership(uid, noteId))) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const updatedAt = new Date().toISOString();
-    if (ownerSource === "firestore") {
-      await updateLessonNote(uid, noteId, {
-        lessonTitle: parsed.data.lessonTitle ?? null,
-        content: parsed.data.content,
-        updatedAt,
-      });
-    } else {
-      await adminDcMutate("UpdateLessonNote", {
-        id: noteId,
-        lessonTitle: parsed.data.lessonTitle ?? null,
-        content: parsed.data.content,
-        updatedAt,
-      });
-    }
+    await adminDcMutate("UpdateLessonNote", {
+      id: noteId,
+      lessonTitle: parsed.data.lessonTitle ?? null,
+      content: parsed.data.content,
+      updatedAt: new Date().toISOString(),
+    });
     return NextResponse.json({ ok: true });
   } catch (err: any) {
     if (err.message?.includes("Unauthorized")) {
@@ -85,16 +57,11 @@ export async function DELETE(
     const { uid } = await verifyIdToken(request.headers.get("Authorization"));
     const { noteId } = await params;
 
-    const ownerSource = await verifyOwnership(uid, noteId);
-    if (!ownerSource) {
+    if (!(await verifyOwnership(uid, noteId))) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    if (ownerSource === "firestore") {
-      await deleteLessonNote(uid, noteId);
-    } else {
-      await adminDcMutate("DeleteLessonNote", { id: noteId });
-    }
+    await adminDcMutate("DeleteLessonNote", { id: noteId });
     return NextResponse.json({ ok: true });
   } catch (err: any) {
     if (err.message?.includes("Unauthorized")) {
