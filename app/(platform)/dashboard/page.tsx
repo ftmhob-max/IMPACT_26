@@ -23,6 +23,13 @@ interface LatestAttempt {
   completedAt: string | null;
 }
 
+const studyLoop = [
+  { title: "Learn", detail: "Build the concept and rule.", icon: Icons.BookOpen, tone: "blue" as const },
+  { title: "Apply", detail: "Use formulas with field-style data.", icon: Icons.Calculator, tone: "green" as const },
+  { title: "Review", detail: "Trace the rationale behind answers.", icon: Icons.FileCheck, tone: "amber" as const },
+  { title: "Measure", detail: "Use scores to choose the next focus.", icon: Icons.BarChart3, tone: "purple" as const },
+];
+
 async function getLatestAttempt(userId: string): Promise<LatestAttempt | null> {
   try {
     const data = await adminDcQuery<{ quizAttempts: LatestAttempt[] }>(
@@ -53,23 +60,25 @@ export default async function DashboardPage() {
         <ContinuePanel latestAttempt={latestAttempt} />
       </div>
 
+      <StudyLoopStrip />
+
       <div className="grid gap-4 sm:grid-cols-3">
         <MetricCard
-          label="Practice exam"
+          label="Practice"
           value="80"
-          detail="Questions across six assessment domains"
+          detail="Exam questions across assessment domains"
           tone="blue"
           icon={Icons.GraduationCap}
         />
         <MetricCard
-          label="Formula compass"
+          label="Formulas"
           value="53"
-          detail="Quick-reference formulas for calculations"
+          detail="Quick-reference calculations and examples"
           tone="green"
           icon={Icons.Compass}
         />
         <MetricCard
-          label="Study level"
+          label="Levels"
           value="3"
           detail="Easy, proficient, and expert practice"
           tone="amber"
@@ -79,8 +88,8 @@ export default async function DashboardPage() {
 
       <div className="mt-6 grid gap-4 lg:grid-cols-[1.45fr_0.9fr]">
         <SectionPanel
-          title="Recommended path"
-          description="A simple course-style flow: learn the method, review formulas, then practice with answer rationales."
+          title="Recommended study path"
+          description="Follow the same loop every session so progress is visible and review stays focused."
         >
           <div className="divide-y divide-slate-100">
             <LearningStep
@@ -93,8 +102,8 @@ export default async function DashboardPage() {
             />
             <LearningStep
               index="2"
-              title="Keep the Formula Compass nearby"
-              description="Use the quick reference before and during practice to reinforce calculation patterns."
+              title="Use the Formula Compass as support"
+              description="Check definitions and examples before practice so the formula choice is intentional."
               href="/formulas"
               cta="Open formulas"
               icon={Icons.Calculator}
@@ -110,7 +119,7 @@ export default async function DashboardPage() {
           </div>
         </SectionPanel>
 
-        <SectionPanel title="Study shortcuts" description="The two fastest routes for self-study.">
+        <SectionPanel title="Study shortcuts" description="Fast routes for the next thing a learner usually needs.">
           <div className="space-y-3 p-4">
             <Shortcut
               href="/courses"
@@ -154,12 +163,35 @@ export default async function DashboardPage() {
   );
 }
 
+function StudyLoopStrip() {
+  return (
+    <SectionPanel className="mb-6">
+      <div className="grid gap-px overflow-hidden bg-slate-100 sm:grid-cols-2 lg:grid-cols-4">
+        {studyLoop.map((step, index) => (
+          <div key={step.title} className="bg-white p-4">
+            <div className="flex items-start gap-3">
+              <IconTile icon={step.icon} tone={step.tone} size={18} className="h-10 w-10" />
+              <div className="min-w-0">
+                <p className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-[#185FA5]">
+                  Step {index + 1}
+                </p>
+                <h2 className="mt-1 text-sm font-extrabold text-slate-950">{step.title}</h2>
+                <p className="mt-1 text-xs leading-5 text-slate-500">{step.detail}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </SectionPanel>
+  );
+}
+
 function ContinuePanel({ latestAttempt }: { latestAttempt: LatestAttempt | null }) {
   const score = latestAttempt?.scorePct ?? null;
   const hasScore = score != null;
   return (
     <SectionPanel>
-      <div className="grid gap-5 p-5 lg:grid-cols-[1.25fr_0.75fr] lg:items-center">
+      <div className="grid gap-5 p-5 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
         <div className="flex flex-col gap-4 min-[380px]:flex-row">
           <IconTile icon={hasScore ? Icons.BarChart3 : Icons.BookOpen} tone={hasScore ? "green" : "blue"} />
           <div className="min-w-0">
@@ -182,7 +214,8 @@ function ContinuePanel({ latestAttempt }: { latestAttempt: LatestAttempt | null 
             </div>
           </div>
         </div>
-        <div className="rounded-lg border border-slate-200 bg-[#f8fbff] p-4">
+
+        <div className="rounded-lg border border-slate-200 bg-[#f8fbff] p-4 shadow-sm">
           <ProgressMeter
             value={hasScore ? Math.round(score ?? 0) : 0}
             label={hasScore ? "Latest score" : "Course progress"}
@@ -193,9 +226,22 @@ function ContinuePanel({ latestAttempt }: { latestAttempt: LatestAttempt | null 
             <MiniMetric label="Sections" value="10" />
             <MiniMetric label="Formulas" value="53" />
           </div>
+          <div className="mt-4 space-y-2 border-t border-slate-100 pt-4">
+            <ReadinessCue label="Current move" value={hasScore ? "Review rationale" : "Start course"} />
+            <ReadinessCue label="Support tool" value="Formula Compass" />
+          </div>
         </div>
       </div>
     </SectionPanel>
+  );
+}
+
+function ReadinessCue({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-md bg-white px-3 py-2 text-xs">
+      <span className="font-bold text-slate-500">{label}</span>
+      <span className="font-extrabold text-slate-900">{value}</span>
+    </div>
   );
 }
 
@@ -275,7 +321,12 @@ function LearningStep({
     <div className="flex flex-col gap-3 px-4 py-4 min-[380px]:flex-row sm:px-5">
       <IconTile icon={Icon} size={16} className="h-9 w-9" />
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-slate-800">{title}</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#E6F1FB] text-[11px] font-extrabold text-[#185FA5]">
+            {index}
+          </span>
+          <p className="text-sm font-semibold text-slate-800">{title}</p>
+        </div>
         <p className="mt-1 text-sm leading-6 text-slate-500">{description}</p>
       </div>
       <Link href={href} className="self-start whitespace-nowrap text-xs font-semibold text-[#185FA5] hover:underline min-[380px]:self-center">

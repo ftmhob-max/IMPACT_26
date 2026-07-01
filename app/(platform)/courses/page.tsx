@@ -1,5 +1,13 @@
 import Link from "next/link";
-import { EmptyState, LearnerPage, PageHeader, PrimaryAction, StatusBadge } from "@/components/ui/LearnerPrimitives";
+import {
+  EmptyState,
+  IconTile,
+  LearnerPage,
+  PageHeader,
+  PrimaryAction,
+  SectionPanel,
+  StatusBadge,
+} from "@/components/ui/LearnerPrimitives";
 import { adminDcQuery } from "@/lib/firebase/admin-dc";
 import { getDevPublishedCourses } from "@/lib/dev-content";
 import { ensureDevDataSeeded } from "@/lib/dev-seed";
@@ -33,7 +41,7 @@ export default async function CoursesPage() {
       <PageHeader
         eyebrow="Course catalog"
         title="Choose a learning path"
-        description="Structured modules for the IMPACT_26V.1 assessment method, followed by focused practice and formula review."
+        description="Start with structured assessment method lessons, keep formulas close, then practice until the rationale is clear."
         action={<PrimaryAction href="/formulas">Open Formula Compass</PrimaryAction>}
         icon={Icons.GraduationCap}
       />
@@ -46,51 +54,139 @@ export default async function CoursesPage() {
           icon={Icons.Search}
         />
       ) : (
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-          {(courses as Array<{ id: string; slug: string; title: string; description?: string; thumbnailUrl?: string }>).map((course) => (
-            <Link
-              key={course.id}
-              href={`/courses/${course.slug}`}
-              className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#185FA5] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2"
-            >
-              {course.thumbnailUrl ? (
-                <div className="aspect-[16/9] bg-slate-100">
-                  <img
-                    src={course.thumbnailUrl}
-                    alt={course.title}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-              ) : (
-                <div className="flex aspect-[16/9] items-center justify-center bg-[#f8fbff] px-6 text-center">
-                  <div className="rounded-lg border border-[#b8d7f0] bg-[#E6F1FB] p-5 text-[#185FA5]">
-                    <Icons.BookOpen size={42} className="opacity-80" />
-                  </div>
-                </div>
-              )}
-              <div className="p-5">
-                <div className="mb-3 flex flex-wrap gap-2">
-                  <StatusBadge tone="blue">Assessment method</StatusBadge>
-                  <StatusBadge tone="slate">Self-paced</StatusBadge>
-                </div>
-                <h2 className="text-lg font-extrabold leading-snug tracking-[-0.01em] text-slate-950 group-hover:text-[#185FA5]">
-                  {course.title}
-                </h2>
-                {course.description && (
-                  <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-500">{course.description}</p>
-                )}
-                <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
-                  <span className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">View modules</span>
-                  <div className="flex items-center gap-1.5 text-sm font-bold text-[#185FA5]">
-                    Start
-                    <Icons.ArrowRight size={16} />
-                  </div>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+        <>
+          <CatalogGuide count={courses.length} />
+
+          <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
+            {(courses as Array<{ id: string; slug: string; title: string; description?: string; thumbnailUrl?: string }>).map((course, index) => (
+              <CourseCard key={course.id} course={course} index={index} />
+            ))}
+          </div>
+        </>
       )}
     </LearnerPage>
+  );
+}
+
+function CatalogGuide({ count }: { count: number }) {
+  return (
+    <SectionPanel>
+      <div className="grid gap-4 p-5 lg:grid-cols-[1fr_0.95fr] lg:items-center">
+        <div className="flex flex-col gap-4 min-[420px]:flex-row">
+          <IconTile icon={Icons.Target} tone="green" />
+          <div>
+            <StatusBadge tone="green">{count} active path{count === 1 ? "" : "s"}</StatusBadge>
+            <h2 className="mt-3 text-xl font-extrabold tracking-[-0.02em] text-slate-950">
+              Use the catalog as your study map.
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+              Open a path, work through lessons in order, keep the Formula Compass nearby, and use rationales to decide what to review next.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
+          <GuideStep label="1" title="Learn" detail="Build the concept first." />
+          <GuideStep label="2" title="Apply" detail="Use formulas with examples." />
+          <GuideStep label="3" title="Review" detail="Check readiness with rationale." />
+        </div>
+      </div>
+    </SectionPanel>
+  );
+}
+
+function GuideStep({ label, title, detail }: { label: string; title: string; detail: string }) {
+  return (
+    <div className="rounded-lg border border-slate-200 bg-[#fbfcfe] px-3 py-2.5">
+      <div className="flex items-center gap-3">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#E6F1FB] text-xs font-extrabold text-[#185FA5]">
+          {label}
+        </span>
+        <div className="min-w-0">
+          <p className="text-sm font-extrabold text-slate-900">{title}</p>
+          <p className="text-xs leading-5 text-slate-500">{detail}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CourseCard({
+  course,
+  index,
+}: {
+  course: { slug: string; title: string; description?: string; thumbnailUrl?: string };
+  index: number;
+}) {
+  const progressWidth = index === 0 ? "w-[68%]" : index === 1 ? "w-[42%]" : "w-[24%]";
+  const focus = index === 0 ? "Foundation path" : index === 1 ? "Formula practice" : "Readiness review";
+
+  return (
+    <Link
+      href={`/courses/${course.slug}`}
+      className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#185FA5] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2"
+    >
+      {course.thumbnailUrl ? (
+        <div className="aspect-[16/9] bg-slate-100">
+          <img
+            src={course.thumbnailUrl}
+            alt={course.title}
+            className="h-full w-full object-cover"
+          />
+        </div>
+      ) : (
+        <div className="border-b border-slate-100 bg-[linear-gradient(135deg,#f8fbff_0%,#eef6ff_56%,#f5fbf7_100%)] px-5 py-5">
+          <div className="flex items-start justify-between gap-4">
+            <div className="rounded-lg border border-[#b8d7f0] bg-white/80 p-3 text-[#185FA5] shadow-sm">
+              <Icons.BookOpen size={30} />
+            </div>
+            <StatusBadge tone="blue">Self-paced</StatusBadge>
+          </div>
+          <div className="mt-5">
+            <div className="mb-2 flex items-center justify-between text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500">
+              <span>{focus}</span>
+              <span>Start ready</span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-white shadow-inner">
+              <div className={`h-full rounded-full bg-[#67c58e] ${progressWidth}`} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="p-5">
+        <div className="mb-3 flex flex-wrap gap-2">
+          <StatusBadge tone="blue">Assessment method</StatusBadge>
+          <StatusBadge tone="slate">Rationale review</StatusBadge>
+        </div>
+        <h2 className="text-lg font-extrabold leading-snug tracking-[-0.01em] text-slate-950 group-hover:text-[#185FA5]">
+          {course.title}
+        </h2>
+        {course.description && (
+          <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-500">{course.description}</p>
+        )}
+        <div className="mt-5 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4">
+          <CourseSignal label="Lessons" value="In order" />
+          <CourseSignal label="Formula" value="Nearby" />
+          <CourseSignal label="Review" value="Rationale" />
+        </div>
+        <div className="mt-5 flex items-center justify-between rounded-lg border border-[#b8d7f0] bg-[#f8fbff] px-3 py-2.5">
+          <span className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">View modules</span>
+          <div className="flex items-center gap-1.5 text-sm font-bold text-[#185FA5]">
+            Start
+            <Icons.ArrowRight size={16} />
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function CourseSignal({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0 rounded-md bg-slate-50 px-2.5 py-2">
+      <p className="text-[10px] font-extrabold uppercase tracking-[0.08em] text-slate-500">{label}</p>
+      <p className="mt-1 truncate text-xs font-bold text-slate-800">{value}</p>
+    </div>
   );
 }

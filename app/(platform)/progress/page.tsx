@@ -242,6 +242,14 @@ export default async function ProfilePage() {
         nextAction={nextAction}
       />
 
+      <ReadinessPlan
+        totalAttempts={totalAttempts}
+        latestAttempt={latestAttempt}
+        weakestDomain={weakestDomain}
+        strongestDomain={strongestDomain}
+        nextAction={nextAction}
+      />
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <MetricCard
           label="Attempts"
@@ -364,6 +372,87 @@ export default async function ProfilePage() {
         </SectionPanel>
       </div>
     </LearnerPage>
+  );
+}
+
+function ReadinessPlan({
+  totalAttempts,
+  latestAttempt,
+  weakestDomain,
+  strongestDomain,
+  nextAction,
+}: {
+  totalAttempts: number;
+  latestAttempt: Attempt | null;
+  weakestDomain: ({ label: string; pct: number } & Record<string, unknown>) | null;
+  strongestDomain: ({ label: string; pct: number } & Record<string, unknown>) | null;
+  nextAction: { href: string; label: string; detail: string };
+}) {
+  const hasBaseline = totalAttempts > 0;
+  const plan = [
+    {
+      label: "Baseline",
+      title: hasBaseline ? "Use your latest attempt" : "Create your first baseline",
+      detail: hasBaseline
+        ? `${latestAttempt?.quiz.title ?? "Latest attempt"} gives this page its current signal.`
+        : "Take one scored attempt so strengths and gaps become visible.",
+      icon: Icons.Target,
+      tone: "blue" as const,
+    },
+    {
+      label: "Focus",
+      title: weakestDomain ? weakestDomain.label : "No weak domain yet",
+      detail: weakestDomain
+        ? `${weakestDomain.pct}% aggregate performance. Review this before the next attempt.`
+        : "Domain-level guidance appears after scored responses.",
+      icon: Icons.AlertCircle,
+      tone: "amber" as const,
+    },
+    {
+      label: "Reinforce",
+      title: strongestDomain ? strongestDomain.label : "Build a strength",
+      detail: strongestDomain
+        ? `${strongestDomain.pct}% aggregate performance. Keep this pattern consistent.`
+        : "Save formulas and glossary terms while you study.",
+      icon: Icons.Award,
+      tone: "green" as const,
+    },
+    {
+      label: "Next",
+      title: nextAction.label,
+      detail: nextAction.detail,
+      icon: Icons.ArrowRight,
+      tone: "purple" as const,
+    },
+  ];
+
+  return (
+    <SectionPanel className="mb-6">
+      <div className="border-b border-slate-100 px-5 py-4">
+        <h2 className="text-sm font-extrabold text-slate-900">Readiness plan</h2>
+        <p className="mt-1 text-xs leading-5 text-slate-500">
+          A simple loop for turning score history into the next study session.
+        </p>
+      </div>
+      <div className="grid gap-px bg-slate-100 sm:grid-cols-2 xl:grid-cols-4">
+        {plan.map((item) => (
+          <div key={item.label} className="bg-white p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-[#f8fbff] text-[#185FA5]">
+                <item.icon size={18} />
+              </div>
+              <div className="min-w-0">
+                <StatusBadge tone={item.tone} className="px-2 py-0.5 text-[10px]">
+                  {item.label}
+                </StatusBadge>
+                <p className="mt-2 text-sm font-extrabold text-slate-900">{item.title}</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">{item.detail}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </SectionPanel>
   );
 }
 

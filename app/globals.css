@@ -119,6 +119,20 @@ body {
   background-color: var(--impact-page);
 }
 
+.landing-hero-bg {
+  background:
+    radial-gradient(circle at 12% 18%, rgba(24, 95, 165, 0.1), transparent 28%),
+    radial-gradient(circle at 86% 22%, rgba(47, 122, 77, 0.12), transparent 30%),
+    linear-gradient(180deg, #ffffff 0%, #f7f8f6 100%);
+}
+
+.dark .landing-hero-bg {
+  background:
+    radial-gradient(circle at 12% 18%, rgba(110, 182, 255, 0.12), transparent 28%),
+    radial-gradient(circle at 86% 22%, rgba(116, 212, 157, 0.1), transparent 30%),
+    linear-gradient(180deg, #151d26 0%, #0e141b 100%);
+}
+
 .dark [class~="bg-white"],
 .dark [class~="bg-[#f7f8f6]"],
 .dark [class~="bg-[#f8fafc]"],

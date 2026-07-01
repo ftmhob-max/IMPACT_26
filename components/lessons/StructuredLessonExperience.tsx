@@ -20,6 +20,13 @@ import { getIdToken } from "@/lib/firebase/auth";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase/client";
 
+const lessonStudyLoop = [
+  { label: "Learn", detail: "Read the concept and rule.", icon: Icons.BookOpen },
+  { label: "Apply", detail: "Work through examples.", icon: Icons.Calculator },
+  { label: "Review", detail: "Save anything to revisit.", icon: Icons.FileCheck },
+  { label: "Measure", detail: "Complete the checkpoint.", icon: Icons.BarChart3 },
+];
+
 export function StructuredLessonExperience({
   lessonId,
   lessonTitle,
@@ -204,6 +211,24 @@ export function StructuredLessonExperience({
             <JourneyStat label="Completed" value={`${completedCount} explored`} />
             <JourneyStat label="Remaining" value={`${remainingCount} left`} />
             <JourneyStat label="Do first" value={visibleBlocks[0] ? titleForBlock(visibleBlocks[0]) : "Add blocks"} />
+          </div>
+          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            {lessonStudyLoop.map((item, index) => (
+              <div key={item.label} className="rounded-xl border border-slate-200 bg-white px-3 py-3 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#E6F1FB] text-[#185FA5]">
+                    <item.icon size={15} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-extrabold uppercase tracking-[0.1em] text-[#185FA5]">
+                      Step {index + 1}
+                    </p>
+                    <p className="mt-0.5 text-sm font-extrabold text-slate-900">{item.label}</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">{item.detail}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
           {document.objectives.some((objective) => objective.trim()) && (
             <div className="mt-4 rounded-xl border border-[#d8e6f4] dark:border-slate-800 bg-[#f7fbff] dark:bg-slate-900 p-4">

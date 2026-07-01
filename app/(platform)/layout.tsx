@@ -9,7 +9,7 @@ export default async function PlatformLayout({ children }: { children: React.Rea
   return (
     <div className="min-h-screen bg-[#f7f8f6] lg:flex lg:h-screen lg:overflow-hidden">
       <Sidebar isAdmin={isAdmin} />
-      <main className="min-w-0 flex-1 lg:h-screen lg:overflow-y-auto">{children}</main>
+      <main className="min-w-0 flex-1 overflow-x-hidden lg:h-screen lg:overflow-y-auto">{children}</main>
     </div>
   );
 }

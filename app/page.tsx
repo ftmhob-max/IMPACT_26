@@ -4,10 +4,10 @@ import * as Icons from "@/components/ui/Icons";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 const valueStrip = [
-  { label: "Logic before formula", icon: Icons.ShieldCheck },
-  { label: "Equity in public service", icon: Icons.Users },
-  { label: "Defensible reasoning", icon: Icons.Scale },
-  { label: "Continuous competence", icon: Icons.RotateCcw },
+  { label: "Principles first", icon: Icons.ShieldCheck },
+  { label: "Guided formulas", icon: Icons.Calculator },
+  { label: "Rationale review", icon: Icons.FileCheck },
+  { label: "Readiness tracking", icon: Icons.BarChart3 },
 ];
 
 const benefits: Array<{
@@ -18,25 +18,25 @@ const benefits: Array<{
 }> = [
   {
     title: "Step-by-step rationale",
-    description: "Every lesson builds the why behind the what, so conclusions are easier to explain.",
+    description: "Every answer connects the rule, inputs, formula, and conclusion so reasoning is easier to defend.",
     icon: Icons.ClipboardList,
     tone: "blue",
   },
   {
     title: "53 formulas at your fingertips",
-    description: "Review definitions, examples, and real assessment applications in one place.",
+    description: "Keep definitions, examples, and applied assessment use cases close while you study.",
     icon: Icons.Calculator,
     tone: "green",
   },
   {
-    title: "Real assessment scenarios",
-    description: "Practice with data-informed cases that reflect municipal assessment work.",
+    title: "Practice that feels like the job",
+    description: "Move through field-style cases that mirror municipal assessment judgment.",
     icon: Icons.Landmark,
     tone: "blue",
   },
   {
     title: "Equity and compliance focus",
-    description: "Strengthen transparent, consistent decisions that can stand up to review.",
+    description: "Build transparent, consistent decisions that can stand up to public review.",
     icon: Icons.Scale,
     tone: "green",
   },
@@ -45,7 +45,7 @@ const benefits: Array<{
 const learningPaths = [
   {
     title: "IMPACT_26V.1 Foundations",
-    description: "Build a strong base in assessment principles, legal framework, and core methodology.",
+    description: "Build the assessment principles, legal framework, and core method in order.",
     meta: "10 sections - 162 questions",
     href: "/courses",
     icon: Icons.Landmark,
@@ -53,7 +53,7 @@ const learningPaths = [
   },
   {
     title: "Formula Compass",
-    description: "Master formulas with clear explanations, examples, and practical applications.",
+    description: "Search formulas, review plain-language definitions, and reinforce calculation patterns.",
     meta: "53 formulas - quick reference",
     href: "/formulas",
     icon: Icons.Compass,
@@ -61,7 +61,7 @@ const learningPaths = [
   },
   {
     title: "Practice Exam & Rationales",
-    description: "Test readiness with practice questions and detailed reasoning for every answer.",
+    description: "Check readiness with practice questions and review the rationale behind every answer.",
     meta: "458 questions - rationale review",
     href: "/courses",
     icon: Icons.ClipboardList,
@@ -73,25 +73,25 @@ const steps = [
   {
     number: "1",
     title: "Learn",
-    description: "Understand the concept, rule, and reasoning behind the method.",
+    description: "Start with the concept, rule, and public-service reason behind the method.",
     icon: Icons.BookOpen,
   },
   {
     number: "2",
     title: "Apply",
-    description: "Use the right formula with guided examples and field-style data.",
+    description: "Use guided examples and field-style data before moving into practice.",
     icon: Icons.Calculator,
   },
   {
     number: "3",
     title: "Review",
-    description: "See each rationale step by step so the pattern becomes clear.",
+    description: "Trace each rationale so mistakes become patterns you can correct.",
     icon: Icons.FileCheck,
   },
   {
     number: "4",
     title: "Measure",
-    description: "Track readiness and know where to focus before moving on.",
+    description: "Use progress and score signals to choose the next focused study move.",
     icon: Icons.BarChart3,
   },
 ];
@@ -111,15 +111,21 @@ const proof = [
   { value: "458", label: "Questions", detail: "Practice, apply, and review with rationale" },
 ];
 
+const heroStats = [
+  { value: "10", label: "guided sections" },
+  { value: "53", label: "formula references" },
+  { value: "458", label: "practice questions" },
+];
+
 export default function Home() {
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#f7f8f6] text-slate-950">
       <Header />
       <HeroSection />
       <ValueStrip />
-      <BenefitsSection />
-      <LearningPaths />
       <HowItWorks />
+      <LearningPaths />
+      <BenefitsSection />
       <Capabilities />
       <MissionProof />
       <FinalCta />
@@ -189,21 +195,38 @@ function Header() {
 function HeroSection() {
   return (
     <section className="relative overflow-hidden border-b border-slate-200 bg-white">
-      <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#f7f8f6] to-transparent" />
-      <div className="mx-auto grid w-full max-w-7xl min-w-0 items-center gap-8 px-4 py-10 sm:gap-10 sm:px-6 sm:py-18 lg:grid-cols-[0.9fr_1.1fr] lg:px-8 lg:py-20">
+      <div className="landing-hero-bg absolute inset-0" />
+      <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#f7f8f6] to-transparent" />
+      <div className="mx-auto grid w-full max-w-7xl min-w-0 items-center gap-8 px-4 py-10 sm:gap-10 sm:px-6 sm:py-16 lg:grid-cols-[0.88fr_1.12fr] lg:px-8 lg:py-20">
         <div className="relative z-10 max-w-2xl">
-          <h1 className="text-[2.15rem] font-extrabold leading-[1.06] tracking-[-0.035em] text-slate-950 sm:max-w-2xl sm:text-5xl lg:text-6xl">
-            <span className="block">Learn to reason</span>
-            <span className="block">through <span className="text-[#185FA5]">every</span></span>
-            <span className="block">assessment.</span>
+          <p className="inline-flex rounded-full border border-[#b8d7f0] bg-[#E6F1FB] px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#185FA5]">
+            Professional assessment e-learning
+          </p>
+          <h1
+            aria-label="Build assessment judgment you can explain and defend."
+            className="text-[2.15rem] font-extrabold leading-[1.06] tracking-[-0.035em] text-slate-950 sm:max-w-2xl sm:text-5xl lg:text-6xl"
+          >
+            <span className="mt-4 block">Build assessment judgment</span>
+            <span className="block">you can <span className="text-[#185FA5]">explain</span></span>
+            <span className="block">and defend.</span>
           </h1>
           <p className="mt-4 text-base leading-7 text-slate-600 sm:mt-5 sm:max-w-xl sm:text-lg">
-            IMPACT_26V.1 trains municipal assessors to understand formulas, apply principles, and make defensible, equitable decisions.
+            IMPACT_26V.1 gives municipal assessors a self-paced path for learning principles, applying formulas, reviewing rationales, and measuring readiness.
           </p>
+
+          <div className="mt-5 grid gap-2 sm:max-w-xl sm:grid-cols-4">
+            {steps.map((step) => (
+              <div key={step.title} className="rounded-lg border border-slate-200 bg-white/80 px-3 py-2 shadow-sm">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#185FA5]">{step.number}</p>
+                <p className="mt-0.5 text-sm font-extrabold text-slate-900">{step.title}</p>
+              </div>
+            ))}
+          </div>
+
           <div className="mt-7 flex flex-col gap-3 sm:mt-8 sm:flex-row">
             <Link
               href="/sign-up"
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-[#185FA5] px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#0d3d6e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-[#185FA5] px-5 py-3 text-sm font-bold text-white shadow-md shadow-[#185FA5]/20 transition-colors hover:bg-[#0d3d6e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2"
             >
               Start Learning
               <Icons.ArrowRight size={16} />
@@ -215,6 +238,15 @@ function HeroSection() {
               Explore Courses
             </Link>
           </div>
+
+          <div className="mt-7 grid max-w-xl grid-cols-3 overflow-hidden rounded-lg border border-slate-200 bg-white/95 shadow-sm">
+            {heroStats.map((stat) => (
+              <div key={stat.label} className="border-r border-slate-200 px-3 py-3 last:border-r-0 sm:px-4">
+                <p className="text-2xl font-extrabold tracking-[-0.03em] text-[#185FA5]">{stat.value}</p>
+                <p className="mt-1 text-[11px] font-bold uppercase leading-4 tracking-[0.08em] text-slate-500">{stat.label}</p>
+              </div>
+            ))}
+          </div>
         </div>
 
         <HeroVisual />
@@ -224,22 +256,28 @@ function HeroSection() {
 }
 
 function HeroVisual() {
+  const lessonSteps = ["Concept", "Rule", "Formula", "Practice", "Rationale"];
+  const checkpointRows = [
+    { label: "Principle check", value: "Complete", tone: "text-[#2f7a4d]" },
+    { label: "Formula confidence", value: "62%", tone: "text-[#185FA5]" },
+    { label: "Next focus", value: "Rationale", tone: "text-[#854F0B]" },
+  ];
+
   return (
     <div className="relative z-10 w-full min-w-0 sm:mx-auto sm:max-w-2xl" aria-hidden="true">
-      <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg sm:hidden">
+      <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl sm:hidden">
         <div className="bg-[#073866] p-4 text-white">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-[11px] font-bold text-white/65">Lesson 3.2</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-white/65">Lesson 3.2</p>
               <p className="mt-0.5 text-sm font-extrabold">Market Approach</p>
             </div>
-            <div className="rounded-md bg-white/10 px-2 py-1 text-[11px] font-bold text-white/75">62% complete</div>
+            <div className="rounded-md bg-white/10 px-2 py-1 text-[11px] font-bold text-white/75">62% ready</div>
           </div>
-          <div className="mt-4 flex items-center gap-2 rounded-md bg-[#185FA5] px-3 py-2 text-xs font-bold">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full border border-white/50 bg-white/10">
-              3
-            </span>
-            Formula
+          <div className="mt-4 grid grid-cols-5 gap-1.5">
+            {lessonSteps.map((item, index) => (
+              <div key={item} className={`h-1.5 rounded-full ${index < 3 ? "bg-[#67c58e]" : "bg-white/20"}`} />
+            ))}
           </div>
           <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/20">
             <div className="h-full w-[62%] rounded-full bg-[#67c58e]" />
@@ -254,22 +292,40 @@ function HeroVisual() {
               <p>$5,625,000</p>
             </div>
           </div>
+          <div className="mt-3 rounded-lg border border-slate-200 bg-white px-3 py-2">
+            <p className="text-[11px] font-bold text-slate-800">Why this answer works</p>
+            <p className="mt-1 text-[11px] leading-4 text-slate-500">
+              Verified income divided by the supported rate gives a defensible value indication.
+            </p>
+          </div>
         </div>
       </div>
 
-      <div className="absolute -left-8 top-10 hidden h-36 w-36 rounded-full bg-[#185FA5]/8 blur-3xl sm:block" />
-      <div className="absolute -right-8 bottom-6 hidden h-40 w-40 rounded-full bg-[#2f7a4d]/10 blur-3xl sm:block" />
-      <div className="relative hidden overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl sm:block">
-        <div className="grid min-h-[390px] lg:grid-cols-[180px_1fr]">
+      <div className="absolute -left-8 top-10 hidden h-36 w-36 rounded-full bg-[#185FA5]/10 blur-3xl sm:block" />
+      <div className="absolute -right-8 bottom-6 hidden h-40 w-40 rounded-full bg-[#2f7a4d]/12 blur-3xl sm:block" />
+      <div className="relative hidden overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10 sm:block">
+        <div className="border-b border-slate-200 bg-[#fbfcfe] px-5 py-3">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#185FA5]">Live course preview</p>
+              <p className="mt-0.5 text-sm font-extrabold text-slate-950">Assessment reasoning workspace</p>
+            </div>
+            <div className="rounded-full border border-[#b9d8c5] bg-[#f5fbf7] px-3 py-1 text-xs font-extrabold text-[#2f7a4d]">
+              62% ready
+            </div>
+          </div>
+        </div>
+
+        <div className="grid min-h-[420px] lg:grid-cols-[190px_1fr]">
           <div className="min-w-0 bg-[#073866] p-5 text-white">
-            <p className="text-xs font-bold text-white/70">Lesson 3.2</p>
+            <p className="text-xs font-bold text-white/70">IMPACT_26V.1</p>
             <p className="mt-1 text-sm font-extrabold leading-tight">Market Approach</p>
-            <div className="mt-6 space-y-3">
-              {["Overview", "Principle", "Formula", "Application", "Rationale"].map((item, index) => (
+            <div className="mt-6 space-y-2.5">
+              {lessonSteps.map((item, index) => (
                 <div
                   key={item}
                   className={`flex items-center gap-2 rounded-md px-2 py-2 text-xs font-bold ${
-                    index === 2 ? "bg-[#185FA5] text-white" : "text-white/75"
+                    index === 2 ? "bg-[#185FA5] text-white shadow-sm" : "text-white/75"
                   }`}
                 >
                   <span
@@ -289,29 +345,46 @@ function HeroVisual() {
             </div>
             <div className="mt-8">
               <div className="mb-2 flex items-center justify-between text-[11px] font-bold text-white/70">
-                <span>Progress</span>
+                <span>Course readiness</span>
                 <span>62%</span>
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-white/20">
                 <div className="h-full w-[62%] rounded-full bg-[#67c58e]" />
               </div>
             </div>
+            <div className="mt-5 rounded-lg border border-white/10 bg-white/10 p-3">
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-white/55">Next action</p>
+              <p className="mt-1 text-xs font-bold leading-5 text-white">Review the rationale before attempting the next case.</p>
+            </div>
           </div>
 
           <div className="min-w-0 overflow-hidden p-5 sm:p-6">
             <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
               <div>
-                <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-[#185FA5]">Formula</p>
-                <h2 className="mt-1 text-lg font-extrabold text-slate-950">Assessment reasoning</h2>
+                <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-[#185FA5]">Formula support</p>
+                <h2 className="mt-1 text-lg font-extrabold text-slate-950">Capitalization method</h2>
               </div>
               <p className="hidden rounded-md bg-[#E6F1FB] px-2.5 py-1 text-xs font-bold text-[#185FA5] sm:block">3.2.1</p>
             </div>
 
-            <div className="mt-5 rounded-lg border border-[#9dc6eb] bg-[#f8fbff] px-4 py-5 text-center shadow-sm">
-              <p className="font-calc text-xl font-bold tracking-[-0.02em] text-slate-900 sm:text-2xl">
-                V = I / R
-              </p>
-              <p className="mt-2 text-xs font-semibold text-slate-500">Value equals income divided by rate.</p>
+            <div className="mt-5 grid gap-3 lg:grid-cols-[1fr_0.72fr]">
+              <div className="rounded-lg border border-[#9dc6eb] bg-[#f8fbff] px-4 py-5 text-center shadow-sm">
+                <p className="font-calc text-xl font-bold tracking-[-0.02em] text-slate-900 sm:text-2xl">
+                  V = I / R
+                </p>
+                <p className="mt-2 text-xs font-semibold text-slate-500">Value equals income divided by rate.</p>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+                <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-slate-500">Checkpoint</p>
+                <div className="mt-3 space-y-2">
+                  {checkpointRows.map((row) => (
+                    <div key={row.label} className="flex items-center justify-between gap-3 text-xs">
+                      <span className="font-semibold text-slate-500">{row.label}</span>
+                      <span className={`font-extrabold ${row.tone}`}>{row.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -324,11 +397,11 @@ function HeroVisual() {
 
             <div className="mt-5">
               <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-slate-500">
-                Reasoning timeline
+                Rationale timeline
               </p>
               <div className="mt-4 grid gap-3 sm:grid-cols-4">
                 {["Data verified", "Formula applied", "Value indicated", "Conclusion"].map((item, index) => (
-              <div key={item} className="relative min-w-0">
+                  <div key={item} className="relative min-w-0 rounded-lg border border-slate-100 bg-[#fbfcfe] p-3">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#E6F1FB] text-[#185FA5]">
                       {index === 0 ? <Icons.Check size={15} /> : index + 1}
                     </div>
@@ -409,7 +482,7 @@ function LearningPaths() {
           <Link
             key={path.title}
             href={path.href}
-            className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#185FA5] hover:shadow-md"
+            className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#185FA5] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2"
           >
             <div className="grid grid-cols-[58px_1fr] sm:grid-cols-[76px_1fr]">
               <div className={`${path.accent} flex min-h-40 items-start justify-center p-4 text-white sm:p-5`}>

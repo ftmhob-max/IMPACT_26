@@ -29,25 +29,25 @@ export interface AdminCohortStatsData {
       email: string;
       fullName?: string | null;
     } & User_Key;
-      quiz: {
+    quiz: {
+      id: UUIDString;
+      title: string;
+    } & Quiz_Key;
+    scorePct?: number | null;
+    passed?: boolean | null;
+    completedAt?: DateString | null;
+    quizResponses_on_attempt: ({
+      isCorrect?: boolean | null;
+      pointsEarned?: number | null;
+      pointsPossible?: number | null;
+      question: {
         id: UUIDString;
-        title: string;
-      } & Quiz_Key;
-        scorePct?: number | null;
-        passed?: boolean | null;
-        completedAt?: DateString | null;
-        quizResponses_on_attempt: ({
-          isCorrect?: boolean | null;
-          pointsEarned?: number | null;
-          pointsPossible?: number | null;
-          question: {
-            id: UUIDString;
-            domain: string;
-            difficulty: string;
-            questionText: string;
-            topicTags?: string | null;
-          } & Question_Key;
-        })[];
+        domain: string;
+        difficulty: string;
+        questionText: string;
+        topicTags?: string | null;
+      } & Question_Key;
+    })[];
   } & QuizAttempt_Key)[];
 }
 
@@ -75,30 +75,30 @@ export interface AdminListCoursesData {
       email: string;
       fullName?: string | null;
     } & User_Key;
-      modules_on_course: ({
+    modules_on_course: ({
+      id: UUIDString;
+      title: string;
+      description?: string | null;
+      learningObjectives?: string | null;
+      prerequisiteModuleIds?: string | null;
+      position: number;
+      status: string;
+      lessons_on_module: ({
         id: UUIDString;
         title: string;
-        description?: string | null;
-        learningObjectives?: string | null;
-        prerequisiteModuleIds?: string | null;
         position: number;
+        lessonType: string;
         status: string;
-        lessons_on_module: ({
+        isPublished: boolean;
+        durationSeconds?: number | null;
+        videoPlaybackId?: string | null;
+        videoUrl?: string | null;
+        contentJson?: string | null;
+        quiz?: {
           id: UUIDString;
-          title: string;
-          position: number;
-          lessonType: string;
-          status: string;
-          isPublished: boolean;
-          durationSeconds?: number | null;
-          videoPlaybackId?: string | null;
-          videoUrl?: string | null;
-          contentJson?: string | null;
-          quiz?: {
-            id: UUIDString;
-          } & Quiz_Key;
-        } & Lesson_Key)[];
-      } & Module_Key)[];
+        } & Quiz_Key;
+      } & Lesson_Key)[];
+    } & Module_Key)[];
   } & Course_Key)[];
 }
 
@@ -118,8 +118,8 @@ export interface AdminListGlossaryTermsData {
       id: string;
       fullName?: string | null;
     } & User_Key;
-      createdAt: DateString;
-      updatedAt: DateString;
+    createdAt: DateString;
+    updatedAt: DateString;
   } & GlossaryTerm_Key)[];
 }
 
@@ -177,21 +177,21 @@ export interface AdminListQuizQuestionUsageData {
       id: UUIDString;
       title: string;
     } & Quiz_Key;
-      question: {
-        id: UUIDString;
-      } & Question_Key;
+    question: {
+      id: UUIDString;
+    } & Question_Key;
   })[];
-    lessons: ({
+  lessons: ({
+    id: UUIDString;
+    title: string;
+    quiz?: {
+      id: UUIDString;
+    } & Quiz_Key;
+    module: {
       id: UUIDString;
       title: string;
-      quiz?: {
-        id: UUIDString;
-      } & Quiz_Key;
-        module: {
-          id: UUIDString;
-          title: string;
-        } & Module_Key;
-    } & Lesson_Key)[];
+    } & Module_Key;
+  } & Lesson_Key)[];
 }
 
 export interface AdminListSourceMaterialFoldersData {
@@ -207,27 +207,27 @@ export interface AdminListSourceMaterialFoldersData {
       id: UUIDString;
       name: string;
     } & SourceMaterialFolder_Key;
-      course?: {
+    course?: {
+      id: UUIDString;
+      title: string;
+    } & Course_Key;
+    lesson?: {
+      id: UUIDString;
+      title: string;
+      module: {
         id: UUIDString;
         title: string;
-      } & Course_Key;
-        lesson?: {
+        course: {
           id: UUIDString;
           title: string;
-          module: {
-            id: UUIDString;
-            title: string;
-            course: {
-              id: UUIDString;
-              title: string;
-            } & Course_Key;
-          } & Module_Key;
-        } & Lesson_Key;
-          createdBy?: {
-            id: string;
-            email: string;
-            fullName?: string | null;
-          } & User_Key;
+        } & Course_Key;
+      } & Module_Key;
+    } & Lesson_Key;
+    createdBy?: {
+      id: string;
+      email: string;
+      fullName?: string | null;
+    } & User_Key;
   } & SourceMaterialFolder_Key)[];
 }
 
@@ -259,42 +259,42 @@ export interface AdminListSourceMaterialsData {
       email: string;
       fullName?: string | null;
     } & User_Key;
-      ingestionJobs_on_sourceMaterial: ({
+    ingestionJobs_on_sourceMaterial: ({
+      id: UUIDString;
+      status: string;
+      parser: string;
+      extractedCharacters: number;
+      errorMessage?: string | null;
+      createdAt: DateString;
+      completedAt?: DateString | null;
+    } & IngestionJob_Key)[];
+    contentSourceLinks_on_sourceMaterial: ({
+      id: UUIDString;
+      referenceLabel?: string | null;
+      createdAt: DateString;
+      course?: {
         id: UUIDString;
-        status: string;
-        parser: string;
-        extractedCharacters: number;
-        errorMessage?: string | null;
-        createdAt: DateString;
-        completedAt?: DateString | null;
-      } & IngestionJob_Key)[];
-        contentSourceLinks_on_sourceMaterial: ({
+        title: string;
+      } & Course_Key;
+      lesson?: {
+        id: UUIDString;
+        title: string;
+        module: {
           id: UUIDString;
-          referenceLabel?: string | null;
-          createdAt: DateString;
-          course?: {
+          title: string;
+          course: {
             id: UUIDString;
             title: string;
           } & Course_Key;
-            lesson?: {
-              id: UUIDString;
-              title: string;
-              module: {
-                id: UUIDString;
-                title: string;
-                course: {
-                  id: UUIDString;
-                  title: string;
-                } & Course_Key;
-              } & Module_Key;
-            } & Lesson_Key;
-              question?: {
-                id: UUIDString;
-                questionText: string;
-                domain: string;
-                difficulty: string;
-              } & Question_Key;
-        } & ContentSourceLink_Key)[];
+        } & Module_Key;
+      } & Lesson_Key;
+      question?: {
+        id: UUIDString;
+        questionText: string;
+        domain: string;
+        difficulty: string;
+      } & Question_Key;
+    } & ContentSourceLink_Key)[];
   } & SourceMaterial_Key)[];
 }
 
@@ -312,96 +312,96 @@ export interface AdminListSourceMaterialsRichData {
         id: UUIDString;
         name: string;
       } & SourceMaterialFolder_Key;
-        course?: {
-          id: UUIDString;
-          title: string;
-        } & Course_Key;
-          lesson?: {
-            id: UUIDString;
-            title: string;
-          } & Lesson_Key;
-            archivedAt?: DateString | null;
-            trashedAt?: DateString | null;
-            createdAt: DateString;
-            updatedAt: DateString;
-    } & SourceMaterialFolder_Key;
-      storagePath: string;
-      downloadUrl?: string | null;
-      extractedText?: string | null;
-      metadataJson?: string | null;
-      status: string;
-      starred: boolean;
-      archivedAt?: DateString | null;
-      trashedAt?: DateString | null;
-      reviewStatus: string;
-      visibility: string;
-      duplicateOf?: {
+      course?: {
         id: UUIDString;
         title: string;
-      } & SourceMaterial_Key;
-        lastActivityAt?: DateString | null;
-        createdAt: DateString;
-        updatedAt: DateString;
-        uploadedBy?: {
-          id: string;
-          email: string;
-          fullName?: string | null;
-        } & User_Key;
-          sourceMaterialTagAssignments_on_sourceMaterial: ({
-            tag: {
-              id: UUIDString;
-              name: string;
-              color?: string | null;
-            } & SourceMaterialTag_Key;
-          })[];
-            sourceMaterialActivities_on_sourceMaterial: ({
-              id: UUIDString;
-              activityType: string;
-              message?: string | null;
-              metadataJson?: string | null;
-              createdAt: DateString;
-              actor?: {
-                id: string;
-                email: string;
-                fullName?: string | null;
-              } & User_Key;
-            } & SourceMaterialActivity_Key)[];
-              ingestionJobs_on_sourceMaterial: ({
-                id: UUIDString;
-                status: string;
-                parser: string;
-                extractedCharacters: number;
-                errorMessage?: string | null;
-                createdAt: DateString;
-                completedAt?: DateString | null;
-              } & IngestionJob_Key)[];
-                contentSourceLinks_on_sourceMaterial: ({
-                  id: UUIDString;
-                  referenceLabel?: string | null;
-                  createdAt: DateString;
-                  course?: {
-                    id: UUIDString;
-                    title: string;
-                  } & Course_Key;
-                    lesson?: {
-                      id: UUIDString;
-                      title: string;
-                      module: {
-                        id: UUIDString;
-                        title: string;
-                        course: {
-                          id: UUIDString;
-                          title: string;
-                        } & Course_Key;
-                      } & Module_Key;
-                    } & Lesson_Key;
-                      question?: {
-                        id: UUIDString;
-                        questionText: string;
-                        domain: string;
-                        difficulty: string;
-                      } & Question_Key;
-                } & ContentSourceLink_Key)[];
+      } & Course_Key;
+      lesson?: {
+        id: UUIDString;
+        title: string;
+      } & Lesson_Key;
+      archivedAt?: DateString | null;
+      trashedAt?: DateString | null;
+      createdAt: DateString;
+      updatedAt: DateString;
+    } & SourceMaterialFolder_Key;
+    storagePath: string;
+    downloadUrl?: string | null;
+    extractedText?: string | null;
+    metadataJson?: string | null;
+    status: string;
+    starred: boolean;
+    archivedAt?: DateString | null;
+    trashedAt?: DateString | null;
+    reviewStatus: string;
+    visibility: string;
+    duplicateOf?: {
+      id: UUIDString;
+      title: string;
+    } & SourceMaterial_Key;
+    lastActivityAt?: DateString | null;
+    createdAt: DateString;
+    updatedAt: DateString;
+    uploadedBy?: {
+      id: string;
+      email: string;
+      fullName?: string | null;
+    } & User_Key;
+    sourceMaterialTagAssignments_on_sourceMaterial: ({
+      tag: {
+        id: UUIDString;
+        name: string;
+        color?: string | null;
+      } & SourceMaterialTag_Key;
+    })[];
+    sourceMaterialActivities_on_sourceMaterial: ({
+      id: UUIDString;
+      activityType: string;
+      message?: string | null;
+      metadataJson?: string | null;
+      createdAt: DateString;
+      actor?: {
+        id: string;
+        email: string;
+        fullName?: string | null;
+      } & User_Key;
+    } & SourceMaterialActivity_Key)[];
+    ingestionJobs_on_sourceMaterial: ({
+      id: UUIDString;
+      status: string;
+      parser: string;
+      extractedCharacters: number;
+      errorMessage?: string | null;
+      createdAt: DateString;
+      completedAt?: DateString | null;
+    } & IngestionJob_Key)[];
+    contentSourceLinks_on_sourceMaterial: ({
+      id: UUIDString;
+      referenceLabel?: string | null;
+      createdAt: DateString;
+      course?: {
+        id: UUIDString;
+        title: string;
+      } & Course_Key;
+      lesson?: {
+        id: UUIDString;
+        title: string;
+        module: {
+          id: UUIDString;
+          title: string;
+          course: {
+            id: UUIDString;
+            title: string;
+          } & Course_Key;
+        } & Module_Key;
+      } & Lesson_Key;
+      question?: {
+        id: UUIDString;
+        questionText: string;
+        domain: string;
+        difficulty: string;
+      } & Question_Key;
+    } & ContentSourceLink_Key)[];
   } & SourceMaterial_Key)[];
 }
 
@@ -1007,17 +1007,17 @@ export interface GetAttemptForCompletionData {
     user: {
       id: string;
     } & User_Key;
-      quiz: {
-        id: UUIDString;
-        passingScore?: number | null;
-      } & Quiz_Key;
-        quizResponses_on_attempt: ({
-          pointsEarned?: number | null;
-          pointsPossible?: number | null;
-          question: {
-            domain: string;
-          };
-        })[];
+    quiz: {
+      id: UUIDString;
+      passingScore?: number | null;
+    } & Quiz_Key;
+    quizResponses_on_attempt: ({
+      pointsEarned?: number | null;
+      pointsPossible?: number | null;
+      question: {
+        domain: string;
+      };
+    })[];
   } & QuizAttempt_Key;
 }
 
@@ -1033,15 +1033,15 @@ export interface GetAttemptForEvaluationData {
     user: {
       id: string;
     } & User_Key;
-      quiz: {
+    quiz: {
+      id: UUIDString;
+    } & Quiz_Key;
+    quizResponses_on_attempt: ({
+      question: {
         id: UUIDString;
-      } & Quiz_Key;
-        quizResponses_on_attempt: ({
-          question: {
-            id: UUIDString;
-          } & Question_Key;
-            isCorrect?: boolean | null;
-        })[];
+      } & Question_Key;
+      isCorrect?: boolean | null;
+    })[];
   } & QuizAttempt_Key;
 }
 
@@ -1076,22 +1076,22 @@ export interface GetAttemptResultsData {
       title: string;
       passingScore?: number | null;
     };
-      quizResponses_on_attempt: ({
-        question: {
-          id: UUIDString;
-          questionText: string;
-          difficulty: string;
-          domain: string;
-          formulaRef?: string | null;
-          rationale?: string | null;
-          calculation?: string | null;
-          sourceRef?: string | null;
-        } & Question_Key;
-          selectedLetters: string;
-          isCorrect?: boolean | null;
-          pointsEarned?: number | null;
-          pointsPossible?: number | null;
-      })[];
+    quizResponses_on_attempt: ({
+      question: {
+        id: UUIDString;
+        questionText: string;
+        difficulty: string;
+        domain: string;
+        formulaRef?: string | null;
+        rationale?: string | null;
+        calculation?: string | null;
+        sourceRef?: string | null;
+      } & Question_Key;
+      selectedLetters: string;
+      isCorrect?: boolean | null;
+      pointsEarned?: number | null;
+      pointsPossible?: number | null;
+    })[];
   } & QuizAttempt_Key;
 }
 
@@ -1170,8 +1170,8 @@ export interface GetGlossaryNotesForUserData {
     term: {
       id: UUIDString;
     } & GlossaryTerm_Key;
-      createdAt: DateString;
-      updatedAt: DateString;
+    createdAt: DateString;
+    updatedAt: DateString;
   } & GlossaryNote_Key)[];
 }
 
@@ -1188,16 +1188,16 @@ export interface GetInProgressAttemptData {
     quiz: {
       timeLimitSeconds?: number | null;
     };
-      quizResponses_on_attempt: ({
-        question: {
-          id: UUIDString;
-        } & Question_Key;
-          selectedLetters: string;
-          isCorrect?: boolean | null;
-          pointsEarned?: number | null;
-          pointsPossible?: number | null;
-          answeredAt?: DateString | null;
-      })[];
+    quizResponses_on_attempt: ({
+      question: {
+        id: UUIDString;
+      } & Question_Key;
+      selectedLetters: string;
+      isCorrect?: boolean | null;
+      pointsEarned?: number | null;
+      pointsPossible?: number | null;
+      answeredAt?: DateString | null;
+    })[];
   } & QuizAttempt_Key)[];
 }
 
@@ -1222,15 +1222,15 @@ export interface GetLessonData {
       shuffleQuestions: boolean;
       shuffleChoices: boolean;
     } & Quiz_Key;
-      sourceMaterial?: {
-        id: UUIDString;
-      } & SourceMaterial_Key;
-        module: {
-          course: {
-            slug: string;
-            title: string;
-          };
-        };
+    sourceMaterial?: {
+      id: UUIDString;
+    } & SourceMaterial_Key;
+    module: {
+      course: {
+        slug: string;
+        title: string;
+      };
+    };
   } & Lesson_Key;
 }
 
@@ -1364,26 +1364,26 @@ export interface GetQuizQuestionsAdminData {
     shuffleQuestions: boolean;
     shuffleChoices: boolean;
   } & Quiz_Key;
-    quizQuestions: ({
-      position: number;
-      pointValue: number;
-      question: {
+  quizQuestions: ({
+    position: number;
+    pointValue: number;
+    question: {
+      id: UUIDString;
+      questionText: string;
+      difficulty: string;
+      domain: string;
+      formulaRef?: string | null;
+      isMultiselect: boolean;
+      answerChoices_on_question: ({
         id: UUIDString;
-        questionText: string;
-        difficulty: string;
-        domain: string;
-        formulaRef?: string | null;
-        isMultiselect: boolean;
-        answerChoices_on_question: ({
-          id: UUIDString;
-          letter: string;
-          choiceText: string;
-          isCorrect: boolean;
-          explanation?: string | null;
-          position: number;
-        } & AnswerChoice_Key)[];
-      } & Question_Key;
-    })[];
+        letter: string;
+        choiceText: string;
+        isCorrect: boolean;
+        explanation?: string | null;
+        position: number;
+      } & AnswerChoice_Key)[];
+    } & Question_Key;
+  })[];
 }
 
 export interface GetQuizQuestionsAdminVariables {
@@ -1422,9 +1422,9 @@ export interface GetUserAttemptHistoryData {
       id: UUIDString;
       title: string;
     } & Quiz_Key;
-      scorePct?: number | null;
-      passed?: boolean | null;
-      completedAt?: DateString | null;
+    scorePct?: number | null;
+    passed?: boolean | null;
+    completedAt?: DateString | null;
   } & QuizAttempt_Key)[];
 }
 
@@ -1437,9 +1437,9 @@ export interface GetUserCourseProgressData {
     lesson: {
       id: UUIDString;
     } & Lesson_Key;
-      status: string;
-      videoPositionSeconds?: number | null;
-      completedAt?: DateString | null;
+    status: string;
+    videoPositionSeconds?: number | null;
+    completedAt?: DateString | null;
   })[];
 }
 
@@ -1447,14 +1447,14 @@ export interface GetUserCourseProgressFullData {
   userCourseProgress: ({
     enrolledAt: DateString;
   })[];
-    userLessonProgresses: ({
-      lesson: {
-        id: UUIDString;
-      } & Lesson_Key;
-        status: string;
-        videoPositionSeconds?: number | null;
-        completedAt?: DateString | null;
-    })[];
+  userLessonProgresses: ({
+    lesson: {
+      id: UUIDString;
+    } & Lesson_Key;
+    status: string;
+    videoPositionSeconds?: number | null;
+    completedAt?: DateString | null;
+  })[];
 }
 
 export interface GetUserCourseProgressFullVariables {
@@ -1510,20 +1510,20 @@ export interface GetUserProgressDetailsData {
       title: string;
       passingScore?: number | null;
     } & Quiz_Key;
-      scorePct?: number | null;
-      scoreRaw?: number | null;
-      scoreMax?: number | null;
-      passed?: boolean | null;
-      startedAt: DateString;
-      completedAt?: DateString | null;
-      quizResponses_on_attempt: ({
-        isCorrect?: boolean | null;
-        pointsEarned?: number | null;
-        pointsPossible?: number | null;
-        question: {
-          domain: string;
-        };
-      })[];
+    scorePct?: number | null;
+    scoreRaw?: number | null;
+    scoreMax?: number | null;
+    passed?: boolean | null;
+    startedAt: DateString;
+    completedAt?: DateString | null;
+    quizResponses_on_attempt: ({
+      isCorrect?: boolean | null;
+      pointsEarned?: number | null;
+      pointsPossible?: number | null;
+      question: {
+        domain: string;
+      };
+    })[];
   } & QuizAttempt_Key)[];
 }
 
