@@ -325,10 +325,10 @@ export function getLessonReadinessReport(document: StructuredLessonDocument): Le
     });
   }
   if (visibleBlocks.length === 0) {
-    issues.push("Add at least one student-visible lesson rawBlock.");
+    issues.push("Add at least one student-visible lesson block.");
     detailed.push({
       id: "visible-block-required",
-      message: "Add at least one student-visible lesson rawBlock.",
+      message: "Add at least one student-visible lesson block.",
       severity: "required",
       field: "block",
     });
@@ -343,66 +343,66 @@ export function getLessonReadinessReport(document: StructuredLessonDocument): Le
   }
 
   for (const block of visibleBlocks) {
-    const label = rawBlock.title?.trim() || defaultTitleForBlock(rawBlock.type);
+    const label = block.title?.trim() || defaultTitleForBlock(block.type);
     const pushBlockIssue = (suffix: string, message: string, severity: LessonReadinessSeverity = "required") => {
       issues.push(message);
       detailed.push({
-        id: `${rawBlock.id}-${suffix}`,
+        id: `${block.id}-${suffix}`,
         message,
         severity,
         field: "block",
-        blockId: rawBlock.id,
+        blockId: block.id,
       });
     };
-    switch (rawBlock.type) {
+    switch (block.type) {
       case "richText":
-        if (!hasMeaningfulRichText(rawBlock.content)) pushBlockIssue("content", `${label}: add lesson text or remove the empty rawBlock.`);
+        if (!hasMeaningfulRichText(block.content)) pushBlockIssue("content", `${label}: add lesson text or remove the empty block.`);
         break;
       case "audio":
-        if (!rawBlock.audioUrl.trim()) pushBlockIssue("audio-url", `${label}: add an audio URL.`);
-        if (!rawBlock.transcript.trim()) pushBlockIssue("audio-transcript", `${label}: add a transcript for accessibility.`);
+        if (!block.audioUrl.trim()) pushBlockIssue("audio-url", `${label}: add an audio URL.`);
+        if (!block.transcript.trim()) pushBlockIssue("audio-transcript", `${label}: add a transcript for accessibility.`);
         break;
       case "video":
-        if (!rawBlock.playbackId?.trim() && !rawBlock.videoUrl?.trim()) pushBlockIssue("video-source", `${label}: add a video playback ID or URL.`);
-        if (!rawBlock.transcript.trim()) pushBlockIssue("video-transcript", `${label}: add a transcript for accessibility.`);
+        if (!block.playbackId?.trim() && !block.videoUrl?.trim()) pushBlockIssue("video-source", `${label}: add a video playback ID or URL.`);
+        if (!block.transcript.trim()) pushBlockIssue("video-transcript", `${label}: add a transcript for accessibility.`);
         break;
       case "transcript":
-        if (!rawBlock.transcript.trim()) pushBlockIssue("transcript", `${label}: transcript text is empty.`);
+        if (!block.transcript.trim()) pushBlockIssue("transcript", `${label}: transcript text is empty.`);
         break;
       case "image":
-        if (!rawBlock.imageUrl.trim()) pushBlockIssue("image-url", `${label}: add an image URL.`);
-        if (!rawBlock.altText.trim()) pushBlockIssue("image-alt", `${label}: alt text is required.`);
+        if (!block.imageUrl.trim()) pushBlockIssue("image-url", `${label}: add an image URL.`);
+        if (!block.altText.trim()) pushBlockIssue("image-alt", `${label}: alt text is required.`);
         break;
       case "document":
       case "download":
       case "externalResource":
-        if (!rawBlock.url.trim()) pushBlockIssue("url", `${label}: add a destination URL.`);
+        if (!block.url.trim()) pushBlockIssue("url", `${label}: add a destination URL.`);
         break;
       case "sourceReference":
-        if (!rawBlock.referenceLabel?.trim() && !rawBlock.title?.trim()) pushBlockIssue("citation", `${label}: add a citation label or title.`);
+        if (!block.referenceLabel?.trim() && !block.title?.trim()) pushBlockIssue("citation", `${label}: add a citation label or title.`);
         break;
       case "caseFile":
-        if (!rawBlock.scenario.trim()) pushBlockIssue("scenario", `${label}: add the case scenario.`);
-        if (!rawBlock.learnerTask.trim()) pushBlockIssue("learner-task", `${label}: add the learner task.`);
-        if (rawBlock.parcelFacts.length === 0 && rawBlock.evidenceItems.length === 0) {
+        if (!block.scenario.trim()) pushBlockIssue("scenario", `${label}: add the case scenario.`);
+        if (!block.learnerTask.trim()) pushBlockIssue("learner-task", `${label}: add the learner task.`);
+        if (block.parcelFacts.length === 0 && block.evidenceItems.length === 0) {
           pushBlockIssue("case-evidence", `${label}: add parcel facts or evidence items.`);
         }
         break;
       case "formula":
-        if (!rawBlock.formula.expression.trim()) pushBlockIssue("formula-expression", `${label}: add the formula expression.`);
-        if (!rawBlock.formula.name.trim()) pushBlockIssue("formula-name", `${label}: add the formula name.`);
+        if (!block.formula.expression.trim()) pushBlockIssue("formula-expression", `${label}: add the formula expression.`);
+        if (!block.formula.name.trim()) pushBlockIssue("formula-name", `${label}: add the formula name.`);
         break;
       case "glossaryTermSet":
-        if (rawBlock.terms.length === 0) pushBlockIssue("glossary-terms", `${label}: add at least one glossary term.`);
+        if (block.terms.length === 0) pushBlockIssue("glossary-terms", `${label}: add at least one glossary term.`);
         break;
       case "quizCheckpoint":
-        if (!rawBlock.quizId?.trim()) pushBlockIssue("quiz-link", `${label}: link a quiz for this checkpoint.`);
+        if (!block.quizId?.trim()) pushBlockIssue("quiz-link", `${label}: link a quiz for this checkpoint.`);
         break;
       case "reflectionPrompt":
-        if (!rawBlock.prompt.trim()) pushBlockIssue("reflection-prompt", `${label}: add a reflection prompt.`);
+        if (!block.prompt.trim()) pushBlockIssue("reflection-prompt", `${label}: add a reflection prompt.`);
         break;
       case "callout":
-        if (!rawBlock.body.trim()) pushBlockIssue("callout-body", `${label}: add callout text.`);
+        if (!block.body.trim()) pushBlockIssue("callout-body", `${label}: add callout text.`);
         break;
     }
   }
@@ -532,21 +532,19 @@ function normalizeStructuredLessonDocument(document: StructuredLessonDocument): 
   };
 }
 
-function normalizeLessonBlock(block: unknown): LessonBlock | null {
-  if (!block || typeof block !== "object") return null;
-  const rawBlock = block as Partial<LessonBlock> & Record<string, any> & { type?: LessonBlock["type"] };
-  if (!rawBlock.type) return null;
+function normalizeLessonBlock(block: any): LessonBlock | null {
+  if (!block || typeof block !== "object" || !block.type) return null;
 
   const base: LessonBlockBase = {
-    id: String(rawBlock.id ?? createBlockId()),
-    type: rawBlock.type,
-    title: rawBlock.title ? String(rawBlock.title) : defaultTitleForBlock(rawBlock.type),
-    isStudentVisible: rawBlock.isStudentVisible !== false,
-    required: Boolean(rawBlock.required),
-    materialId: rawBlock.materialId ? String(rawBlock.materialId) : undefined,
+    id: String(block.id ?? createBlockId()),
+    type: block.type,
+    title: block.title ? String(block.title) : defaultTitleForBlock(block.type),
+    isStudentVisible: block.isStudentVisible !== false,
+    required: Boolean(block.required),
+    materialId: block.materialId ? String(block.materialId) : undefined,
   };
 
-  switch (rawBlock.type) {
+  switch (block.type) {
     case "richText":
       return {
         ...base,
