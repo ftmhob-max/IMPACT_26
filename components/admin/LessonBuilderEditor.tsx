@@ -274,8 +274,8 @@ export const LessonBuilderEditor = forwardRef<LessonBuilderEditorHandle, Props>(
   const readinessIssues = useMemo(() => getLessonReadinessReport(documentState), [documentState]);
   const blockCounts = useMemo(
     () => ({
-      visible: documentState.blocks.filter((block) => block.isStudentVisible).length,
-      required: documentState.blocks.filter((block) => block.required && block.isStudentVisible).length,
+      visible: documentState.blocks.filter((block) => block?.isStudentVisible).length,
+      required: documentState.blocks.filter((block) => block?.required && block?.isStudentVisible).length,
     }),
     [documentState.blocks]
   );

@@ -118,7 +118,7 @@ export default async function LessonPage({
   }
 
   const structuredDocument = parseStructuredLessonContent(lesson.contentJson ?? null);
-  const hasStructuredBlocks = structuredDocument.blocks.some((block) => block.isStudentVisible);
+  const hasStructuredBlocks = structuredDocument.blocks.some((block) => block?.isStudentVisible);
   const nextLesson = (() => {
     if (!outline) return null;
     const orderedLessons = outline.modules_on_course

@@ -534,6 +534,7 @@ function normalizeStructuredLessonDocument(document: StructuredLessonDocument): 
 
 function normalizeLessonBlock(block: any): LessonBlock | null {
   if (!block || typeof block !== "object" || !block.type) return null;
+  const rawBlock = block as Record<string, any>;
 
   const base: LessonBlockBase = {
     id: String(block.id ?? createBlockId()),
@@ -599,7 +600,7 @@ function normalizeLessonBlock(block: any): LessonBlock | null {
           expression: String(rawBlock.formula?.expression ?? ""),
           notes: String(rawBlock.formula?.notes ?? ""),
           workedExample: String(rawBlock.formula?.workedExample ?? ""),
-          relatedTerms: Array.isArray(rawBlock.formula?.relatedTerms) ? rawBlock.formula.relatedTerms.map((term) => String(term)) : [],
+          relatedTerms: Array.isArray(rawBlock.formula?.relatedTerms) ? rawBlock.formula.relatedTerms.map((term: unknown) => String(term)) : [],
         },
       };
     case "glossaryTermSet":
