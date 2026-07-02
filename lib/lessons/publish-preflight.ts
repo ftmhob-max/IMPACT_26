@@ -1,4 +1,4 @@
-import { getLessonReadinessReport, parseStructuredLessonContent } from "@/lib/lessons/structured-content";
+import { getLessonReadinessReport, getVisibleLessonBlocks, parseStructuredLessonContent } from "@/lib/lessons/structured-content";
 import type { QuizReadinessState } from "@/lib/admin/quiz-dashboard";
 
 export interface LessonPreflightInput {
@@ -47,8 +47,7 @@ export function runLessonPreflight(
       }
       if (lesson.contentJson) {
         const doc = parseStructuredLessonContent(lesson.contentJson);
-        for (const block of doc.blocks) {
-          if (!block.isStudentVisible) continue;
+        for (const block of getVisibleLessonBlocks(doc.blocks)) {
           if (block.type === "video" && !block.transcript?.trim()) {
             warnings.push("A video block is missing its transcript.");
           }

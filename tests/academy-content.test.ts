@@ -125,3 +125,19 @@ test("unrecognized or malformed lesson blocks are filtered out during parsing", 
   assert.equal(parsed.blocks.length, 1);
   assert.equal(parsed.blocks[0]?.type, "richText");
 });
+
+test("lesson readiness tolerates malformed block arrays", () => {
+  const validBlock = createDefaultLessonBlock("richText");
+  const issues = getLessonReadinessReport({
+    version: 2,
+    kind: "structured-lesson",
+    summary: "Legacy imported lesson",
+    objectives: ["Review malformed imports"],
+    estimatedDurationMinutes: 5,
+    completionMode: "manual",
+    blocks: [null, undefined, {}, validBlock] as any,
+  });
+
+  assert.ok(Array.isArray(issues));
+  assert.ok(!issues.some((issue) => issue.id === "visible-block-required"));
+});

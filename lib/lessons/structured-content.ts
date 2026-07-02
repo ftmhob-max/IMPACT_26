@@ -295,10 +295,16 @@ export function stringifyStructuredLessonContent(document: StructuredLessonDocum
   return JSON.stringify(normalizeStructuredLessonDocument(document));
 }
 
+export function getVisibleLessonBlocks(blocks: unknown[] | null | undefined): LessonBlock[] {
+  return Array.isArray(blocks)
+    ? blocks.filter((block): block is LessonBlock => Boolean(block && typeof block === "object" && "type" in block && (block as LessonBlock).isStudentVisible))
+    : [];
+}
+
 export function getLessonReadinessReport(document: StructuredLessonDocument): LessonReadinessIssue[] {
   const issues: string[] = [];
   const detailed: LessonReadinessIssue[] = [];
-  const visibleBlocks = document.blocks.filter((block) => block.isStudentVisible);
+  const visibleBlocks = getVisibleLessonBlocks(document.blocks);
 
   if (!document.summary.trim()) {
     issues.push("Add a lesson summary so students know what this lesson covers.");
@@ -319,10 +325,10 @@ export function getLessonReadinessReport(document: StructuredLessonDocument): Le
     });
   }
   if (visibleBlocks.length === 0) {
-    issues.push("Add at least one student-visible lesson block.");
+    issues.push("Add at least one student-visible lesson rawBlock.");
     detailed.push({
       id: "visible-block-required",
-      message: "Add at least one student-visible lesson block.",
+      message: "Add at least one student-visible lesson rawBlock.",
       severity: "required",
       field: "block",
     });
@@ -337,66 +343,66 @@ export function getLessonReadinessReport(document: StructuredLessonDocument): Le
   }
 
   for (const block of visibleBlocks) {
-    const label = block.title?.trim() || defaultTitleForBlock(block.type);
+    const label = rawBlock.title?.trim() || defaultTitleForBlock(rawBlock.type);
     const pushBlockIssue = (suffix: string, message: string, severity: LessonReadinessSeverity = "required") => {
       issues.push(message);
       detailed.push({
-        id: `${block.id}-${suffix}`,
+        id: `${rawBlock.id}-${suffix}`,
         message,
         severity,
         field: "block",
-        blockId: block.id,
+        blockId: rawBlock.id,
       });
     };
-    switch (block.type) {
+    switch (rawBlock.type) {
       case "richText":
-        if (!hasMeaningfulRichText(block.content)) pushBlockIssue("content", `${label}: add lesson text or remove the empty block.`);
+        if (!hasMeaningfulRichText(rawBlock.content)) pushBlockIssue("content", `${label}: add lesson text or remove the empty rawBlock.`);
         break;
       case "audio":
-        if (!block.audioUrl.trim()) pushBlockIssue("audio-url", `${label}: add an audio URL.`);
-        if (!block.transcript.trim()) pushBlockIssue("audio-transcript", `${label}: add a transcript for accessibility.`);
+        if (!rawBlock.audioUrl.trim()) pushBlockIssue("audio-url", `${label}: add an audio URL.`);
+        if (!rawBlock.transcript.trim()) pushBlockIssue("audio-transcript", `${label}: add a transcript for accessibility.`);
         break;
       case "video":
-        if (!block.playbackId?.trim() && !block.videoUrl?.trim()) pushBlockIssue("video-source", `${label}: add a video playback ID or URL.`);
-        if (!block.transcript.trim()) pushBlockIssue("video-transcript", `${label}: add a transcript for accessibility.`);
+        if (!rawBlock.playbackId?.trim() && !rawBlock.videoUrl?.trim()) pushBlockIssue("video-source", `${label}: add a video playback ID or URL.`);
+        if (!rawBlock.transcript.trim()) pushBlockIssue("video-transcript", `${label}: add a transcript for accessibility.`);
         break;
       case "transcript":
-        if (!block.transcript.trim()) pushBlockIssue("transcript", `${label}: transcript text is empty.`);
+        if (!rawBlock.transcript.trim()) pushBlockIssue("transcript", `${label}: transcript text is empty.`);
         break;
       case "image":
-        if (!block.imageUrl.trim()) pushBlockIssue("image-url", `${label}: add an image URL.`);
-        if (!block.altText.trim()) pushBlockIssue("image-alt", `${label}: alt text is required.`);
+        if (!rawBlock.imageUrl.trim()) pushBlockIssue("image-url", `${label}: add an image URL.`);
+        if (!rawBlock.altText.trim()) pushBlockIssue("image-alt", `${label}: alt text is required.`);
         break;
       case "document":
       case "download":
       case "externalResource":
-        if (!block.url.trim()) pushBlockIssue("url", `${label}: add a destination URL.`);
+        if (!rawBlock.url.trim()) pushBlockIssue("url", `${label}: add a destination URL.`);
         break;
       case "sourceReference":
-        if (!block.referenceLabel?.trim() && !block.title?.trim()) pushBlockIssue("citation", `${label}: add a citation label or title.`);
+        if (!rawBlock.referenceLabel?.trim() && !rawBlock.title?.trim()) pushBlockIssue("citation", `${label}: add a citation label or title.`);
         break;
       case "caseFile":
-        if (!block.scenario.trim()) pushBlockIssue("scenario", `${label}: add the case scenario.`);
-        if (!block.learnerTask.trim()) pushBlockIssue("learner-task", `${label}: add the learner task.`);
-        if (block.parcelFacts.length === 0 && block.evidenceItems.length === 0) {
+        if (!rawBlock.scenario.trim()) pushBlockIssue("scenario", `${label}: add the case scenario.`);
+        if (!rawBlock.learnerTask.trim()) pushBlockIssue("learner-task", `${label}: add the learner task.`);
+        if (rawBlock.parcelFacts.length === 0 && rawBlock.evidenceItems.length === 0) {
           pushBlockIssue("case-evidence", `${label}: add parcel facts or evidence items.`);
         }
         break;
       case "formula":
-        if (!block.formula.expression.trim()) pushBlockIssue("formula-expression", `${label}: add the formula expression.`);
-        if (!block.formula.name.trim()) pushBlockIssue("formula-name", `${label}: add the formula name.`);
+        if (!rawBlock.formula.expression.trim()) pushBlockIssue("formula-expression", `${label}: add the formula expression.`);
+        if (!rawBlock.formula.name.trim()) pushBlockIssue("formula-name", `${label}: add the formula name.`);
         break;
       case "glossaryTermSet":
-        if (block.terms.length === 0) pushBlockIssue("glossary-terms", `${label}: add at least one glossary term.`);
+        if (rawBlock.terms.length === 0) pushBlockIssue("glossary-terms", `${label}: add at least one glossary term.`);
         break;
       case "quizCheckpoint":
-        if (!block.quizId?.trim()) pushBlockIssue("quiz-link", `${label}: link a quiz for this checkpoint.`);
+        if (!rawBlock.quizId?.trim()) pushBlockIssue("quiz-link", `${label}: link a quiz for this checkpoint.`);
         break;
       case "reflectionPrompt":
-        if (!block.prompt.trim()) pushBlockIssue("reflection-prompt", `${label}: add a reflection prompt.`);
+        if (!rawBlock.prompt.trim()) pushBlockIssue("reflection-prompt", `${label}: add a reflection prompt.`);
         break;
       case "callout":
-        if (!block.body.trim()) pushBlockIssue("callout-body", `${label}: add callout text.`);
+        if (!rawBlock.body.trim()) pushBlockIssue("callout-body", `${label}: add callout text.`);
         break;
     }
   }
@@ -526,83 +532,85 @@ function normalizeStructuredLessonDocument(document: StructuredLessonDocument): 
   };
 }
 
-function normalizeLessonBlock(block: LessonBlock): LessonBlock | null {
-  if (!block || typeof block !== "object" || !block.type) return null;
+function normalizeLessonBlock(block: unknown): LessonBlock | null {
+  if (!block || typeof block !== "object") return null;
+  const rawBlock = block as Partial<LessonBlock> & Record<string, any> & { type?: LessonBlock["type"] };
+  if (!rawBlock.type) return null;
 
   const base: LessonBlockBase = {
-    id: String(block.id ?? createBlockId()),
-    type: block.type,
-    title: block.title ? String(block.title) : defaultTitleForBlock(block.type),
-    isStudentVisible: block.isStudentVisible !== false,
-    required: Boolean(block.required),
-    materialId: block.materialId ? String(block.materialId) : undefined,
+    id: String(rawBlock.id ?? createBlockId()),
+    type: rawBlock.type,
+    title: rawBlock.title ? String(rawBlock.title) : defaultTitleForBlock(rawBlock.type),
+    isStudentVisible: rawBlock.isStudentVisible !== false,
+    required: Boolean(rawBlock.required),
+    materialId: rawBlock.materialId ? String(rawBlock.materialId) : undefined,
   };
 
-  switch (block.type) {
+  switch (rawBlock.type) {
     case "richText":
       return {
         ...base,
         type: "richText",
         contentKind: "tiptap",
-        content: typeof block.content === "string" ? block.content : emptyTipTapDocument(),
+        content: typeof rawBlock.content === "string" ? rawBlock.content : emptyTipTapDocument(),
       };
     case "audio":
-      return { ...base, type: "audio", audioUrl: String(block.audioUrl ?? ""), transcript: String(block.transcript ?? ""), description: String(block.description ?? "") };
+      return { ...base, type: "audio", audioUrl: String(rawBlock.audioUrl ?? ""), transcript: String(rawBlock.transcript ?? ""), description: String(rawBlock.description ?? "") };
     case "video":
       return {
         ...base,
         type: "video",
-        playbackId: String(block.playbackId ?? ""),
-        videoUrl: String(block.videoUrl ?? ""),
-        transcript: String(block.transcript ?? ""),
-        description: String(block.description ?? ""),
+        playbackId: String(rawBlock.playbackId ?? ""),
+        videoUrl: String(rawBlock.videoUrl ?? ""),
+        transcript: String(rawBlock.transcript ?? ""),
+        description: String(rawBlock.description ?? ""),
       };
     case "transcript":
-      return { ...base, type: "transcript", transcript: String(block.transcript ?? "") };
+      return { ...base, type: "transcript", transcript: String(rawBlock.transcript ?? "") };
     case "image":
-      return { ...base, type: "image", imageUrl: String(block.imageUrl ?? ""), altText: String(block.altText ?? ""), caption: String(block.caption ?? "") };
+      return { ...base, type: "image", imageUrl: String(rawBlock.imageUrl ?? ""), altText: String(rawBlock.altText ?? ""), caption: String(rawBlock.caption ?? "") };
     case "document":
-      return { ...base, type: "document", url: String(block.url ?? ""), description: String(block.description ?? "") };
+      return { ...base, type: "document", url: String(rawBlock.url ?? ""), description: String(rawBlock.description ?? "") };
     case "sourceReference":
       return {
         ...base,
         type: "sourceReference",
-        materialId: String(block.materialId ?? ""),
-        referenceLabel: String(block.referenceLabel ?? ""),
-        excerpt: String(block.excerpt ?? ""),
-        sourceUrl: String(block.sourceUrl ?? ""),
+        materialId: String(rawBlock.materialId ?? ""),
+        referenceLabel: String(rawBlock.referenceLabel ?? ""),
+        excerpt: String(rawBlock.excerpt ?? ""),
+        sourceUrl: String(rawBlock.sourceUrl ?? ""),
       };
     case "caseFile":
       return {
         ...base,
         type: "caseFile",
-        scenario: String(block.scenario ?? ""),
-        parcelFacts: normalizeCaseFileItems(block.parcelFacts),
-        evidenceItems: normalizeCaseFileItems(block.evidenceItems),
-        learnerTask: String(block.learnerTask ?? ""),
-        rubric: String(block.rubric ?? ""),
+        scenario: String(rawBlock.scenario ?? ""),
+        parcelFacts: normalizeCaseFileItems(rawBlock.parcelFacts),
+        evidenceItems: normalizeCaseFileItems(rawBlock.evidenceItems),
+        learnerTask: String(rawBlock.learnerTask ?? ""),
+        rubric: String(rawBlock.rubric ?? ""),
       };
     case "formula":
       return {
         ...base,
         type: "formula",
         formula: {
-          id: block.formula?.id ? String(block.formula.id) : undefined,
-          code: String(block.formula?.code ?? ""),
-          name: String(block.formula?.name ?? ""),
-          expression: String(block.formula?.expression ?? ""),
-          notes: String(block.formula?.notes ?? ""),
-          workedExample: String(block.formula?.workedExample ?? ""),
-          relatedTerms: Array.isArray(block.formula?.relatedTerms) ? block.formula.relatedTerms.map((term) => String(term)) : [],
+          id: rawBlock.formula?.id ? String(rawBlock.formula.id) : undefined,
+          code: String(rawBlock.formula?.code ?? ""),
+          name: String(rawBlock.formula?.name ?? ""),
+          expression: String(rawBlock.formula?.expression ?? ""),
+          notes: String(rawBlock.formula?.notes ?? ""),
+          workedExample: String(rawBlock.formula?.workedExample ?? ""),
+          relatedTerms: Array.isArray(rawBlock.formula?.relatedTerms) ? rawBlock.formula.relatedTerms.map((term) => String(term)) : [],
         },
       };
     case "glossaryTermSet":
       return {
         ...base,
         type: "glossaryTermSet",
-        displayMode: block.displayMode === "inline" ? "inline" : "cards",
-        terms: Array.isArray(block.terms)
-          ? block.terms.map((term) => ({
+        displayMode: rawBlock.displayMode === "inline" ? "inline" : "cards",
+        terms: Array.isArray(rawBlock.terms)
+          ? rawBlock.terms.map((term) => ({
               id: term.id ? String(term.id) : undefined,
               term: String(term.term ?? ""),
               definition: String(term.definition ?? ""),
@@ -614,22 +622,22 @@ function normalizeLessonBlock(block: LessonBlock): LessonBlock | null {
       return {
         ...base,
         type: "quizCheckpoint",
-        quizId: String(block.quizId ?? ""),
-        titleText: String(block.titleText ?? ""),
-        description: String(block.description ?? ""),
-        timeLimitSeconds: block.timeLimitSeconds == null ? null : Number(block.timeLimitSeconds),
-        shuffleQuestions: Boolean(block.shuffleQuestions),
-        shuffleChoices: Boolean(block.shuffleChoices),
-        glossaryEnabled: Boolean(block.glossaryEnabled),
+        quizId: String(rawBlock.quizId ?? ""),
+        titleText: String(rawBlock.titleText ?? ""),
+        description: String(rawBlock.description ?? ""),
+        timeLimitSeconds: rawBlock.timeLimitSeconds == null ? null : Number(rawBlock.timeLimitSeconds),
+        shuffleQuestions: Boolean(rawBlock.shuffleQuestions),
+        shuffleChoices: Boolean(rawBlock.shuffleChoices),
+        glossaryEnabled: Boolean(rawBlock.glossaryEnabled),
       };
     case "reflectionPrompt":
-      return { ...base, type: "reflectionPrompt", prompt: String(block.prompt ?? ""), guidance: String(block.guidance ?? "") };
+      return { ...base, type: "reflectionPrompt", prompt: String(rawBlock.prompt ?? ""), guidance: String(rawBlock.guidance ?? "") };
     case "download":
-      return { ...base, type: "download", url: String(block.url ?? ""), description: String(block.description ?? "") };
+      return { ...base, type: "download", url: String(rawBlock.url ?? ""), description: String(rawBlock.description ?? "") };
     case "externalResource":
-      return { ...base, type: "externalResource", url: String(block.url ?? ""), description: String(block.description ?? "") };
+      return { ...base, type: "externalResource", url: String(rawBlock.url ?? ""), description: String(rawBlock.description ?? "") };
     case "callout":
-      return { ...base, type: "callout", tone: block.tone === "warning" || block.tone === "success" ? block.tone : "info", body: String(block.body ?? "") };
+      return { ...base, type: "callout", tone: rawBlock.tone === "warning" || rawBlock.tone === "success" ? rawBlock.tone : "info", body: String(rawBlock.body ?? "") };
     default:
       return null;
   }

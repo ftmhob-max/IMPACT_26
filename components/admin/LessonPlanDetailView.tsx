@@ -28,6 +28,7 @@ import { QuestionBankPicker } from "@/components/admin/QuestionBankPicker";
 import { VideoUpload } from "@/components/admin/VideoUpload";
 import { VideoLinkInput } from "@/components/admin/VideoLinkInput";
 import {
+  getVisibleLessonBlocks,
   getLessonReadinessReport,
   parseStructuredLessonContent,
 } from "@/lib/lessons/structured-content";
@@ -1118,14 +1119,15 @@ function LessonPreviewValidationPanel({
       : undefined;
 
   const doc = parseStructuredLessonContent(lesson.contentJson ?? null);
-  const hasVideoTranscript = !doc.blocks.some(
-    (b) => b.isStudentVisible && b.type === "video" && !b.transcript?.trim()
+  const visibleBlocks = getVisibleLessonBlocks(doc.blocks);
+  const hasVideoTranscript = !visibleBlocks.some(
+    (b) => b.type === "video" && !b.transcript?.trim()
   );
-  const hasAudioTranscript = !doc.blocks.some(
-    (b) => b.isStudentVisible && b.type === "audio" && !b.transcript?.trim()
+  const hasAudioTranscript = !visibleBlocks.some(
+    (b) => b.type === "audio" && !b.transcript?.trim()
   );
-  const hasVideoBlocks = doc.blocks.some((b) => b.type === "video" && b.isStudentVisible);
-  const hasAudioBlocks = doc.blocks.some((b) => b.type === "audio" && b.isStudentVisible);
+  const hasVideoBlocks = visibleBlocks.some((b) => b.type === "video");
+  const hasAudioBlocks = visibleBlocks.some((b) => b.type === "audio");
 
   type CheckRow = {
     label: string;
@@ -2842,9 +2844,8 @@ function lessonMatchesFilter(lesson: LessonData, filter: OutlineFilter): boolean
   if (filter === "missing-transcript") {
     if (!lesson.contentJson) return false;
     const doc = parseStructuredLessonContent(lesson.contentJson);
-    return doc.blocks.some(
+    return getVisibleLessonBlocks(doc.blocks).some(
       (b) =>
-        b.isStudentVisible &&
         ((b.type === "video" && !b.transcript?.trim()) ||
           (b.type === "audio" && !b.transcript?.trim()))
     );
@@ -2881,7 +2882,7 @@ function computeFilterCounts(lessons: LessonData[]): Record<OutlineFilter, numbe
 
 function getLessonSidebarInsight(lesson: LessonData) {
   const document = parseStructuredLessonContent(lesson.contentJson ?? null);
-  const visibleBlocks = document.blocks.filter((block) => block.isStudentVisible).length;
+  const visibleBlocks = getVisibleLessonBlocks(document.blocks).length;
   const durationMinutes =
     document.estimatedDurationMinutes ??
     (lesson.durationSeconds ? Math.max(1, Math.round(lesson.durationSeconds / 60)) : null);

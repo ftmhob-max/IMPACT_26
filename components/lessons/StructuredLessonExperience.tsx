@@ -8,6 +8,7 @@ import {
   type LessonGlossaryTermSnapshot,
   type StructuredLessonDocument,
   parseStructuredLessonContent,
+  getVisibleLessonBlocks,
 } from "@/lib/lessons/structured-content";
 import { RichTextRenderer } from "@/components/lessons/RichTextRenderer";
 import type { GlossaryTermData } from "@/components/lessons/GlossaryTooltip";
@@ -65,7 +66,7 @@ export function StructuredLessonExperience({
 
   const document = useMemo(() => parseStructuredLessonContent(contentJson), [contentJson]);
   const visibleBlocks = useMemo(
-    () => document.blocks.filter((block) => block.isStudentVisible),
+    () => getVisibleLessonBlocks(document.blocks),
     [document.blocks]
   );
   const [activeBlockId, setActiveBlockId] = useState<string | null>(visibleBlocks[0]?.id ?? null);
