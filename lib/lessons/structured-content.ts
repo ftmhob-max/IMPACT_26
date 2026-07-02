@@ -520,11 +520,15 @@ function normalizeStructuredLessonDocument(document: StructuredLessonDocument): 
         ? null
         : Math.max(0, Number(document.estimatedDurationMinutes)),
     completionMode: document.completionMode === "all-blocks" ? "all-blocks" : "manual",
-    blocks: Array.isArray(document.blocks) ? document.blocks.map(normalizeLessonBlock) : [],
+    blocks: Array.isArray(document.blocks)
+      ? document.blocks.map(normalizeLessonBlock).filter((b): b is LessonBlock => b !== null)
+      : [],
   };
 }
 
-function normalizeLessonBlock(block: LessonBlock): LessonBlock {
+function normalizeLessonBlock(block: LessonBlock): LessonBlock | null {
+  if (!block || typeof block !== "object" || !block.type) return null;
+
   const base: LessonBlockBase = {
     id: String(block.id ?? createBlockId()),
     type: block.type,
@@ -626,6 +630,8 @@ function normalizeLessonBlock(block: LessonBlock): LessonBlock {
       return { ...base, type: "externalResource", url: String(block.url ?? ""), description: String(block.description ?? "") };
     case "callout":
       return { ...base, type: "callout", tone: block.tone === "warning" || block.tone === "success" ? block.tone : "info", body: String(block.body ?? "") };
+    default:
+      return null;
   }
 }
 

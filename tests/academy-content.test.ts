@@ -5,6 +5,7 @@ import { DEV_COURSES, DEV_FORMULA_SECTIONS, DEV_QUIZZES } from "@/lib/dev-conten
 import {
   blockCategoryForType,
   createDefaultLessonBlock,
+  emptyTipTapDocument,
   getLessonReadinessReport,
   parseStructuredLessonContent,
   stringifyStructuredLessonContent,
@@ -88,4 +89,39 @@ test("academy seed covers foundational evaluator curriculum primitives", () => {
   assert.ok(formulas.every((formula) => formula.calcMetaJson));
   assert.ok(quizQuestions.some((question) => question.questionType === "scenario"));
   assert.ok(quizQuestions.every((question) => question.domain in DOMAINS));
+});
+
+test("unrecognized or malformed lesson blocks are filtered out during parsing", () => {
+  const malformedDoc = {
+    version: 2,
+    kind: "structured-lesson",
+    summary: "Test lesson",
+    objectives: ["Test objectives"],
+    estimatedDurationMinutes: 5,
+    completionMode: "manual",
+    blocks: [
+      {
+        id: "block-1",
+        type: "richText",
+        title: "Good block",
+        isStudentVisible: true,
+        required: true,
+        contentKind: "tiptap",
+        content: emptyTipTapDocument(),
+      },
+      {
+        id: "block-2",
+        type: "unknownTypeForTesting",
+        title: "Bad block",
+        isStudentVisible: true,
+        required: true,
+      },
+      null,
+      undefined,
+    ],
+  };
+
+  const parsed = parseStructuredLessonContent(JSON.stringify(malformedDoc));
+  assert.equal(parsed.blocks.length, 1);
+  assert.equal(parsed.blocks[0]?.type, "richText");
 });
