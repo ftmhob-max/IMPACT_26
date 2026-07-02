@@ -1804,6 +1804,7 @@ export interface UpdateLessonVariables {
   quizId?: UUIDString | null;
   sourceMaterialId?: UUIDString | null;
   durationSeconds?: number | null;
+  position?: number | null;
   status?: string | null;
   isPublished?: boolean | null;
   updatedById?: string | null;

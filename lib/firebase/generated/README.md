@@ -6330,6 +6330,7 @@ export interface UpdateLessonVariables {
   quizId?: UUIDString | null;
   sourceMaterialId?: UUIDString | null;
   durationSeconds?: number | null;
+  position?: number | null;
   status?: string | null;
   isPublished?: boolean | null;
   updatedById?: string | null;
@@ -6361,6 +6362,7 @@ const updateLessonVars: UpdateLessonVariables = {
   quizId: ..., // optional
   sourceMaterialId: ..., // optional
   durationSeconds: ..., // optional
+  position: ..., // optional
   status: ..., // optional
   isPublished: ..., // optional
   updatedById: ..., // optional
@@ -6371,7 +6373,7 @@ const updateLessonVars: UpdateLessonVariables = {
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await updateLesson(updateLessonVars);
 // Variables can be defined inline as well.
-const { data } = await updateLesson({ id: ..., title: ..., contentJson: ..., videoPlaybackId: ..., videoUrl: ..., quizId: ..., sourceMaterialId: ..., durationSeconds: ..., status: ..., isPublished: ..., updatedById: ..., publishedAt: ..., });
+const { data } = await updateLesson({ id: ..., title: ..., contentJson: ..., videoPlaybackId: ..., videoUrl: ..., quizId: ..., sourceMaterialId: ..., durationSeconds: ..., position: ..., status: ..., isPublished: ..., updatedById: ..., publishedAt: ..., });
 
 // You can also pass in a `DataConnect` instance to the action shortcut function.
 const dataConnect = getDataConnect(connectorConfig);
@@ -6402,6 +6404,7 @@ const updateLessonVars: UpdateLessonVariables = {
   quizId: ..., // optional
   sourceMaterialId: ..., // optional
   durationSeconds: ..., // optional
+  position: ..., // optional
   status: ..., // optional
   isPublished: ..., // optional
   updatedById: ..., // optional
@@ -6411,7 +6414,7 @@ const updateLessonVars: UpdateLessonVariables = {
 // Call the `updateLessonRef()` function to get a reference to the mutation.
 const ref = updateLessonRef(updateLessonVars);
 // Variables can be defined inline as well.
-const ref = updateLessonRef({ id: ..., title: ..., contentJson: ..., videoPlaybackId: ..., videoUrl: ..., quizId: ..., sourceMaterialId: ..., durationSeconds: ..., status: ..., isPublished: ..., updatedById: ..., publishedAt: ..., });
+const ref = updateLessonRef({ id: ..., title: ..., contentJson: ..., videoPlaybackId: ..., videoUrl: ..., quizId: ..., sourceMaterialId: ..., durationSeconds: ..., position: ..., status: ..., isPublished: ..., updatedById: ..., publishedAt: ..., });
 
 // You can also pass in a `DataConnect` instance to the `MutationRef` function.
 const dataConnect = getDataConnect(connectorConfig);

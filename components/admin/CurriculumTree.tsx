@@ -6,6 +6,9 @@ import { useRouter } from "next/navigation";
 import * as Icons from "@/components/ui/Icons";
 import { adminFetch } from "@/lib/admin/client-fetch";
 import { cn } from "@/lib/utils";
+import { DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { VideoUpload } from "@/components/admin/VideoUpload";
 import { VideoLinkInput } from "@/components/admin/VideoLinkInput";
 import { CourseImportPanel } from "@/components/admin/CourseImportPanel";
@@ -713,6 +716,30 @@ function CourseNode({
   const totalLessons = course.modules_on_course.reduce((s, m) => s + m.lessons_on_module.length, 0);
   const publishedLessons = course.modules_on_course.reduce((s, m) => s + m.lessons_on_module.filter((l) => l.isPublished).length, 0);
 
+  const [orderedModules, setOrderedModules] = useState(
+    [...course.modules_on_course].sort((a, b) => a.position - b.position)
+  );
+  useEffect(() => {
+    setOrderedModules([...course.modules_on_course].sort((a, b) => a.position - b.position));
+  }, [course.modules_on_course]);
+
+  const moduleSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  function handleModuleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    setOrderedModules((prev) => {
+      const oldIndex = prev.findIndex((m) => m.id === active.id);
+      const newIndex = prev.findIndex((m) => m.id === over.id);
+      const next = arrayMove(prev, oldIndex, newIndex);
+      void onReorder("module", next.map((m, i) => ({ id: m.id, position: i + 1 })));
+      return next;
+    });
+  }
+
   return (
     <div className="course-tree-card rounded-xl border border-black/10 bg-white shadow-sm overflow-hidden">
       {/* Course header */}
@@ -769,26 +796,31 @@ function CourseNode({
 
       {expanded && (
         <div className="divide-y divide-slate-50">
-          {course.modules_on_course.map((mod) => (
-            <ModuleNode
-              key={mod.id}
-              module={mod}
-              courseId={course.id}
-              expanded={expandedModules.has(mod.id)}
-              selectedLessonIds={selectedLessonIds}
-              onToggle={() => onToggleModule(mod.id)}
-              onEdit={(t) => onEdit(t)}
-              onAddLesson={() => onAddLesson(mod.id)}
-              onToggleLessonSelection={onToggleLessonSelection}
-              onToggleModuleLessonSelection={onToggleModuleLessonSelection}
-              onPublishLessons={onPublishLessons}
-              onUnpublishLesson={onUnpublishLesson}
-              onDeleteLessons={onDeleteLessons}
-              onDeleteModule={onDeleteModule}
-              onPublishModule={() => onPublishModule(mod)}
-            />
-          ))}
-          {course.modules_on_course.length === 0 && (
+          <DndContext sensors={moduleSensors} collisionDetection={closestCenter} onDragEnd={handleModuleDragEnd}>
+            <SortableContext items={orderedModules.map((m) => m.id)} strategy={verticalListSortingStrategy}>
+              {orderedModules.map((mod) => (
+                <SortableModuleNode
+                  key={mod.id}
+                  module={mod}
+                  courseId={course.id}
+                  expanded={expandedModules.has(mod.id)}
+                  selectedLessonIds={selectedLessonIds}
+                  onToggle={() => onToggleModule(mod.id)}
+                  onEdit={(t) => onEdit(t)}
+                  onAddLesson={() => onAddLesson(mod.id)}
+                  onToggleLessonSelection={onToggleLessonSelection}
+                  onToggleModuleLessonSelection={onToggleModuleLessonSelection}
+                  onPublishLessons={onPublishLessons}
+                  onUnpublishLesson={onUnpublishLesson}
+                  onDeleteLessons={onDeleteLessons}
+                  onDeleteModule={onDeleteModule}
+                  onPublishModule={() => onPublishModule(mod)}
+                  onReorder={onReorder}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
+          {orderedModules.length === 0 && (
             <p className="px-8 py-4 text-xs text-slate-400">No modules — click + to add one.</p>
           )}
         </div>
@@ -814,6 +846,9 @@ function ModuleNode({
   onDeleteLessons,
   onDeleteModule,
   onPublishModule,
+  onReorder,
+  dragHandleRef,
+  dragHandleListeners,
 }: {
   module: Module;
   courseId: string;
@@ -829,20 +864,52 @@ function ModuleNode({
   onDeleteLessons: (lessonIds: string[]) => void;
   onDeleteModule: (moduleId: string, moduleTitle: string) => void;
   onPublishModule: () => void;
+  onReorder: (type: "module" | "lesson", items: Array<{ id: string; position: number }>) => void;
+  dragHandleRef?: (node: HTMLElement | null) => void;
+  dragHandleListeners?: Record<string, unknown>;
 }) {
+  const [orderedLessons, setOrderedLessons] = useState(
+    [...module.lessons_on_module].sort((a, b) => a.position - b.position)
+  );
+  useEffect(() => {
+    setOrderedLessons([...module.lessons_on_module].sort((a, b) => a.position - b.position));
+  }, [module.lessons_on_module]);
+
+  const lessonSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  function handleLessonDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    setOrderedLessons((prev) => {
+      const oldIndex = prev.findIndex((l) => l.id === active.id);
+      const newIndex = prev.findIndex((l) => l.id === over.id);
+      const next = arrayMove(prev, oldIndex, newIndex);
+      void onReorder("lesson", next.map((l, i) => ({ id: l.id, position: i + 1 })));
+      return next;
+    });
+  }
+
   let prereqs: string[] = [];
   try { prereqs = JSON.parse(module.prerequisiteModuleIds ?? "[]"); } catch { /* ignore */ }
-  const lessonIds = module.lessons_on_module.map((lesson) => lesson.id);
+  const lessonIds = orderedLessons.map((lesson) => lesson.id);
   const selectedIds = lessonIds.filter((lessonId) => selectedLessonIds.has(lessonId));
   const allSelected = lessonIds.length > 0 && selectedIds.length === lessonIds.length;
   const someSelected = selectedIds.length > 0;
-  const unpublishedIds = module.lessons_on_module.filter((l) => !l.isPublished).map((l) => l.id);
-  const publishedCount = module.lessons_on_module.filter((l) => l.isPublished).length;
+  const unpublishedIds = orderedLessons.filter((l) => !l.isPublished).map((l) => l.id);
+  const publishedCount = orderedLessons.filter((l) => l.isPublished).length;
   const allPublished = lessonIds.length > 0 && publishedCount === lessonIds.length;
 
   return (
     <div className="course-tree-module pl-4">
       <div className="course-tree-module-row flex items-center gap-2 px-3 py-2.5 bg-slate-50/50">
+        {dragHandleRef && (
+          <span ref={dragHandleRef} {...(dragHandleListeners ?? {})} className="cursor-grab touch-none text-slate-300 hover:text-slate-400 shrink-0 active:cursor-grabbing" aria-label="Drag to reorder module">
+            <Icons.GripVertical size={14} />
+          </span>
+        )}
         <button type="button" onClick={onToggle} className="course-tree-icon-button flex items-center gap-2 flex-1 min-w-0 text-left">
           {expanded ? <Icons.ChevronDown size={13} className="text-slate-300 shrink-0" /> : <Icons.ChevronRight size={13} className="text-slate-300 shrink-0" />}
           <Icons.BookMarked size={14} className="text-slate-400 shrink-0" />
@@ -924,28 +991,55 @@ function ModuleNode({
 
       {expanded && (
         <div className="course-tree-lessons pl-4 divide-y divide-slate-50/80">
-          {module.lessons_on_module.map((lesson) => (
-            <LessonRow
-              key={lesson.id}
-              lesson={lesson}
-              moduleId={module.id}
-              courseId={courseId}
-              selected={selectedLessonIds.has(lesson.id)}
-              onToggleSelected={(checked) => onToggleLessonSelection(lesson.id, checked)}
-              onEdit={(t) => onEdit(t)}
-              onDelete={() => onDeleteLessons([lesson.id])}
-              onTogglePublish={() =>
-                lesson.isPublished
-                  ? onUnpublishLesson(lesson.id)
-                  : onPublishLessons([lesson.id])
-              }
-            />
-          ))}
-          {module.lessons_on_module.length === 0 && (
+          <DndContext sensors={lessonSensors} collisionDetection={closestCenter} onDragEnd={handleLessonDragEnd}>
+            <SortableContext items={orderedLessons.map((l) => l.id)} strategy={verticalListSortingStrategy}>
+              {orderedLessons.map((lesson) => (
+                <SortableLessonRow
+                  key={lesson.id}
+                  lesson={lesson}
+                  moduleId={module.id}
+                  courseId={courseId}
+                  selected={selectedLessonIds.has(lesson.id)}
+                  onToggleSelected={(checked) => onToggleLessonSelection(lesson.id, checked)}
+                  onEdit={(t) => onEdit(t)}
+                  onDelete={() => onDeleteLessons([lesson.id])}
+                  onTogglePublish={() =>
+                    lesson.isPublished
+                      ? onUnpublishLesson(lesson.id)
+                      : onPublishLessons([lesson.id])
+                  }
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
+          {orderedLessons.length === 0 && (
             <p className="px-4 py-3 text-xs text-slate-400">No lessons — click + to add one.</p>
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── Sortable wrappers ────────────────────────────────────────────────────────
+
+function SortableModuleNode(props: Omit<Parameters<typeof ModuleNode>[0], "dragHandleRef" | "dragHandleListeners">) {
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: props.module.id });
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.45 : 1, position: "relative", zIndex: isDragging ? 10 : undefined }}
+    >
+      <ModuleNode {...props} dragHandleRef={setActivatorNodeRef} dragHandleListeners={{ ...listeners, ...attributes }} />
+    </div>
+  );
+}
+
+function SortableLessonRow(props: Omit<Parameters<typeof LessonRow>[0], "dragHandleRef" | "dragHandleListeners" | "isDragging">) {
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: props.lesson.id });
+  return (
+    <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }}>
+      <LessonRow {...props} dragHandleRef={setActivatorNodeRef} dragHandleListeners={{ ...listeners, ...attributes }} isDragging={isDragging} />
     </div>
   );
 }
@@ -961,6 +1055,9 @@ function LessonRow({
   onEdit,
   onDelete,
   onTogglePublish,
+  dragHandleRef,
+  dragHandleListeners,
+  isDragging,
 }: {
   lesson: Lesson;
   moduleId: string;
@@ -970,6 +1067,9 @@ function LessonRow({
   onEdit: (t: EditTarget) => void;
   onDelete: () => void;
   onTogglePublish: () => void;
+  dragHandleRef?: (node: HTMLElement | null) => void;
+  dragHandleListeners?: Record<string, unknown>;
+  isDragging?: boolean;
 }) {
   const typeIcons: Record<string, React.ComponentType<any>> = {
     text: Icons.FileText,
@@ -983,7 +1083,7 @@ function LessonRow({
 
   return (
     <div
-      className="course-tree-lesson-row group flex cursor-pointer items-center gap-2 px-3 py-2 transition-colors duration-200 hover:bg-slate-50"
+      className={cn("course-tree-lesson-row group flex cursor-pointer items-center gap-2 px-3 py-2 transition-colors duration-200 hover:bg-slate-50", isDragging && "opacity-50 bg-slate-50")}
       onClick={(event) => {
         const target = event.target as HTMLElement;
         if (target.closest("input, button, a, [role='menu'], [role='menuitem']")) return;
@@ -998,7 +1098,13 @@ function LessonRow({
         aria-label={`Select lesson ${lesson.title}`}
         className="h-3.5 w-3.5 rounded border-slate-300 cursor-pointer"
       />
-      <Icons.GripVertical size={12} className="text-slate-200 shrink-0" aria-hidden />
+      {dragHandleRef ? (
+        <span ref={dragHandleRef} {...(dragHandleListeners ?? {})} className="cursor-grab touch-none text-slate-300 hover:text-slate-500 shrink-0 active:cursor-grabbing" aria-label="Drag to reorder">
+          <Icons.GripVertical size={12} />
+        </span>
+      ) : (
+        <Icons.GripVertical size={12} className="text-slate-200 shrink-0" aria-hidden />
+      )}
       <TypeIcon size={13} className="text-slate-400 shrink-0" aria-hidden />
       <Link
         href={editorHref}

@@ -81,7 +81,7 @@ mutation CreateLesson($id: UUID!, $moduleId: UUID!, $title: String!, $position: 
   })
 }
 
-mutation UpdateLesson($id: UUID!, $title: String, $contentJson: String, $videoPlaybackId: String, $videoUrl: String, $quizId: UUID, $sourceMaterialId: UUID, $durationSeconds: Int, $status: String, $isPublished: Boolean, $updatedById: String, $publishedAt: Date) @auth(level: NO_ACCESS) {
+mutation UpdateLesson($id: UUID!, $title: String, $contentJson: String, $videoPlaybackId: String, $videoUrl: String, $quizId: UUID, $sourceMaterialId: UUID, $durationSeconds: Int, $position: Int, $status: String, $isPublished: Boolean, $updatedById: String, $publishedAt: Date) @auth(level: NO_ACCESS) {
   lesson_update(id: $id, data: {
     title: $title
     contentJson: $contentJson
@@ -90,6 +90,7 @@ mutation UpdateLesson($id: UUID!, $title: String, $contentJson: String, $videoPl
     quiz: { id: $quizId }
     sourceMaterial: { id: $sourceMaterialId }
     durationSeconds: $durationSeconds
+    position: $position
     status: $status
     isPublished: $isPublished
     updatedBy: { id: $updatedById }
