@@ -34,9 +34,12 @@ async function getCourse(slug: string) {
       }>;
     };
 
+    if (isDevelopmentEnvironment()) {
+      await ensureDevDataSeeded().catch(() => null);
+    }
+
     let data = await adminDcQuery<CourseData>("GetCourseBySlug", { slug });
     if (!data.courses[0] && isDevelopmentEnvironment()) {
-      await ensureDevDataSeeded().catch(() => null);
       data = await adminDcQuery<CourseData>("GetCourseBySlug", { slug }).catch(
         (): CourseData => ({ courses: [] })
       );
@@ -118,7 +121,7 @@ export default async function CourseDetailPage({
       <div className="mb-5 grid gap-3 sm:grid-cols-3">
         <CourseStat label="Modules" value={course.modules_on_course.length} icon={Icons.LayoutDashboard} />
         <CourseStat label="Lessons" value={totalLessons} icon={Icons.BookOpen} />
-        <CourseStat label="Mode" value="Self-paced" icon={Icons.RotateCcw} />
+        <CourseStat label="Mode" value="Scenario labs" icon={Icons.FileCheck} />
       </div>
 
       <CourseEnrollmentClient

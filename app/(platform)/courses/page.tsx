@@ -5,10 +5,12 @@ import {
   LearnerPage,
   PageHeader,
   PrimaryAction,
+  SecondaryAction,
   SectionPanel,
   StatusBadge,
 } from "@/components/ui/LearnerPrimitives";
 import { adminDcQuery } from "@/lib/firebase/admin-dc";
+import { getLearnerSession } from "@/lib/firebase/learner-session";
 import { getDevPublishedCourses } from "@/lib/dev-content";
 import { ensureDevDataSeeded } from "@/lib/dev-seed";
 import { isDevelopmentEnvironment } from "@/lib/dev-gate";
@@ -20,9 +22,12 @@ async function getCourses() {
       courses: Array<{ id: string; slug: string; title: string; description?: string | null; thumbnailUrl?: string | null }>;
     };
 
+    if (isDevelopmentEnvironment()) {
+      await ensureDevDataSeeded().catch(() => null);
+    }
+
     let data = await adminDcQuery<CoursesData>("ListPublishedCourses");
     if (data.courses.length === 0 && isDevelopmentEnvironment()) {
-      await ensureDevDataSeeded().catch(() => null);
       data = await adminDcQuery<CoursesData>("ListPublishedCourses").catch((): CoursesData => ({ courses: [] }));
       if (data.courses.length > 0) return data.courses;
       return getDevPublishedCourses();
@@ -33,15 +38,36 @@ async function getCourses() {
   }
 }
 
+interface LatestAttempt {
+  id: string;
+  quiz: { title: string };
+  scorePct: number | null;
+  passed: boolean | null;
+}
+
+async function getLatestAttempt(userId: string): Promise<LatestAttempt | null> {
+  try {
+    const data = await adminDcQuery<{ quizAttempts: LatestAttempt[] }>("GetUserProgressDetails", { userId });
+    return data.quizAttempts?.[0] ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export default async function CoursesPage() {
-  const courses = await getCourses();
+  const session = await getLearnerSession();
+  const [courses, latestAttempt] = await Promise.all([
+    getCourses(),
+    session ? getLatestAttempt(session.uid) : Promise.resolve(null),
+  ]);
+  const firstCourse = courses[0] as { slug: string } | undefined;
 
   return (
     <LearnerPage>
       <PageHeader
-        eyebrow="Course catalog"
-        title="Choose a learning path"
-        description="Start with structured assessment method lessons, keep formulas close, then practice until the rationale is clear."
+        eyebrow="Evaluator academy"
+        title="Choose a property assessment path"
+        description="Train through Philadelphia-specific scenarios, source-backed lessons, Formula Compass labs, appeal evidence reviews, and competency checkpoints."
         action={<PrimaryAction href="/formulas">Open Formula Compass</PrimaryAction>}
         icon={Icons.GraduationCap}
       />
@@ -56,6 +82,7 @@ export default async function CoursesPage() {
       ) : (
         <>
           <CatalogGuide count={courses.length} />
+          <PlacementPanel latestAttempt={latestAttempt} firstCourseSlug={firstCourse?.slug ?? null} />
 
           <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
             {(courses as Array<{ id: string; slug: string; title: string; description?: string; thumbnailUrl?: string }>).map((course, index) => (
@@ -68,6 +95,44 @@ export default async function CoursesPage() {
   );
 }
 
+function PlacementPanel({
+  latestAttempt,
+  firstCourseSlug,
+}: {
+  latestAttempt: LatestAttempt | null;
+  firstCourseSlug: string | null;
+}) {
+  const hasAttempt = latestAttempt?.scorePct != null;
+  return (
+    <SectionPanel className="mt-5">
+      <div className="grid gap-4 p-5 lg:grid-cols-[1fr_auto] lg:items-center">
+        <div className="flex flex-col gap-4 min-[420px]:flex-row">
+          <IconTile icon={hasAttempt ? Icons.BarChart3 : Icons.Target} tone={hasAttempt ? "purple" : "amber"} />
+          <div className="min-w-0">
+            <StatusBadge tone={hasAttempt ? (latestAttempt?.passed ? "green" : "amber") : "blue"}>
+              {hasAttempt ? "Adaptive recommendation" : "Placement diagnostic"}
+            </StatusBadge>
+            <h2 className="mt-3 text-lg font-extrabold tracking-[-0.01em] text-slate-950">
+              {hasAttempt ? "Use your latest attempt to choose the next competency." : "Start with a short evaluator placement check."}
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+              {hasAttempt
+                ? `${latestAttempt?.quiz.title ?? "Your latest attempt"} is available for review. Use the competency dashboard to decide whether to revisit appeals, valuation, data quality, or formulas next.`
+                : "The academy begins with a short scenario diagnostic covering taxpayer triage, income approach, and property data. It creates the first signal for your competency dashboard."}
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
+          <PrimaryAction href={hasAttempt ? "/progress" : firstCourseSlug ? `/courses/${firstCourseSlug}` : "/courses"}>
+            {hasAttempt ? "Review competencies" : "Begin placement"}
+          </PrimaryAction>
+          <SecondaryAction href="/formulas">Open Formula Compass</SecondaryAction>
+        </div>
+      </div>
+    </SectionPanel>
+  );
+}
+
 function CatalogGuide({ count }: { count: number }) {
   return (
     <SectionPanel>
@@ -77,18 +142,18 @@ function CatalogGuide({ count }: { count: number }) {
           <div>
             <StatusBadge tone="green">{count} active path{count === 1 ? "" : "s"}</StatusBadge>
             <h2 className="mt-3 text-xl font-extrabold tracking-[-0.02em] text-slate-950">
-              Use the catalog as your study map.
+              Use the academy as your evaluator map.
             </h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-              Open a path, work through lessons in order, keep the Formula Compass nearby, and use rationales to decide what to review next.
+              Open a path, inspect each case file, keep Formula Compass nearby, and use rationales and rubrics to decide what to review next.
             </p>
           </div>
         </div>
 
         <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
-          <GuideStep label="1" title="Learn" detail="Build the concept first." />
-          <GuideStep label="2" title="Apply" detail="Use formulas with examples." />
-          <GuideStep label="3" title="Review" detail="Check readiness with rationale." />
+          <GuideStep label="1" title="Learn" detail="Build the local workflow." />
+          <GuideStep label="2" title="Inspect" detail="Review parcel evidence." />
+          <GuideStep label="3" title="Defend" detail="Document the decision." />
         </div>
       </div>
     </SectionPanel>
@@ -119,7 +184,7 @@ function CourseCard({
   index: number;
 }) {
   const progressWidth = index === 0 ? "w-[68%]" : index === 1 ? "w-[42%]" : "w-[24%]";
-  const focus = index === 0 ? "Foundation path" : index === 1 ? "Formula practice" : "Readiness review";
+  const focus = index === 0 ? "Foundation path" : index === 1 ? "Case practice" : "Readiness review";
 
   return (
     <Link
@@ -156,8 +221,8 @@ function CourseCard({
 
       <div className="p-5">
         <div className="mb-3 flex flex-wrap gap-2">
-          <StatusBadge tone="blue">Assessment method</StatusBadge>
-          <StatusBadge tone="slate">Rationale review</StatusBadge>
+          <StatusBadge tone="blue">Philadelphia scenarios</StatusBadge>
+          <StatusBadge tone="slate">Rubric review</StatusBadge>
         </div>
         <h2 className="text-lg font-extrabold leading-snug tracking-[-0.01em] text-slate-950 group-hover:text-[#185FA5]">
           {course.title}
@@ -166,9 +231,9 @@ function CourseCard({
           <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-500">{course.description}</p>
         )}
         <div className="mt-5 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4">
-          <CourseSignal label="Lessons" value="In order" />
-          <CourseSignal label="Formula" value="Nearby" />
-          <CourseSignal label="Review" value="Rationale" />
+          <CourseSignal label="Cases" value="Evidence" />
+          <CourseSignal label="Formula" value="Compass" />
+          <CourseSignal label="Review" value="Rubric" />
         </div>
         <div className="mt-5 flex items-center justify-between rounded-lg border border-[#b8d7f0] bg-[#f8fbff] px-3 py-2.5">
           <span className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">View modules</span>

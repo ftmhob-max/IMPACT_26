@@ -423,7 +423,25 @@ function EditableRowTable({
 }
 
 const VALID_DIFFICULTIES = ["easy", "proficient", "expert"] as const;
-const VALID_DOMAINS = ["math", "appraisal", "law", "philly", "admin", "ethics"] as const;
+const VALID_DOMAINS = [
+  "market_value",
+  "uniformity",
+  "property_data",
+  "comparable_sales",
+  "cost_approach",
+  "income_approach",
+  "appeals",
+  "exemptions",
+  "ratio_studies",
+  "mass_appraisal",
+  "communication",
+  "ethics",
+  "math",
+  "appraisal",
+  "law",
+  "philly",
+  "admin",
+] as const;
 const QUESTION_TYPES = ["multiple_choice", "multiselect", "scenario", "short_answer"] as const;
 
 function validateFixedRow(row: PreviewRow): string[] {

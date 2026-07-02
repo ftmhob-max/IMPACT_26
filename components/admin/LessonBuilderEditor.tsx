@@ -106,6 +106,7 @@ const BLOCK_LIBRARY: Array<{
   { type: "transcript", label: "Transcript", description: "Standalone transcript or reading support.", icon: Icons.FileCode, category: "core" },
   { type: "formula", label: "Formula", description: "Formula Compass explainer block.", icon: Icons.Calculator, category: "core" },
   { type: "callout", label: "Callout", description: "Teacher note, warning, or exam tip.", icon: Icons.Info, category: "core" },
+  { type: "caseFile", label: "Case file", description: "Scenario packet with parcel facts, evidence, task, and rubric.", icon: Icons.FileCheck, category: "practice" },
   { type: "quizCheckpoint", label: "Checkpoint", description: "Embedded knowledge check.", icon: Icons.ClipboardList, category: "practice" },
   { type: "reflectionPrompt", label: "Reflection", description: "Prompt students to self-check their understanding.", icon: Icons.Quote, category: "practice" },
   { type: "image", label: "Image", description: "Illustrations, charts, and annotated visuals.", icon: Icons.BookOpen, category: "support" },
@@ -1631,6 +1632,44 @@ function BlockSpecificFields({
           <TextField label="Source URL" value={block.sourceUrl ?? ""} onChange={(value) => onChange({ ...block, sourceUrl: value })} placeholder="Optional link to the source." />
         </div>
       );
+    case "caseFile":
+      return (
+        <div className="space-y-4">
+          <TextAreaField
+            label="Scenario narrative"
+            value={block.scenario}
+            onChange={(value) => onChange({ ...block, scenario: value })}
+            placeholder="Describe the Philadelphia property, taxpayer concern, and assessment decision context."
+            rows={4}
+          />
+          <CaseFileItemEditor
+            title="Parcel facts"
+            items={block.parcelFacts}
+            emptyLabel="Add parcel fact"
+            onChange={(items) => onChange({ ...block, parcelFacts: items })}
+          />
+          <CaseFileItemEditor
+            title="Evidence packet"
+            items={block.evidenceItems}
+            emptyLabel="Add evidence item"
+            onChange={(items) => onChange({ ...block, evidenceItems: items })}
+          />
+          <TextAreaField
+            label="Learner task"
+            value={block.learnerTask}
+            onChange={(value) => onChange({ ...block, learnerTask: value })}
+            placeholder="Tell learners what decision, calculation, or documentation they must produce."
+            rows={3}
+          />
+          <TextAreaField
+            label="Instructor rubric"
+            value={block.rubric}
+            onChange={(value) => onChange({ ...block, rubric: value })}
+            placeholder="List the decision criteria for instructor review."
+            rows={4}
+          />
+        </div>
+      );
     case "formula":
       return (
         <div className="space-y-3">
@@ -1936,6 +1975,63 @@ function ToggleRow({
           <span className={cn("absolute top-1 left-1 h-4 w-4 rounded-full bg-white shadow transition-transform", checked && "translate-x-5")} />
         </button>
         <span className="text-sm text-slate-600">{checked ? "On" : "Off"}</span>
+      </div>
+    </div>
+  );
+}
+
+function CaseFileItemEditor({
+  title,
+  items,
+  emptyLabel,
+  onChange,
+}: {
+  title: string;
+  items: Array<{ label: string; detail: string; sourceRef?: string }>;
+  emptyLabel: string;
+  onChange: (items: Array<{ label: string; detail: string; sourceRef?: string }>) => void;
+}) {
+  const safeItems = items.length > 0 ? items : [{ label: "", detail: "", sourceRef: "" }];
+
+  function updateItem(index: number, patch: Partial<{ label: string; detail: string; sourceRef: string }>) {
+    onChange(safeItems.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)));
+  }
+
+  function removeItem(index: number) {
+    onChange(safeItems.filter((_, itemIndex) => itemIndex !== index));
+  }
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <FieldLabel>{title}</FieldLabel>
+        <button
+          type="button"
+          onClick={() => onChange([...safeItems, { label: "", detail: "", sourceRef: "" }])}
+          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-[#185FA5] transition hover:border-[#185FA5]"
+        >
+          {emptyLabel}
+        </button>
+      </div>
+      <div className="mt-3 space-y-3">
+        {safeItems.map((item, index) => (
+          <div key={index} className="rounded-lg border border-slate-200 bg-white p-3">
+            <div className="grid gap-3 md:grid-cols-[1fr_0.55fr_auto] md:items-end">
+              <TextField label="Label" value={item.label} onChange={(value) => updateItem(index, { label: value })} placeholder="e.g. Subject property" />
+              <TextField label="Source ref" value={item.sourceRef ?? ""} onChange={(value) => updateItem(index, { sourceRef: value })} placeholder="Optional" />
+              <button
+                type="button"
+                onClick={() => removeItem(index)}
+                className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-red-600 transition hover:border-red-200"
+              >
+                Remove
+              </button>
+            </div>
+            <div className="mt-3">
+              <TextAreaField label="Detail" value={item.detail} onChange={(value) => updateItem(index, { detail: value })} placeholder="Add the fact, document summary, or evidence note." rows={3} />
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -24,10 +24,10 @@ interface LatestAttempt {
 }
 
 const studyLoop = [
-  { title: "Learn", detail: "Build the concept and rule.", icon: Icons.BookOpen, tone: "blue" as const },
-  { title: "Apply", detail: "Use formulas with field-style data.", icon: Icons.Calculator, tone: "green" as const },
-  { title: "Review", detail: "Trace the rationale behind answers.", icon: Icons.FileCheck, tone: "amber" as const },
-  { title: "Measure", detail: "Use scores to choose the next focus.", icon: Icons.BarChart3, tone: "purple" as const },
+  { title: "Learn", detail: "Build the assessment concept and local workflow.", icon: Icons.BookOpen, tone: "blue" as const },
+  { title: "Inspect", detail: "Read parcel facts, sales, photos, and appeal evidence.", icon: Icons.FileCheck, tone: "amber" as const },
+  { title: "Calculate", detail: "Use Formula Compass for ratios, income, cost, and tax impact.", icon: Icons.Calculator, tone: "green" as const },
+  { title: "Defend", detail: "Document the decision and communicate it clearly.", icon: Icons.BarChart3, tone: "purple" as const },
 ];
 
 async function getLatestAttempt(userId: string): Promise<LatestAttempt | null> {
@@ -49,9 +49,9 @@ export default async function DashboardPage() {
   return (
     <LearnerPage>
       <PageHeader
-        eyebrow="IMPACT_26V.1"
-        title="Property assessment learning"
-        description="Continue the integrated method for assessment calculations, compliance, formulas, and transparent review."
+        eyebrow="IMPACT_26 Academy"
+        title="Philadelphia property assessment training"
+        description="Work through scenario-based evaluator training for market value, uniformity, data quality, valuation methods, appeals, ratio studies, and defensible taxpayer communication."
         action={<PrimaryAction href="/courses">Continue learning</PrimaryAction>}
         icon={Icons.LayoutDashboard}
       />
@@ -65,22 +65,22 @@ export default async function DashboardPage() {
       <div className="grid gap-4 sm:grid-cols-3">
         <MetricCard
           label="Practice"
-          value="80"
-          detail="Exam questions across assessment domains"
+          value="14"
+          detail="Evaluator courses from beginner to advanced"
           tone="blue"
           icon={Icons.GraduationCap}
         />
         <MetricCard
           label="Formulas"
-          value="53"
-          detail="Quick-reference calculations and examples"
+          value="Core"
+          detail="Assessment ratios, cap rates, income, cost, and equity"
           tone="green"
           icon={Icons.Compass}
         />
         <MetricCard
-          label="Levels"
-          value="3"
-          detail="Easy, proficient, and expert practice"
+          label="Mode"
+          value="Cases"
+          detail="Parcel records, evidence packets, and review memos"
           tone="amber"
           icon={Icons.TrendingUp}
         />
@@ -94,24 +94,24 @@ export default async function DashboardPage() {
           <div className="divide-y divide-slate-100">
             <LearningStep
               index="1"
-              title="Start with the IMPACT_26V.1 course"
-              description="Work through modules in order so appraisal, legal, administrative, and ethics topics stay connected."
+              title="Start with the Philadelphia academy path"
+              description="Build the foundations first: OPA roles, market value, uniformity, property data, and taxpayer issue triage."
               href="/courses"
               cta="View courses"
               icon={Icons.BookOpen}
             />
             <LearningStep
               index="2"
-              title="Use the Formula Compass as support"
-              description="Check definitions and examples before practice so the formula choice is intentional."
+              title="Use Formula Compass during case work"
+              description="Calculate assessment ratios, income approach indications, depreciation, cap rate sensitivity, COD, and PRD."
               href="/formulas"
               cta="Open formulas"
               icon={Icons.Calculator}
             />
             <LearningStep
               index="3"
-              title="Take the practice exam"
-              description="Answer, submit, and review rationales until the domain breakdown shows where to focus next."
+              title="Practice with appeal and parcel scenarios"
+              description="Review evidence packets, submit decisions, and use rationales to strengthen documentation and communication."
               href="/courses"
               cta="Find exam"
               icon={Icons.Target}
@@ -199,12 +199,12 @@ function ContinuePanel({ latestAttempt }: { latestAttempt: LatestAttempt | null 
               {hasScore ? "Recent exam activity" : "Ready to begin"}
             </StatusBadge>
             <h2 className="mt-3 text-xl font-extrabold tracking-[-0.02em] text-slate-950">
-              {hasScore ? "Review your latest attempt and choose the next study move." : "Start with the course, then reinforce formulas as you practice."}
+              {hasScore ? "Review your latest attempt and choose the next study move." : "Start with the academy path, then reinforce each case with formulas and source references."}
             </h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
               {hasScore
                 ? `${latestAttempt?.quiz.title} is ready for review. Use the rationale and domain feedback to focus your next session.`
-                : "The learner portal is organized around a simple loop: learn the concept, apply the formula, review the rationale, and measure readiness."}
+                : "The learner portal is organized around a field-ready loop: learn the concept, inspect evidence, calculate support, and defend the assessment decision."}
             </p>
             <div className="mt-4 flex flex-col gap-3 sm:flex-row">
               <PrimaryAction href={hasScore && latestAttempt ? `/quiz/${latestAttempt.id}` : "/courses"}>
@@ -223,11 +223,11 @@ function ContinuePanel({ latestAttempt }: { latestAttempt: LatestAttempt | null 
             tone={hasScore && latestAttempt?.passed ? "green" : "blue"}
           />
           <div className="mt-4 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4">
-            <MiniMetric label="Sections" value="10" />
-            <MiniMetric label="Formulas" value="53" />
+            <MiniMetric label="Tracks" value="5" />
+            <MiniMetric label="Cases" value="Live" />
           </div>
           <div className="mt-4 space-y-2 border-t border-slate-100 pt-4">
-            <ReadinessCue label="Current move" value={hasScore ? "Review rationale" : "Start course"} />
+            <ReadinessCue label="Current move" value={hasScore ? "Review rationale" : "Start academy"} />
             <ReadinessCue label="Support tool" value="Formula Compass" />
           </div>
         </div>

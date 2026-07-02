@@ -23,12 +23,23 @@ export function shuffleArray<T>(arr: T[]): T[] {
 }
 
 export const DOMAINS = {
-  math:      { label: "Math / Formulas",   color: "#534AB7", barClass: "bar-math",      badgeClass: "badge-math"      },
-  appraisal: { label: "Appraisal Theory",  color: "#0F6E56", barClass: "bar-appraisal", badgeClass: "badge-appraisal" },
-  law:       { label: "PA Law",            color: "#993C1D", barClass: "bar-law",        badgeClass: "badge-law"       },
-  philly:    { label: "Philadelphia",      color: "#c47c00", barClass: "bar-philly",     badgeClass: "badge-philly"    },
-  admin:     { label: "Administration",    color: "#A32D2D", barClass: "bar-admin",      badgeClass: "badge-admin"     },
-  ethics:    { label: "Ethics & Data",     color: "#3B6D11", barClass: "bar-ethics",     badgeClass: "badge-ethics"    },
+  market_value: { label: "Market Value", color: "#0F6E56", barClass: "bar-appraisal", badgeClass: "badge-appraisal" },
+  uniformity: { label: "Uniformity", color: "#534AB7", barClass: "bar-math", badgeClass: "badge-math" },
+  property_data: { label: "Property Data", color: "#185FA5", barClass: "bar-philly", badgeClass: "badge-philly" },
+  comparable_sales: { label: "Comparable Sales", color: "#0F6E56", barClass: "bar-appraisal", badgeClass: "badge-appraisal" },
+  cost_approach: { label: "Cost Approach", color: "#3B6D11", barClass: "bar-ethics", badgeClass: "badge-ethics" },
+  income_approach: { label: "Income Approach", color: "#534AB7", barClass: "bar-math", badgeClass: "badge-math" },
+  appeals: { label: "FLR & BRT Appeals", color: "#993C1D", barClass: "bar-law", badgeClass: "badge-law" },
+  exemptions: { label: "Exemptions & Abatements", color: "#c47c00", barClass: "bar-philly", badgeClass: "badge-philly" },
+  ratio_studies: { label: "Ratio Studies", color: "#534AB7", barClass: "bar-math", badgeClass: "badge-math" },
+  mass_appraisal: { label: "Mass Appraisal", color: "#185FA5", barClass: "bar-philly", badgeClass: "badge-philly" },
+  communication: { label: "Taxpayer Communication", color: "#A32D2D", barClass: "bar-admin", badgeClass: "badge-admin" },
+  ethics: { label: "Ethics & Defensible Review", color: "#3B6D11", barClass: "bar-ethics", badgeClass: "badge-ethics" },
+  math: { label: "Math / Formulas", color: "#534AB7", barClass: "bar-math", badgeClass: "badge-math" },
+  appraisal: { label: "Appraisal Theory", color: "#0F6E56", barClass: "bar-appraisal", badgeClass: "badge-appraisal" },
+  law: { label: "PA Law", color: "#993C1D", barClass: "bar-law", badgeClass: "badge-law" },
+  philly: { label: "Philadelphia", color: "#c47c00", barClass: "bar-philly", badgeClass: "badge-philly" },
+  admin: { label: "Administration", color: "#A32D2D", barClass: "bar-admin", badgeClass: "badge-admin" },
 } as const;
 
 export const DIFFICULTIES = {

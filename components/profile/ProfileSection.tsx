@@ -51,8 +51,8 @@ export function ProfileSection({
               <p className="mt-1 text-sm font-medium text-slate-500">{session.email || "No email available"}</p>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
                 {totalAttempts > 0
-                  ? `You have completed ${totalAttempts} attempt${totalAttempts === 1 ? "" : "s"} so far. Use this page to keep your strongest work visible and your weakest domain in focus.`
-                  : "This page becomes your study command center once you begin submitting practice work. Start an exam, then return here for tailored guidance."}
+                  ? `You have completed ${totalAttempts} attempt${totalAttempts === 1 ? "" : "s"} so far. Use this page to keep your strongest evaluator competency visible and your next focus area clear.`
+                  : "This page becomes your training command center once you begin submitting scenario work. Start a checkpoint, then return here for tailored guidance."}
               </p>
 
               <div className="mt-4 flex flex-wrap gap-2">

@@ -1,7 +1,7 @@
 "use client";
 
 import { type ReactNode, useState, useMemo, useCallback, useEffect } from "react";
-import { cn } from "@/lib/utils";
+import { cn, DOMAINS as DOMAIN_CONFIG } from "@/lib/utils";
 import * as Icons from "@/components/ui/Icons";
 import { DomainCombobox } from "@/components/admin/DomainCombobox";
 import { DomainBadge } from "@/components/ui/DomainBadge";
@@ -48,7 +48,7 @@ interface Props {
 
 const PAGE_SIZE = 25;
 
-const DOMAINS = ["math", "appraisal", "law", "philly", "admin", "ethics"];
+const DOMAINS = Object.keys(DOMAIN_CONFIG);
 const DIFFICULTIES = ["easy", "proficient", "expert"];
 const STATUSES = ["draft", "review", "published", "archived"];
 

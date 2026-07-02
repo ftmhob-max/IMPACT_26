@@ -226,8 +226,8 @@ export default async function ProfilePage() {
     <LearnerPage>
       <PageHeader
         eyebrow="My progress"
-        title="Performance overview"
-        description="Track your scores, focus on the right domain next, and keep your saved study references close."
+        title="Evaluator competency dashboard"
+        description="Track scenario attempts, focus the next competency, and keep formulas and glossary references close for defensible review."
         icon={Icons.BarChart3}
         action={<PrimaryAction href={nextAction.href}>{nextAction.label}</PrimaryAction>}
       />
@@ -254,7 +254,7 @@ export default async function ProfilePage() {
         <MetricCard
           label="Attempts"
           value={totalAttempts}
-          detail="Completed exam attempts"
+          detail="Completed scenario or quiz attempts"
           tone="blue"
           icon={Icons.Target}
         />
@@ -287,7 +287,7 @@ export default async function ProfilePage() {
               ? `${weakestDomain.pct}% aggregate performance`
               : strongestDomain
                 ? `${strongestDomain.pct}% aggregate performance`
-                : "Complete an exam to unlock domain insight"
+                : "Complete a scenario to unlock competency insight"
           }
           tone={weakestDomain ? "red" : "purple"}
           icon={weakestDomain ? Icons.AlertCircle : Icons.Award}
@@ -295,7 +295,7 @@ export default async function ProfilePage() {
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
-        <SectionPanel title="Study guidance" description="A quick read on where to focus your next session.">
+        <SectionPanel title="Training guidance" description="A quick read on which evaluator competency to work next.">
           <StudyGuidance
             message={coachingMessage}
             nextAction={nextAction}
@@ -335,9 +335,9 @@ export default async function ProfilePage() {
         <SectionPanel title="Attempt history" description="Most recent attempts first.">
           {attempts.length === 0 ? (
             <EmptyState
-              title="No exam history yet"
-              description="Complete a practice exam to see your score breakdown, domain performance, and improvement over time."
-              action={<PrimaryAction href="/courses">Find an exam</PrimaryAction>}
+              title="No scenario history yet"
+              description="Complete a scenario checkpoint or practice quiz to see competency performance and improvement over time."
+              action={<PrimaryAction href="/courses">Find training</PrimaryAction>}
               icon={Icons.BarChart3}
             />
           ) : (
@@ -470,12 +470,12 @@ function getNextAction({
   if (totalAttempts === 0) {
     return {
       href: "/courses",
-      label: "Take your first exam",
-      detail: "Start a course or practice exam to generate a real performance baseline.",
+      label: "Start your first scenario",
+      detail: "Start a course checkpoint to generate a real competency baseline.",
     };
   }
 
-  if (weakestDomain?.key === "math" || favoriteFormulasCount === 0) {
+  if (weakestDomain?.key === "math" || weakestDomain?.key === "income_approach" || weakestDomain?.key === "ratio_studies" || favoriteFormulasCount === 0) {
     return {
       href: "/formulas",
       label: "Review formulas",
@@ -494,7 +494,7 @@ function getNextAction({
   return {
     href: "/courses",
     label: "Continue studying",
-    detail: "Return to the course catalog and keep building confidence across domains.",
+    detail: "Return to the academy catalog and keep building confidence across evaluator competencies.",
   };
 }
 
@@ -512,7 +512,7 @@ function getCoachingMessage({
   weakestDomain: ({ label: string; pct: number } & Record<string, unknown>) | null;
 }) {
   if (totalAttempts === 0) {
-    return "You have not established a baseline yet. Start with a practice exam, then use this page to spot the domains that deserve more review.";
+    return "You have not established a baseline yet. Start with a scenario checkpoint, then use this page to spot the competencies that deserve more review.";
   }
 
   if (weakestDomain && strongestDomain) {
@@ -523,7 +523,7 @@ function getCoachingMessage({
     return "Your recent history shows steady progress. Keep momentum by reviewing the last attempt and then taking another timed practice run.";
   }
 
-  return "You have usable progress data now. Review the latest attempt, reinforce the weak spots, and then return for another full attempt.";
+  return "You have usable progress data now. Review the latest scenario, reinforce the weak spots, and then return for another applied attempt.";
 }
 
 function StudyGuidance({
@@ -636,7 +636,7 @@ function EmptyDomainState() {
     <div className="px-5 py-8">
       <p className="text-sm font-semibold text-slate-800">No domain breakdown yet</p>
       <p className="mt-1 text-sm leading-6 text-slate-500">
-        Once you complete a scored attempt, domain performance bars will show where you are strongest and where to spend more time.
+        Once you complete a scored attempt, competency performance bars will show where you are strongest and where to spend more time.
       </p>
     </div>
   );

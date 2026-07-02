@@ -8,6 +8,7 @@ export type LessonBlockType =
   | "image"
   | "document"
   | "sourceReference"
+  | "caseFile"
   | "formula"
   | "glossaryTermSet"
   | "quizCheckpoint"
@@ -70,6 +71,21 @@ export interface LessonSourceReferenceBlock extends LessonBlockBase {
   referenceLabel?: string;
   excerpt?: string;
   sourceUrl?: string;
+}
+
+export interface LessonCaseFileEvidenceItem {
+  label: string;
+  detail: string;
+  sourceRef?: string;
+}
+
+export interface LessonCaseFileBlock extends LessonBlockBase {
+  type: "caseFile";
+  scenario: string;
+  parcelFacts: LessonCaseFileEvidenceItem[];
+  evidenceItems: LessonCaseFileEvidenceItem[];
+  learnerTask: string;
+  rubric: string;
 }
 
 export interface LessonFormulaSnapshot {
@@ -143,6 +159,7 @@ export type LessonBlock =
   | LessonImageBlock
   | LessonDocumentBlock
   | LessonSourceReferenceBlock
+  | LessonCaseFileBlock
   | LessonFormulaBlock
   | LessonGlossaryTermSetBlock
   | LessonQuizCheckpointBlock
@@ -213,6 +230,22 @@ export function createDefaultLessonBlock(type: LessonBlockType): LessonBlock {
       return { ...base, type, url: "", description: "" };
     case "sourceReference":
       return { ...base, type, materialId: "", referenceLabel: "", excerpt: "", sourceUrl: "" };
+    case "caseFile":
+      return {
+        ...base,
+        type,
+        scenario: "",
+        parcelFacts: [
+          { label: "Subject property", detail: "" },
+          { label: "Assessment concern", detail: "" },
+        ],
+        evidenceItems: [
+          { label: "Comparable sale", detail: "", sourceRef: "" },
+          { label: "Property record", detail: "", sourceRef: "" },
+        ],
+        learnerTask: "",
+        rubric: "",
+      };
     case "formula":
       return {
         ...base,
@@ -342,6 +375,13 @@ export function getLessonReadinessReport(document: StructuredLessonDocument): Le
       case "sourceReference":
         if (!block.referenceLabel?.trim() && !block.title?.trim()) pushBlockIssue("citation", `${label}: add a citation label or title.`);
         break;
+      case "caseFile":
+        if (!block.scenario.trim()) pushBlockIssue("scenario", `${label}: add the case scenario.`);
+        if (!block.learnerTask.trim()) pushBlockIssue("learner-task", `${label}: add the learner task.`);
+        if (block.parcelFacts.length === 0 && block.evidenceItems.length === 0) {
+          pushBlockIssue("case-evidence", `${label}: add parcel facts or evidence items.`);
+        }
+        break;
       case "formula":
         if (!block.formula.expression.trim()) pushBlockIssue("formula-expression", `${label}: add the formula expression.`);
         if (!block.formula.name.trim()) pushBlockIssue("formula-name", `${label}: add the formula name.`);
@@ -380,6 +420,8 @@ export function defaultTitleForBlock(type: LessonBlockType): string {
       return "Reference document";
     case "sourceReference":
       return "Source citation";
+    case "caseFile":
+      return "Case file";
     case "formula":
       return "Formula focus";
     case "glossaryTermSet":
@@ -408,6 +450,7 @@ export function blockCategoryForType(type: LessonBlockType): "core" | "practice"
       return "core";
     case "quizCheckpoint":
     case "reflectionPrompt":
+    case "caseFile":
       return "practice";
     case "image":
     case "document":
@@ -525,6 +568,16 @@ function normalizeLessonBlock(block: LessonBlock): LessonBlock {
         excerpt: String(block.excerpt ?? ""),
         sourceUrl: String(block.sourceUrl ?? ""),
       };
+    case "caseFile":
+      return {
+        ...base,
+        type: "caseFile",
+        scenario: String(block.scenario ?? ""),
+        parcelFacts: normalizeCaseFileItems(block.parcelFacts),
+        evidenceItems: normalizeCaseFileItems(block.evidenceItems),
+        learnerTask: String(block.learnerTask ?? ""),
+        rubric: String(block.rubric ?? ""),
+      };
     case "formula":
       return {
         ...base,
@@ -574,6 +627,16 @@ function normalizeLessonBlock(block: LessonBlock): LessonBlock {
     case "callout":
       return { ...base, type: "callout", tone: block.tone === "warning" || block.tone === "success" ? block.tone : "info", body: String(block.body ?? "") };
   }
+}
+
+function normalizeCaseFileItems(items: LessonCaseFileEvidenceItem[] | undefined): LessonCaseFileEvidenceItem[] {
+  return Array.isArray(items)
+    ? items.map((item) => ({
+        label: String(item?.label ?? ""),
+        detail: String(item?.detail ?? ""),
+        sourceRef: item?.sourceRef ? String(item.sourceRef) : "",
+      }))
+    : [];
 }
 
 function createBlockId() {

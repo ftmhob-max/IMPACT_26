@@ -581,6 +581,38 @@ function LessonBlockRenderer({
           )}
         </div>
       );
+    case "caseFile":
+      return (
+        <div className="overflow-hidden rounded-xl border border-amber-200 bg-white shadow-sm">
+          <div className="border-b border-amber-100 bg-amber-50 px-4 py-4">
+            <div className="flex items-start gap-3">
+              <div className="rounded-lg bg-white p-2 text-amber-700 shadow-sm">
+                <Icons.FileCheck size={18} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-amber-700">Case file simulation</p>
+                <p className="mt-1 text-sm leading-6 text-amber-950">{block.scenario || "Add the property assessment scenario."}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-px bg-slate-100 md:grid-cols-2">
+            <CaseFileColumn title="Parcel facts" items={block.parcelFacts} empty="Add subject property facts." />
+            <CaseFileColumn title="Evidence packet" items={block.evidenceItems} empty="Add evidence items for learners to inspect." />
+          </div>
+
+          <div className="grid gap-4 border-t border-slate-100 p-4 lg:grid-cols-[1fr_0.9fr]">
+            <div className="rounded-lg border border-[#d8e6f4] bg-[#f7fbff] px-4 py-3">
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-[#185FA5]">Learner task</p>
+              <p className="mt-2 text-sm leading-6 text-slate-700">{block.learnerTask || "Describe the decision learners should make."}</p>
+            </div>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-slate-500">Review rubric</p>
+              <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">{block.rubric || "Add instructor review criteria."}</p>
+            </div>
+          </div>
+        </div>
+      );
     case "formula":
       return (
         <div className="rounded-xl border border-[#d8d5fb] dark:border-slate-800 bg-[#f8f7ff] dark:bg-slate-900 p-4">
@@ -957,6 +989,42 @@ function MiniStat({ label, value }: { label: string; value: string }) {
   );
 }
 
+function CaseFileColumn({
+  title,
+  items,
+  empty,
+}: {
+  title: string;
+  items: Array<{ label: string; detail: string; sourceRef?: string }>;
+  empty: string;
+}) {
+  const visibleItems = items.filter((item) => item.label.trim() || item.detail.trim());
+  return (
+    <div className="bg-white p-4">
+      <p className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-slate-500">{title}</p>
+      {visibleItems.length === 0 ? (
+        <p className="mt-3 text-sm text-slate-500">{empty}</p>
+      ) : (
+        <div className="mt-3 space-y-3">
+          {visibleItems.map((item, index) => (
+            <div key={`${item.label}-${index}`} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-extrabold text-slate-900">{item.label || `Item ${index + 1}`}</p>
+                {item.sourceRef && (
+                  <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">
+                    {item.sourceRef}
+                  </span>
+                )}
+              </div>
+              {item.detail && <p className="mt-2 text-sm leading-6 text-slate-600">{item.detail}</p>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function iconForBlock(block: LessonBlock) {
   switch (block.type) {
     case "richText":
@@ -973,6 +1041,8 @@ function iconForBlock(block: LessonBlock) {
       return Icons.FileText;
     case "sourceReference":
       return Icons.Database;
+    case "caseFile":
+      return Icons.FileCheck;
     case "formula":
       return Icons.Calculator;
     case "glossaryTermSet":
@@ -1039,6 +1109,8 @@ function labelForBlock(block: LessonBlock) {
       return "Document";
     case "sourceReference":
       return "Citation";
+    case "caseFile":
+      return "Case file";
     case "formula":
       return "Formula Compass";
     case "glossaryTermSet":
