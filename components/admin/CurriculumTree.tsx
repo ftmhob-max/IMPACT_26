@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as Icons from "@/components/ui/Icons";
 import { adminFetch } from "@/lib/admin/client-fetch";
+import { toast, confirmDialog } from "@/components/admin/AdminFeedback";
 import { cn } from "@/lib/utils";
 import { DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
@@ -82,7 +83,6 @@ export function CurriculumTree({
   const [expandedCourses, setExpandedCourses] = useState<Set<string>>(new Set());
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
   const [selectedLessonIds, setSelectedLessonIds] = useState<Set<string>>(new Set());
-  const [notice, setNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [showCreateCourse, setShowCreateCourse] = useState(false);
   const [showImportCourse, setShowImportCourse] = useState(false);
   const [quizzes, setQuizzes] = useState<Array<{ id: string; title: string }>>(initialQuizzes);
@@ -132,8 +132,7 @@ export function CurriculumTree({
   }
 
   function showNotice(type: "success" | "error", text: string) {
-    setNotice({ type, text });
-    setTimeout(() => setNotice(null), 4000);
+    toast(type, text);
   }
 
   function toggleLessonSelection(lessonId: string, checked: boolean) {
@@ -230,8 +229,9 @@ export function CurriculumTree({
 
   async function deleteLessons(lessonIds: string[]) {
     if (!lessonIds.length) return;
-    const confirmed = window.confirm(
-      `Delete ${lessonIds.length} lesson${lessonIds.length !== 1 ? "s" : ""}? This cannot be undone.`
+    const confirmed = await confirmDialog(
+      `Delete ${lessonIds.length} lesson${lessonIds.length !== 1 ? "s" : ""}? This cannot be undone.`,
+      { danger: true }
     );
     if (!confirmed) return;
 
@@ -255,8 +255,9 @@ export function CurriculumTree({
   }
 
   async function deleteCourse(courseId: string, courseTitle: string) {
-    const confirmed = window.confirm(
-      `Permanently delete "${courseTitle}"?\n\nThis will remove all modules, lessons, and learner progress for this course. This cannot be undone.`
+    const confirmed = await confirmDialog(
+      `Permanently delete "${courseTitle}"?\n\nThis will remove all modules, lessons, and learner progress for this course. This cannot be undone.`,
+      { danger: true, title: "Delete course" }
     );
     if (!confirmed) return;
 
@@ -275,7 +276,10 @@ export function CurriculumTree({
   }
 
   async function deleteModule(moduleId: string, moduleTitle: string) {
-    const confirmed = window.confirm(`Delete module "${moduleTitle}" and all of its lessons? This cannot be undone.`);
+    const confirmed = await confirmDialog(`Delete module "${moduleTitle}" and all of its lessons? This cannot be undone.`, {
+      danger: true,
+      title: "Delete module",
+    });
     if (!confirmed) return;
 
     const res = await adminFetch("/api/admin/courses", {
@@ -328,8 +332,9 @@ export function CurriculumTree({
       if (!idsToPublish.length) { showNotice("error", "No lessons published — all had blockers."); return; }
       await publishLessonsForce(idsToPublish);
       if (!courseIsPublished) {
-        const shouldPublishCourse = window.confirm(
-          `Lessons in "${module.title}" published.\n\nThe course is currently hidden from students. Publish the course now?`
+        const shouldPublishCourse = await confirmDialog(
+          `Lessons in "${module.title}" published.\n\nThe course is currently hidden from students. Publish the course now?`,
+          { title: "Publish course?", confirmLabel: "Publish course" }
         );
         if (shouldPublishCourse) await publishCourse(courseId, true);
       }
@@ -478,16 +483,6 @@ export function CurriculumTree({
 
       {/* Tree */}
       <div className={cn("flex-1 min-w-0 space-y-4", selectedLessonIds.size > 0 && "pb-20")}>
-        {notice && (
-          <div
-            role={notice.type === "error" ? "alert" : undefined}
-            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium ${notice.type === "success" ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}
-          >
-            {notice.type === "success" ? <Icons.Check size={13} /> : <Icons.X size={13} />}
-            {notice.text}
-          </div>
-        )}
-
         <div className="flex flex-col items-start gap-3 min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between">
           <h2 className="text-base font-bold text-slate-800">Course hierarchy</h2>
           <div className="flex items-center gap-2">

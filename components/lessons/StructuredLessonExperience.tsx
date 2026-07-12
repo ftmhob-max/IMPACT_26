@@ -1,3 +1,4 @@
+// Front-end structured lesson experience: components/lessons/StructuredLessonExperience.tsx
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -511,7 +512,13 @@ function LessonBlockRenderer({
     case "richText":
       return <RichTextRenderer content={block.content} glossaryTerms={glossaryTerms} />;
     case "audio": {
-      const resolvedAudioUrl = getAssetUrl(block.audioUrl, block.materialId, token, true);
+      const resolvedAudioUrl = getAssetUrl(
+        block.audioUrl,
+        block.materialId,
+        token,
+        true,
+        previewMode,
+      );
       return (
         <div className="space-y-4">
           {block.description && <p className="text-sm text-slate-600">{block.description}</p>}
@@ -526,7 +533,13 @@ function LessonBlockRenderer({
     }
     case "video": {
       const resolvedPlaybackId = block.playbackId || null;
-      const resolvedVideoUrl = getAssetUrl(block.videoUrl, block.materialId, token);
+      const resolvedVideoUrl = getAssetUrl(
+        block.videoUrl,
+        block.materialId,
+        token,
+        false,
+        previewMode,
+      );
       if (!resolvedPlaybackId?.trim() && !resolvedVideoUrl?.trim()) {
         return <EmptyBlockMessage message="Add a Mux playback ID, external video URL, or link a source material to render this lesson." />;
       }
@@ -547,7 +560,13 @@ function LessonBlockRenderer({
     case "transcript":
       return <TranscriptPanel transcript={block.transcript} />;
     case "image": {
-      const resolvedImageUrl = getAssetUrl(block.imageUrl, block.materialId, token);
+      const resolvedImageUrl = getAssetUrl(
+        block.imageUrl,
+        block.materialId,
+        token,
+        false,
+        previewMode,
+      );
       return resolvedImageUrl ? (
         <figure className="space-y-3">
           <img src={resolvedImageUrl} alt={block.altText || block.title || "Visual content"} className="w-full rounded-xl border border-slate-200 object-cover" />
@@ -558,7 +577,13 @@ function LessonBlockRenderer({
       );
     }
     case "document": {
-      const resolvedDocUrl = getAssetUrl(block.url, block.materialId, token);
+      const resolvedDocUrl = getAssetUrl(
+        block.url,
+        block.materialId,
+        token,
+        false,
+        previewMode,
+      );
       return <LinkCard title={block.title || "Reference document"} description={block.description} url={resolvedDocUrl} icon={<Icons.FileText size={18} className="text-[#185FA5]" />} cta="Open document" />;
     }
     case "sourceReference":
@@ -691,11 +716,23 @@ function LessonBlockRenderer({
         </div>
       );
     case "download": {
-      const resolvedDownloadUrl = getAssetUrl(block.url, block.materialId, token);
+      const resolvedDownloadUrl = getAssetUrl(
+        block.url,
+        block.materialId,
+        token,
+        false,
+        previewMode,
+      );
       return <LinkCard title={block.title || "Downloadable resource"} description={block.description} url={resolvedDownloadUrl} icon={<Icons.Upload size={18} className="text-[#185FA5]" />} cta="Download resource" />;
     }
     case "externalResource": {
-      const resolvedExternalUrl = getAssetUrl(block.url, block.materialId, token);
+      const resolvedExternalUrl = getAssetUrl(
+        block.url,
+        block.materialId,
+        token,
+        false,
+        previewMode,
+      );
       return <LinkCard title={block.title || "External resource"} description={block.description} url={resolvedExternalUrl} icon={<Icons.Link2 size={18} className="text-[#185FA5]" />} cta="Open resource" />;
     }
     case "callout":
@@ -718,13 +755,26 @@ function getAssetUrl(
   url: string | undefined | null,
   materialId: string | undefined | null,
   token: string | null,
-  streamInline = false
+  streamInline = false,
+  previewMode = false,
 ): string {
-  const rawUrl = url || (materialId ? `/api/admin/materials/${materialId}/asset` : "");
+  // Admin previews retain the private-material boundary for draft content.
+  // Learner rendering migrates only legacy admin asset paths; external URLs remain unchanged.
+  const contentUrl = previewMode
+    ? url
+    : url?.replace(
+        /^\/api\/admin\/materials\/([^/]+)\/asset/,
+        "/api/resources/$1/asset",
+      );
+  const rawUrl = materialId
+    ? previewMode
+      ? `/api/admin/materials/${materialId}/asset`
+      : `/api/resources/${materialId}/asset`
+    : contentUrl || "";
   if (!rawUrl || !rawUrl.startsWith("/api/")) return rawUrl;
 
   let resolvedUrl = rawUrl;
-  if (streamInline && rawUrl.includes("/api/admin/materials/") && rawUrl.includes("/asset")) {
+  if (streamInline && rawUrl.includes("/api/resources/") && rawUrl.includes("/asset")) {
     resolvedUrl = `${resolvedUrl}${resolvedUrl.includes("?") ? "&" : "?"}stream=1`;
   }
   return token

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import * as Icons from "@/components/ui/Icons";
 import { cn } from "@/lib/utils";
+import { toast } from "@/components/admin/AdminFeedback";
 import { QuestionBankPicker } from "@/components/admin/QuestionBankPicker";
 import { DomainCombobox } from "@/components/admin/DomainCombobox";
 import { DomainBadge } from "@/components/ui/DomainBadge";
@@ -51,7 +52,6 @@ export function LessonQuizPanel({ quizId }: { quizId: string }) {
   const [quiz, setQuiz] = useState<QuizInfo | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
-  const [notice, setNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [addMode, setAddMode] = useState<AddMode>(null);
 
   const load = useCallback(async () => {
@@ -68,8 +68,7 @@ export function LessonQuizPanel({ quizId }: { quizId: string }) {
   useEffect(() => { load(); }, [load]);
 
   function showNotice(type: "success" | "error", text: string) {
-    setNotice({ type, text });
-    setTimeout(() => setNotice(null), 4000);
+    toast(type, text);
   }
 
   async function saveQuestion(q: Question, updated: Partial<Question>) {
@@ -221,14 +220,6 @@ export function LessonQuizPanel({ quizId }: { quizId: string }) {
             <strong>{incomplete.length} question{incomplete.length !== 1 ? "s" : ""}</strong>{" "}
             {incomplete.length !== 1 ? "have" : "has"} no correct answer marked — fix before publishing.
           </span>
-        </div>
-      )}
-
-      {/* Notice */}
-      {notice && (
-        <div className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium ${notice.type === "success" ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
-          {notice.type === "success" ? <Icons.Check size={13} /> : <Icons.X size={13} />}
-          {notice.text}
         </div>
       )}
 

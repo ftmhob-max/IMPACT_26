@@ -1,3 +1,9 @@
+// Development content fixtures: lib/dev-content.ts
+
+import type {
+  LearnerCatalogCourseRecord,
+  PublishedQuiz,
+} from "@/lib/firebase/learner-portal";
 import type { StructuredLessonDocument } from "@/lib/lessons/structured-content";
 
 export interface DevFormula {
@@ -1563,6 +1569,49 @@ export const DEV_COURSES: DevCourse[] = [
 
 export function getDevPublishedCourses() {
   return DEV_COURSES.map(({ modules_on_course, ...course }) => course);
+}
+
+/**
+ * Adapts local course fixtures to the same published catalog shape as Data Connect.
+ */
+export function getDevLearnerCatalogCourses(): LearnerCatalogCourseRecord[] {
+  return DEV_COURSES.map((course) => ({
+    id: course.id,
+    slug: course.slug,
+    title: course.title,
+    description: course.description ?? null,
+    thumbnailUrl: course.thumbnailUrl ?? null,
+    publishedAt: null,
+    modules_on_course: course.modules_on_course.map((courseModule) => ({
+      id: courseModule.id,
+      title: courseModule.title,
+      position: courseModule.position,
+      lessons_on_module: courseModule.lessons_on_module.map((lesson) => ({
+        id: lesson.id,
+        title: lesson.title,
+        position: lesson.position,
+        lessonType: lesson.lessonType,
+        durationSeconds: lesson.durationSeconds ?? null,
+      })),
+    })),
+  }));
+}
+
+/**
+ * Exposes development quiz fixtures without answer-key or question content.
+ */
+export function getDevPublishedQuizzes(): PublishedQuiz[] {
+  return DEV_QUIZZES.map((quiz) => ({
+    id: quiz.id,
+    title: quiz.title,
+    description: quiz.description ?? null,
+    timeLimitSeconds: quiz.timeLimitSeconds ?? null,
+    passingScore: quiz.passingScore ?? null,
+    shuffleQuestions: quiz.shuffleQuestions,
+    shuffleChoices: quiz.shuffleChoices,
+    calculatorSettingsJson: quiz.calculatorSettingsJson ?? null,
+    publishedAt: null,
+  }));
 }
 
 export function getDevCourseBySlug(slug: string) {

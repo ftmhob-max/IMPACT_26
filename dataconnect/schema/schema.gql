@@ -1,3 +1,4 @@
+# Backend Data Connect schema: dataconnect/schema/schema.gql
 # ─── Users ────────────────────────────────────────────────────────────────────
 
 type User @table(name: "users", singular: "user", plural: "users") {
@@ -8,6 +9,35 @@ type User @table(name: "users", singular: "user", plural: "users") {
   # learner | viewer | instructor | admin
   role: String! @col(dataType: "text") @default(value: "learner")
   createdAt: Date! @default(expr: "request.time")
+}
+
+# ─── Cohorts / Classes ────────────────────────────────────────────────────────
+
+# A teacher-managed class/group of learners. `createdBy` is the owning instructor;
+# additional co-instructors are linked through CohortInstructor.
+type Cohort @table(name: "cohorts", singular: "cohort", plural: "cohorts", key: ["id"]) {
+  id: UUID! @col(name: "id") @default(expr: "uuidV4()")
+  name: String! @col(dataType: "text")
+  description: String @col(dataType: "text")
+  createdBy: User! @ref
+  # Non-null timestamp marks the cohort as archived (soft delete for lists).
+  archivedAt: Date
+  createdAt: Date! @default(expr: "request.time")
+  updatedAt: Date! @default(expr: "request.time")
+}
+
+# Learner membership in a cohort. Compound key prevents duplicate enrollment.
+type CohortMembership @table(name: "cohort_memberships", singular: "cohortMembership", plural: "cohortMemberships", key: ["cohort", "user"]) {
+  cohort: Cohort! @ref
+  user: User! @ref
+  joinedAt: Date! @default(expr: "request.time")
+}
+
+# Instructor assignment to a cohort — enables co-teaching beyond createdBy.
+type CohortInstructor @table(name: "cohort_instructors", singular: "cohortInstructor", plural: "cohortInstructors", key: ["cohort", "instructor"]) {
+  cohort: Cohort! @ref
+  instructor: User! @ref
+  assignedAt: Date! @default(expr: "request.time")
 }
 
 # ─── Courses ──────────────────────────────────────────────────────────────────
@@ -178,18 +208,18 @@ type Question @table(name: "questions", singular: "question", plural: "questions
   updatedAt: Date! @default(expr: "request.time")
 }
 
-# SECURITY: isCorrect and explanation are protected via @auth directives.
-# Learner-role tokens cannot query these fields.
-# Server-side code uses the Firebase Admin SDK (bypasses all auth rules).
+# SECURITY: Data Connect does not currently apply field-level directives here.
+# Learner operations must omit these fields; review operations are NO_ACCESS
+# and run only through trusted server code using the Firebase Admin SDK.
 type AnswerChoice @table(name: "answer_choices", singular: "answerChoice", plural: "answerChoices") {
   id: UUID! @col(name: "id") @default(expr: "uuidV4()")
   question: Question! @ref
   # A–E
   letter: String! @col(dataType: "char(1)")
   choiceText: String! @col(dataType: "text")
-  # Protected: only admin/instructor tokens may read
+  # Sensitive: omit from learner-facing operations
   isCorrect: Boolean! @default(value: false)
-  # Protected: only returned to browser after question is answered (via API route)
+  # Sensitive: only return after server-side attempt authorization
   explanation: String @col(dataType: "text")
   position: Int!
 }
@@ -234,9 +264,19 @@ type UserLessonProgress @table(name: "user_lesson_progress", key: ["user", "less
   user: User!
   lesson: Lesson!
   # not_started | in_progress | completed
-  status: String! @default(value: "not_started")
+  # Rows are created only after learner activity, so playback-only inserts begin in progress.
+  status: String! @default(value: "in_progress")
   videoPositionSeconds: Int @default(value: 0)
   completedAt: Date
+}
+
+# One row per learner and UTC calendar day. The string date keeps the
+# user/day compound key stable across application and database runtimes.
+type DailyActivity @table(name: "daily_activity", singular: "dailyActivity", plural: "dailyActivities", key: ["user", "activityDate"]) {
+  user: User!
+  # UTC YYYY-MM-DD
+  activityDate: String! @col(dataType: "text")
+  lastActivityAt: Date!
 }
 
 # ─── Quiz Attempts ────────────────────────────────────────────────────────────

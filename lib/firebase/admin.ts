@@ -61,3 +61,22 @@ export function getAdminStorage() {
   const { getStorage } = eval("require")("firebase-admin/storage");
   return getStorage(buildAdminApp());
 }
+
+function loadFirestoreModule() {
+  return eval("require")("firebase-admin/firestore");
+}
+
+let cachedAdminFirestore: any = null;
+
+export function getAdminFirestore() {
+  if (cachedAdminFirestore) return cachedAdminFirestore;
+  const { getFirestore } = loadFirestoreModule();
+  cachedAdminFirestore = getFirestore(buildAdminApp());
+  return cachedAdminFirestore;
+}
+
+export const FieldValue: typeof import("firebase-admin/firestore").FieldValue = new Proxy({} as any, {
+  get(_, key: string) {
+    return (loadFirestoreModule().FieldValue as any)[key];
+  },
+});

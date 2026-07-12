@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { verifyIdToken } from "@/lib/firebase/auth-server";
 import { adminDcQuery, adminDcMutate } from "@/lib/firebase/admin-dc";
+import { recordDailyActivitySafely } from "@/lib/firebase/daily-activity";
 import { z } from "zod";
 
 const updateSchema = z.object({ note: z.string().trim().min(1) });
@@ -33,6 +34,7 @@ export async function PUT(
       note: parsed.data.note,
       updatedAt: new Date().toISOString(),
     });
+    await recordDailyActivitySafely(uid);
     return NextResponse.json({ ok: true });
   } catch (err: any) {
     if (err.message?.includes("Unauthorized")) {

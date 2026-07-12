@@ -147,12 +147,8 @@ export function QuestionCard({
       <div className="px-4 pb-3 pt-3.5 sm:px-5">
         <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start">
           <span
-            className="w-fit rounded-md px-2 py-1 text-[12px] font-extrabold tabular-nums"
-            style={{
-              background: domainConfig?.color ? `${domainConfig.color}18` : "#f8f7f4",
-              color: domainConfig?.color ?? "#888880",
-              border: `1px solid ${domainConfig?.color ?? "#e8e7e0"}40`,
-            }}
+            className="domain-chip w-fit rounded-md px-2 py-1 text-[12px] font-extrabold tabular-nums"
+            data-domain={question.domain}
           >
             Q{index + 1}
           </span>
@@ -235,12 +231,8 @@ export function QuestionCard({
             <button
               onClick={handleTogglePanel}
               disabled={isPeeking}
-              className={`inline-flex items-center justify-center gap-1.5 rounded-md border px-4 py-1.5 text-[11.5px] font-bold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2 disabled:opacity-50 ${canUseCalc ? "flex-1" : ""}`}
-              style={
-                answerPanelOpen
-                  ? { color: "#185FA5", borderColor: "#185FA5", background: "#E6F1FB" }
-                  : { color: "#888880", borderColor: "rgba(0,0,0,0.20)", background: "transparent" }
-              }
+              data-open={answerPanelOpen}
+              className={`quiz-answer-toggle inline-flex items-center justify-center gap-1.5 rounded-md px-4 py-1.5 text-[11.5px] font-bold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--impact-blue)] focus-visible:ring-offset-2 disabled:opacity-50 ${canUseCalc ? "flex-1" : ""}`}
             >
               {isPeeking ? "Loading..." : answerPanelOpen ? "Hide answer" : "Show answer"}
               {!isPeeking && (answerPanelOpen ? <Icons.ChevronUp size={13} /> : <Icons.ChevronRight size={13} />)}

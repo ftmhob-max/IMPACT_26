@@ -1,3 +1,4 @@
+// Front-end shared application sidebar: components/layout/Sidebar.tsx
 "use client";
 
 import Link from "next/link";
@@ -10,20 +11,14 @@ import * as Icons from "@/components/ui/Icons";
 import { UserAvatar as ProfileAvatar } from "@/components/profile/UserAvatar";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { applyTheme, type ThemeMode } from "@/components/theme/ThemeController";
+import type { StudyRhythmData } from "@/lib/firebase/study-rhythm";
+import type { LearnerProfileSettings } from "@/lib/profile-settings";
+import { deriveStudyReminder } from "@/lib/study-reminders";
 
 const DESKTOP_SIDEBAR_MODE_KEY = "impact26:desktop-sidebar-mode";
 const STUDY_RHYTHM_OPEN_KEY = "impact26:study-rhythm-open";
 const STUDENT_SECTION_OPEN_KEY = "impact26:student-section-open";
 const ADMIN_TOOLS_OPEN_KEY = "impact26:admin-tools-open";
-
-type StudyRhythmData = {
-  lessonsCompleted: number;
-  quizAttempts: number;
-  bestScore: number | null;
-  hasPassed: boolean;
-  formulaFavorites: number;
-  overallPct: number;
-};
 
 type NavItem = {
   href: string;
@@ -36,6 +31,8 @@ type DesktopSidebarMode = "expanded" | "collapsed" | "auto";
 const navItems: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: Icons.LayoutDashboard },
   { href: "/courses", label: "Courses", icon: Icons.GraduationCap },
+  { href: "/exams", label: "Exams", icon: Icons.ClipboardList },
+  { href: "/resources", label: "Resources", icon: Icons.Database },
   { href: "/progress", label: "My Progress", icon: Icons.BarChart3 },
   { href: "/formulas", label: "Formula Compass", icon: Icons.Calculator },
   { href: "/glossary", label: "Glossary", icon: Icons.BookOpen },
@@ -51,6 +48,7 @@ const adminItems: NavItem[] = [
   { href: "/admin/formulas", label: "Formula Editor", icon: Icons.Calculator },
   { href: "/admin/glossary", label: "Glossary Editor", icon: Icons.BookOpen },
   { href: "/admin/materials", label: "Source Materials", icon: Icons.Database },
+  { href: "/admin/cohorts/manage", label: "Cohorts", icon: Icons.Users },
   { href: "/admin/cohorts", label: "Cohort Stats", icon: Icons.BarChart3 },
   { href: "/admin/users", label: "Users", icon: Icons.Users },
 ];
@@ -225,6 +223,7 @@ export function Sidebar({ isAdmin }: SidebarProps) {
               </nav>
 
               <div className="border-t border-[var(--sidebar-border)] px-3 py-4">
+                {!isAdmin && <LearnerProgressCard compact />}
                 <ThemeToggle compact className="mb-2" onChange={persistThemePreference} />
                 <SignOutButton compact />
               </div>
@@ -464,8 +463,8 @@ function SidebarPanelContent({
 
       {/* Footer */}
       <div className={cn("border-t border-[var(--sidebar-border)]", compact ? "px-3 py-4" : "px-3 py-4")}>
-        {!isAdmin && !compact && <LearnerProgressCard />}
-        <div className={cn(!isAdmin && !compact && "mt-3")}>
+        {!isAdmin && <LearnerProgressCard compact={compact} />}
+        <div className={cn(!isAdmin && "mt-3")}>
           <ThemeToggle compact={compact} onChange={persistThemePreference} />
         </div>
         <div className="mt-2">
@@ -566,13 +565,14 @@ function NavLink({
   );
 }
 
-function LearnerProgressCard() {
+function LearnerProgressCard({ compact = false }: { compact?: boolean }) {
   const [open, setOpen] = useState(() => {
     if (typeof window === "undefined") return true;
     const stored = window.localStorage.getItem(STUDY_RHYTHM_OPEN_KEY);
     return stored === null ? true : stored === "true";
   });
   const [data, setData] = useState<StudyRhythmData | null>(null);
+  const [profileSettings, setProfileSettings] = useState<LearnerProfileSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const fetchedRef = useRef(false);
 
@@ -580,19 +580,22 @@ function LearnerProgressCard() {
     if (fetchedRef.current) return;
     fetchedRef.current = true;
 
-    // Get a fresh Firebase ID token to call the API
-    import("@/lib/firebase/client").then(({ auth: clientAuth }) => {
-      const user = clientAuth.currentUser;
-      if (!user) { setLoading(false); return; }
-      user.getIdToken().then((token) =>
-        fetch("/api/study-rhythm", {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-      ).then((res) => res.ok ? res.json() : null)
-        .then((json) => { if (json) setData(json); })
-        .catch(() => {})
-        .finally(() => setLoading(false));
-    });
+    // Both authenticated endpoints use the browser's existing session cookie.
+    Promise.all([
+      fetch("/api/study-rhythm", { cache: "no-store" }),
+      fetch("/api/profile", { cache: "no-store" }),
+    ])
+      .then(async ([studyRhythmResponse, profileResponse]) => {
+        if (studyRhythmResponse.ok) {
+          setData(await studyRhythmResponse.json() as StudyRhythmData);
+        }
+        if (profileResponse.ok) {
+          const profilePayload = await profileResponse.json() as { settings: LearnerProfileSettings };
+          setProfileSettings(profilePayload.settings);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   function toggle() {
@@ -604,6 +607,28 @@ function LearnerProgressCard() {
   }
 
   const pct = data?.overallPct ?? 0;
+  const reminderStatus = data && profileSettings
+    ? deriveStudyReminder({
+        remindersEnabled: profileSettings.remindersEnabled,
+        reminderAfterDays: profileSettings.reminderAfterDays,
+        defaultStudyGoal: profileSettings.defaultStudyGoal,
+        lastActivityAt: data.lastActivityAt,
+        referenceTime: new Date(),
+      })
+    : null;
+
+  if (compact) {
+    return reminderStatus?.due ? (
+      <Link
+        href="/dashboard"
+        title={`Study reminder: ${reminderStatus.studyGoal}`}
+        aria-label={`Study reminder: ${reminderStatus.studyGoal}`}
+        className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--impact-warning-border)] bg-[var(--impact-warning-bg)] text-sm font-extrabold text-[var(--impact-warning-text)] shadow-sm transition hover:brightness-105"
+      >
+        !
+      </Link>
+    ) : null;
+  }
 
   // Derive milestone states from real data
   const learnState: "complete" | "active" | "upcoming" =
@@ -651,6 +676,14 @@ function LearnerProgressCard() {
       {/* Collapsible body */}
       {open && (
         <div className="px-4 pb-4">
+          {reminderStatus?.due ? (
+            <Link
+              href="/dashboard"
+              className="mb-3 block rounded-lg border border-[#ecd39b]/50 bg-[#fff3dc]/10 px-3 py-2 text-xs font-bold leading-5 text-[#ffe4ad] hover:bg-[#fff3dc]/15"
+            >
+              Study reminder: {reminderStatus.studyGoal}
+            </Link>
+          ) : null}
           {/* Progress bar */}
           <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.10]">
             <div
@@ -772,7 +805,9 @@ function SignOutButton({ compact }: { compact?: boolean }) {
 }
 
 function matchesPath(pathname: string, href: string) {
-  if (href === "/dashboard" || href === "/admin") {
+  // Exact-match roots so a nested route (e.g. /admin/cohorts/manage) does not
+  // also light up its sibling parent entry (/admin/cohorts stats page).
+  if (href === "/dashboard" || href === "/admin" || href === "/admin/cohorts") {
     return pathname === href;
   }
 

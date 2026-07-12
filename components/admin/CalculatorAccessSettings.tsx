@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { adminFetch } from "@/lib/admin/client-fetch";
+import { toast } from "@/components/admin/AdminFeedback";
 import { cn } from "@/lib/utils";
 import * as Icons from "@/components/ui/Icons";
 import type { QuizCalculatorSettings } from "@/components/layout/FormulaCalculatorProvider";
@@ -112,7 +113,6 @@ export function CalculatorAccessSettings({ quizId, initialSettingsJson, onSaved 
     () => parseSettings(initialSettingsJson)
   );
   const [saving, setSaving] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
     setSettings(parseSettings(initialSettingsJson));
@@ -124,7 +124,6 @@ export function CalculatorAccessSettings({ quizId, initialSettingsJson, onSaved 
 
   async function handleSave() {
     setSaving(true);
-    setNotice(null);
     try {
       const res = await adminFetch(`/api/admin/quizzes/${quizId}/calculator-settings`, {
         method: "PUT",
@@ -132,23 +131,16 @@ export function CalculatorAccessSettings({ quizId, initialSettingsJson, onSaved 
         body: JSON.stringify({ calculatorSettingsJson: JSON.stringify(settings) }),
       });
       if (!res.ok) throw new Error(await res.text());
-      setNotice("Settings saved.");
+      toast("success", "Calculator settings saved.");
       onSaved?.();
     } catch (e) {
-      setNotice(`Error: ${e}`);
+      toast("error", `Could not save calculator settings: ${e}`);
     }
     setSaving(false);
-    setTimeout(() => setNotice(null), 3000);
   }
 
   return (
     <div className="space-y-5">
-      {notice && (
-        <p className={cn("text-xs font-semibold", notice.startsWith("Error") ? "text-red-500" : "text-emerald-600")}>
-          {notice}
-        </p>
-      )}
-
       <div className="rounded-xl border border-slate-200 bg-white p-4">
         <Toggle
           checked={settings.enabled}

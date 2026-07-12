@@ -3,21 +3,49 @@ import { requireAdminRequest } from "@/lib/admin/auth";
 import { rowsToCsv } from "@/lib/admin/csv";
 import { adminDcQuery } from "@/lib/firebase/admin-dc";
 import { analyticsExportSchema } from "@/lib/validations/admin";
+import { getCohortMemberIds } from "@/lib/admin/cohorts";
+import { resolveCohortScope, scopeIncludesCohort } from "@/lib/admin/scope";
 
 export async function GET(request: NextRequest) {
   const auth = await requireAdminRequest(request, "viewer");
   if (!auth.ok) return auth.response;
 
+  const cohortIdParam = request.nextUrl.searchParams.get("cohortId") ?? undefined;
   const parsed = analyticsExportSchema.safeParse({
     kind: request.nextUrl.searchParams.get("kind") ?? "attempts",
+    cohortId: cohortIdParam,
   });
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { quizAttempts } = await adminDcQuery<{ quizAttempts: any[] }>("AdminCohortStats").catch(() => ({
-    quizAttempts: [],
-  }));
+  // Resolve visibility scope. Non-admins are always restricted to their cohort
+  // members, even when no cohortId is supplied (never fall back to global data).
+  const scope = await resolveCohortScope(auth.session);
+
+  let quizAttempts: any[] = [];
+  if (parsed.data.cohortId) {
+    if (!scopeIncludesCohort(scope, parsed.data.cohortId)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    const memberIds = await getCohortMemberIds(parsed.data.cohortId);
+    if (memberIds.length > 0) {
+      const data = await adminDcQuery<{ quizAttempts: any[] }>("GetCohortAttempts", {
+        userIds: memberIds,
+      }).catch(() => ({ quizAttempts: [] }));
+      quizAttempts = data.quizAttempts ?? [];
+    }
+  } else if (scope.mode === "all") {
+    const data = await adminDcQuery<{ quizAttempts: any[] }>("AdminCohortStats").catch(() => ({
+      quizAttempts: [],
+    }));
+    quizAttempts = data.quizAttempts ?? [];
+  } else if (scope.memberUserIds.length > 0) {
+    const data = await adminDcQuery<{ quizAttempts: any[] }>("GetCohortAttempts", {
+      userIds: scope.memberUserIds,
+    }).catch(() => ({ quizAttempts: [] }));
+    quizAttempts = data.quizAttempts ?? [];
+  }
 
   let rows: Array<Record<string, unknown>>;
   if (parsed.data.kind === "questions") {

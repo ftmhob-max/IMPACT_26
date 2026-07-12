@@ -16,33 +16,11 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { randomUUID } from "crypto";
 import { parse as parseHtml } from "node-html-parser";
-import { initializeApp, cert, getApps, type App } from "firebase-admin/app";
-import { getAuth } from "firebase-admin/auth";
+import { adminDcMutate } from "@/lib/firebase/admin-dc";
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
-const PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? "impact26-aa59b";
-const SERVICE_ACCOUNT_KEY = process.env.SERVICE_ACCOUNT_KEY;
 const HTML_PATH = join(process.cwd(), "public", "index.html");
-const DC_BASE_URL = process.env.FIREBASE_DATACONNECT_EMULATOR_HOST
-  ? `http://${process.env.FIREBASE_DATACONNECT_EMULATOR_HOST}/v1beta/projects/${PROJECT_ID}/locations/us-central1/services/impact26-dataconnect/connectors/impact26-connector`
-  : `https://firebasedataconnect.googleapis.com/v1beta/projects/${PROJECT_ID}/locations/us-central1/services/impact26-dataconnect/connectors/impact26-connector`;
-
-// ─── Firebase Admin init ─────────────────────────────────────────────────────
-
-let app: App | null = null;
-const isEmulator = !!process.env.FIREBASE_DATACONNECT_EMULATOR_HOST;
-
-if (!getApps().length) {
-  if (SERVICE_ACCOUNT_KEY) {
-    app = initializeApp({ credential: cert(JSON.parse(SERVICE_ACCOUNT_KEY)), projectId: PROJECT_ID });
-  } else if (!isEmulator) {
-    throw new Error("Set SERVICE_ACCOUNT_KEY env var before running");
-  }
-} else {
-  app = getApps()[0];
-}
-const adminAuth = app ? getAuth(app) : null;
 
 // ─── Types (mirror the Q array in the HTML) ──────────────────────────────────
 
@@ -61,31 +39,6 @@ interface RawQuestion {
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-async function getAdminToken(): Promise<string> {
-  if (isEmulator) return "owner";
-  // Use the service account's access token to call the Data Connect REST API
-  // @ts-ignore
-  const accessTokenObj = await app?.options.credential?.getAccessToken();
-  return accessTokenObj?.access_token || "";
-}
-
-async function dcMutate(operationName: string, variables: Record<string, unknown>) {
-  const token = await getAdminToken();
-  const res = await fetch(`${DC_BASE_URL}:executeMutation`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ operationName, variables }),
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Data Connect mutation '${operationName}' failed: ${text}`);
-  }
-  return res.json();
-}
 
 function parseAnswerLetters(ans: string): string[] {
   return ans.split(",").map((s) => s.trim().toUpperCase());
@@ -186,7 +139,7 @@ async function main() {
 
     // Create question
     const questionId = randomUUID();
-    await dcMutate("CreateQuestion", {
+    await adminDcMutate("CreateQuestion", {
       id: questionId,
       questionText: q.txt,
       difficulty: q.diff,
@@ -207,7 +160,7 @@ async function main() {
       const choiceText = stripChoicePrefix(q.ch[i]);
       const isCorrect = correctLetters.includes(letter);
 
-      await dcMutate("CreateAnswerChoice", {
+      await adminDcMutate("CreateAnswerChoice", {
         questionId,
         letter,
         choiceText,
@@ -223,7 +176,7 @@ async function main() {
   // ── Create default quiz with all 80 questions ─────────────────────────────
   console.log("\nCreating default quiz...");
   const quizId = randomUUID();
-  await dcMutate("CreateQuiz", {
+  await adminDcMutate("CreateQuiz", {
     id: quizId,
     title: "IMPACT_26V.1 Full Practice Exam",
     description:
@@ -240,7 +193,7 @@ async function main() {
   for (const q of questions) {
     const questionId = questionIdMap.get(q.id);
     if (!questionId) continue;
-    await dcMutate("AddQuestionToQuiz", {
+    await adminDcMutate("AddQuestionToQuiz", {
       quizId,
       questionId,
       position: q.id - 1, // 0-indexed
@@ -255,7 +208,7 @@ async function main() {
 
   for (const section of sections) {
     const sectionId = randomUUID();
-    await dcMutate("CreateFormulaSection", {
+    await adminDcMutate("CreateFormulaSection", {
       id: sectionId,
       code: section.code,
       title: section.title,
@@ -263,7 +216,7 @@ async function main() {
     });
 
     for (const formula of section.formulas) {
-      await dcMutate("CreateFormula", {
+      await adminDcMutate("CreateFormula", {
         sectionId,
         code: formula.code,
         name: formula.name,

@@ -1,6 +1,8 @@
+// Backend API route: app/api/quiz/attempts/[attemptId]/answer/route.ts
 import { NextResponse, type NextRequest } from "next/server";
 import { verifyIdToken } from "@/lib/firebase/auth-server";
 import { adminDcQuery, adminDcMutate } from "@/lib/firebase/admin-dc";
+import { recordDailyActivitySafely, toUtcDateKey } from "@/lib/firebase/daily-activity";
 import { evaluateAnswer } from "@/lib/quiz-engine/evaluate";
 import { submitAnswerSchema } from "@/lib/validations/quiz";
 import { formatUuid } from "@/lib/utils";
@@ -81,8 +83,9 @@ export async function POST(
       isCorrect: result.isCorrect,
       pointsEarned: result.pointsEarned,
       pointsPossible: result.pointsPossible,
-      answeredAt: new Date().toISOString().split("T")[0],
+      answeredAt: toUtcDateKey(new Date()),
     });
+    await recordDailyActivitySafely(userId);
 
     return NextResponse.json(result);
   } catch (err) {

@@ -1,6 +1,7 @@
+# Backend Data Connect operations: dataconnect/connector/queries.gql
 # ─── Learner queries (no sensitive fields) ───────────────────────────────────
 
-# Get published courses for the catalog
+# Get the published catalog tree without learner progress for signed-out views.
 query ListPublishedCourses @auth(level: NO_ACCESS) {
   courses(where: { isPublished: { eq: true } }, orderBy: { createdAt: DESC }) {
     id
@@ -8,7 +9,70 @@ query ListPublishedCourses @auth(level: NO_ACCESS) {
     title
     description
     thumbnailUrl
-    createdBy { fullName }
+    publishedAt
+    modules_on_course(orderBy: { position: ASC }) {
+      id
+      title
+      position
+      lessons_on_module(
+        orderBy: { position: ASC }
+        where: { isPublished: { eq: true } }
+      ) {
+        id
+        title
+        position
+        lessonType
+        durationSeconds
+      }
+    }
+  }
+}
+
+# Get the published catalog and the requesting learner's related progress in
+# one server-only request. Metrics are derived in the typed learner service.
+query GetLearnerCatalog($userId: String!) @auth(level: NO_ACCESS) {
+  courses(where: { isPublished: { eq: true } }, orderBy: { createdAt: DESC }) {
+    id
+    slug
+    title
+    description
+    thumbnailUrl
+    publishedAt
+    modules_on_course(orderBy: { position: ASC }) {
+      id
+      title
+      position
+      lessons_on_module(
+        orderBy: { position: ASC }
+        where: { isPublished: { eq: true } }
+      ) {
+        id
+        title
+        position
+        lessonType
+        durationSeconds
+      }
+    }
+  }
+  userCourseProgresses(where: { user: { id: { eq: $userId } } }) {
+    course { id }
+    enrolledAt
+    lastAccessedAt
+    completedAt
+  }
+  userLessonProgresses(where: { user: { id: { eq: $userId } } }) {
+    lesson { id }
+    status
+    videoPositionSeconds
+    completedAt
+  }
+}
+
+# Owner-scoped learner identity used for certificate display.
+query GetLearnerProfile($userId: String!) @auth(level: NO_ACCESS) {
+  users(where: { id: { eq: $userId } }, limit: 1) {
+    fullName
+    email
   }
 }
 
@@ -39,6 +103,27 @@ query GetCourseBySlug($slug: String!) @auth(level: NO_ACCESS) {
   }
 }
 
+# Published-only course lookup for learner certificate eligibility.
+query GetPublishedCourseBySlug($slug: String!) @auth(level: NO_ACCESS) {
+  courses(
+    where: { slug: { eq: $slug }, isPublished: { eq: true } }
+    limit: 1
+  ) {
+    id
+    slug
+    title
+    isPublished
+    modules_on_course(orderBy: { position: ASC }) {
+      lessons_on_module(
+        orderBy: { position: ASC }
+        where: { isPublished: { eq: true } }
+      ) {
+        id
+      }
+    }
+  }
+}
+
 # Get a single lesson (learner view — no isCorrect on choices)
 query GetLesson($id: UUID!) @auth(level: NO_ACCESS) {
   lesson(id: $id) {
@@ -52,15 +137,200 @@ query GetLesson($id: UUID!) @auth(level: NO_ACCESS) {
     quiz {
       id
       title
+      description
       timeLimitSeconds
+      passingScore
       shuffleQuestions
       shuffleChoices
+      calculatorSettingsJson
+      status
+      publishedAt
     }
     sourceMaterial { id }
     module {
       course {
         slug
         title
+      }
+    }
+  }
+}
+
+# Published assessment index for learner quiz discovery.
+query ListPublishedQuizzes @auth(level: NO_ACCESS) {
+  quizzes(where: { status: { eq: "published" } }, orderBy: { publishedAt: DESC }) {
+    id
+    title
+    description
+    timeLimitSeconds
+    passingScore
+    shuffleQuestions
+    shuffleChoices
+    calculatorSettingsJson
+    publishedAt
+    quizQuestions_on_quiz(orderBy: { position: ASC }, limit: 1000) {
+      position
+      pointValue
+      question { id domain difficulty }
+    }
+  }
+}
+
+# Lightweight quiz metadata plus question weights. Learner lesson pages do not
+# fetch cohort attempts or answer keys to describe an assessment.
+query GetQuizSummary($quizId: UUID!) @auth(level: NO_ACCESS) {
+  quiz(id: $quizId) {
+    id
+    title
+    description
+    timeLimitSeconds
+    passingScore
+    status
+    publishedAt
+  }
+  quizQuestions(
+    where: { quiz: { id: { eq: $quizId } } }
+    orderBy: { position: ASC }
+  ) {
+    position
+    pointValue
+    question { id domain difficulty }
+  }
+}
+
+# Server-only review payload. Correct answers remain behind this NO_ACCESS
+# operation and must only be returned after API-layer ownership checks.
+query GetAttemptReview($attemptId: UUID!) @auth(level: NO_ACCESS) {
+  quizAttempt(id: $attemptId) {
+    id
+    status
+    questionOrder
+    scoreRaw
+    scoreMax
+    scorePct
+    passed
+    startedAt
+    completedAt
+    user { id }
+    quiz {
+      id
+      title
+      passingScore
+      quizQuestions_on_quiz(orderBy: { position: ASC }) {
+        position
+        pointValue
+        question {
+          id
+          questionText
+          difficulty
+          domain
+          formulaRef
+          rationale
+          calculation
+          sourceRef
+          answerChoices_on_question(orderBy: { position: ASC }) {
+            id
+            letter
+            choiceText
+            isCorrect
+            explanation
+            position
+          }
+        }
+      }
+    }
+    quizResponses_on_attempt(orderBy: { answeredAt: ASC }) {
+      selectedLetters
+      isCorrect
+      pointsEarned
+      pointsPossible
+      answeredAt
+      question {
+        id
+        questionText
+        difficulty
+        domain
+        formulaRef
+        rationale
+        calculation
+        sourceRef
+        answerChoices_on_question(orderBy: { position: ASC }) {
+          id
+          letter
+          choiceText
+          isCorrect
+          explanation
+          position
+        }
+      }
+    }
+  }
+}
+
+# Learner-visible source library. Archived or trashed records are excluded at
+# the operation boundary so callers cannot accidentally surface stale assets.
+query ListLearnerSourceMaterials @auth(level: NO_ACCESS) {
+  sourceMaterials(
+    where: {
+      visibility: { eq: "learner" }
+      archivedAt: { isNull: true }
+      trashedAt: { isNull: true }
+    }
+    orderBy: { updatedAt: DESC }
+  ) {
+    id
+    title
+    fileName
+    fileType
+    metadataJson
+    status
+    reviewStatus
+    visibility
+    archivedAt
+    trashedAt
+    createdAt
+    updatedAt
+    folder { id name folderType }
+    sourceMaterialTagAssignments_on_sourceMaterial {
+      tag { id name color }
+    }
+  }
+}
+
+# Access-sensitive fields are isolated to a single material lookup. The route
+# authorizes learner visibility or an attachment to a published lesson before
+# reading storagePath; course-only and question-only links do not grant access.
+query GetLearnerSourceMaterialAccess($materialId: UUID!) @auth(level: NO_ACCESS) {
+  sourceMaterials(
+    where: {
+      id: { eq: $materialId }
+      archivedAt: { isNull: true }
+      trashedAt: { isNull: true }
+    }
+    limit: 1
+  ) {
+    id
+    title
+    fileName
+    fileType
+    storagePath
+    downloadUrl
+    status
+    visibility
+    metadataJson
+    archivedAt
+    trashedAt
+    updatedAt
+    lessons_on_sourceMaterial {
+      id
+      status
+      isPublished
+    }
+    contentSourceLinks_on_sourceMaterial {
+      lesson {
+        id
+        status
+        isPublished
       }
     }
   }
@@ -74,8 +344,8 @@ query GetQuizById($quizId: UUID!) @auth(level: NO_ACCESS) {
   }
 }
 
-# Get quiz questions with choices — OMITS isCorrect and explanation
-# (those fields blocked by @auth for learner tokens)
+# Get quiz questions with choices — explicitly OMITS isCorrect and explanation.
+# Field comments are not authorization; this NO_ACCESS operation is server-only.
 query GetQuizQuestions($quizId: UUID!) @auth(level: NO_ACCESS) {
   quizQuestions(
     where: { quiz: { id: { eq: $quizId } } }
@@ -95,8 +365,7 @@ query GetQuizQuestions($quizId: UUID!) @auth(level: NO_ACCESS) {
         letter
         choiceText
         position
-        # isCorrect: blocked for learner role by @auth directive in schema
-        # explanation: blocked for learner role by @auth directive in schema
+        # isCorrect and explanation intentionally omitted from this learner payload
       }
     }
   }
@@ -162,6 +431,7 @@ query GetUserCourseProgressFull($userId: String!, $courseId: UUID!) @auth(level:
     limit: 1
   ) {
     enrolledAt
+    completedAt
   }
   userLessonProgresses(
     where: {
@@ -190,12 +460,56 @@ query GetUserAttemptHistory($userId: String!) @auth(level: NO_ACCESS) {
   quizAttempts(
     where: { user: { id: { eq: $userId } }, status: { eq: "completed" } }
     orderBy: { completedAt: DESC }
+    limit: 500
   ) {
     id
     quiz { id title }
     scorePct
     passed
     completedAt
+  }
+}
+
+# UTC daily activity history plus bounded legacy activity sources used to
+# backfill study streaks without requiring a migration.
+query GetUserActivityHistory($userId: String!) @auth(level: NO_ACCESS) {
+  dailyActivities(
+    where: { user: { id: { eq: $userId } } }
+    orderBy: { activityDate: DESC }
+    limit: 1000
+  ) {
+    activityDate
+    lastActivityAt
+  }
+  completedAttempts: quizAttempts(
+    where: { user: { id: { eq: $userId } }, status: { eq: "completed" } }
+    orderBy: { completedAt: DESC }
+    limit: 500
+  ) {
+    completedAt
+  }
+  completedLessons: userLessonProgresses(
+    where: { user: { id: { eq: $userId } }, status: { eq: "completed" } }
+    orderBy: { completedAt: DESC }
+    limit: 1000
+  ) {
+    completedAt
+  }
+  lessonNoteActivity: lessonNotes(
+    where: { user: { id: { eq: $userId } } }
+    orderBy: { updatedAt: DESC }
+    limit: 500
+  ) {
+    createdAt
+    updatedAt
+  }
+  glossaryNoteActivity: glossaryNotes(
+    where: { user: { id: { eq: $userId } } }
+    orderBy: { updatedAt: DESC }
+    limit: 500
+  ) {
+    createdAt
+    updatedAt
   }
 }
 
@@ -380,12 +694,21 @@ query GetAttemptForCompletion($attemptId: UUID!) @auth(level: NO_ACCESS) {
   quizAttempt(id: $attemptId) {
     id
     status
+    questionOrder
     user { id }
-    quiz { id passingScore }
+    quiz {
+      id
+      passingScore
+      quizQuestions_on_quiz(orderBy: { position: ASC }) {
+        position
+        pointValue
+        question { id domain }
+      }
+    }
     quizResponses_on_attempt {
       pointsEarned
       pointsPossible
-      question { domain }
+      question { id domain }
     }
   }
 }
@@ -811,6 +1134,219 @@ query ListCustomDomains @auth(level: NO_ACCESS) {
   customDomains(orderBy: { createdAt: ASC }) {
     id
     name
+  }
+}
+
+# ─── Cohorts / Classes (admin + instructor, server-only) ──────────────────────
+
+# All cohorts with owner and membership/instructor rows for counts (admin scope).
+query AdminListCohorts @auth(level: NO_ACCESS) {
+  cohorts(orderBy: { createdAt: DESC }) {
+    id
+    name
+    description
+    archivedAt
+    createdAt
+    updatedAt
+    createdBy { id email fullName }
+    cohortMemberships_on_cohort { user { id } }
+    cohortInstructors_on_cohort { instructor { id } }
+  }
+}
+
+# Cohorts an instructor owns (createdBy) plus cohorts they are assigned to as a
+# co-instructor. Results are merged/deduped in TypeScript.
+query ListCohortsForInstructor($instructorId: String!) @auth(level: NO_ACCESS) {
+  cohorts(
+    where: { createdBy: { id: { eq: $instructorId } } }
+    orderBy: { createdAt: DESC }
+  ) {
+    id
+    name
+    description
+    archivedAt
+    createdAt
+    updatedAt
+    createdBy { id email fullName }
+    cohortMemberships_on_cohort { user { id } }
+    cohortInstructors_on_cohort { instructor { id } }
+  }
+  cohortInstructors(where: { instructor: { id: { eq: $instructorId } } }) {
+    cohort {
+      id
+      name
+      description
+      archivedAt
+      createdAt
+      updatedAt
+      createdBy { id email fullName }
+      cohortMemberships_on_cohort { user { id } }
+      cohortInstructors_on_cohort { instructor { id } }
+    }
+  }
+}
+
+# Full detail for one cohort: owner, learner members, and co-instructors.
+query GetCohortDetail($cohortId: UUID!) @auth(level: NO_ACCESS) {
+  cohort(id: $cohortId) {
+    id
+    name
+    description
+    archivedAt
+    createdAt
+    updatedAt
+    createdBy { id email fullName }
+  }
+  cohortMemberships(
+    where: { cohort: { id: { eq: $cohortId } } }
+    orderBy: { joinedAt: DESC }
+  ) {
+    joinedAt
+    user { id email fullName role }
+  }
+  cohortInstructors(where: { cohort: { id: { eq: $cohortId } } }) {
+    assignedAt
+    instructor { id email fullName role }
+  }
+}
+
+# Member user IDs only — used to derive analytics scope.
+query GetCohortMemberIds($cohortId: UUID!) @auth(level: NO_ACCESS) {
+  cohortMemberships(where: { cohort: { id: { eq: $cohortId } } }) {
+    user { id }
+  }
+}
+
+# Completed attempts scoped to a set of learner IDs (same shape as AdminCohortStats).
+query GetCohortAttempts($userIds: [String!]!) @auth(level: NO_ACCESS) {
+  quizAttempts(
+    where: { user: { id: { in: $userIds } }, status: { eq: "completed" } }
+    orderBy: { completedAt: DESC }
+  ) {
+    id
+    user { id email fullName }
+    quiz { id title }
+    scorePct
+    passed
+    completedAt
+    quizResponses_on_attempt {
+      isCorrect
+      pointsEarned
+      pointsPossible
+      question { id domain difficulty questionText topicTags }
+    }
+  }
+}
+
+# Course/lesson progress and daily activity for a set of learner IDs — drives the
+# engagement panel (completion %, lessons completed, streaks, last active).
+query GetCohortEngagement($userIds: [String!]!) @auth(level: NO_ACCESS) {
+  userCourseProgresses(where: { user: { id: { in: $userIds } } }) {
+    user { id }
+    course { id title }
+    enrolledAt
+    completedAt
+    lastAccessedAt
+  }
+  userLessonProgresses(where: { user: { id: { in: $userIds } } }) {
+    user { id }
+    lesson { id }
+    status
+    completedAt
+  }
+  dailyActivities(where: { user: { id: { in: $userIds } } }) {
+    user { id }
+    activityDate
+    lastActivityAt
+  }
+}
+
+# Everything needed for a single learner drill-down page.
+query GetLearnerProgressDetail($userId: String!) @auth(level: NO_ACCESS) {
+  users(where: { id: { eq: $userId } }, limit: 1) {
+    id
+    email
+    fullName
+    role
+    createdAt
+  }
+  quizAttempts(
+    where: { user: { id: { eq: $userId } }, status: { eq: "completed" } }
+    orderBy: { completedAt: DESC }
+  ) {
+    id
+    quiz { id title passingScore }
+    scorePct
+    scoreRaw
+    scoreMax
+    passed
+    startedAt
+    completedAt
+    quizResponses_on_attempt {
+      isCorrect
+      pointsEarned
+      pointsPossible
+      question { domain }
+    }
+  }
+  userCourseProgresses(where: { user: { id: { eq: $userId } } }) {
+    course { id title }
+    enrolledAt
+    completedAt
+    lastAccessedAt
+  }
+  userLessonProgresses(where: { user: { id: { eq: $userId } } }) {
+    lesson { id }
+    status
+    completedAt
+  }
+  dailyActivities(
+    where: { user: { id: { eq: $userId } } }
+    orderBy: { activityDate: DESC }
+    limit: 1000
+  ) {
+    activityDate
+    lastActivityAt
+  }
+}
+
+# Teacher-side attempt review — full correct-answer detail, authorized by cohort
+# scope in the API route (not by learner ownership).
+query AdminGetAttemptReview($attemptId: UUID!) @auth(level: NO_ACCESS) {
+  quizAttempt(id: $attemptId) {
+    id
+    user { id }
+    quiz { id title passingScore }
+    status
+    questionOrder
+    scoreRaw
+    scoreMax
+    scorePct
+    passed
+    startedAt
+    completedAt
+  }
+  quizResponses(where: { attempt: { id: { eq: $attemptId } } }) {
+    question {
+      id
+      questionText
+      domain
+      difficulty
+      rationale
+      calculation
+      sourceRef
+      answerChoices_on_question {
+        letter
+        choiceText
+        isCorrect
+        explanation
+        position
+      }
+    }
+    selectedLetters
+    isCorrect
+    pointsEarned
+    pointsPossible
   }
 }
 

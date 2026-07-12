@@ -515,6 +515,15 @@ export const Sun = (props: IconProps) => (
   </IconWrapper>
 );
 
+// Monitor / display glyph used to represent the "System" (follow OS) theme option.
+export const Monitor = (props: IconProps) => (
+  <IconWrapper {...props}>
+    <rect x="2" y="3" width="20" height="14" rx="2" />
+    <path d="M8 21h8" />
+    <path d="M12 17v4" />
+  </IconWrapper>
+);
+
 export const List = (props: IconProps) => (
   <IconWrapper {...props}>
     <line x1="8" y1="6" x2="21" y2="6" />

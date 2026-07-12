@@ -1,3 +1,4 @@
+// Front-end admin source-material library: components/admin/MaterialsPanel.tsx
 "use client";
 
 // components/admin/MaterialsPanel.tsx — Teacher Portal source materials library (front-end)
@@ -7,9 +8,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase/client";
 import { cn } from "@/lib/utils";
+import { toast, confirmDialog } from "@/components/admin/AdminFeedback";
 import { FileDropZone } from "./FileDropZone";
 import * as Icons from "@/components/ui/Icons";
 import { FieldHint } from "@/components/ui/FieldHint";
+import { EmptyState } from "@/components/admin/EmptyState";
 
 type MaterialKind = "document" | "audio" | "video" | "image";
 type PreviewTab = "preview" | "content" | "links" | "details";
@@ -522,6 +525,47 @@ function RenderedDocumentHtml({
           text-underline-offset: 0.18em;
         }
 
+        /* Dark-mode variants: styled-jsx is scoped, so the global .dark override
+           layer cannot reach these rules. Re-map the document surfaces to the
+           semantic theme tokens when the dark class is active. */
+        :global(.dark) .document-html-page {
+          background: var(--impact-surface-raised);
+          border-color: var(--impact-border);
+          color: var(--impact-muted);
+          box-shadow: var(--shadow-lg);
+        }
+        :global(.dark) .document-html-page :global(h1),
+        :global(.dark) .document-html-page :global(h2),
+        :global(.dark) .document-html-page :global(h3),
+        :global(.dark) .document-html-page :global(h4),
+        :global(.dark) .document-html-page :global(h5),
+        :global(.dark) .document-html-page :global(h6) {
+          color: var(--impact-ink);
+        }
+        :global(.dark) .document-html-page :global(h2) {
+          border-top-color: var(--impact-border);
+        }
+        :global(.dark) .document-html-page :global(blockquote) {
+          background: var(--impact-brand-soft);
+          border-left-color: var(--impact-blue);
+          color: var(--impact-muted);
+        }
+        :global(.dark) .document-html-page :global(pre) {
+          background: var(--impact-surface-inset);
+          border-color: var(--impact-border);
+        }
+        :global(.dark) .document-html-page :global(th) {
+          background: var(--impact-surface-inset);
+          color: var(--impact-ink);
+        }
+        :global(.dark) .document-html-page :global(th),
+        :global(.dark) .document-html-page :global(td) {
+          border-color: var(--impact-border);
+        }
+        :global(.dark) .document-html-page :global(a) {
+          color: var(--impact-blue);
+        }
+
         .document-html-page :global(hr) {
           border: 0;
           border-top: 1px solid rgba(148, 163, 184, 0.24);
@@ -563,7 +607,10 @@ export function MaterialsPanel() {
   const [previewTab, setPreviewTab] = useState<PreviewTab>("preview");
   const [uploadItems, setUploadItems] = useState<UploadQueueItem[]>([]);
   const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  // ponytail: shim keeps the 16 existing setNotice call sites untouched
+  const setNotice = (n: { type: "success" | "error"; text: string } | null) => {
+    if (n) toast(n.type, n.text);
+  };
   const [uploadOpen, setUploadOpen] = useState(initialUploadOpen);
   const [linkingMaterialId, setLinkingMaterialId] = useState<string | null>(null);
   const [view, setView] = useState<LibraryView>(initialView ?? "all");
@@ -674,12 +721,6 @@ export function MaterialsPanel() {
       window.removeEventListener("resize", closeMenus);
     };
   }, [folderMenu, areaMenu]);
-
-  useEffect(() => {
-    if (!notice || notice.type !== "success") return;
-    const timer = setTimeout(() => setNotice(null), 3500);
-    return () => clearTimeout(timer);
-  }, [notice]);
 
   useEffect(() => {
     (async () => {
@@ -919,7 +960,7 @@ export function MaterialsPanel() {
   }
 
   async function deleteMaterial(material: MaterialListItem) {
-    if (!window.confirm(`Move "${material.title}" to trash? Existing learning-content links will be preserved until final deletion.`)) return;
+    if (!(await confirmDialog(`Move "${material.title}" to trash? Existing learning-content links will be preserved until final deletion.`, { danger: true, title: "Move to trash", confirmLabel: "Move to trash" }))) return;
     const res = await fetch(`/api/admin/materials/${material.id}`, { method: "DELETE" });
     const data = await res.json().catch(() => ({}));
     if (res.ok) {
@@ -935,7 +976,7 @@ export function MaterialsPanel() {
   }
 
   async function deleteFolder(folder: MaterialFolder) {
-    if (!window.confirm(`Delete folder "${folder.name}"? Materials in this folder will move back to All Materials.`)) return;
+    if (!(await confirmDialog(`Delete folder "${folder.name}"? Materials in this folder will move back to All Materials.`, { danger: true, title: "Delete folder" }))) return;
     const res = await fetch(`/api/admin/materials/folders/${folder.id}`, { method: "DELETE" });
     const data = await res.json().catch(() => ({}));
 
@@ -1455,6 +1496,9 @@ export function MaterialsPanel() {
                     </>
                   )}
                 </button>
+                <p className="mt-3 text-xs text-slate-500">
+                  Files appear in the library immediately; parser status and retry live in the preview pane.
+                </p>
               </div>
 
               <div className="rounded-2xl border border-[#185FA5]/15 bg-white p-4 shadow-sm">
@@ -1533,27 +1577,8 @@ export function MaterialsPanel() {
                     </select>
                   </div>
                 </div>
-                <p className="mt-3 text-xs text-slate-500">
-                  Files appear in the library immediately; parser status and retry live in the preview pane.
-                </p>
               </div>
             </div>
-          </div>
-        )}
-
-        {notice && (
-          <div className="border-b border-slate-100 bg-white px-5 py-3">
-            <p
-              role={notice.type === "error" ? "alert" : "status"}
-              aria-live="polite"
-              className={cn(
-                "flex items-center gap-2 text-sm",
-                notice.type === "success" ? "text-emerald-700" : "text-red-700"
-              )}
-            >
-              {notice.type === "success" ? <Icons.Check size={14} /> : <Icons.X size={14} />}
-              {notice.text}
-            </p>
           </div>
         )}
 
@@ -1721,6 +1746,7 @@ export function MaterialsPanel() {
                 }}
                 onCancelDestructive={() => setPendingBulkConfirm(null)}
                 onMarkReviewed={() => void runBulkAction("mark-reviewed")}
+                onSetVisibility={(visibility) => void runBulkAction("visibility", { visibility })}
                 onExport={() => void runBulkAction("export-metadata")}
               />
             )}
@@ -1776,13 +1802,15 @@ export function MaterialsPanel() {
             {loading || isPending ? (
               <div className="px-5 py-8 text-center text-sm text-slate-400">Loading materials…</div>
             ) : materials.length === 0 ? (
-              <div className="px-5 py-12 text-center">
-                <Icons.Database size={36} className="mx-auto mb-3 text-slate-200" />
-                <p className="text-sm font-semibold text-slate-700">No materials match the current view.</p>
-                <p className="mt-1 text-xs text-slate-500">
-                  {pagination.total === 0 ? "Add your first material to start building the library." : "Adjust the search or reset filters to widen the archive."}
-                </p>
-              </div>
+              <EmptyState
+                icon={<Icons.Database size={36} />}
+                title="No materials match the current view."
+                hint={
+                  pagination.total === 0
+                    ? "Add your first material to start building the library."
+                    : "Adjust the search or reset filters to widen the archive."
+                }
+              />
             ) : (
               <div className="divide-y divide-slate-100">
                 {materials.map((material) => (
@@ -2590,6 +2618,7 @@ function BulkActionBar({
   onConfirmDestructive,
   onCancelDestructive,
   onMarkReviewed,
+  onSetVisibility,
   onExport,
 }: {
   count: number;
@@ -2601,6 +2630,7 @@ function BulkActionBar({
   onConfirmDestructive: () => void;
   onCancelDestructive: () => void;
   onMarkReviewed: () => void;
+  onSetVisibility: (visibility: "admin" | "learner") => void;
   onExport: () => void;
 }) {
   if (pendingConfirm) {
@@ -2627,6 +2657,8 @@ function BulkActionBar({
       <div className="flex flex-wrap items-center gap-2">
         <button type="button" onClick={onOpenMove} className="admin-action h-9">Move to folder</button>
         <button type="button" onClick={onMarkReviewed} className="admin-action secondary h-9">Mark reviewed</button>
+        <button type="button" onClick={() => onSetVisibility("learner")} className="admin-action secondary h-9">Share with learners</button>
+        <button type="button" onClick={() => onSetVisibility("admin")} className="admin-action secondary h-9">Make admin only</button>
         <button type="button" onClick={onArchive} className="admin-action secondary h-9">Archive</button>
         <button type="button" onClick={onExport} className="admin-action secondary h-9">Export metadata</button>
         <button type="button" onClick={onTrash} className="admin-action secondary h-9 text-red-600">Trash</button>
@@ -2857,10 +2889,10 @@ function MaterialGrid({
   if (loading) return <div className="px-5 py-8 text-center text-sm text-slate-400">Loading materials...</div>;
   if (!materials.length) {
     return (
-      <div className="px-5 py-12 text-center">
-        <Icons.Database size={36} className="mx-auto mb-3 text-slate-200" />
-        <p className="text-sm font-semibold text-slate-700">No materials match the current view.</p>
-      </div>
+      <EmptyState
+        icon={<Icons.Database size={36} />}
+        title="No materials match the current view."
+      />
     );
   }
 

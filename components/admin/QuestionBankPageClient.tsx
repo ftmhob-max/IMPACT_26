@@ -5,6 +5,7 @@ import { adminFetch } from "@/lib/admin/client-fetch";
 import { ManualQuestionPanel } from "@/components/admin/ManualQuestionPanel";
 import { QuestionBankClient } from "@/components/admin/QuestionBankClient";
 import { DocxImportClient } from "@/components/admin/DocxImportClient";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import * as Icons from "@/components/ui/Icons";
 
 interface Question {
@@ -73,12 +74,12 @@ export function QuestionBankPageClient({
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-5 sm:space-y-8 sm:px-6 sm:py-8">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Question Bank</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          {questions.length} question{questions.length !== 1 ? "s" : ""} · Import via CSV or build manually, then assign to a quiz.
-        </p>
-      </div>
+      <AdminPageHeader
+        icon={<Icons.Database size={20} />}
+        eyebrow="Teacher Portal"
+        title="Question Bank"
+        description={`${questions.length} question${questions.length !== 1 ? "s" : ""} · Import via CSV or build manually, then assign to a quiz.`}
+      />
 
       <div className="grid gap-6 xl:grid-cols-2">
         <div className="rounded-xl border border-black/10 bg-white shadow-sm">
@@ -87,7 +88,7 @@ export function QuestionBankPageClient({
             onClick={() => setImportOpen((open) => !open)}
             className="flex w-full flex-wrap items-center gap-2 border-b border-slate-100 px-4 py-3 text-left"
           >
-            <span className="text-[#185FA5]">📄</span>
+            <Icons.Upload size={15} className="text-[#185FA5]" />
             <h2 className="text-sm font-bold text-slate-900">Question Import</h2>
             <span className="ml-auto text-xs text-slate-400">DOCX or CSV</span>
             {importOpen ? <Icons.ChevronUp size={16} className="text-slate-400" /> : <Icons.ChevronDown size={16} className="text-slate-400" />}
@@ -105,7 +106,7 @@ export function QuestionBankPageClient({
             onClick={() => setManualOpen((open) => !open)}
             className="flex w-full flex-wrap items-center gap-2 border-b border-slate-100 px-4 py-3 text-left"
           >
-            <span className="text-[#185FA5]">✏️</span>
+            <Icons.Pencil size={15} className="text-[#185FA5]" />
             <h2 className="text-sm font-bold text-slate-900">Manual Builder</h2>
             <span className="order-last w-full text-xs text-slate-400 sm:order-none sm:ml-auto sm:w-auto">Multiple choice, multiselect, scenario</span>
             {manualOpen ? <Icons.ChevronUp size={16} className="text-slate-400" /> : <Icons.ChevronDown size={16} className="text-slate-400" />}

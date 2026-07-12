@@ -1,3 +1,4 @@
+/* Front-end global styles and design tokens: app/globals.css */
 @import "tailwindcss";
 
 :root {
@@ -42,6 +43,10 @@
   --impact-info-border: #b8d7f0;
   --impact-input-bg: #ffffff;
   --impact-overlay: rgba(15, 23, 42, 0.45);
+  --impact-focus-ring: rgba(24, 95, 165, 0.32);
+  --impact-interactive-hover: #f4f8fc;
+  --impact-skeleton-base: #e8eaee;
+  --impact-skeleton-highlight: #f4f6f8;
   --sidebar-bg: #0b3a69;
   --sidebar-bg-strong: #073866;
   --sidebar-border: rgba(196, 220, 245, 0.18);
@@ -88,6 +93,10 @@
   --impact-info-border: rgba(110, 182, 255, 0.36);
   --impact-input-bg: #101821;
   --impact-overlay: rgba(0, 0, 0, 0.7);
+  --impact-focus-ring: rgba(110, 182, 255, 0.42);
+  --impact-interactive-hover: #1b2633;
+  --impact-skeleton-base: #1b2633;
+  --impact-skeleton-highlight: #273648;
   --sidebar-bg: #071c33;
   --sidebar-bg-strong: #041525;
   --sidebar-border: rgba(196, 220, 245, 0.16);
@@ -106,12 +115,63 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+  font-family: var(--font-impact-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 14px;
   line-height: 1.65;
   color: var(--impact-ink);
   background-color: var(--impact-page);
   -webkit-font-smoothing: antialiased;
+}
+
+/* Shared learner motion and interaction affordances use semantic tokens so the
+   same components remain legible in both themes. */
+.learner-page {
+  animation: learner-page-enter 240ms ease-out both;
+}
+
+.learner-interactive {
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.learner-interactive:focus-visible {
+  outline: 2px solid var(--impact-blue);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 4px var(--impact-focus-ring);
+}
+
+.learner-interactive:not(:disabled):active {
+  transform: translateY(1px);
+}
+
+.learner-hover-surface {
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.learner-hover-surface:hover {
+  border-color: var(--impact-border-strong);
+  background-color: var(--impact-interactive-hover);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+@keyframes learner-page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .dark body {
@@ -163,12 +223,19 @@ body {
 .dark [class~="bg-[#f5fbf7]"],
 .dark [class~="bg-[#f7fbff]"],
 .dark [class~="bg-[#f8f7ff]"],
-.dark [class~="bg-[#F8F7F4]"],
-.dark [class~="bg-[#f0ede3]"],
-.dark [class~="bg-[#fbfcfd]"],
-.dark [class~="bg-[#fbfcfe]"],
-.dark [class~="bg-[#fbfdff]"] {
+  .dark [class~="bg-[#F8F7F4]"],
+  .dark [class~="bg-[#f8f7f4]"],
+  .dark [class~="bg-[#f0ede3]"],
+  .dark [class~="bg-[#fbfcfd]"],
+  .dark [class~="bg-[#fbfcfe]"],
+  .dark [class~="bg-[#fbfdff]"],
+  .dark [class~="bg-[#d0e8f8]"] {
   background-color: var(--impact-surface-inset) !important;
+}
+
+/* Additional light warning/tint surfaces not caught by the base state rules. */
+.dark [class~="bg-[#fff3dc]"] {
+  background-color: var(--impact-warning-bg) !important;
 }
 
 .dark [class*="bg-[#E6F1FB]/"],
@@ -182,7 +249,10 @@ body {
   background-color: rgb(21 29 38 / 0.94) !important;
 }
 
-.dark [class*="bg-[linear-gradient(180deg,#"] {
+/* Flatten decorative light gradients to a dark surface. Matches any angle
+   (135deg/180deg/etc.) so tinted card banners do not stay light in dark mode. */
+.dark [class*="bg-[linear-gradient(180deg,#"],
+.dark [class*="bg-[linear-gradient(135deg,#"] {
   background: var(--impact-surface-inset) !important;
 }
 
@@ -909,6 +979,55 @@ select.h-8 {
 }
 .admin-action.secondary:hover { background: #E6F1FB; border-color: rgba(24, 95, 165, 0.35); }
 
+.admin-action.danger {
+  border-color: #dc2626;
+  background: #dc2626;
+  color: #ffffff;
+}
+.admin-action.danger:hover { background: #b91c1c; border-color: #b91c1c; }
+
+.impact-skeleton,
+.admin-skeleton {
+  border-radius: 8px;
+  background: linear-gradient(
+    90deg,
+    var(--impact-skeleton-base) 25%,
+    var(--impact-skeleton-highlight) 50%,
+    var(--impact-skeleton-base) 75%
+  );
+  background-size: 200% 100%;
+  animation: impact-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes impact-skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Respect both the operating-system preference and the persisted learner
+   preference applied by ThemeController after hydration. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+html.reduced-motion *,
+html.reduced-motion *::before,
+html.reduced-motion *::after,
+html[data-reduced-motion="true"] *,
+html[data-reduced-motion="true"] *::before,
+html[data-reduced-motion="true"] *::after {
+  scroll-behavior: auto !important;
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
 .profile-input {
   width: 100%;
   border-radius: 8px;
@@ -1091,3 +1210,133 @@ select.h-8 {
     display: none;
   }
 }
+
+/* Front-end certificate printing: keep the credential on one landscape page. */
+@media print {
+  @page {
+    size: landscape;
+    margin: 0;
+  }
+
+  body:has(.certificate-page) {
+    overflow: hidden !important;
+    background: #ffffff !important;
+  }
+
+  body:has(.certificate-page) > div > aside,
+  body:has(.certificate-page) header,
+  .certificate-actions {
+    display: none !important;
+  }
+
+  .certificate-page {
+    min-height: 0 !important;
+    height: 100vh !important;
+    overflow: hidden !important;
+  }
+
+  .certificate-sheet {
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: none !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
+
+/* ─── Theme-aware domain tokens & quiz surfaces ───────────────────────────── */
+/* Dark-mode domain color values keep domain-tinted chips, bars, and filter pills
+   legible on dark surfaces. Components reference these tokens (never inline hex)
+   so the same markup adapts automatically to the active theme. */
+:root.dark {
+  --color-math:      #a99cff;
+  --color-appraisal: #4cc6a4;
+  --color-law:       #e29066;
+  --color-philly:    #e3b04a;
+  --color-admin:     #e58080;
+  --color-ethics:    #93c95d;
+}
+
+/* Domain-tinted chip (e.g. quiz question-number pill). The data-domain attribute
+   selects the correct theme-aware color token; color-mix derives soft fills. */
+.domain-chip {
+  border: 1px solid var(--impact-border);
+  background: var(--impact-surface-muted);
+  color: var(--impact-faint);
+}
+.domain-chip[data-domain="math"]      { color: var(--color-math);      background: color-mix(in srgb, var(--color-math) 12%, transparent);      border-color: color-mix(in srgb, var(--color-math) 32%, transparent); }
+.domain-chip[data-domain="appraisal"] { color: var(--color-appraisal); background: color-mix(in srgb, var(--color-appraisal) 12%, transparent); border-color: color-mix(in srgb, var(--color-appraisal) 32%, transparent); }
+.domain-chip[data-domain="law"]       { color: var(--color-law);       background: color-mix(in srgb, var(--color-law) 12%, transparent);       border-color: color-mix(in srgb, var(--color-law) 32%, transparent); }
+.domain-chip[data-domain="philly"]    { color: var(--color-philly);    background: color-mix(in srgb, var(--color-philly) 12%, transparent);    border-color: color-mix(in srgb, var(--color-philly) 32%, transparent); }
+.domain-chip[data-domain="admin"]     { color: var(--color-admin);     background: color-mix(in srgb, var(--color-admin) 12%, transparent);     border-color: color-mix(in srgb, var(--color-admin) 32%, transparent); }
+.domain-chip[data-domain="ethics"]    { color: var(--color-ethics);    background: color-mix(in srgb, var(--color-ethics) 12%, transparent);    border-color: color-mix(in srgb, var(--color-ethics) 32%, transparent); }
+
+/* Difficulty & domain filter pills (quiz FilterPanel). Base pill uses semantic
+   surface tokens; the active pill fills with brand blue (difficulty) or the
+   domain color (domain), with theme-correct label contrast. */
+.quiz-filter-pill {
+  border: 1px solid var(--impact-border);
+  background: var(--impact-surface);
+  color: var(--impact-muted);
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+.quiz-filter-pill:hover {
+  border-color: var(--impact-border-strong);
+  color: var(--impact-blue);
+}
+.quiz-filter-pill[data-active="true"] {
+  border-color: var(--impact-blue);
+  background: var(--impact-blue);
+  color: #ffffff;
+}
+/* On dark surfaces the brand/domain fills are light, so use the page ink for labels. */
+.dark .quiz-filter-pill[data-active="true"] {
+  color: var(--impact-page);
+}
+.quiz-filter-pill[data-active="true"][data-domain="all"]       { background: var(--impact-ink);        border-color: var(--impact-ink);        color: var(--impact-page); }
+.quiz-filter-pill[data-active="true"][data-domain="math"]      { background: var(--color-math);        border-color: var(--color-math); }
+.quiz-filter-pill[data-active="true"][data-domain="appraisal"] { background: var(--color-appraisal);   border-color: var(--color-appraisal); }
+.quiz-filter-pill[data-active="true"][data-domain="law"]       { background: var(--color-law);         border-color: var(--color-law); }
+.quiz-filter-pill[data-active="true"][data-domain="philly"]    { background: var(--color-philly);      border-color: var(--color-philly); }
+.quiz-filter-pill[data-active="true"][data-domain="admin"]     { background: var(--color-admin);       border-color: var(--color-admin); }
+.quiz-filter-pill[data-active="true"][data-domain="ethics"]    { background: var(--color-ethics);      border-color: var(--color-ethics); }
+
+/* Quiz progress bar — track and animated fill driven by tokens. */
+.quiz-progress-track {
+  background: var(--impact-surface-muted);
+  border: 1px solid var(--impact-border);
+}
+.quiz-progress-fill {
+  background: linear-gradient(90deg, var(--impact-blue) 0%, #22a0e8 100%);
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Quiz "show answer" toggle — tinted brand state when open. */
+.quiz-answer-toggle {
+  border: 1px solid var(--impact-border);
+  background: transparent;
+  color: var(--impact-faint);
+}
+.quiz-answer-toggle[data-open="true"] {
+  border-color: var(--impact-blue);
+  background: var(--impact-brand-soft);
+  color: var(--impact-blue);
+}
+
+/* Floating "scroll to top" button. */
+.quiz-scroll-top {
+  background: var(--impact-blue);
+  color: #ffffff;
+  box-shadow: var(--shadow-md);
+}
+.dark .quiz-scroll-top {
+  color: var(--impact-page);
+}
+
+/* Dark-mode domain badge/bar polish: keep tinted badges readable on dark. */
+.dark .badge-math       { background: color-mix(in srgb, var(--color-math) 16%, transparent);      color: var(--color-math); }
+.dark .badge-appraisal  { background: color-mix(in srgb, var(--color-appraisal) 16%, transparent); color: var(--color-appraisal); }
+.dark .badge-law        { background: color-mix(in srgb, var(--color-law) 16%, transparent);       color: var(--color-law); }
+.dark .badge-philly     { background: color-mix(in srgb, var(--color-philly) 16%, transparent);    color: var(--color-philly); }
+.dark .badge-admin      { background: color-mix(in srgb, var(--color-admin) 16%, transparent);     color: var(--color-admin); }
+.dark .badge-ethics     { background: color-mix(in srgb, var(--color-ethics) 16%, transparent);    color: var(--color-ethics); }

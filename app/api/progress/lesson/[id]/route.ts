@@ -1,6 +1,12 @@
+// Backend API route: app/api/progress/lesson/[id]/route.ts
 import { NextResponse, type NextRequest } from "next/server";
 import { verifyIdToken } from "@/lib/firebase/auth-server";
-import { adminDcMutate, adminDcQuery } from "@/lib/firebase/admin-dc";
+import { adminDcQuery } from "@/lib/firebase/admin-dc";
+import { recordDailyActivitySafely } from "@/lib/firebase/daily-activity";
+import {
+  applyLessonProgressOperation,
+  selectLessonProgressOperation,
+} from "@/lib/firebase/learner-portal";
 import { z } from "zod";
 
 export async function GET(
@@ -57,12 +63,13 @@ export async function PATCH(
       return NextResponse.json({ error: "Provide at least status or videoPositionSeconds" }, { status: 400 });
     }
 
-    await adminDcMutate("UpsertLessonProgress", {
-      userId,
-      lessonId,
-      status: status ?? "in_progress",
-      videoPositionSeconds: videoPositionSeconds ?? null,
-    });
+    // Operation-specific mutation shapes enforce monotonic completion in the datastore.
+    const progressOperation = selectLessonProgressOperation(
+      { userId, lessonId, status, videoPositionSeconds },
+      new Date().toISOString(),
+    );
+    await applyLessonProgressOperation(progressOperation);
+    await recordDailyActivitySafely(userId);
 
     return NextResponse.json({ ok: true });
   } catch (err) {

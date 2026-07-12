@@ -1,10 +1,15 @@
+// Front-end learner course detail: app/(platform)/courses/[slug]/page.tsx
+import { notFound } from "next/navigation";
 import { IconTile, LearnerPage, PageHeader, PrimaryAction, SectionPanel } from "@/components/ui/LearnerPrimitives";
 import { CourseEnrollmentClient } from "@/components/platform/CourseEnrollmentClient";
 import { adminDcQuery } from "@/lib/firebase/admin-dc";
 import { getDevCourseBySlug } from "@/lib/dev-content";
 import { ensureDevDataSeeded } from "@/lib/dev-seed";
-import { isDevelopmentEnvironment } from "@/lib/dev-gate";
 import * as Icons from "@/components/ui/Icons";
+import { getLearnerSession } from "@/lib/firebase/learner-session";
+import { getCourseCertificateEligibility } from "@/lib/firebase/certificates";
+
+const isDevEnvironment = process.env.NODE_ENV === "development";
 
 async function getCourse(slug: string) {
   try {
@@ -34,20 +39,25 @@ async function getCourse(slug: string) {
       }>;
     };
 
-    if (isDevelopmentEnvironment()) {
+    if (isDevEnvironment) {
       await ensureDevDataSeeded().catch(() => null);
     }
 
     let data = await adminDcQuery<CourseData>("GetCourseBySlug", { slug });
-    if (!data.courses[0] && isDevelopmentEnvironment()) {
+    if (!data.courses[0] && isDevEnvironment) {
       data = await adminDcQuery<CourseData>("GetCourseBySlug", { slug }).catch(
         (): CourseData => ({ courses: [] })
       );
       return data.courses[0] ?? getDevCourseBySlug(slug);
     }
     return data.courses[0] ?? null;
-  } catch {
-    return isDevelopmentEnvironment() ? getDevCourseBySlug(slug) : null;
+  } catch (error) {
+    if (isDevEnvironment) {
+      return getDevCourseBySlug(slug);
+    }
+    // Operational failures belong to the retryable route error boundary; only
+    // a successful query with no course should render the not-found boundary.
+    throw error;
   }
 }
 
@@ -57,23 +67,16 @@ export default async function CourseDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const course = await getCourse(slug);
+  const session = await getLearnerSession();
+  const [course, certificateResult] = await Promise.all([
+    getCourse(slug),
+    session
+      ? getCourseCertificateEligibility(session.uid, slug).catch(() => null)
+      : Promise.resolve(null),
+  ]);
 
   if (!course) {
-    return (
-      <LearnerPage width="narrow">
-        <PageHeader
-          backHref="/courses"
-          backLabel="Back to courses"
-          eyebrow="Course unavailable"
-          title="We could not load this course"
-          description="The course may not exist, or the training data service may be unavailable in this environment."
-        />
-        <div className="rounded-lg border border-dashed border-slate-200 bg-white px-6 py-12 text-center text-sm text-slate-500">
-          Return to the catalog and try again.
-        </div>
-      </LearnerPage>
-    );
+    notFound();
   }
 
   const totalLessons = course.modules_on_course.reduce(
@@ -112,7 +115,9 @@ export default async function CourseDetailPage({
         description={course.description}
         icon={Icons.GraduationCap}
         action={
-          firstLesson ? (
+          certificateResult?.eligibility?.eligible ? (
+            <PrimaryAction href={`/certificates/${slug}`}>View certificate</PrimaryAction>
+          ) : firstLesson ? (
             <PrimaryAction href={`/lessons/${firstLesson.id}`}>Start course</PrimaryAction>
           ) : null
         }

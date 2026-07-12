@@ -2,12 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { adminFetch } from "@/lib/admin/client-fetch";
+import { toast, confirmDialog } from "@/components/admin/AdminFeedback";
 import { validateExpression, evalExpression } from "@/lib/admin/formula-eval";
 import { formatValue, hasFormulaCalculatorConfig, parseFormulaCalculatorConfig } from "@/lib/formula-calculator";
 import * as Icons from "@/components/ui/Icons";
 import { cn } from "@/lib/utils";
 import { FieldHint } from "@/components/ui/FieldHint";
 import { StatusBadge } from "@/components/ui/LearnerPrimitives";
+import { EmptyState } from "@/components/admin/EmptyState";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -156,7 +158,6 @@ export function FormulasPanel({ onSaved }: { onSaved?: () => void }) {
   const [editorTab, setEditorTab] = useState<EditorTab>("fields");
   const [isCreating, setIsCreating] = useState(false);
   const [savingBusy, setSavingBusy] = useState(false);
-  const [notice, setNotice] = useState<{ msg: string; ok: boolean } | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [confirmDeleteSectionId, setConfirmDeleteSectionId] = useState<string | null>(null);
   const [addSectionOpen, setAddSectionOpen] = useState(false);
@@ -179,8 +180,7 @@ export function FormulasPanel({ onSaved }: { onSaved?: () => void }) {
   useEffect(() => { loadSections(); }, [loadSections]);
 
   const showNotice = (msg: string, ok = true) => {
-    setNotice({ msg, ok });
-    setTimeout(() => setNotice(null), 3500);
+    toast(ok ? "success" : "error", msg);
   };
 
   const filteredSections = useMemo(() => {
@@ -194,9 +194,9 @@ export function FormulasPanel({ onSaved }: { onSaved?: () => void }) {
     })).filter((s) => s.formulas.length > 0 || s.code.toLowerCase().includes(q) || s.title.toLowerCase().includes(q));
   }, [sections, search]);
 
-  function selectFormula(formula: AdminFormula, sectionId: string) {
+  async function selectFormula(formula: AdminFormula, sectionId: string) {
     // #15 unsaved guard
-    if (isDirty && !window.confirm("You have unsaved changes. Discard them?")) return;
+    if (isDirty && !(await confirmDialog("You have unsaved changes. Discard them?", { confirmLabel: "Discard" }))) return;
     setSelectedFormula(formula);
     setSelectedSectionId(sectionId);
     setEditorTab("fields");
@@ -205,8 +205,8 @@ export function FormulasPanel({ onSaved }: { onSaved?: () => void }) {
     setIsDirty(false);
   }
 
-  function startCreate(sectionId: string) {
-    if (isDirty && !window.confirm("You have unsaved changes. Discard them?")) return;
+  async function startCreate(sectionId: string) {
+    if (isDirty && !(await confirmDialog("You have unsaved changes. Discard them?", { confirmLabel: "Discard" }))) return;
     const section = sections.find((s) => s.id === sectionId);
     const nextPos = (section?.formulas.length ?? 0);
     setSelectedFormula({
@@ -220,8 +220,8 @@ export function FormulasPanel({ onSaved }: { onSaved?: () => void }) {
   }
 
   // #12 Duplicate formula
-  function duplicateFormula(formula: AdminFormula, sectionId: string) {
-    if (isDirty && !window.confirm("You have unsaved changes. Discard them?")) return;
+  async function duplicateFormula(formula: AdminFormula, sectionId: string) {
+    if (isDirty && !(await confirmDialog("You have unsaved changes. Discard them?", { confirmLabel: "Discard" }))) return;
     const section = sections.find((s) => s.id === sectionId);
     const nextPos = (section?.formulas.length ?? 0);
     setSelectedFormula({
@@ -418,16 +418,6 @@ export function FormulasPanel({ onSaved }: { onSaved?: () => void }) {
         ))}
       </div>
 
-      {notice && (
-        <div className={cn(
-          "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium",
-          notice.ok ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"
-        )}>
-          {notice.ok ? <Icons.Check size={14} /> : <Icons.AlertCircle size={14} />}
-          {notice.msg}
-        </div>
-      )}
-
       {panelTab === "manage" && (
         <ManageTab
           sections={sections}
@@ -550,7 +540,11 @@ function ManageTab({
         {loading ? (
           <p className="py-6 text-center text-sm text-slate-400">Loading…</p>
         ) : sortedSections.length === 0 ? (
-          <p className="py-6 text-center text-sm text-slate-400">No formulas found.</p>
+          <EmptyState
+            icon={<Icons.Calculator size={36} />}
+            title="No formulas found."
+            hint="Create a formula section, or adjust your search to see results."
+          />
         ) : (
           <div className="space-y-2">
             {sortedSections.map((section, sIdx) => {

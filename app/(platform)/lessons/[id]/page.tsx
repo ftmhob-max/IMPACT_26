@@ -1,8 +1,17 @@
-import { IconTile, LearnerPage, PageHeader, SectionPanel } from "@/components/ui/LearnerPrimitives";
+// Front-end lesson page: app/(platform)/lessons/[id]/page.tsx
+
+import { notFound } from "next/navigation";
+import {
+  EmptyState,
+  IconTile,
+  LearnerPage,
+  PageHeader,
+  SectionPanel,
+} from "@/components/ui/LearnerPrimitives";
 import { adminDcQuery } from "@/lib/firebase/admin-dc";
-import { getDevLessonById } from "@/lib/dev-content";
+import { getQuizSummary } from "@/lib/firebase/learner-portal";
+import { DEV_QUIZZES, getDevLessonById } from "@/lib/dev-content";
 import { ensureDevDataSeeded } from "@/lib/dev-seed";
-import { isDevelopmentEnvironment } from "@/lib/dev-gate";
 import { StartQuizButton } from "@/components/quiz/StartQuizButton";
 import { parseVideoUrl } from "@/lib/video-url";
 import { LessonMuxPlayer } from "@/components/platform/LessonMuxPlayer";
@@ -12,44 +21,82 @@ import * as Icons from "@/components/ui/Icons";
 import { StructuredLessonExperience } from "@/components/lessons/StructuredLessonExperience";
 import { parseStructuredLessonContent } from "@/lib/lessons/structured-content";
 
-async function fetchLesson(id: string) {
-  try {
-    type LessonData = {
-      lesson?: {
-        id: string;
-        title: string;
-        lessonType: string;
-        contentJson?: string | null;
-        videoPlaybackId?: string | null;
-        videoUrl?: string | null;
-        durationSeconds?: number | null;
-        quiz?: {
-          id: string;
-          title: string;
-          timeLimitSeconds?: number | null;
-          shuffleQuestions: boolean;
-          shuffleChoices: boolean;
-        } | null;
-        module: {
-          course: {
-            slug: string;
-            title: string;
-          };
-        };
-      } | null;
-    };
+const isDevEnvironment = process.env.NODE_ENV === "development";
 
+type LessonRecord = {
+  id: string;
+  title: string;
+  lessonType: string;
+  contentJson?: string | null;
+  videoPlaybackId?: string | null;
+  videoUrl?: string | null;
+  durationSeconds?: number | null;
+  quiz?: {
+    id: string;
+    title: string;
+    timeLimitSeconds?: number | null;
+    passingScore?: number | null;
+    shuffleQuestions: boolean;
+    shuffleChoices: boolean;
+    calculatorSettingsJson?: string | null;
+  } | null;
+  module?: {
+    course: {
+      slug: string;
+      title: string;
+    };
+  };
+};
+
+type LessonData = { lesson?: LessonRecord | null };
+
+function getNormalizedDevLesson(id: string): LessonRecord | null {
+  const developmentLesson = getDevLessonById(id);
+  if (!developmentLesson) return null;
+
+  const developmentQuiz = developmentLesson.quiz
+    ? DEV_QUIZZES.find((quiz) => quiz.id === developmentLesson.quiz?.id)
+    : null;
+
+  return {
+    ...developmentLesson,
+    quiz: developmentLesson.quiz
+      ? {
+          ...developmentLesson.quiz,
+          passingScore: developmentQuiz?.passingScore ?? null,
+          calculatorSettingsJson: developmentQuiz?.calculatorSettingsJson ?? null,
+        }
+      : null,
+  };
+}
+
+async function fetchLesson(id: string): Promise<LessonRecord | null> {
+  try {
     let data = await adminDcQuery<LessonData>("GetLesson", { id });
-    if (!data.lesson && isDevelopmentEnvironment()) {
+    if (!data.lesson && isDevEnvironment) {
       await ensureDevDataSeeded().catch(() => null);
       data = await adminDcQuery<LessonData>("GetLesson", { id }).catch(
         (): LessonData => ({ lesson: null })
       );
-      return data.lesson ?? getDevLessonById(id);
+      return data.lesson ?? getNormalizedDevLesson(id);
     }
     return data.lesson ?? null;
+  } catch (error) {
+    if (isDevEnvironment) {
+      return getNormalizedDevLesson(id);
+    }
+    // Keep unavailable data services distinct from a confirmed missing lesson
+    // so the retryable route error boundary can handle operational failures.
+    throw error;
+  }
+}
+
+async function fetchQuizSummary(quizId: string | null | undefined) {
+  if (!quizId) return null;
+  try {
+    return await getQuizSummary(quizId);
   } catch {
-    return isDevelopmentEnvironment() ? getDevLessonById(id) : null;
+    return null;
   }
 }
 
@@ -92,29 +139,20 @@ export default async function LessonPage({
     fetchLesson(id),
     fetchPublishedGlossaryTerms(),
   ]);
-  const outline = await fetchCourseOutline((lesson as any)?.module?.course?.slug);
+  const [outline, quizSummary] = await Promise.all([
+    fetchCourseOutline(lesson?.module?.course.slug),
+    fetchQuizSummary(lesson?.quiz?.id),
+  ]);
 
-  const backHref = (lesson as any)?.module?.course
-    ? `/courses/${(lesson as any).module.course.slug}`
+  const backHref = lesson?.module?.course
+    ? `/courses/${lesson.module.course.slug}`
     : "/courses";
-  const backLabel = (lesson as any)?.module?.course
-    ? `Back to ${(lesson as any).module.course.title}`
+  const backLabel = lesson?.module?.course
+    ? `Back to ${lesson.module.course.title}`
     : "Back to catalog";
 
   if (!lesson) {
-    return (
-      <LearnerPage width="narrow">
-        <PageHeader
-          eyebrow="Lesson unavailable"
-          title="We could not load this lesson"
-          description="The lesson may not exist, or the training data service may be unavailable in this environment."
-          icon={Icons.Inbox}
-        />
-        <div className="rounded-lg border border-dashed border-slate-200 bg-white px-6 py-12 text-center text-sm text-slate-500">
-          Return to the course catalog and try opening the lesson again.
-        </div>
-      </LearnerPage>
-    );
+    notFound();
   }
 
   const structuredDocument = parseStructuredLessonContent(lesson.contentJson ?? null);
@@ -155,6 +193,11 @@ export default async function LessonPage({
 
   // ── Quiz lesson ─────────────────────────────────────────────────────────────
   if (lesson.lessonType === "quiz" && lesson.quiz) {
+    const assessmentDomainCount = new Set(
+      quizSummary?.quizQuestions.map((quizQuestion) => quizQuestion.question.domain) ?? [],
+    ).size;
+    const passingScore = quizSummary?.quiz?.passingScore ?? lesson.quiz.passingScore ?? null;
+
     return (
       <LearnerPage width="narrow">
         <PageHeader
@@ -178,9 +221,22 @@ export default async function LessonPage({
               </div>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
-              <StatRow label="Questions" value="80" />
-              <StatRow label="Domains" value="6 assessment domains" />
-              <StatRow label="Passing score" value="70%" />
+              <StatRow
+                label="Questions"
+                value={quizSummary ? String(quizSummary.aggregation.questionCount) : "Not available"}
+              />
+              <StatRow
+                label="Domains"
+                value={
+                  quizSummary
+                    ? `${assessmentDomainCount} assessment ${assessmentDomainCount === 1 ? "domain" : "domains"}`
+                    : "Not available"
+                }
+              />
+              <StatRow
+                label="Passing score"
+                value={passingScore !== null ? `${passingScore}%` : "Not specified"}
+              />
               <StatRow
                 label="Time limit"
                 value={lesson.quiz.timeLimitSeconds ? `${Math.round(lesson.quiz.timeLimitSeconds / 60)} minutes` : "Untimed"}
@@ -200,7 +256,7 @@ export default async function LessonPage({
                 timeLimitSeconds={lesson.quiz.timeLimitSeconds ?? null}
                 shuffleQuestions={lesson.quiz.shuffleQuestions}
                 shuffleChoices={lesson.quiz.shuffleChoices}
-                calculatorSettingsJson={(lesson.quiz as any).calculatorSettingsJson ?? null}
+                calculatorSettingsJson={lesson.quiz.calculatorSettingsJson ?? null}
               />
             </div>
           </div>
@@ -226,7 +282,7 @@ export default async function LessonPage({
     }
 
     // External link: YouTube / Vimeo / Loom / Google Drive / Wistia / direct file
-    const rawUrl = (lesson as any).videoUrl as string | null;
+    const rawUrl = lesson.videoUrl ?? null;
     if (rawUrl) {
       const meta = parseVideoUrl(rawUrl);
       if (meta && meta.embedUrl) {
@@ -275,9 +331,11 @@ export default async function LessonPage({
   return (
     <LearnerPage width="narrow">
       <PageHeader eyebrow="Lesson" title={lesson.title} backHref={backHref} backLabel={backLabel} icon={Icons.BookOpen} />
-      <div className="rounded-lg border border-dashed border-slate-200 bg-white px-6 py-16 text-center text-sm text-slate-500">
-        This lesson has no content yet.
-      </div>
+      <EmptyState
+        title="This lesson has no content yet"
+        description="Return to the course and choose another published lesson while this one is prepared."
+        icon={Icons.BookOpen}
+      />
     </LearnerPage>
   );
 }

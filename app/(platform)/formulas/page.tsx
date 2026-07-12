@@ -1,16 +1,22 @@
+// Front-end learner formula reference: app/(platform)/formulas/page.tsx
+
 import { EmptyState, LearnerPage, PageHeader } from "@/components/ui/LearnerPrimitives";
 import { FormulaCompass } from "@/components/layout/FormulaCompass";
-import { FormulaCalculatorProvider } from "@/components/layout/FormulaCalculatorProvider";
+import {
+  FormulaCalculatorProvider,
+  type FormulaSection,
+} from "@/components/layout/FormulaCalculatorProvider";
 import { adminDcQuery } from "@/lib/firebase/admin-dc";
 import { DEV_FORMULA_SECTIONS } from "@/lib/dev-content";
 import { ensureDevDataSeeded } from "@/lib/dev-seed";
-import { isDevelopmentEnvironment } from "@/lib/dev-gate";
 import { dedupeFormulaSections } from "@/lib/utils";
 import { listUserFavorites } from "@/lib/firebase/favorites";
 import { getLearnerSession } from "@/lib/firebase/learner-session";
 import * as Icons from "@/components/ui/Icons";
 
-async function getFormulaSectionsData() {
+const isDevEnvironment = process.env.NODE_ENV === "development";
+
+async function getFormulaSectionsData(): Promise<FormulaSection[]> {
   try {
     type FormulaSectionsData = {
       formulaSections: Array<{
@@ -32,7 +38,7 @@ async function getFormulaSectionsData() {
     };
 
     let data = await adminDcQuery<FormulaSectionsData>("GetFormulaSections");
-    if (data.formulaSections.length === 0 && isDevelopmentEnvironment()) {
+    if (data.formulaSections.length === 0 && isDevEnvironment) {
       await ensureDevDataSeeded().catch(() => null);
       data = await adminDcQuery<FormulaSectionsData>("GetFormulaSections").catch(
         (): FormulaSectionsData => ({ formulaSections: [] })
@@ -49,7 +55,7 @@ async function getFormulaSectionsData() {
     })));
     return sections;
   } catch {
-    return isDevelopmentEnvironment() ? DEV_FORMULA_SECTIONS : [];
+    return isDevEnvironment ? DEV_FORMULA_SECTIONS : [];
   }
 }
 
@@ -79,17 +85,17 @@ export default async function FormulasPage() {
       <PageHeader
         eyebrow="Formula Compass"
         title="Assessment formula reference"
-        description={`${totalFormulas || 53} formulas organized by assessment method section for fast study and exam review.`}
+        description={`${totalFormulas} formulas organized by assessment method section for fast study and exam review.`}
         icon={Icons.Calculator}
       />
-      {sections.length === 0 ? (
+      {sections.length === 0 || totalFormulas === 0 ? (
         <EmptyState
           title="No formulas available"
           description="Formula data could not be loaded or has not been imported yet. If you are developing locally, confirm the Data Connect service you intend to use is available."
           icon={Icons.Search}
         />
       ) : (
-        <FormulaCalculatorProvider initialSections={sections as any}>
+        <FormulaCalculatorProvider initialSections={sections}>
           <FormulaCompass
             sections={sections}
             initialFavoriteFormulaIds={favoriteFormulaIds}

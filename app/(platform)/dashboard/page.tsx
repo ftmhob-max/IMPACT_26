@@ -1,3 +1,5 @@
+// Front-end learner dashboard: app/(platform)/dashboard/page.tsx
+
 import Link from "next/link";
 import {
   EmptyState,
@@ -12,8 +14,30 @@ import {
   IconTile,
 } from "@/components/ui/LearnerPrimitives";
 import * as Icons from "@/components/ui/Icons";
+import { ReminderNudge } from "@/components/platform/ReminderNudge";
+import { StudyMomentum } from "@/components/platform/StudyMomentum";
 import { getLearnerSession } from "@/lib/firebase/learner-session";
 import { adminDcQuery } from "@/lib/firebase/admin-dc";
+import {
+  deriveCatalogMetrics,
+  deriveLearnerPortalMetrics,
+  getLearnerCatalog,
+  listPublishedLearnerCatalog,
+  listPublishedQuizzes,
+  type LearnerCatalogCourse,
+  type LearnerPortalMetrics,
+  type PublishedQuiz,
+} from "@/lib/firebase/learner-portal";
+import {
+  getDevLearnerCatalogCourses,
+  getDevPublishedQuizzes,
+} from "@/lib/dev-content";
+import { ensureDevDataSeeded } from "@/lib/dev-seed";
+import { getStudyRhythm } from "@/lib/firebase/study-rhythm";
+import { getUserProfileSettings } from "@/lib/profile-settings";
+import { deriveStudyReminder } from "@/lib/study-reminders";
+
+const isDevEnvironment = process.env.NODE_ENV === "development";
 
 interface LatestAttempt {
   id: string;
@@ -42,9 +66,53 @@ async function getLatestAttempt(userId: string): Promise<LatestAttempt | null> {
   }
 }
 
+async function getDashboardCatalog(userId: string | null): Promise<LearnerCatalogCourse[]> {
+  try {
+    if (isDevEnvironment) {
+      await ensureDevDataSeeded().catch(() => null);
+    }
+
+    const courses = userId
+      ? await getLearnerCatalog(userId)
+      : await listPublishedLearnerCatalog();
+    if (courses.length > 0 || !isDevEnvironment) return courses;
+  } catch {
+    if (!isDevEnvironment) return [];
+  }
+
+  return deriveCatalogMetrics(getDevLearnerCatalogCourses(), [], []);
+}
+
+async function getDashboardQuizzes(): Promise<PublishedQuiz[]> {
+  try {
+    const quizzes = await listPublishedQuizzes();
+    if (quizzes.length > 0 || !isDevEnvironment) return quizzes;
+  } catch {
+    if (!isDevEnvironment) return [];
+  }
+
+  return getDevPublishedQuizzes();
+}
+
 export default async function DashboardPage() {
   const session = await getLearnerSession();
-  const latestAttempt = session ? await getLatestAttempt(session.uid) : null;
+  const [catalog, quizzes, latestAttempt, studyRhythm, profileSettingsResult] = await Promise.all([
+    getDashboardCatalog(session?.uid ?? null),
+    getDashboardQuizzes(),
+    session ? getLatestAttempt(session.uid) : Promise.resolve(null),
+    session ? getStudyRhythm(session.uid).catch(() => null) : Promise.resolve(null),
+    session ? getUserProfileSettings(session.uid) : Promise.resolve(null),
+  ]);
+  const portalMetrics = deriveLearnerPortalMetrics(catalog, quizzes);
+  const reminderStatus = studyRhythm && profileSettingsResult
+    ? deriveStudyReminder({
+        remindersEnabled: profileSettingsResult.settings.remindersEnabled,
+        reminderAfterDays: profileSettingsResult.settings.reminderAfterDays,
+        defaultStudyGoal: profileSettingsResult.settings.defaultStudyGoal,
+        lastActivityAt: studyRhythm.lastActivityAt,
+        referenceTime: new Date(),
+      })
+    : null;
 
   return (
     <LearnerPage>
@@ -56,33 +124,39 @@ export default async function DashboardPage() {
         icon={Icons.LayoutDashboard}
       />
 
+      {reminderStatus ? (
+        <ReminderNudge due={reminderStatus.due} studyGoal={reminderStatus.studyGoal} />
+      ) : null}
+
       <div className="mb-6">
-        <ContinuePanel latestAttempt={latestAttempt} />
+        <ContinuePanel latestAttempt={latestAttempt} portalMetrics={portalMetrics} />
       </div>
+
+      {studyRhythm ? <StudyMomentum studyRhythm={studyRhythm} /> : null}
 
       <StudyLoopStrip />
 
       <div className="grid gap-4 sm:grid-cols-3">
         <MetricCard
-          label="Practice"
-          value="14"
-          detail="Evaluator courses from beginner to advanced"
+          label="Courses"
+          value={String(portalMetrics.publishedCourses)}
+          detail="Published evaluator learning paths"
           tone="blue"
           icon={Icons.GraduationCap}
         />
         <MetricCard
-          label="Formulas"
-          value="Core"
-          detail="Assessment ratios, cap rates, income, cost, and equity"
+          label="Lessons"
+          value={String(portalMetrics.publishedLessons)}
+          detail="Published lessons across the academy"
           tone="green"
-          icon={Icons.Compass}
+          icon={Icons.BookOpen}
         />
         <MetricCard
-          label="Mode"
-          value="Cases"
-          detail="Parcel records, evidence packets, and review memos"
+          label="Exams"
+          value={String(portalMetrics.publishedQuizzes)}
+          detail="Published quizzes and competency checks"
           tone="amber"
-          icon={Icons.TrendingUp}
+          icon={Icons.Target}
         />
       </div>
 
@@ -112,7 +186,7 @@ export default async function DashboardPage() {
               index="3"
               title="Practice with appeal and parcel scenarios"
               description="Review evidence packets, submit decisions, and use rationales to strengthen documentation and communication."
-              href="/courses"
+              href="/exams"
               cta="Find exam"
               icon={Icons.Target}
             />
@@ -186,7 +260,13 @@ function StudyLoopStrip() {
   );
 }
 
-function ContinuePanel({ latestAttempt }: { latestAttempt: LatestAttempt | null }) {
+function ContinuePanel({
+  latestAttempt,
+  portalMetrics,
+}: {
+  latestAttempt: LatestAttempt | null;
+  portalMetrics: LearnerPortalMetrics;
+}) {
   const score = latestAttempt?.scorePct ?? null;
   const hasScore = score != null;
   return (
@@ -207,7 +287,7 @@ function ContinuePanel({ latestAttempt }: { latestAttempt: LatestAttempt | null 
                 : "The learner portal is organized around a field-ready loop: learn the concept, inspect evidence, calculate support, and defend the assessment decision."}
             </p>
             <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-              <PrimaryAction href={hasScore && latestAttempt ? `/quiz/${latestAttempt.id}` : "/courses"}>
+              <PrimaryAction href={hasScore && latestAttempt ? `/quiz/${latestAttempt.id}/review` : "/courses"}>
                 {hasScore ? "Review attempt" : "Start course"}
               </PrimaryAction>
               <SecondaryAction href="/formulas">Open Formula Compass</SecondaryAction>
@@ -217,14 +297,18 @@ function ContinuePanel({ latestAttempt }: { latestAttempt: LatestAttempt | null 
 
         <div className="rounded-lg border border-slate-200 bg-[#f8fbff] p-4 shadow-sm">
           <ProgressMeter
-            value={hasScore ? Math.round(score ?? 0) : 0}
-            label={hasScore ? "Latest score" : "Course progress"}
-            detail={hasScore ? `${score?.toFixed(1)}%` : "Not started"}
+            value={hasScore ? Math.round(score ?? 0) : portalMetrics.progressPercent}
+            label={hasScore ? "Latest score" : "Lesson progress"}
+            detail={
+              hasScore
+                ? `${score?.toFixed(1)}%`
+                : `${portalMetrics.completedLessons} of ${portalMetrics.publishedLessons} complete`
+            }
             tone={hasScore && latestAttempt?.passed ? "green" : "blue"}
           />
           <div className="mt-4 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4">
-            <MiniMetric label="Tracks" value="5" />
-            <MiniMetric label="Cases" value="Live" />
+            <MiniMetric label="Courses" value={String(portalMetrics.publishedCourses)} />
+            <MiniMetric label="Exams" value={String(portalMetrics.publishedQuizzes)} />
           </div>
           <div className="mt-4 space-y-2 border-t border-slate-100 pt-4">
             <ReadinessCue label="Current move" value={hasScore ? "Review rationale" : "Start academy"} />
@@ -292,7 +376,7 @@ function RecentActivity({ attempt }: { attempt: LatestAttempt }) {
           </div>
         </div>
         <div className="flex flex-col gap-2 min-[380px]:flex-row sm:shrink-0">
-          <SecondaryAction href={`/quiz/${attempt.id}`} icon={false}>Review attempt</SecondaryAction>
+          <SecondaryAction href={`/quiz/${attempt.id}/review`} icon={false}>Review attempt</SecondaryAction>
           <PrimaryAction href="/courses" icon={false}>
             Take again
           </PrimaryAction>

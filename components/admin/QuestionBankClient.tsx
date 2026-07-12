@@ -3,6 +3,7 @@
 import { type ReactNode, useState, useMemo, useCallback, useEffect } from "react";
 import { cn, DOMAINS as DOMAIN_CONFIG } from "@/lib/utils";
 import * as Icons from "@/components/ui/Icons";
+import { confirmDialog } from "@/components/admin/AdminFeedback";
 import { DomainCombobox } from "@/components/admin/DomainCombobox";
 import { DomainBadge } from "@/components/ui/DomainBadge";
 import { DifficultyBadge } from "@/components/ui/DifficultyBadge";
@@ -230,20 +231,23 @@ export function QuestionBankClient({ questions, quizzes }: Props) {
     }).catch(() => {});
   }, []);
 
-  async function runBulkStatus() {
+  // Accepts an optional status override so quick-action buttons (Publish /
+  // Archive) can reuse the same flow as the status dropdown's Apply button.
+  async function runBulkStatus(statusOverride?: string) {
     if (selected.size === 0 || bulkBusy) return;
+    const status = statusOverride ?? bulkStatus;
     setBulkBusy(true);
     setBulkMessage(null);
     try {
       const res = await fetch("/api/admin/questions/bulk", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "set-status", ids: [...selected], status: bulkStatus }),
+        body: JSON.stringify({ action: "set-status", ids: [...selected], status }),
       });
       const data = await res.json();
       if (res.ok) {
-        selected.forEach((id) => setLocalStatuses((prev) => ({ ...prev, [id]: bulkStatus })));
-        setBulkMessage({ ok: true, text: `Updated ${data.updated} question${data.updated !== 1 ? "s" : ""} to "${bulkStatus}".` });
+        selected.forEach((id) => setLocalStatuses((prev) => ({ ...prev, [id]: status })));
+        setBulkMessage({ ok: true, text: `Updated ${data.updated} question${data.updated !== 1 ? "s" : ""} to "${status}".` });
         clearSelection();
       } else {
         setBulkMessage({ ok: false, text: data.error ?? "Failed" });
@@ -253,6 +257,38 @@ export function QuestionBankClient({ questions, quizzes }: Props) {
     } finally {
       setBulkBusy(false);
     }
+  }
+
+  // Bulk delete reuses the per-question DELETE endpoint for each selection.
+  async function runBulkDelete() {
+    if (selected.size === 0 || bulkBusy) return;
+    const count = selected.size;
+    const confirmed = await confirmDialog(
+      `Delete ${count} selected question${count !== 1 ? "s" : ""}? This cannot be undone.`,
+      { danger: true, title: "Delete questions", confirmLabel: "Delete" },
+    );
+    if (!confirmed) return;
+    setBulkBusy(true);
+    setBulkMessage(null);
+    const ids = [...selected];
+    const results = await Promise.allSettled(
+      ids.map((id) => fetch(`/api/admin/questions/${id}`, { method: "DELETE" })),
+    );
+    const deletedIds = new Set<string>();
+    results.forEach((result, index) => {
+      if (result.status === "fulfilled" && result.value.ok) deletedIds.add(ids[index]);
+    });
+    setQuestionItems((prev) => prev.filter((question) => !deletedIds.has(question.id)));
+    setBulkBusy(false);
+    clearSelection();
+    const failed = ids.length - deletedIds.size;
+    setBulkMessage({
+      ok: failed === 0,
+      text:
+        failed === 0
+          ? `Deleted ${deletedIds.size} question${deletedIds.size !== 1 ? "s" : ""}.`
+          : `${deletedIds.size} deleted, ${failed} failed.`,
+    });
   }
 
   async function runBulkAssign() {
@@ -303,7 +339,7 @@ export function QuestionBankClient({ questions, quizzes }: Props) {
   }
 
   async function deleteQuestion(question: Question) {
-    if (!window.confirm(`Delete question "${question.questionText.slice(0, 80)}${question.questionText.length > 80 ? "…" : ""}"? This cannot be undone.`)) return;
+    if (!(await confirmDialog(`Delete question "${question.questionText.slice(0, 80)}${question.questionText.length > 80 ? "…" : ""}"? This cannot be undone.`, { danger: true, title: "Delete question" }))) return;
     const res = await fetch(`/api/admin/questions/${question.id}`, { method: "DELETE" });
     const data = await res.json().catch(() => ({}));
     if (res.ok) {
@@ -393,12 +429,32 @@ export function QuestionBankClient({ questions, quizzes }: Props) {
             <span className="text-xs text-slate-500">Apply changes to the current selection across filtered pages.</span>
             <button type="button" onClick={clearSelection} className="text-xs text-slate-500 underline hover:text-slate-700">Clear</button>
             <div className="h-4 w-px bg-slate-300" />
+            {/* Quick status actions */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => runBulkStatus("published")}
+                disabled={bulkBusy}
+                className="rounded bg-emerald-600 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+              >
+                Publish
+              </button>
+              <button
+                type="button"
+                onClick={() => runBulkStatus("archived")}
+                disabled={bulkBusy}
+                className="rounded bg-slate-500 px-3 py-1 text-xs font-semibold text-white hover:bg-slate-600 disabled:opacity-60"
+              >
+                Archive
+              </button>
+            </div>
+            <div className="h-4 w-px bg-slate-300" />
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium text-slate-600">Set status:</span>
               <select className="admin-input py-1 text-xs" value={bulkStatus} onChange={(e) => setBulkStatus(e.target.value)}>
                 {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
-              <button type="button" onClick={runBulkStatus} disabled={bulkBusy} className="rounded bg-slate-700 px-3 py-1 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-60">Apply</button>
+              <button type="button" onClick={() => runBulkStatus()} disabled={bulkBusy} className="rounded bg-slate-700 px-3 py-1 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-60">Apply</button>
             </div>
             {quizzes.length > 0 && (
               <>
@@ -422,6 +478,17 @@ export function QuestionBankClient({ questions, quizzes }: Props) {
             >
               <Icons.Shuffle size={12} />
               Shuffle choices
+            </button>
+            <div className="h-4 w-px bg-slate-300" />
+            <button
+              type="button"
+              onClick={runBulkDelete}
+              disabled={bulkBusy}
+              className="flex items-center gap-1.5 rounded bg-red-600 px-3 py-1 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+              title="Delete all selected questions"
+            >
+              <Icons.Trash2 size={12} />
+              Delete
             </button>
             {bulkBusy && <span className="text-xs text-slate-500">Working…</span>}
           </div>

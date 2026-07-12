@@ -1,3 +1,4 @@
+// Front-end shared learner UI primitives: components/ui/LearnerPrimitives.tsx
 import Link from "next/link";
 import type { ReactNode, ComponentType } from "react";
 import { cn } from "@/lib/utils";
@@ -5,13 +6,45 @@ import { ArrowRight, ChevronLeft, type IconProps } from "./Icons";
 
 type Tone = "blue" | "green" | "amber" | "slate" | "red" | "purple";
 
+// Tone palette driven by semantic theme tokens so tinted labels, tiles, and
+// badges adapt to light and dark without depending on the .dark override layer.
 const toneStyles: Record<Tone, { text: string; bg: string; border: string; soft: string }> = {
-  blue: { text: "text-[#185FA5]", bg: "bg-[#185FA5]", border: "border-[#b8d7f0]", soft: "bg-[#E6F1FB]" },
-  green: { text: "text-[#2f7a4d]", bg: "bg-[#2f7a4d]", border: "border-[#b9d8c5]", soft: "bg-[#f5fbf7]" },
-  amber: { text: "text-[#854F0B]", bg: "bg-[#c47c00]", border: "border-[#ecd39b]", soft: "bg-[#FAEEDA]" },
-  slate: { text: "text-slate-700", bg: "bg-slate-800", border: "border-slate-200", soft: "bg-slate-100" },
-  red: { text: "text-red-700", bg: "bg-red-700", border: "border-red-200", soft: "bg-red-50" },
-  purple: { text: "text-[#534AB7]", bg: "bg-[#534AB7]", border: "border-[#d8d5fb]", soft: "bg-[#EEEDFE]" },
+  blue: {
+    text: "text-[var(--impact-blue)]",
+    bg: "bg-[var(--impact-blue)]",
+    border: "border-[var(--impact-brand-border)]",
+    soft: "bg-[var(--impact-brand-soft)]",
+  },
+  green: {
+    text: "text-[var(--impact-success-text)]",
+    bg: "bg-[var(--impact-success-text)]",
+    border: "border-[var(--impact-success-border)]",
+    soft: "bg-[var(--impact-success-bg)]",
+  },
+  amber: {
+    text: "text-[var(--impact-warning-text)]",
+    bg: "bg-[var(--impact-warning-text)]",
+    border: "border-[var(--impact-warning-border)]",
+    soft: "bg-[var(--impact-warning-bg)]",
+  },
+  slate: {
+    text: "text-[var(--impact-muted)]",
+    bg: "bg-[var(--impact-ink)]",
+    border: "border-[var(--impact-border)]",
+    soft: "bg-[var(--impact-surface-muted)]",
+  },
+  red: {
+    text: "text-[var(--impact-danger-text)]",
+    bg: "bg-[var(--impact-danger-text)]",
+    border: "border-[var(--impact-danger-border)]",
+    soft: "bg-[var(--impact-danger-bg)]",
+  },
+  purple: {
+    text: "text-[#534AB7]",
+    bg: "bg-[#534AB7]",
+    border: "border-[var(--impact-brand-border)]",
+    soft: "bg-[var(--impact-brand-soft)]",
+  },
 };
 
 export function LearnerPage({
@@ -24,7 +57,7 @@ export function LearnerPage({
   return (
     <div
       className={cn(
-        "mx-auto w-full px-4 py-6 sm:px-6 sm:py-8 lg:py-10",
+        "learner-page mx-auto w-full px-4 py-6 sm:px-6 sm:py-8 lg:py-10",
         width === "narrow" ? "max-w-3xl" : "max-w-6xl"
       )}
     >
@@ -51,31 +84,31 @@ export function PageHeader({
   icon?: ComponentType<IconProps>;
 }) {
   return (
-    <header className="mb-6 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+    <header className="mb-6 overflow-hidden rounded-lg border border-[var(--impact-border)] bg-[var(--impact-surface)] shadow-sm">
       {backHref && backLabel && (
         <Link
           href={backHref}
-          className="mx-5 mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-[#185FA5] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2"
+          className="learner-interactive mx-5 mt-4 inline-flex items-center gap-1.5 rounded-sm text-xs font-bold text-[var(--impact-blue)] hover:underline"
         >
           <ChevronLeft size={14} />
           {backLabel}
         </Link>
       )}
       <div className="relative flex flex-col gap-5 px-5 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-6">
-        <div className="absolute inset-x-0 top-0 h-1 bg-[#185FA5]" />
+        <div className="absolute inset-x-0 top-0 h-1 bg-[var(--impact-blue)]" />
         <div className="max-w-3xl">
           <div className="flex items-start gap-3">
             {Icon && <IconTile icon={Icon} tone="blue" className="mt-0.5" />}
             <div>
               {eyebrow && (
-                <p className="mb-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#185FA5]">
+                <p className="mb-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-[var(--impact-blue)]">
                   {eyebrow}
                 </p>
               )}
-              <h1 className="text-2xl font-extrabold leading-tight tracking-[-0.02em] text-slate-950 sm:text-3xl">
+              <h1 className="text-2xl font-extrabold leading-tight tracking-[-0.02em] text-[var(--impact-ink)] sm:text-3xl">
                 {title}
               </h1>
-              {description && <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">{description}</p>}
+              {description && <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--impact-muted)]">{description}</p>}
             </div>
           </div>
         </div>
@@ -97,11 +130,11 @@ export function SectionPanel({
   className?: string;
 }) {
   return (
-    <section className={cn("overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm", className)}>
+    <section className={cn("overflow-hidden rounded-lg border border-[var(--impact-border)] bg-[var(--impact-surface)] shadow-sm", className)}>
       {(title || description) && (
-        <div className="border-b border-slate-100 px-5 py-4">
-          {title && <h2 className="text-sm font-extrabold text-slate-900">{title}</h2>}
-          {description && <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>}
+        <div className="border-b border-[var(--impact-border)] px-5 py-4">
+          {title && <h2 className="text-sm font-extrabold text-[var(--impact-ink)]">{title}</h2>}
+          {description && <p className="mt-1 text-xs leading-5 text-[var(--impact-faint)]">{description}</p>}
         </div>
       )}
       {children}
@@ -125,15 +158,15 @@ export function MetricCard({
   const toneStyle = toneStyles[tone];
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
+    <div className="learner-hover-surface rounded-lg border border-[var(--impact-border)] bg-[var(--impact-surface)] p-4 shadow-sm">
       <div className="mb-3 flex items-center justify-between">
         <div className={cn("inline-flex rounded-md border px-2 py-1 text-[11px] font-extrabold uppercase tracking-[0.08em]", toneStyle.text, toneStyle.soft, toneStyle.border)}>
           {label}
         </div>
         {Icon && <Icon className={cn("opacity-70", toneStyle.text)} size={20} />}
       </div>
-      <p className="text-2xl font-extrabold leading-none tracking-[-0.02em] text-slate-950">{value}</p>
-      {detail && <p className="mt-2 text-xs leading-5 text-slate-500">{detail}</p>}
+      <p className="text-2xl font-extrabold leading-none tracking-[-0.02em] text-[var(--impact-ink)]">{value}</p>
+      {detail && <p className="mt-2 text-xs leading-5 text-[var(--impact-faint)]">{detail}</p>}
     </div>
   );
 }
@@ -151,8 +184,10 @@ export function PrimaryAction({
   disabled?: boolean;
   icon?: boolean;
 }) {
+  // Solid brand button keeps a fixed dark-blue fill in both themes so the white
+  // label stays high-contrast (the --impact-blue token is intentionally light in dark mode).
   const classes =
-    "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-[#185FA5] px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#0d3d6e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-55";
+    "learner-interactive inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-[#185FA5] px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#0d3d6e] disabled:cursor-not-allowed disabled:opacity-55";
 
   const content = (
     <>
@@ -170,7 +205,7 @@ export function PrimaryAction({
   }
 
   return (
-    <button onClick={onClick} disabled={disabled} className={classes}>
+    <button type="button" onClick={onClick} disabled={disabled} className={classes}>
       {content}
     </button>
   );
@@ -190,7 +225,7 @@ export function SecondaryAction({
   icon?: boolean;
 }) {
   const classes =
-    "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-[#185FA5] bg-white px-4 py-2 text-sm font-bold text-[#185FA5] shadow-sm transition-colors hover:bg-[#E6F1FB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-55";
+    "learner-interactive inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-[var(--impact-blue)] bg-[var(--impact-surface)] px-4 py-2 text-sm font-bold text-[var(--impact-blue)] shadow-sm transition-colors hover:bg-[var(--impact-brand-soft)] disabled:cursor-not-allowed disabled:opacity-55";
 
   const content = (
     <>
@@ -208,7 +243,7 @@ export function SecondaryAction({
   }
 
   return (
-    <button onClick={onClick} disabled={disabled} className={classes}>
+    <button type="button" onClick={onClick} disabled={disabled} className={classes}>
       {content}
     </button>
   );
@@ -226,14 +261,14 @@ export function EmptyState({
   icon?: ComponentType<IconProps>;
 }) {
   return (
-    <div className="rounded-lg border border-dashed border-slate-200 bg-white px-6 py-12 text-center shadow-sm">
+    <div className="rounded-lg border border-dashed border-[var(--impact-border)] bg-[var(--impact-surface)] px-6 py-12 text-center shadow-sm">
       {Icon && (
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg border border-[#b8d7f0] bg-[#E6F1FB] text-[#185FA5]">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg border border-[var(--impact-brand-border)] bg-[var(--impact-brand-soft)] text-[var(--impact-blue)]">
           <Icon size={28} strokeWidth={1.8} />
         </div>
       )}
-      <p className="text-sm font-extrabold text-slate-800">{title}</p>
-      <p className="mx-auto mt-1 max-w-md text-sm leading-6 text-slate-500">{description}</p>
+      <p className="text-sm font-extrabold text-[var(--impact-ink)]">{title}</p>
+      <p className="mx-auto mt-1 max-w-md text-sm leading-6 text-[var(--impact-faint)]">{description}</p>
       {action && <div className="mt-5">{action}</div>}
     </div>
   );
@@ -292,11 +327,11 @@ export function ProgressMeter({
     <div>
       {(label || detail) && (
         <div className="mb-2 flex items-center justify-between gap-3 text-xs">
-          {label && <span className="font-bold text-slate-700">{label}</span>}
-          {detail && <span className="font-semibold text-slate-500">{detail}</span>}
+          {label && <span className="font-bold text-[var(--impact-muted)]">{label}</span>}
+          {detail && <span className="font-semibold text-[var(--impact-faint)]">{detail}</span>}
         </div>
       )}
-      <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+      <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--impact-surface-muted)]">
         <div className={cn("h-full rounded-full transition-all", toneStyle.bg)} style={{ width: `${clamped}%` }} />
       </div>
     </div>

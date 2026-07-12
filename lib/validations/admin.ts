@@ -151,6 +151,29 @@ export const csvImportSchema = z.object({
 
 export const analyticsExportSchema = z.object({
   kind: z.enum(["attempts", "questions", "engagement"]).default("attempts"),
+  // Optional cohort scope — when present, exports are limited to cohort members.
+  cohortId: z.string().uuid().optional(),
+});
+
+// ─── Cohorts / Classes ────────────────────────────────────────────────────────
+
+export const cohortSchema = z.object({
+  name: z.string().trim().min(2).max(120),
+  description: z.string().trim().max(2000).optional().nullable(),
+});
+
+export const cohortUpdateSchema = z.object({
+  name: z.string().trim().min(2).max(120).optional(),
+  description: z.string().trim().max(2000).optional().nullable(),
+  archived: z.boolean().optional(),
+});
+
+export const cohortMembershipSchema = z.object({
+  userId: z.string().trim().min(1),
+});
+
+export const cohortInstructorSchema = z.object({
+  instructorId: z.string().trim().min(1),
 });
 
 export type ManualQuestionInput = z.infer<typeof manualQuestionSchema>;

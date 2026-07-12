@@ -4,24 +4,14 @@ import { spawn } from "node:child_process";
 import net from "node:net";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import {
+  getDataConnectEmulatorPort,
+  shouldUseDataConnectEmulator,
+} from "./emulator-config.mjs";
 
 const execFileAsync = promisify(execFile);
 const cwd = process.cwd();
 const envPath = path.join(cwd, ".env");
-
-function shouldUseEmulator(env) {
-  if (env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR === "true") return true;
-  if (env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR === "false") return false;
-  return env.NODE_ENV !== "production";
-}
-
-function getEmulatorPort(env) {
-  const rawPort =
-    env.NEXT_PUBLIC_FIREBASE_DATACONNECT_EMULATOR_PORT ??
-    env.FIREBASE_DATACONNECT_EMULATOR_PORT;
-  const port = Number.parseInt(rawPort ?? "9400", 10);
-  return Number.isInteger(port) && port > 0 ? port : 9400;
-}
 
 function isPortListening(port, host = "127.0.0.1") {
   return new Promise((resolve) => {
@@ -134,8 +124,8 @@ async function main() {
   }
 
   const env = process.env;
-  const useEmulator = shouldUseEmulator(env);
-  const emulatorPort = getEmulatorPort(env);
+  const useEmulator = shouldUseDataConnectEmulator(env);
+  const emulatorPort = getDataConnectEmulatorPort(env);
   const emulatorRunning = useEmulator && (await isPortListening(emulatorPort));
   const appPort = await findAvailablePort(
     Number.parseInt(env.PORT ?? env.NEXT_PORT ?? "3000", 10) || 3000

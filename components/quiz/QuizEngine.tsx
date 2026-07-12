@@ -381,8 +381,7 @@ function QuizScrollToTopButton() {
   return (
     <button
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-      className="scroll-top fixed bottom-5 right-5 z-[100] w-10 h-10 rounded-full text-white flex items-center justify-center text-base transition-all duration-150 hover:-translate-y-0.5"
-      style={{ background: "#185FA5", boxShadow: "0 2px 10px rgba(0,0,0,0.2)" }}
+      className="quiz-scroll-top scroll-top fixed bottom-5 right-5 z-[100] w-10 h-10 rounded-full flex items-center justify-center text-base transition-all duration-150 hover:-translate-y-0.5"
       aria-label="Scroll to top"
     >
       ↑

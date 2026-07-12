@@ -5,6 +5,7 @@ import * as Icons from "@/components/ui/Icons";
 import { FieldHint } from "@/components/ui/FieldHint";
 import { adminFetch } from "@/lib/admin/client-fetch";
 import { cn } from "@/lib/utils";
+import { toast, confirmDialog } from "@/components/admin/AdminFeedback";
 import { DomainCombobox } from "@/components/admin/DomainCombobox";
 import { QuestionBankPicker } from "@/components/admin/QuestionBankPicker";
 import { CalculatorAccessSettings } from "@/components/admin/CalculatorAccessSettings";
@@ -137,7 +138,6 @@ export function QuizManagementPanel({
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState<NewQuizForm>(DEFAULT_FORM);
   const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [selectedQuizId, setSelectedQuizId] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [showQuickImport, setShowQuickImport] = useState(false);
@@ -177,8 +177,7 @@ export function QuizManagementPanel({
   }, []);
 
   function showNotice(type: "success" | "error", text: string) {
-    setNotice({ type, text });
-    setTimeout(() => setNotice(null), 4000);
+    toast(type, text);
   }
 
   async function createQuiz() {
@@ -211,6 +210,20 @@ export function QuizManagementPanel({
   }
 
   async function publishQuiz(quizId: string, publish: boolean) {
+    // Publish-readiness guard: a quiz must have at least one question and no
+    // questions missing a correct answer before it can go live.
+    if (publish) {
+      const target = quizzes.find((quiz) => quiz.id === quizId);
+      if (target && target.readiness !== "ready") {
+        showNotice(
+          "error",
+          target.readiness === "empty"
+            ? "Add at least one question before publishing this quiz."
+            : `Fix ${target.incompleteQuestionCount} question${target.incompleteQuestionCount !== 1 ? "s" : ""} missing a correct answer before publishing.`,
+        );
+        return;
+      }
+    }
     const res = await fetch("/api/admin/quizzes", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -226,7 +239,7 @@ export function QuizManagementPanel({
   }
 
   async function deleteQuiz(quiz: Quiz) {
-    if (!window.confirm(`Delete quiz "${quiz.title}"? This cannot be undone.`)) return;
+    if (!(await confirmDialog(`Delete quiz "${quiz.title}"? This cannot be undone.`, { danger: true, title: "Delete quiz" }))) return;
     const res = await fetch("/api/admin/quizzes", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
@@ -260,13 +273,6 @@ export function QuizManagementPanel({
       <div className="flex flex-col gap-5 lg:flex-row">
       {/* Left: quiz list */}
       <div className={cn("min-w-0 space-y-5", selectedQuiz ? "w-full lg:w-80 lg:shrink-0" : "w-full")}>
-        {notice && (
-          <div className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${notice.type === "success" ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
-            {notice.type === "success" ? <Icons.Check size={16} /> : <Icons.X size={16} />}
-            {notice.text}
-          </div>
-        )}
-
         <div className="rounded-xl border border-black/10 bg-white shadow-sm">
           <div className="flex flex-wrap items-center gap-3 border-b border-slate-100 px-4 py-3">
             <div className="flex items-center gap-2">

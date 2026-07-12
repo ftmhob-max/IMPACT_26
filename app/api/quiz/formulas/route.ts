@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { adminDcQuery } from "@/lib/firebase/admin-dc";
 import { DEV_FORMULA_SECTIONS } from "@/lib/dev-content";
 import { ensureDevDataSeeded } from "@/lib/dev-seed";
-import { isDevelopmentEnvironment } from "@/lib/dev-gate";
 import { dedupeFormulaSections } from "@/lib/utils";
+
+const isDevEnvironment = process.env.NODE_ENV === "development";
 
 type FormulaSectionsData = {
   formulaSections: Array<{
@@ -46,7 +47,7 @@ function mapFormulaSections(data: FormulaSectionsData) {
 export async function GET() {
   try {
     let data = await adminDcQuery<FormulaSectionsData>("GetFormulaSections");
-    if (data.formulaSections.length === 0 && isDevelopmentEnvironment()) {
+    if (data.formulaSections.length === 0 && isDevEnvironment) {
       await ensureDevDataSeeded().catch(() => null);
       data = await adminDcQuery<FormulaSectionsData>("GetFormulaSections").catch(() => ({ formulaSections: [] }));
       if (data.formulaSections.length === 0) {
@@ -59,7 +60,7 @@ export async function GET() {
       headers: { "Cache-Control": "public, max-age=3600" },
     });
   } catch {
-    if (isDevelopmentEnvironment()) {
+    if (isDevEnvironment) {
       return NextResponse.json(DEV_FORMULA_SECTIONS, { status: 200 });
     }
     return NextResponse.json([], { status: 200 });

@@ -10,6 +10,24 @@ export type DateString = string;
 
 
 
+export interface AddCohortInstructorData {
+  cohortInstructor_upsert: CohortInstructor_Key;
+}
+
+export interface AddCohortInstructorVariables {
+  cohortId: UUIDString;
+  instructorId: string;
+}
+
+export interface AddCohortMembershipData {
+  cohortMembership_upsert: CohortMembership_Key;
+}
+
+export interface AddCohortMembershipVariables {
+  cohortId: UUIDString;
+  userId: string;
+}
+
 export interface AddQuestionToQuizData {
   quizQuestion_insert: QuizQuestion_Key;
 }
@@ -29,25 +47,25 @@ export interface AdminCohortStatsData {
       email: string;
       fullName?: string | null;
     } & User_Key;
-    quiz: {
-      id: UUIDString;
-      title: string;
-    } & Quiz_Key;
-    scorePct?: number | null;
-    passed?: boolean | null;
-    completedAt?: DateString | null;
-    quizResponses_on_attempt: ({
-      isCorrect?: boolean | null;
-      pointsEarned?: number | null;
-      pointsPossible?: number | null;
-      question: {
+      quiz: {
         id: UUIDString;
-        domain: string;
-        difficulty: string;
-        questionText: string;
-        topicTags?: string | null;
-      } & Question_Key;
-    })[];
+        title: string;
+      } & Quiz_Key;
+        scorePct?: number | null;
+        passed?: boolean | null;
+        completedAt?: DateString | null;
+        quizResponses_on_attempt: ({
+          isCorrect?: boolean | null;
+          pointsEarned?: number | null;
+          pointsPossible?: number | null;
+          question: {
+            id: UUIDString;
+            domain: string;
+            difficulty: string;
+            questionText: string;
+            topicTags?: string | null;
+          } & Question_Key;
+        })[];
   } & QuizAttempt_Key)[];
 }
 
@@ -55,6 +73,80 @@ export interface AdminCountQuestionsData {
   questions: ({
     id: UUIDString;
   } & Question_Key)[];
+}
+
+export interface AdminGetAttemptReviewData {
+  quizAttempt?: {
+    id: UUIDString;
+    user: {
+      id: string;
+    } & User_Key;
+      quiz: {
+        id: UUIDString;
+        title: string;
+        passingScore?: number | null;
+      } & Quiz_Key;
+        status: string;
+        questionOrder: string;
+        scoreRaw?: number | null;
+        scoreMax?: number | null;
+        scorePct?: number | null;
+        passed?: boolean | null;
+        startedAt: DateString;
+        completedAt?: DateString | null;
+  } & QuizAttempt_Key;
+    quizResponses: ({
+      question: {
+        id: UUIDString;
+        questionText: string;
+        domain: string;
+        difficulty: string;
+        rationale?: string | null;
+        calculation?: string | null;
+        sourceRef?: string | null;
+        answerChoices_on_question: ({
+          letter: string;
+          choiceText: string;
+          isCorrect: boolean;
+          explanation?: string | null;
+          position: number;
+        })[];
+      } & Question_Key;
+        selectedLetters: string;
+        isCorrect?: boolean | null;
+        pointsEarned?: number | null;
+        pointsPossible?: number | null;
+    })[];
+}
+
+export interface AdminGetAttemptReviewVariables {
+  attemptId: UUIDString;
+}
+
+export interface AdminListCohortsData {
+  cohorts: ({
+    id: UUIDString;
+    name: string;
+    description?: string | null;
+    archivedAt?: DateString | null;
+    createdAt: DateString;
+    updatedAt: DateString;
+    createdBy: {
+      id: string;
+      email: string;
+      fullName?: string | null;
+    } & User_Key;
+      cohortMemberships_on_cohort: ({
+        user: {
+          id: string;
+        } & User_Key;
+      })[];
+        cohortInstructors_on_cohort: ({
+          instructor: {
+            id: string;
+          } & User_Key;
+        })[];
+  } & Cohort_Key)[];
 }
 
 export interface AdminListCoursesData {
@@ -75,30 +167,30 @@ export interface AdminListCoursesData {
       email: string;
       fullName?: string | null;
     } & User_Key;
-    modules_on_course: ({
-      id: UUIDString;
-      title: string;
-      description?: string | null;
-      learningObjectives?: string | null;
-      prerequisiteModuleIds?: string | null;
-      position: number;
-      status: string;
-      lessons_on_module: ({
+      modules_on_course: ({
         id: UUIDString;
         title: string;
+        description?: string | null;
+        learningObjectives?: string | null;
+        prerequisiteModuleIds?: string | null;
         position: number;
-        lessonType: string;
         status: string;
-        isPublished: boolean;
-        durationSeconds?: number | null;
-        videoPlaybackId?: string | null;
-        videoUrl?: string | null;
-        contentJson?: string | null;
-        quiz?: {
+        lessons_on_module: ({
           id: UUIDString;
-        } & Quiz_Key;
-      } & Lesson_Key)[];
-    } & Module_Key)[];
+          title: string;
+          position: number;
+          lessonType: string;
+          status: string;
+          isPublished: boolean;
+          durationSeconds?: number | null;
+          videoPlaybackId?: string | null;
+          videoUrl?: string | null;
+          contentJson?: string | null;
+          quiz?: {
+            id: UUIDString;
+          } & Quiz_Key;
+        } & Lesson_Key)[];
+      } & Module_Key)[];
   } & Course_Key)[];
 }
 
@@ -118,8 +210,8 @@ export interface AdminListGlossaryTermsData {
       id: string;
       fullName?: string | null;
     } & User_Key;
-    createdAt: DateString;
-    updatedAt: DateString;
+      createdAt: DateString;
+      updatedAt: DateString;
   } & GlossaryTerm_Key)[];
 }
 
@@ -177,21 +269,21 @@ export interface AdminListQuizQuestionUsageData {
       id: UUIDString;
       title: string;
     } & Quiz_Key;
-    question: {
-      id: UUIDString;
-    } & Question_Key;
+      question: {
+        id: UUIDString;
+      } & Question_Key;
   })[];
-  lessons: ({
-    id: UUIDString;
-    title: string;
-    quiz?: {
-      id: UUIDString;
-    } & Quiz_Key;
-    module: {
+    lessons: ({
       id: UUIDString;
       title: string;
-    } & Module_Key;
-  } & Lesson_Key)[];
+      quiz?: {
+        id: UUIDString;
+      } & Quiz_Key;
+        module: {
+          id: UUIDString;
+          title: string;
+        } & Module_Key;
+    } & Lesson_Key)[];
 }
 
 export interface AdminListSourceMaterialFoldersData {
@@ -207,27 +299,27 @@ export interface AdminListSourceMaterialFoldersData {
       id: UUIDString;
       name: string;
     } & SourceMaterialFolder_Key;
-    course?: {
-      id: UUIDString;
-      title: string;
-    } & Course_Key;
-    lesson?: {
-      id: UUIDString;
-      title: string;
-      module: {
+      course?: {
         id: UUIDString;
         title: string;
-        course: {
+      } & Course_Key;
+        lesson?: {
           id: UUIDString;
           title: string;
-        } & Course_Key;
-      } & Module_Key;
-    } & Lesson_Key;
-    createdBy?: {
-      id: string;
-      email: string;
-      fullName?: string | null;
-    } & User_Key;
+          module: {
+            id: UUIDString;
+            title: string;
+            course: {
+              id: UUIDString;
+              title: string;
+            } & Course_Key;
+          } & Module_Key;
+        } & Lesson_Key;
+          createdBy?: {
+            id: string;
+            email: string;
+            fullName?: string | null;
+          } & User_Key;
   } & SourceMaterialFolder_Key)[];
 }
 
@@ -259,42 +351,42 @@ export interface AdminListSourceMaterialsData {
       email: string;
       fullName?: string | null;
     } & User_Key;
-    ingestionJobs_on_sourceMaterial: ({
-      id: UUIDString;
-      status: string;
-      parser: string;
-      extractedCharacters: number;
-      errorMessage?: string | null;
-      createdAt: DateString;
-      completedAt?: DateString | null;
-    } & IngestionJob_Key)[];
-    contentSourceLinks_on_sourceMaterial: ({
-      id: UUIDString;
-      referenceLabel?: string | null;
-      createdAt: DateString;
-      course?: {
+      ingestionJobs_on_sourceMaterial: ({
         id: UUIDString;
-        title: string;
-      } & Course_Key;
-      lesson?: {
-        id: UUIDString;
-        title: string;
-        module: {
+        status: string;
+        parser: string;
+        extractedCharacters: number;
+        errorMessage?: string | null;
+        createdAt: DateString;
+        completedAt?: DateString | null;
+      } & IngestionJob_Key)[];
+        contentSourceLinks_on_sourceMaterial: ({
           id: UUIDString;
-          title: string;
-          course: {
+          referenceLabel?: string | null;
+          createdAt: DateString;
+          course?: {
             id: UUIDString;
             title: string;
           } & Course_Key;
-        } & Module_Key;
-      } & Lesson_Key;
-      question?: {
-        id: UUIDString;
-        questionText: string;
-        domain: string;
-        difficulty: string;
-      } & Question_Key;
-    } & ContentSourceLink_Key)[];
+            lesson?: {
+              id: UUIDString;
+              title: string;
+              module: {
+                id: UUIDString;
+                title: string;
+                course: {
+                  id: UUIDString;
+                  title: string;
+                } & Course_Key;
+              } & Module_Key;
+            } & Lesson_Key;
+              question?: {
+                id: UUIDString;
+                questionText: string;
+                domain: string;
+                difficulty: string;
+              } & Question_Key;
+        } & ContentSourceLink_Key)[];
   } & SourceMaterial_Key)[];
 }
 
@@ -312,96 +404,96 @@ export interface AdminListSourceMaterialsRichData {
         id: UUIDString;
         name: string;
       } & SourceMaterialFolder_Key;
-      course?: {
-        id: UUIDString;
-        title: string;
-      } & Course_Key;
-      lesson?: {
-        id: UUIDString;
-        title: string;
-      } & Lesson_Key;
-      archivedAt?: DateString | null;
-      trashedAt?: DateString | null;
-      createdAt: DateString;
-      updatedAt: DateString;
-    } & SourceMaterialFolder_Key;
-    storagePath: string;
-    downloadUrl?: string | null;
-    extractedText?: string | null;
-    metadataJson?: string | null;
-    status: string;
-    starred: boolean;
-    archivedAt?: DateString | null;
-    trashedAt?: DateString | null;
-    reviewStatus: string;
-    visibility: string;
-    duplicateOf?: {
-      id: UUIDString;
-      title: string;
-    } & SourceMaterial_Key;
-    lastActivityAt?: DateString | null;
-    createdAt: DateString;
-    updatedAt: DateString;
-    uploadedBy?: {
-      id: string;
-      email: string;
-      fullName?: string | null;
-    } & User_Key;
-    sourceMaterialTagAssignments_on_sourceMaterial: ({
-      tag: {
-        id: UUIDString;
-        name: string;
-        color?: string | null;
-      } & SourceMaterialTag_Key;
-    })[];
-    sourceMaterialActivities_on_sourceMaterial: ({
-      id: UUIDString;
-      activityType: string;
-      message?: string | null;
-      metadataJson?: string | null;
-      createdAt: DateString;
-      actor?: {
-        id: string;
-        email: string;
-        fullName?: string | null;
-      } & User_Key;
-    } & SourceMaterialActivity_Key)[];
-    ingestionJobs_on_sourceMaterial: ({
-      id: UUIDString;
-      status: string;
-      parser: string;
-      extractedCharacters: number;
-      errorMessage?: string | null;
-      createdAt: DateString;
-      completedAt?: DateString | null;
-    } & IngestionJob_Key)[];
-    contentSourceLinks_on_sourceMaterial: ({
-      id: UUIDString;
-      referenceLabel?: string | null;
-      createdAt: DateString;
-      course?: {
-        id: UUIDString;
-        title: string;
-      } & Course_Key;
-      lesson?: {
-        id: UUIDString;
-        title: string;
-        module: {
+        course?: {
           id: UUIDString;
           title: string;
-          course: {
+        } & Course_Key;
+          lesson?: {
             id: UUIDString;
             title: string;
-          } & Course_Key;
-        } & Module_Key;
-      } & Lesson_Key;
-      question?: {
+          } & Lesson_Key;
+            archivedAt?: DateString | null;
+            trashedAt?: DateString | null;
+            createdAt: DateString;
+            updatedAt: DateString;
+    } & SourceMaterialFolder_Key;
+      storagePath: string;
+      downloadUrl?: string | null;
+      extractedText?: string | null;
+      metadataJson?: string | null;
+      status: string;
+      starred: boolean;
+      archivedAt?: DateString | null;
+      trashedAt?: DateString | null;
+      reviewStatus: string;
+      visibility: string;
+      duplicateOf?: {
         id: UUIDString;
-        questionText: string;
-        domain: string;
-        difficulty: string;
-      } & Question_Key;
-    } & ContentSourceLink_Key)[];
+        title: string;
+      } & SourceMaterial_Key;
+        lastActivityAt?: DateString | null;
+        createdAt: DateString;
+        updatedAt: DateString;
+        uploadedBy?: {
+          id: string;
+          email: string;
+          fullName?: string | null;
+        } & User_Key;
+          sourceMaterialTagAssignments_on_sourceMaterial: ({
+            tag: {
+              id: UUIDString;
+              name: string;
+              color?: string | null;
+            } & SourceMaterialTag_Key;
+          })[];
+            sourceMaterialActivities_on_sourceMaterial: ({
+              id: UUIDString;
+              activityType: string;
+              message?: string | null;
+              metadataJson?: string | null;
+              createdAt: DateString;
+              actor?: {
+                id: string;
+                email: string;
+                fullName?: string | null;
+              } & User_Key;
+            } & SourceMaterialActivity_Key)[];
+              ingestionJobs_on_sourceMaterial: ({
+                id: UUIDString;
+                status: string;
+                parser: string;
+                extractedCharacters: number;
+                errorMessage?: string | null;
+                createdAt: DateString;
+                completedAt?: DateString | null;
+              } & IngestionJob_Key)[];
+                contentSourceLinks_on_sourceMaterial: ({
+                  id: UUIDString;
+                  referenceLabel?: string | null;
+                  createdAt: DateString;
+                  course?: {
+                    id: UUIDString;
+                    title: string;
+                  } & Course_Key;
+                    lesson?: {
+                      id: UUIDString;
+                      title: string;
+                      module: {
+                        id: UUIDString;
+                        title: string;
+                        course: {
+                          id: UUIDString;
+                          title: string;
+                        } & Course_Key;
+                      } & Module_Key;
+                    } & Lesson_Key;
+                      question?: {
+                        id: UUIDString;
+                        questionText: string;
+                        domain: string;
+                        difficulty: string;
+                      } & Question_Key;
+                } & ContentSourceLink_Key)[];
   } & SourceMaterial_Key)[];
 }
 
@@ -420,6 +512,34 @@ export interface AnswerChoice_Key {
   __typename?: 'AnswerChoice_Key';
 }
 
+export interface CohortInstructor_Key {
+  cohortId: UUIDString;
+  instructorId: string;
+  __typename?: 'CohortInstructor_Key';
+}
+
+export interface CohortMembership_Key {
+  cohortId: UUIDString;
+  userId: string;
+  __typename?: 'CohortMembership_Key';
+}
+
+export interface Cohort_Key {
+  id: UUIDString;
+  __typename?: 'Cohort_Key';
+}
+
+export interface CompleteLessonProgressData {
+  userLessonProgress_upsert: UserLessonProgress_Key;
+}
+
+export interface CompleteLessonProgressVariables {
+  userId: string;
+  lessonId: UUIDString;
+  videoPositionSeconds?: number | null;
+  completedAt: DateString;
+}
+
 export interface CompleteQuizAttemptData {
   quizAttempt_update?: QuizAttempt_Key | null;
 }
@@ -430,6 +550,7 @@ export interface CompleteQuizAttemptVariables {
   scoreMax: number;
   scorePct: number;
   passed: boolean;
+  completedAt: DateString;
 }
 
 export interface ContentSourceLink_Key {
@@ -453,6 +574,17 @@ export interface CreateAnswerChoiceVariables {
   isCorrect: boolean;
   explanation?: string | null;
   position: number;
+}
+
+export interface CreateCohortData {
+  cohort_insert: Cohort_Key;
+}
+
+export interface CreateCohortVariables {
+  id: UUIDString;
+  name: string;
+  description?: string | null;
+  createdById: string;
 }
 
 export interface CreateContentSourceLinkData {
@@ -739,12 +871,42 @@ export interface CustomDomain_Key {
   __typename?: 'CustomDomain_Key';
 }
 
+export interface DailyActivity_Key {
+  userId: string;
+  activityDate: string;
+  __typename?: 'DailyActivity_Key';
+}
+
 export interface DeleteAnswerChoicesForQuestionData {
   answerChoice_deleteMany: number;
 }
 
 export interface DeleteAnswerChoicesForQuestionVariables {
   questionId: UUIDString;
+}
+
+export interface DeleteCohortData {
+  cohort_delete?: Cohort_Key | null;
+}
+
+export interface DeleteCohortInstructorsForCohortData {
+  cohortInstructor_deleteMany: number;
+}
+
+export interface DeleteCohortInstructorsForCohortVariables {
+  cohortId: UUIDString;
+}
+
+export interface DeleteCohortMembershipsForCohortData {
+  cohortMembership_deleteMany: number;
+}
+
+export interface DeleteCohortMembershipsForCohortVariables {
+  cohortId: UUIDString;
+}
+
+export interface DeleteCohortVariables {
+  id: UUIDString;
 }
 
 export interface DeleteContentSourceLinkData {
@@ -1004,20 +1166,30 @@ export interface GetAttemptForCompletionData {
   quizAttempt?: {
     id: UUIDString;
     status: string;
+    questionOrder: string;
     user: {
       id: string;
     } & User_Key;
-    quiz: {
-      id: UUIDString;
-      passingScore?: number | null;
-    } & Quiz_Key;
-    quizResponses_on_attempt: ({
-      pointsEarned?: number | null;
-      pointsPossible?: number | null;
-      question: {
-        domain: string;
-      };
-    })[];
+      quiz: {
+        id: UUIDString;
+        passingScore?: number | null;
+        quizQuestions_on_quiz: ({
+          position: number;
+          pointValue: number;
+          question: {
+            id: UUIDString;
+            domain: string;
+          } & Question_Key;
+        })[];
+      } & Quiz_Key;
+        quizResponses_on_attempt: ({
+          pointsEarned?: number | null;
+          pointsPossible?: number | null;
+          question: {
+            id: UUIDString;
+            domain: string;
+          } & Question_Key;
+        })[];
   } & QuizAttempt_Key;
 }
 
@@ -1033,15 +1205,15 @@ export interface GetAttemptForEvaluationData {
     user: {
       id: string;
     } & User_Key;
-    quiz: {
-      id: UUIDString;
-    } & Quiz_Key;
-    quizResponses_on_attempt: ({
-      question: {
+      quiz: {
         id: UUIDString;
-      } & Question_Key;
-      isCorrect?: boolean | null;
-    })[];
+      } & Quiz_Key;
+        quizResponses_on_attempt: ({
+          question: {
+            id: UUIDString;
+          } & Question_Key;
+            isCorrect?: boolean | null;
+        })[];
   } & QuizAttempt_Key;
 }
 
@@ -1076,27 +1248,220 @@ export interface GetAttemptResultsData {
       title: string;
       passingScore?: number | null;
     };
-    quizResponses_on_attempt: ({
-      question: {
-        id: UUIDString;
-        questionText: string;
-        difficulty: string;
-        domain: string;
-        formulaRef?: string | null;
-        rationale?: string | null;
-        calculation?: string | null;
-        sourceRef?: string | null;
-      } & Question_Key;
-      selectedLetters: string;
-      isCorrect?: boolean | null;
-      pointsEarned?: number | null;
-      pointsPossible?: number | null;
-    })[];
+      quizResponses_on_attempt: ({
+        question: {
+          id: UUIDString;
+          questionText: string;
+          difficulty: string;
+          domain: string;
+          formulaRef?: string | null;
+          rationale?: string | null;
+          calculation?: string | null;
+          sourceRef?: string | null;
+        } & Question_Key;
+          selectedLetters: string;
+          isCorrect?: boolean | null;
+          pointsEarned?: number | null;
+          pointsPossible?: number | null;
+      })[];
   } & QuizAttempt_Key;
 }
 
 export interface GetAttemptResultsVariables {
   attemptId: UUIDString;
+}
+
+export interface GetAttemptReviewData {
+  quizAttempt?: {
+    id: UUIDString;
+    status: string;
+    questionOrder: string;
+    scoreRaw?: number | null;
+    scoreMax?: number | null;
+    scorePct?: number | null;
+    passed?: boolean | null;
+    startedAt: DateString;
+    completedAt?: DateString | null;
+    user: {
+      id: string;
+    } & User_Key;
+      quiz: {
+        id: UUIDString;
+        title: string;
+        passingScore?: number | null;
+        quizQuestions_on_quiz: ({
+          position: number;
+          pointValue: number;
+          question: {
+            id: UUIDString;
+            questionText: string;
+            difficulty: string;
+            domain: string;
+            formulaRef?: string | null;
+            rationale?: string | null;
+            calculation?: string | null;
+            sourceRef?: string | null;
+            answerChoices_on_question: ({
+              id: UUIDString;
+              letter: string;
+              choiceText: string;
+              isCorrect: boolean;
+              explanation?: string | null;
+              position: number;
+            } & AnswerChoice_Key)[];
+          } & Question_Key;
+        })[];
+      } & Quiz_Key;
+        quizResponses_on_attempt: ({
+          selectedLetters: string;
+          isCorrect?: boolean | null;
+          pointsEarned?: number | null;
+          pointsPossible?: number | null;
+          answeredAt?: DateString | null;
+          question: {
+            id: UUIDString;
+            questionText: string;
+            difficulty: string;
+            domain: string;
+            formulaRef?: string | null;
+            rationale?: string | null;
+            calculation?: string | null;
+            sourceRef?: string | null;
+            answerChoices_on_question: ({
+              id: UUIDString;
+              letter: string;
+              choiceText: string;
+              isCorrect: boolean;
+              explanation?: string | null;
+              position: number;
+            } & AnswerChoice_Key)[];
+          } & Question_Key;
+        })[];
+  } & QuizAttempt_Key;
+}
+
+export interface GetAttemptReviewVariables {
+  attemptId: UUIDString;
+}
+
+export interface GetCohortAttemptsData {
+  quizAttempts: ({
+    id: UUIDString;
+    user: {
+      id: string;
+      email: string;
+      fullName?: string | null;
+    } & User_Key;
+      quiz: {
+        id: UUIDString;
+        title: string;
+      } & Quiz_Key;
+        scorePct?: number | null;
+        passed?: boolean | null;
+        completedAt?: DateString | null;
+        quizResponses_on_attempt: ({
+          isCorrect?: boolean | null;
+          pointsEarned?: number | null;
+          pointsPossible?: number | null;
+          question: {
+            id: UUIDString;
+            domain: string;
+            difficulty: string;
+            questionText: string;
+            topicTags?: string | null;
+          } & Question_Key;
+        })[];
+  } & QuizAttempt_Key)[];
+}
+
+export interface GetCohortAttemptsVariables {
+  userIds: string[];
+}
+
+export interface GetCohortDetailData {
+  cohort?: {
+    id: UUIDString;
+    name: string;
+    description?: string | null;
+    archivedAt?: DateString | null;
+    createdAt: DateString;
+    updatedAt: DateString;
+    createdBy: {
+      id: string;
+      email: string;
+      fullName?: string | null;
+    } & User_Key;
+  } & Cohort_Key;
+    cohortMemberships: ({
+      joinedAt: DateString;
+      user: {
+        id: string;
+        email: string;
+        fullName?: string | null;
+        role: string;
+      } & User_Key;
+    })[];
+      cohortInstructors: ({
+        assignedAt: DateString;
+        instructor: {
+          id: string;
+          email: string;
+          fullName?: string | null;
+          role: string;
+        } & User_Key;
+      })[];
+}
+
+export interface GetCohortDetailVariables {
+  cohortId: UUIDString;
+}
+
+export interface GetCohortEngagementData {
+  userCourseProgresses: ({
+    user: {
+      id: string;
+    } & User_Key;
+      course: {
+        id: UUIDString;
+        title: string;
+      } & Course_Key;
+        enrolledAt: DateString;
+        completedAt?: DateString | null;
+        lastAccessedAt?: DateString | null;
+  })[];
+    userLessonProgresses: ({
+      user: {
+        id: string;
+      } & User_Key;
+        lesson: {
+          id: UUIDString;
+        } & Lesson_Key;
+          status: string;
+          completedAt?: DateString | null;
+    })[];
+      dailyActivities: ({
+        user: {
+          id: string;
+        } & User_Key;
+          activityDate: string;
+          lastActivityAt: DateString;
+      })[];
+}
+
+export interface GetCohortEngagementVariables {
+  userIds: string[];
+}
+
+export interface GetCohortMemberIdsData {
+  cohortMemberships: ({
+    user: {
+      id: string;
+    } & User_Key;
+  })[];
+}
+
+export interface GetCohortMemberIdsVariables {
+  cohortId: UUIDString;
 }
 
 export interface GetCourseBySlugData {
@@ -1170,8 +1535,8 @@ export interface GetGlossaryNotesForUserData {
     term: {
       id: UUIDString;
     } & GlossaryTerm_Key;
-    createdAt: DateString;
-    updatedAt: DateString;
+      createdAt: DateString;
+      updatedAt: DateString;
   } & GlossaryNote_Key)[];
 }
 
@@ -1188,22 +1553,165 @@ export interface GetInProgressAttemptData {
     quiz: {
       timeLimitSeconds?: number | null;
     };
-    quizResponses_on_attempt: ({
-      question: {
-        id: UUIDString;
-      } & Question_Key;
-      selectedLetters: string;
-      isCorrect?: boolean | null;
-      pointsEarned?: number | null;
-      pointsPossible?: number | null;
-      answeredAt?: DateString | null;
-    })[];
+      quizResponses_on_attempt: ({
+        question: {
+          id: UUIDString;
+        } & Question_Key;
+          selectedLetters: string;
+          isCorrect?: boolean | null;
+          pointsEarned?: number | null;
+          pointsPossible?: number | null;
+          answeredAt?: DateString | null;
+      })[];
   } & QuizAttempt_Key)[];
 }
 
 export interface GetInProgressAttemptVariables {
   userId: string;
   quizId: UUIDString;
+}
+
+export interface GetLearnerCatalogData {
+  courses: ({
+    id: UUIDString;
+    slug: string;
+    title: string;
+    description?: string | null;
+    thumbnailUrl?: string | null;
+    publishedAt?: DateString | null;
+    modules_on_course: ({
+      id: UUIDString;
+      title: string;
+      position: number;
+      lessons_on_module: ({
+        id: UUIDString;
+        title: string;
+        position: number;
+        lessonType: string;
+        durationSeconds?: number | null;
+      } & Lesson_Key)[];
+    } & Module_Key)[];
+  } & Course_Key)[];
+    userCourseProgresses: ({
+      course: {
+        id: UUIDString;
+      } & Course_Key;
+        enrolledAt: DateString;
+        lastAccessedAt?: DateString | null;
+        completedAt?: DateString | null;
+    })[];
+      userLessonProgresses: ({
+        lesson: {
+          id: UUIDString;
+        } & Lesson_Key;
+          status: string;
+          videoPositionSeconds?: number | null;
+          completedAt?: DateString | null;
+      })[];
+}
+
+export interface GetLearnerCatalogVariables {
+  userId: string;
+}
+
+export interface GetLearnerProfileData {
+  users: ({
+    fullName?: string | null;
+    email: string;
+  })[];
+}
+
+export interface GetLearnerProfileVariables {
+  userId: string;
+}
+
+export interface GetLearnerProgressDetailData {
+  users: ({
+    id: string;
+    email: string;
+    fullName?: string | null;
+    role: string;
+    createdAt: DateString;
+  } & User_Key)[];
+    quizAttempts: ({
+      id: UUIDString;
+      quiz: {
+        id: UUIDString;
+        title: string;
+        passingScore?: number | null;
+      } & Quiz_Key;
+        scorePct?: number | null;
+        scoreRaw?: number | null;
+        scoreMax?: number | null;
+        passed?: boolean | null;
+        startedAt: DateString;
+        completedAt?: DateString | null;
+        quizResponses_on_attempt: ({
+          isCorrect?: boolean | null;
+          pointsEarned?: number | null;
+          pointsPossible?: number | null;
+          question: {
+            domain: string;
+          };
+        })[];
+    } & QuizAttempt_Key)[];
+      userCourseProgresses: ({
+        course: {
+          id: UUIDString;
+          title: string;
+        } & Course_Key;
+          enrolledAt: DateString;
+          completedAt?: DateString | null;
+          lastAccessedAt?: DateString | null;
+      })[];
+        userLessonProgresses: ({
+          lesson: {
+            id: UUIDString;
+          } & Lesson_Key;
+            status: string;
+            completedAt?: DateString | null;
+        })[];
+          dailyActivities: ({
+            activityDate: string;
+            lastActivityAt: DateString;
+          })[];
+}
+
+export interface GetLearnerProgressDetailVariables {
+  userId: string;
+}
+
+export interface GetLearnerSourceMaterialAccessData {
+  sourceMaterials: ({
+    id: UUIDString;
+    title: string;
+    fileName: string;
+    fileType: string;
+    storagePath: string;
+    downloadUrl?: string | null;
+    status: string;
+    visibility: string;
+    metadataJson?: string | null;
+    archivedAt?: DateString | null;
+    trashedAt?: DateString | null;
+    updatedAt: DateString;
+    lessons_on_sourceMaterial: ({
+      id: UUIDString;
+      status: string;
+      isPublished: boolean;
+    } & Lesson_Key)[];
+      contentSourceLinks_on_sourceMaterial: ({
+        lesson?: {
+          id: UUIDString;
+          status: string;
+          isPublished: boolean;
+        } & Lesson_Key;
+      })[];
+  } & SourceMaterial_Key)[];
+}
+
+export interface GetLearnerSourceMaterialAccessVariables {
+  materialId: UUIDString;
 }
 
 export interface GetLessonData {
@@ -1218,19 +1726,24 @@ export interface GetLessonData {
     quiz?: {
       id: UUIDString;
       title: string;
+      description?: string | null;
       timeLimitSeconds?: number | null;
+      passingScore?: number | null;
       shuffleQuestions: boolean;
       shuffleChoices: boolean;
+      calculatorSettingsJson?: string | null;
+      status: string;
+      publishedAt?: DateString | null;
     } & Quiz_Key;
-    sourceMaterial?: {
-      id: UUIDString;
-    } & SourceMaterial_Key;
-    module: {
-      course: {
-        slug: string;
-        title: string;
-      };
-    };
+      sourceMaterial?: {
+        id: UUIDString;
+      } & SourceMaterial_Key;
+        module: {
+          course: {
+            slug: string;
+            title: string;
+          };
+        };
   } & Lesson_Key;
 }
 
@@ -1296,6 +1809,24 @@ export interface GetLessonVersionsData {
 
 export interface GetLessonVersionsVariables {
   lessonId: UUIDString;
+}
+
+export interface GetPublishedCourseBySlugData {
+  courses: ({
+    id: UUIDString;
+    slug: string;
+    title: string;
+    isPublished: boolean;
+    modules_on_course: ({
+      lessons_on_module: ({
+        id: UUIDString;
+      } & Lesson_Key)[];
+    })[];
+  } & Course_Key)[];
+}
+
+export interface GetPublishedCourseBySlugVariables {
+  slug: string;
 }
 
 export interface GetQuestionWithAnswersData {
@@ -1364,26 +1895,26 @@ export interface GetQuizQuestionsAdminData {
     shuffleQuestions: boolean;
     shuffleChoices: boolean;
   } & Quiz_Key;
-  quizQuestions: ({
-    position: number;
-    pointValue: number;
-    question: {
-      id: UUIDString;
-      questionText: string;
-      difficulty: string;
-      domain: string;
-      formulaRef?: string | null;
-      isMultiselect: boolean;
-      answerChoices_on_question: ({
+    quizQuestions: ({
+      position: number;
+      pointValue: number;
+      question: {
         id: UUIDString;
-        letter: string;
-        choiceText: string;
-        isCorrect: boolean;
-        explanation?: string | null;
-        position: number;
-      } & AnswerChoice_Key)[];
-    } & Question_Key;
-  })[];
+        questionText: string;
+        difficulty: string;
+        domain: string;
+        formulaRef?: string | null;
+        isMultiselect: boolean;
+        answerChoices_on_question: ({
+          id: UUIDString;
+          letter: string;
+          choiceText: string;
+          isCorrect: boolean;
+          explanation?: string | null;
+          position: number;
+        } & AnswerChoice_Key)[];
+      } & Question_Key;
+    })[];
 }
 
 export interface GetQuizQuestionsAdminVariables {
@@ -1415,6 +1946,56 @@ export interface GetQuizQuestionsVariables {
   quizId: UUIDString;
 }
 
+export interface GetQuizSummaryData {
+  quiz?: {
+    id: UUIDString;
+    title: string;
+    description?: string | null;
+    timeLimitSeconds?: number | null;
+    passingScore?: number | null;
+    status: string;
+    publishedAt?: DateString | null;
+  } & Quiz_Key;
+    quizQuestions: ({
+      position: number;
+      pointValue: number;
+      question: {
+        id: UUIDString;
+        domain: string;
+        difficulty: string;
+      } & Question_Key;
+    })[];
+}
+
+export interface GetQuizSummaryVariables {
+  quizId: UUIDString;
+}
+
+export interface GetUserActivityHistoryData {
+  dailyActivities: ({
+    activityDate: string;
+    lastActivityAt: DateString;
+  })[];
+    completedAttempts: ({
+      completedAt?: DateString | null;
+    })[];
+      completedLessons: ({
+        completedAt?: DateString | null;
+      })[];
+        lessonNoteActivity: ({
+          createdAt: DateString;
+          updatedAt: DateString;
+        })[];
+          glossaryNoteActivity: ({
+            createdAt: DateString;
+            updatedAt: DateString;
+          })[];
+}
+
+export interface GetUserActivityHistoryVariables {
+  userId: string;
+}
+
 export interface GetUserAttemptHistoryData {
   quizAttempts: ({
     id: UUIDString;
@@ -1422,9 +2003,9 @@ export interface GetUserAttemptHistoryData {
       id: UUIDString;
       title: string;
     } & Quiz_Key;
-    scorePct?: number | null;
-    passed?: boolean | null;
-    completedAt?: DateString | null;
+      scorePct?: number | null;
+      passed?: boolean | null;
+      completedAt?: DateString | null;
   } & QuizAttempt_Key)[];
 }
 
@@ -1437,24 +2018,25 @@ export interface GetUserCourseProgressData {
     lesson: {
       id: UUIDString;
     } & Lesson_Key;
-    status: string;
-    videoPositionSeconds?: number | null;
-    completedAt?: DateString | null;
+      status: string;
+      videoPositionSeconds?: number | null;
+      completedAt?: DateString | null;
   })[];
 }
 
 export interface GetUserCourseProgressFullData {
   userCourseProgress: ({
     enrolledAt: DateString;
-  })[];
-  userLessonProgresses: ({
-    lesson: {
-      id: UUIDString;
-    } & Lesson_Key;
-    status: string;
-    videoPositionSeconds?: number | null;
     completedAt?: DateString | null;
   })[];
+    userLessonProgresses: ({
+      lesson: {
+        id: UUIDString;
+      } & Lesson_Key;
+        status: string;
+        videoPositionSeconds?: number | null;
+        completedAt?: DateString | null;
+    })[];
 }
 
 export interface GetUserCourseProgressFullVariables {
@@ -1510,20 +2092,20 @@ export interface GetUserProgressDetailsData {
       title: string;
       passingScore?: number | null;
     } & Quiz_Key;
-    scorePct?: number | null;
-    scoreRaw?: number | null;
-    scoreMax?: number | null;
-    passed?: boolean | null;
-    startedAt: DateString;
-    completedAt?: DateString | null;
-    quizResponses_on_attempt: ({
-      isCorrect?: boolean | null;
-      pointsEarned?: number | null;
-      pointsPossible?: number | null;
-      question: {
-        domain: string;
-      };
-    })[];
+      scorePct?: number | null;
+      scoreRaw?: number | null;
+      scoreMax?: number | null;
+      passed?: boolean | null;
+      startedAt: DateString;
+      completedAt?: DateString | null;
+      quizResponses_on_attempt: ({
+        isCorrect?: boolean | null;
+        pointsEarned?: number | null;
+        pointsPossible?: number | null;
+        question: {
+          domain: string;
+        };
+      })[];
   } & QuizAttempt_Key)[];
 }
 
@@ -1576,11 +2158,95 @@ export interface ListAdminQuizzesData {
   } & Quiz_Key)[];
 }
 
+export interface ListCohortsForInstructorData {
+  cohorts: ({
+    id: UUIDString;
+    name: string;
+    description?: string | null;
+    archivedAt?: DateString | null;
+    createdAt: DateString;
+    updatedAt: DateString;
+    createdBy: {
+      id: string;
+      email: string;
+      fullName?: string | null;
+    } & User_Key;
+      cohortMemberships_on_cohort: ({
+        user: {
+          id: string;
+        } & User_Key;
+      })[];
+        cohortInstructors_on_cohort: ({
+          instructor: {
+            id: string;
+          } & User_Key;
+        })[];
+  } & Cohort_Key)[];
+    cohortInstructors: ({
+      cohort: {
+        id: UUIDString;
+        name: string;
+        description?: string | null;
+        archivedAt?: DateString | null;
+        createdAt: DateString;
+        updatedAt: DateString;
+        createdBy: {
+          id: string;
+          email: string;
+          fullName?: string | null;
+        } & User_Key;
+          cohortMemberships_on_cohort: ({
+            user: {
+              id: string;
+            } & User_Key;
+          })[];
+            cohortInstructors_on_cohort: ({
+              instructor: {
+                id: string;
+              } & User_Key;
+            })[];
+      } & Cohort_Key;
+    })[];
+}
+
+export interface ListCohortsForInstructorVariables {
+  instructorId: string;
+}
+
 export interface ListCustomDomainsData {
   customDomains: ({
     id: UUIDString;
     name: string;
   } & CustomDomain_Key)[];
+}
+
+export interface ListLearnerSourceMaterialsData {
+  sourceMaterials: ({
+    id: UUIDString;
+    title: string;
+    fileName: string;
+    fileType: string;
+    metadataJson?: string | null;
+    status: string;
+    reviewStatus: string;
+    visibility: string;
+    archivedAt?: DateString | null;
+    trashedAt?: DateString | null;
+    createdAt: DateString;
+    updatedAt: DateString;
+    folder?: {
+      id: UUIDString;
+      name: string;
+      folderType: string;
+    } & SourceMaterialFolder_Key;
+      sourceMaterialTagAssignments_on_sourceMaterial: ({
+        tag: {
+          id: UUIDString;
+          name: string;
+          color?: string | null;
+        } & SourceMaterialTag_Key;
+      })[];
+  } & SourceMaterial_Key)[];
 }
 
 export interface ListPublishedCoursesData {
@@ -1590,9 +2256,19 @@ export interface ListPublishedCoursesData {
     title: string;
     description?: string | null;
     thumbnailUrl?: string | null;
-    createdBy: {
-      fullName?: string | null;
-    };
+    publishedAt?: DateString | null;
+    modules_on_course: ({
+      id: UUIDString;
+      title: string;
+      position: number;
+      lessons_on_module: ({
+        id: UUIDString;
+        title: string;
+        position: number;
+        lessonType: string;
+        durationSeconds?: number | null;
+      } & Lesson_Key)[];
+    } & Module_Key)[];
   } & Course_Key)[];
 }
 
@@ -1610,6 +2286,29 @@ export interface ListPublishedGlossaryTermsData {
     createdAt: DateString;
     updatedAt: DateString;
   } & GlossaryTerm_Key)[];
+}
+
+export interface ListPublishedQuizzesData {
+  quizzes: ({
+    id: UUIDString;
+    title: string;
+    description?: string | null;
+    timeLimitSeconds?: number | null;
+    passingScore?: number | null;
+    shuffleQuestions: boolean;
+    shuffleChoices: boolean;
+    calculatorSettingsJson?: string | null;
+    publishedAt?: DateString | null;
+    quizQuestions_on_quiz: ({
+      position: number;
+      pointValue: number;
+      question: {
+        id: UUIDString;
+        domain: string;
+        difficulty: string;
+      } & Question_Key;
+    })[];
+  } & Quiz_Key)[];
 }
 
 export interface MarkAnsweredAtData {
@@ -1652,6 +2351,34 @@ export interface QuizResponse_Key {
 export interface Quiz_Key {
   id: UUIDString;
   __typename?: 'Quiz_Key';
+}
+
+export interface RecordDailyActivityData {
+  dailyActivity_upsert: DailyActivity_Key;
+}
+
+export interface RecordDailyActivityVariables {
+  userId: string;
+  activityDate: string;
+  lastActivityAt: DateString;
+}
+
+export interface RemoveCohortInstructorData {
+  cohortInstructor_deleteMany: number;
+}
+
+export interface RemoveCohortInstructorVariables {
+  cohortId: UUIDString;
+  instructorId: string;
+}
+
+export interface RemoveCohortMembershipData {
+  cohortMembership_deleteMany: number;
+}
+
+export interface RemoveCohortMembershipVariables {
+  cohortId: UUIDString;
+  userId: string;
 }
 
 export interface RemoveQuestionFromQuizData {
@@ -1708,6 +2435,18 @@ export interface UpdateAnswerChoiceVariables {
   choiceText?: string | null;
   isCorrect?: boolean | null;
   explanation?: string | null;
+}
+
+export interface UpdateCohortData {
+  cohort_update?: Cohort_Key | null;
+}
+
+export interface UpdateCohortVariables {
+  id: UUIDString;
+  name?: string | null;
+  description?: string | null;
+  archivedAt?: DateString | null;
+  updatedAt: DateString;
 }
 
 export interface UpdateCourseData {
@@ -1793,6 +2532,16 @@ export interface UpdateLessonNoteVariables {
   lessonTitle?: string | null;
   content: string;
   updatedAt: DateString;
+}
+
+export interface UpdateLessonPlaybackData {
+  userLessonProgress_upsert: UserLessonProgress_Key;
+}
+
+export interface UpdateLessonPlaybackVariables {
+  userId: string;
+  lessonId: UUIDString;
+  videoPositionSeconds?: number | null;
 }
 
 export interface UpdateLessonVariables {
@@ -1924,6 +2673,17 @@ export interface UpdateSourceMaterialVariables {
   status?: string | null;
 }
 
+export interface UpdateUserCourseProgressData {
+  userCourseProgress_upsert: UserCourseProgress_Key;
+}
+
+export interface UpdateUserCourseProgressVariables {
+  userId: string;
+  courseId: UUIDString;
+  lastAccessedAt?: DateString | null;
+  completedAt?: DateString | null;
+}
+
 export interface UpdateUserRoleData {
   user_update?: User_Key | null;
 }
@@ -1942,6 +2702,7 @@ export interface UpsertLessonProgressVariables {
   lessonId: UUIDString;
   status: string;
   videoPositionSeconds?: number | null;
+  completedAt?: DateString | null;
 }
 
 export interface UpsertQuizResponseData {
@@ -2616,6 +3377,18 @@ export const enrollInCourseRef: EnrollInCourseRef;
 export function enrollInCourse(vars: EnrollInCourseVariables): MutationPromise<EnrollInCourseData, EnrollInCourseVariables>;
 export function enrollInCourse(dc: DataConnect, vars: EnrollInCourseVariables): MutationPromise<EnrollInCourseData, EnrollInCourseVariables>;
 
+interface UpdateUserCourseProgressRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateUserCourseProgressVariables): MutationRef<UpdateUserCourseProgressData, UpdateUserCourseProgressVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: UpdateUserCourseProgressVariables): MutationRef<UpdateUserCourseProgressData, UpdateUserCourseProgressVariables>;
+  operationName: string;
+}
+export const updateUserCourseProgressRef: UpdateUserCourseProgressRef;
+
+export function updateUserCourseProgress(vars: UpdateUserCourseProgressVariables): MutationPromise<UpdateUserCourseProgressData, UpdateUserCourseProgressVariables>;
+export function updateUserCourseProgress(dc: DataConnect, vars: UpdateUserCourseProgressVariables): MutationPromise<UpdateUserCourseProgressData, UpdateUserCourseProgressVariables>;
+
 interface UpsertLessonProgressRef {
   /* Allow users to create refs without passing in DataConnect */
   (vars: UpsertLessonProgressVariables): MutationRef<UpsertLessonProgressData, UpsertLessonProgressVariables>;
@@ -2627,6 +3400,42 @@ export const upsertLessonProgressRef: UpsertLessonProgressRef;
 
 export function upsertLessonProgress(vars: UpsertLessonProgressVariables): MutationPromise<UpsertLessonProgressData, UpsertLessonProgressVariables>;
 export function upsertLessonProgress(dc: DataConnect, vars: UpsertLessonProgressVariables): MutationPromise<UpsertLessonProgressData, UpsertLessonProgressVariables>;
+
+interface UpdateLessonPlaybackRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateLessonPlaybackVariables): MutationRef<UpdateLessonPlaybackData, UpdateLessonPlaybackVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: UpdateLessonPlaybackVariables): MutationRef<UpdateLessonPlaybackData, UpdateLessonPlaybackVariables>;
+  operationName: string;
+}
+export const updateLessonPlaybackRef: UpdateLessonPlaybackRef;
+
+export function updateLessonPlayback(vars: UpdateLessonPlaybackVariables): MutationPromise<UpdateLessonPlaybackData, UpdateLessonPlaybackVariables>;
+export function updateLessonPlayback(dc: DataConnect, vars: UpdateLessonPlaybackVariables): MutationPromise<UpdateLessonPlaybackData, UpdateLessonPlaybackVariables>;
+
+interface CompleteLessonProgressRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CompleteLessonProgressVariables): MutationRef<CompleteLessonProgressData, CompleteLessonProgressVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: CompleteLessonProgressVariables): MutationRef<CompleteLessonProgressData, CompleteLessonProgressVariables>;
+  operationName: string;
+}
+export const completeLessonProgressRef: CompleteLessonProgressRef;
+
+export function completeLessonProgress(vars: CompleteLessonProgressVariables): MutationPromise<CompleteLessonProgressData, CompleteLessonProgressVariables>;
+export function completeLessonProgress(dc: DataConnect, vars: CompleteLessonProgressVariables): MutationPromise<CompleteLessonProgressData, CompleteLessonProgressVariables>;
+
+interface RecordDailyActivityRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: RecordDailyActivityVariables): MutationRef<RecordDailyActivityData, RecordDailyActivityVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: RecordDailyActivityVariables): MutationRef<RecordDailyActivityData, RecordDailyActivityVariables>;
+  operationName: string;
+}
+export const recordDailyActivityRef: RecordDailyActivityRef;
+
+export function recordDailyActivity(vars: RecordDailyActivityVariables): MutationPromise<RecordDailyActivityData, RecordDailyActivityVariables>;
+export function recordDailyActivity(dc: DataConnect, vars: RecordDailyActivityVariables): MutationPromise<RecordDailyActivityData, RecordDailyActivityVariables>;
 
 interface CreateQuizAttemptRef {
   /* Allow users to create refs without passing in DataConnect */
@@ -2940,6 +3749,114 @@ export const createCustomDomainRef: CreateCustomDomainRef;
 export function createCustomDomain(vars: CreateCustomDomainVariables): MutationPromise<CreateCustomDomainData, CreateCustomDomainVariables>;
 export function createCustomDomain(dc: DataConnect, vars: CreateCustomDomainVariables): MutationPromise<CreateCustomDomainData, CreateCustomDomainVariables>;
 
+interface CreateCohortRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateCohortVariables): MutationRef<CreateCohortData, CreateCohortVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: CreateCohortVariables): MutationRef<CreateCohortData, CreateCohortVariables>;
+  operationName: string;
+}
+export const createCohortRef: CreateCohortRef;
+
+export function createCohort(vars: CreateCohortVariables): MutationPromise<CreateCohortData, CreateCohortVariables>;
+export function createCohort(dc: DataConnect, vars: CreateCohortVariables): MutationPromise<CreateCohortData, CreateCohortVariables>;
+
+interface UpdateCohortRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateCohortVariables): MutationRef<UpdateCohortData, UpdateCohortVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: UpdateCohortVariables): MutationRef<UpdateCohortData, UpdateCohortVariables>;
+  operationName: string;
+}
+export const updateCohortRef: UpdateCohortRef;
+
+export function updateCohort(vars: UpdateCohortVariables): MutationPromise<UpdateCohortData, UpdateCohortVariables>;
+export function updateCohort(dc: DataConnect, vars: UpdateCohortVariables): MutationPromise<UpdateCohortData, UpdateCohortVariables>;
+
+interface DeleteCohortRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteCohortVariables): MutationRef<DeleteCohortData, DeleteCohortVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteCohortVariables): MutationRef<DeleteCohortData, DeleteCohortVariables>;
+  operationName: string;
+}
+export const deleteCohortRef: DeleteCohortRef;
+
+export function deleteCohort(vars: DeleteCohortVariables): MutationPromise<DeleteCohortData, DeleteCohortVariables>;
+export function deleteCohort(dc: DataConnect, vars: DeleteCohortVariables): MutationPromise<DeleteCohortData, DeleteCohortVariables>;
+
+interface DeleteCohortMembershipsForCohortRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteCohortMembershipsForCohortVariables): MutationRef<DeleteCohortMembershipsForCohortData, DeleteCohortMembershipsForCohortVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteCohortMembershipsForCohortVariables): MutationRef<DeleteCohortMembershipsForCohortData, DeleteCohortMembershipsForCohortVariables>;
+  operationName: string;
+}
+export const deleteCohortMembershipsForCohortRef: DeleteCohortMembershipsForCohortRef;
+
+export function deleteCohortMembershipsForCohort(vars: DeleteCohortMembershipsForCohortVariables): MutationPromise<DeleteCohortMembershipsForCohortData, DeleteCohortMembershipsForCohortVariables>;
+export function deleteCohortMembershipsForCohort(dc: DataConnect, vars: DeleteCohortMembershipsForCohortVariables): MutationPromise<DeleteCohortMembershipsForCohortData, DeleteCohortMembershipsForCohortVariables>;
+
+interface DeleteCohortInstructorsForCohortRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteCohortInstructorsForCohortVariables): MutationRef<DeleteCohortInstructorsForCohortData, DeleteCohortInstructorsForCohortVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteCohortInstructorsForCohortVariables): MutationRef<DeleteCohortInstructorsForCohortData, DeleteCohortInstructorsForCohortVariables>;
+  operationName: string;
+}
+export const deleteCohortInstructorsForCohortRef: DeleteCohortInstructorsForCohortRef;
+
+export function deleteCohortInstructorsForCohort(vars: DeleteCohortInstructorsForCohortVariables): MutationPromise<DeleteCohortInstructorsForCohortData, DeleteCohortInstructorsForCohortVariables>;
+export function deleteCohortInstructorsForCohort(dc: DataConnect, vars: DeleteCohortInstructorsForCohortVariables): MutationPromise<DeleteCohortInstructorsForCohortData, DeleteCohortInstructorsForCohortVariables>;
+
+interface AddCohortMembershipRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: AddCohortMembershipVariables): MutationRef<AddCohortMembershipData, AddCohortMembershipVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: AddCohortMembershipVariables): MutationRef<AddCohortMembershipData, AddCohortMembershipVariables>;
+  operationName: string;
+}
+export const addCohortMembershipRef: AddCohortMembershipRef;
+
+export function addCohortMembership(vars: AddCohortMembershipVariables): MutationPromise<AddCohortMembershipData, AddCohortMembershipVariables>;
+export function addCohortMembership(dc: DataConnect, vars: AddCohortMembershipVariables): MutationPromise<AddCohortMembershipData, AddCohortMembershipVariables>;
+
+interface RemoveCohortMembershipRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: RemoveCohortMembershipVariables): MutationRef<RemoveCohortMembershipData, RemoveCohortMembershipVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: RemoveCohortMembershipVariables): MutationRef<RemoveCohortMembershipData, RemoveCohortMembershipVariables>;
+  operationName: string;
+}
+export const removeCohortMembershipRef: RemoveCohortMembershipRef;
+
+export function removeCohortMembership(vars: RemoveCohortMembershipVariables): MutationPromise<RemoveCohortMembershipData, RemoveCohortMembershipVariables>;
+export function removeCohortMembership(dc: DataConnect, vars: RemoveCohortMembershipVariables): MutationPromise<RemoveCohortMembershipData, RemoveCohortMembershipVariables>;
+
+interface AddCohortInstructorRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: AddCohortInstructorVariables): MutationRef<AddCohortInstructorData, AddCohortInstructorVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: AddCohortInstructorVariables): MutationRef<AddCohortInstructorData, AddCohortInstructorVariables>;
+  operationName: string;
+}
+export const addCohortInstructorRef: AddCohortInstructorRef;
+
+export function addCohortInstructor(vars: AddCohortInstructorVariables): MutationPromise<AddCohortInstructorData, AddCohortInstructorVariables>;
+export function addCohortInstructor(dc: DataConnect, vars: AddCohortInstructorVariables): MutationPromise<AddCohortInstructorData, AddCohortInstructorVariables>;
+
+interface RemoveCohortInstructorRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: RemoveCohortInstructorVariables): MutationRef<RemoveCohortInstructorData, RemoveCohortInstructorVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: RemoveCohortInstructorVariables): MutationRef<RemoveCohortInstructorData, RemoveCohortInstructorVariables>;
+  operationName: string;
+}
+export const removeCohortInstructorRef: RemoveCohortInstructorRef;
+
+export function removeCohortInstructor(vars: RemoveCohortInstructorVariables): MutationPromise<RemoveCohortInstructorData, RemoveCohortInstructorVariables>;
+export function removeCohortInstructor(dc: DataConnect, vars: RemoveCohortInstructorVariables): MutationPromise<RemoveCohortInstructorData, RemoveCohortInstructorVariables>;
+
 interface ListPublishedCoursesRef {
   /* Allow users to create refs without passing in DataConnect */
   (): QueryRef<ListPublishedCoursesData, undefined>;
@@ -2951,6 +3868,30 @@ export const listPublishedCoursesRef: ListPublishedCoursesRef;
 
 export function listPublishedCourses(options?: ExecuteQueryOptions): QueryPromise<ListPublishedCoursesData, undefined>;
 export function listPublishedCourses(dc: DataConnect, options?: ExecuteQueryOptions): QueryPromise<ListPublishedCoursesData, undefined>;
+
+interface GetLearnerCatalogRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetLearnerCatalogVariables): QueryRef<GetLearnerCatalogData, GetLearnerCatalogVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: GetLearnerCatalogVariables): QueryRef<GetLearnerCatalogData, GetLearnerCatalogVariables>;
+  operationName: string;
+}
+export const getLearnerCatalogRef: GetLearnerCatalogRef;
+
+export function getLearnerCatalog(vars: GetLearnerCatalogVariables, options?: ExecuteQueryOptions): QueryPromise<GetLearnerCatalogData, GetLearnerCatalogVariables>;
+export function getLearnerCatalog(dc: DataConnect, vars: GetLearnerCatalogVariables, options?: ExecuteQueryOptions): QueryPromise<GetLearnerCatalogData, GetLearnerCatalogVariables>;
+
+interface GetLearnerProfileRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetLearnerProfileVariables): QueryRef<GetLearnerProfileData, GetLearnerProfileVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: GetLearnerProfileVariables): QueryRef<GetLearnerProfileData, GetLearnerProfileVariables>;
+  operationName: string;
+}
+export const getLearnerProfileRef: GetLearnerProfileRef;
+
+export function getLearnerProfile(vars: GetLearnerProfileVariables, options?: ExecuteQueryOptions): QueryPromise<GetLearnerProfileData, GetLearnerProfileVariables>;
+export function getLearnerProfile(dc: DataConnect, vars: GetLearnerProfileVariables, options?: ExecuteQueryOptions): QueryPromise<GetLearnerProfileData, GetLearnerProfileVariables>;
 
 interface GetCourseBySlugRef {
   /* Allow users to create refs without passing in DataConnect */
@@ -2964,6 +3905,18 @@ export const getCourseBySlugRef: GetCourseBySlugRef;
 export function getCourseBySlug(vars: GetCourseBySlugVariables, options?: ExecuteQueryOptions): QueryPromise<GetCourseBySlugData, GetCourseBySlugVariables>;
 export function getCourseBySlug(dc: DataConnect, vars: GetCourseBySlugVariables, options?: ExecuteQueryOptions): QueryPromise<GetCourseBySlugData, GetCourseBySlugVariables>;
 
+interface GetPublishedCourseBySlugRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetPublishedCourseBySlugVariables): QueryRef<GetPublishedCourseBySlugData, GetPublishedCourseBySlugVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: GetPublishedCourseBySlugVariables): QueryRef<GetPublishedCourseBySlugData, GetPublishedCourseBySlugVariables>;
+  operationName: string;
+}
+export const getPublishedCourseBySlugRef: GetPublishedCourseBySlugRef;
+
+export function getPublishedCourseBySlug(vars: GetPublishedCourseBySlugVariables, options?: ExecuteQueryOptions): QueryPromise<GetPublishedCourseBySlugData, GetPublishedCourseBySlugVariables>;
+export function getPublishedCourseBySlug(dc: DataConnect, vars: GetPublishedCourseBySlugVariables, options?: ExecuteQueryOptions): QueryPromise<GetPublishedCourseBySlugData, GetPublishedCourseBySlugVariables>;
+
 interface GetLessonRef {
   /* Allow users to create refs without passing in DataConnect */
   (vars: GetLessonVariables): QueryRef<GetLessonData, GetLessonVariables>;
@@ -2975,6 +3928,66 @@ export const getLessonRef: GetLessonRef;
 
 export function getLesson(vars: GetLessonVariables, options?: ExecuteQueryOptions): QueryPromise<GetLessonData, GetLessonVariables>;
 export function getLesson(dc: DataConnect, vars: GetLessonVariables, options?: ExecuteQueryOptions): QueryPromise<GetLessonData, GetLessonVariables>;
+
+interface ListPublishedQuizzesRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (): QueryRef<ListPublishedQuizzesData, undefined>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect): QueryRef<ListPublishedQuizzesData, undefined>;
+  operationName: string;
+}
+export const listPublishedQuizzesRef: ListPublishedQuizzesRef;
+
+export function listPublishedQuizzes(options?: ExecuteQueryOptions): QueryPromise<ListPublishedQuizzesData, undefined>;
+export function listPublishedQuizzes(dc: DataConnect, options?: ExecuteQueryOptions): QueryPromise<ListPublishedQuizzesData, undefined>;
+
+interface GetQuizSummaryRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetQuizSummaryVariables): QueryRef<GetQuizSummaryData, GetQuizSummaryVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: GetQuizSummaryVariables): QueryRef<GetQuizSummaryData, GetQuizSummaryVariables>;
+  operationName: string;
+}
+export const getQuizSummaryRef: GetQuizSummaryRef;
+
+export function getQuizSummary(vars: GetQuizSummaryVariables, options?: ExecuteQueryOptions): QueryPromise<GetQuizSummaryData, GetQuizSummaryVariables>;
+export function getQuizSummary(dc: DataConnect, vars: GetQuizSummaryVariables, options?: ExecuteQueryOptions): QueryPromise<GetQuizSummaryData, GetQuizSummaryVariables>;
+
+interface GetAttemptReviewRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetAttemptReviewVariables): QueryRef<GetAttemptReviewData, GetAttemptReviewVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: GetAttemptReviewVariables): QueryRef<GetAttemptReviewData, GetAttemptReviewVariables>;
+  operationName: string;
+}
+export const getAttemptReviewRef: GetAttemptReviewRef;
+
+export function getAttemptReview(vars: GetAttemptReviewVariables, options?: ExecuteQueryOptions): QueryPromise<GetAttemptReviewData, GetAttemptReviewVariables>;
+export function getAttemptReview(dc: DataConnect, vars: GetAttemptReviewVariables, options?: ExecuteQueryOptions): QueryPromise<GetAttemptReviewData, GetAttemptReviewVariables>;
+
+interface ListLearnerSourceMaterialsRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (): QueryRef<ListLearnerSourceMaterialsData, undefined>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect): QueryRef<ListLearnerSourceMaterialsData, undefined>;
+  operationName: string;
+}
+export const listLearnerSourceMaterialsRef: ListLearnerSourceMaterialsRef;
+
+export function listLearnerSourceMaterials(options?: ExecuteQueryOptions): QueryPromise<ListLearnerSourceMaterialsData, undefined>;
+export function listLearnerSourceMaterials(dc: DataConnect, options?: ExecuteQueryOptions): QueryPromise<ListLearnerSourceMaterialsData, undefined>;
+
+interface GetLearnerSourceMaterialAccessRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetLearnerSourceMaterialAccessVariables): QueryRef<GetLearnerSourceMaterialAccessData, GetLearnerSourceMaterialAccessVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: GetLearnerSourceMaterialAccessVariables): QueryRef<GetLearnerSourceMaterialAccessData, GetLearnerSourceMaterialAccessVariables>;
+  operationName: string;
+}
+export const getLearnerSourceMaterialAccessRef: GetLearnerSourceMaterialAccessRef;
+
+export function getLearnerSourceMaterialAccess(vars: GetLearnerSourceMaterialAccessVariables, options?: ExecuteQueryOptions): QueryPromise<GetLearnerSourceMaterialAccessData, GetLearnerSourceMaterialAccessVariables>;
+export function getLearnerSourceMaterialAccess(dc: DataConnect, vars: GetLearnerSourceMaterialAccessVariables, options?: ExecuteQueryOptions): QueryPromise<GetLearnerSourceMaterialAccessData, GetLearnerSourceMaterialAccessVariables>;
 
 interface GetQuizByIdRef {
   /* Allow users to create refs without passing in DataConnect */
@@ -3071,6 +4084,18 @@ export const getUserAttemptHistoryRef: GetUserAttemptHistoryRef;
 
 export function getUserAttemptHistory(vars: GetUserAttemptHistoryVariables, options?: ExecuteQueryOptions): QueryPromise<GetUserAttemptHistoryData, GetUserAttemptHistoryVariables>;
 export function getUserAttemptHistory(dc: DataConnect, vars: GetUserAttemptHistoryVariables, options?: ExecuteQueryOptions): QueryPromise<GetUserAttemptHistoryData, GetUserAttemptHistoryVariables>;
+
+interface GetUserActivityHistoryRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetUserActivityHistoryVariables): QueryRef<GetUserActivityHistoryData, GetUserActivityHistoryVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: GetUserActivityHistoryVariables): QueryRef<GetUserActivityHistoryData, GetUserActivityHistoryVariables>;
+  operationName: string;
+}
+export const getUserActivityHistoryRef: GetUserActivityHistoryRef;
+
+export function getUserActivityHistory(vars: GetUserActivityHistoryVariables, options?: ExecuteQueryOptions): QueryPromise<GetUserActivityHistoryData, GetUserActivityHistoryVariables>;
+export function getUserActivityHistory(dc: DataConnect, vars: GetUserActivityHistoryVariables, options?: ExecuteQueryOptions): QueryPromise<GetUserActivityHistoryData, GetUserActivityHistoryVariables>;
 
 interface GetAttemptResultsRef {
   /* Allow users to create refs without passing in DataConnect */
@@ -3455,4 +4480,100 @@ export const listCustomDomainsRef: ListCustomDomainsRef;
 
 export function listCustomDomains(options?: ExecuteQueryOptions): QueryPromise<ListCustomDomainsData, undefined>;
 export function listCustomDomains(dc: DataConnect, options?: ExecuteQueryOptions): QueryPromise<ListCustomDomainsData, undefined>;
+
+interface AdminListCohortsRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (): QueryRef<AdminListCohortsData, undefined>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect): QueryRef<AdminListCohortsData, undefined>;
+  operationName: string;
+}
+export const adminListCohortsRef: AdminListCohortsRef;
+
+export function adminListCohorts(options?: ExecuteQueryOptions): QueryPromise<AdminListCohortsData, undefined>;
+export function adminListCohorts(dc: DataConnect, options?: ExecuteQueryOptions): QueryPromise<AdminListCohortsData, undefined>;
+
+interface ListCohortsForInstructorRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: ListCohortsForInstructorVariables): QueryRef<ListCohortsForInstructorData, ListCohortsForInstructorVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: ListCohortsForInstructorVariables): QueryRef<ListCohortsForInstructorData, ListCohortsForInstructorVariables>;
+  operationName: string;
+}
+export const listCohortsForInstructorRef: ListCohortsForInstructorRef;
+
+export function listCohortsForInstructor(vars: ListCohortsForInstructorVariables, options?: ExecuteQueryOptions): QueryPromise<ListCohortsForInstructorData, ListCohortsForInstructorVariables>;
+export function listCohortsForInstructor(dc: DataConnect, vars: ListCohortsForInstructorVariables, options?: ExecuteQueryOptions): QueryPromise<ListCohortsForInstructorData, ListCohortsForInstructorVariables>;
+
+interface GetCohortDetailRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetCohortDetailVariables): QueryRef<GetCohortDetailData, GetCohortDetailVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: GetCohortDetailVariables): QueryRef<GetCohortDetailData, GetCohortDetailVariables>;
+  operationName: string;
+}
+export const getCohortDetailRef: GetCohortDetailRef;
+
+export function getCohortDetail(vars: GetCohortDetailVariables, options?: ExecuteQueryOptions): QueryPromise<GetCohortDetailData, GetCohortDetailVariables>;
+export function getCohortDetail(dc: DataConnect, vars: GetCohortDetailVariables, options?: ExecuteQueryOptions): QueryPromise<GetCohortDetailData, GetCohortDetailVariables>;
+
+interface GetCohortMemberIdsRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetCohortMemberIdsVariables): QueryRef<GetCohortMemberIdsData, GetCohortMemberIdsVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: GetCohortMemberIdsVariables): QueryRef<GetCohortMemberIdsData, GetCohortMemberIdsVariables>;
+  operationName: string;
+}
+export const getCohortMemberIdsRef: GetCohortMemberIdsRef;
+
+export function getCohortMemberIds(vars: GetCohortMemberIdsVariables, options?: ExecuteQueryOptions): QueryPromise<GetCohortMemberIdsData, GetCohortMemberIdsVariables>;
+export function getCohortMemberIds(dc: DataConnect, vars: GetCohortMemberIdsVariables, options?: ExecuteQueryOptions): QueryPromise<GetCohortMemberIdsData, GetCohortMemberIdsVariables>;
+
+interface GetCohortAttemptsRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetCohortAttemptsVariables): QueryRef<GetCohortAttemptsData, GetCohortAttemptsVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: GetCohortAttemptsVariables): QueryRef<GetCohortAttemptsData, GetCohortAttemptsVariables>;
+  operationName: string;
+}
+export const getCohortAttemptsRef: GetCohortAttemptsRef;
+
+export function getCohortAttempts(vars: GetCohortAttemptsVariables, options?: ExecuteQueryOptions): QueryPromise<GetCohortAttemptsData, GetCohortAttemptsVariables>;
+export function getCohortAttempts(dc: DataConnect, vars: GetCohortAttemptsVariables, options?: ExecuteQueryOptions): QueryPromise<GetCohortAttemptsData, GetCohortAttemptsVariables>;
+
+interface GetCohortEngagementRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetCohortEngagementVariables): QueryRef<GetCohortEngagementData, GetCohortEngagementVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: GetCohortEngagementVariables): QueryRef<GetCohortEngagementData, GetCohortEngagementVariables>;
+  operationName: string;
+}
+export const getCohortEngagementRef: GetCohortEngagementRef;
+
+export function getCohortEngagement(vars: GetCohortEngagementVariables, options?: ExecuteQueryOptions): QueryPromise<GetCohortEngagementData, GetCohortEngagementVariables>;
+export function getCohortEngagement(dc: DataConnect, vars: GetCohortEngagementVariables, options?: ExecuteQueryOptions): QueryPromise<GetCohortEngagementData, GetCohortEngagementVariables>;
+
+interface GetLearnerProgressDetailRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetLearnerProgressDetailVariables): QueryRef<GetLearnerProgressDetailData, GetLearnerProgressDetailVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: GetLearnerProgressDetailVariables): QueryRef<GetLearnerProgressDetailData, GetLearnerProgressDetailVariables>;
+  operationName: string;
+}
+export const getLearnerProgressDetailRef: GetLearnerProgressDetailRef;
+
+export function getLearnerProgressDetail(vars: GetLearnerProgressDetailVariables, options?: ExecuteQueryOptions): QueryPromise<GetLearnerProgressDetailData, GetLearnerProgressDetailVariables>;
+export function getLearnerProgressDetail(dc: DataConnect, vars: GetLearnerProgressDetailVariables, options?: ExecuteQueryOptions): QueryPromise<GetLearnerProgressDetailData, GetLearnerProgressDetailVariables>;
+
+interface AdminGetAttemptReviewRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: AdminGetAttemptReviewVariables): QueryRef<AdminGetAttemptReviewData, AdminGetAttemptReviewVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: AdminGetAttemptReviewVariables): QueryRef<AdminGetAttemptReviewData, AdminGetAttemptReviewVariables>;
+  operationName: string;
+}
+export const adminGetAttemptReviewRef: AdminGetAttemptReviewRef;
+
+export function adminGetAttemptReview(vars: AdminGetAttemptReviewVariables, options?: ExecuteQueryOptions): QueryPromise<AdminGetAttemptReviewData, AdminGetAttemptReviewVariables>;
+export function adminGetAttemptReview(dc: DataConnect, vars: AdminGetAttemptReviewVariables, options?: ExecuteQueryOptions): QueryPromise<AdminGetAttemptReviewData, AdminGetAttemptReviewVariables>;
 

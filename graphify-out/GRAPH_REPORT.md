@@ -1,16 +1,16 @@
-# Graph Report - IMPACT  (2026-06-27)
+# Graph Report - IMPACT  (2026-07-11)
 
 ## Corpus Check
-- 245 files · ~302,130 words
+- 299 files · ~360,286 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3259 nodes · 5550 edges · 398 communities (208 shown, 190 thin omitted)
-- Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 117 edges (avg confidence: 0.8)
+- 3971 nodes · 7004 edges · 476 communities (238 shown, 238 thin omitted)
+- Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 140 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `29be72e0`
+- Built from commit: `1c813b7a`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -99,6 +99,7 @@
 - [[_COMMUNITY_Community 81|Community 81]]
 - [[_COMMUNITY_Community 82|Community 82]]
 - [[_COMMUNITY_Community 83|Community 83]]
+- [[_COMMUNITY_Community 84|Community 84]]
 - [[_COMMUNITY_Community 85|Community 85]]
 - [[_COMMUNITY_Community 86|Community 86]]
 - [[_COMMUNITY_Community 87|Community 87]]
@@ -154,6 +155,7 @@
 - [[_COMMUNITY_Community 137|Community 137]]
 - [[_COMMUNITY_Community 138|Community 138]]
 - [[_COMMUNITY_Community 139|Community 139]]
+- [[_COMMUNITY_Community 140|Community 140]]
 - [[_COMMUNITY_Community 141|Community 141]]
 - [[_COMMUNITY_Community 142|Community 142]]
 - [[_COMMUNITY_Community 143|Community 143]]
@@ -222,8 +224,10 @@
 - [[_COMMUNITY_Community 206|Community 206]]
 - [[_COMMUNITY_Community 207|Community 207]]
 - [[_COMMUNITY_Community 208|Community 208]]
+- [[_COMMUNITY_Community 209|Community 209]]
 - [[_COMMUNITY_Community 210|Community 210]]
 - [[_COMMUNITY_Community 211|Community 211]]
+- [[_COMMUNITY_Community 212|Community 212]]
 - [[_COMMUNITY_Community 214|Community 214]]
 - [[_COMMUNITY_Community 215|Community 215]]
 - [[_COMMUNITY_Community 216|Community 216]]
@@ -247,22 +251,18 @@
 - [[_COMMUNITY_Community 234|Community 234]]
 - [[_COMMUNITY_Community 235|Community 235]]
 - [[_COMMUNITY_Community 236|Community 236]]
-- [[_COMMUNITY_Community 237|Community 237]]
 - [[_COMMUNITY_Community 238|Community 238]]
 - [[_COMMUNITY_Community 239|Community 239]]
 - [[_COMMUNITY_Community 240|Community 240]]
 - [[_COMMUNITY_Community 241|Community 241]]
-- [[_COMMUNITY_Community 242|Community 242]]
 - [[_COMMUNITY_Community 243|Community 243]]
 - [[_COMMUNITY_Community 244|Community 244]]
 - [[_COMMUNITY_Community 245|Community 245]]
 - [[_COMMUNITY_Community 246|Community 246]]
 - [[_COMMUNITY_Community 247|Community 247]]
 - [[_COMMUNITY_Community 248|Community 248]]
-- [[_COMMUNITY_Community 249|Community 249]]
 - [[_COMMUNITY_Community 250|Community 250]]
 - [[_COMMUNITY_Community 251|Community 251]]
-- [[_COMMUNITY_Community 252|Community 252]]
 - [[_COMMUNITY_Community 253|Community 253]]
 - [[_COMMUNITY_Community 254|Community 254]]
 - [[_COMMUNITY_Community 255|Community 255]]
@@ -291,7 +291,6 @@
 - [[_COMMUNITY_Community 278|Community 278]]
 - [[_COMMUNITY_Community 279|Community 279]]
 - [[_COMMUNITY_Community 280|Community 280]]
-- [[_COMMUNITY_Community 281|Community 281]]
 - [[_COMMUNITY_Community 282|Community 282]]
 - [[_COMMUNITY_Community 283|Community 283]]
 - [[_COMMUNITY_Community 284|Community 284]]
@@ -411,18 +410,97 @@
 - [[_COMMUNITY_Community 398|Community 398]]
 - [[_COMMUNITY_Community 399|Community 399]]
 - [[_COMMUNITY_Community 400|Community 400]]
+- [[_COMMUNITY_Community 402|Community 402]]
+- [[_COMMUNITY_Community 403|Community 403]]
+- [[_COMMUNITY_Community 404|Community 404]]
+- [[_COMMUNITY_Community 405|Community 405]]
+- [[_COMMUNITY_Community 406|Community 406]]
+- [[_COMMUNITY_Community 407|Community 407]]
+- [[_COMMUNITY_Community 408|Community 408]]
+- [[_COMMUNITY_Community 409|Community 409]]
+- [[_COMMUNITY_Community 410|Community 410]]
+- [[_COMMUNITY_Community 411|Community 411]]
+- [[_COMMUNITY_Community 412|Community 412]]
+- [[_COMMUNITY_Community 413|Community 413]]
+- [[_COMMUNITY_Community 414|Community 414]]
+- [[_COMMUNITY_Community 415|Community 415]]
+- [[_COMMUNITY_Community 416|Community 416]]
+- [[_COMMUNITY_Community 417|Community 417]]
+- [[_COMMUNITY_Community 418|Community 418]]
+- [[_COMMUNITY_Community 419|Community 419]]
+- [[_COMMUNITY_Community 420|Community 420]]
+- [[_COMMUNITY_Community 421|Community 421]]
+- [[_COMMUNITY_Community 422|Community 422]]
+- [[_COMMUNITY_Community 423|Community 423]]
+- [[_COMMUNITY_Community 424|Community 424]]
+- [[_COMMUNITY_Community 425|Community 425]]
+- [[_COMMUNITY_Community 426|Community 426]]
+- [[_COMMUNITY_Community 427|Community 427]]
+- [[_COMMUNITY_Community 428|Community 428]]
+- [[_COMMUNITY_Community 429|Community 429]]
+- [[_COMMUNITY_Community 430|Community 430]]
+- [[_COMMUNITY_Community 431|Community 431]]
+- [[_COMMUNITY_Community 432|Community 432]]
+- [[_COMMUNITY_Community 433|Community 433]]
+- [[_COMMUNITY_Community 434|Community 434]]
+- [[_COMMUNITY_Community 435|Community 435]]
+- [[_COMMUNITY_Community 436|Community 436]]
+- [[_COMMUNITY_Community 437|Community 437]]
+- [[_COMMUNITY_Community 438|Community 438]]
+- [[_COMMUNITY_Community 439|Community 439]]
+- [[_COMMUNITY_Community 440|Community 440]]
+- [[_COMMUNITY_Community 441|Community 441]]
+- [[_COMMUNITY_Community 442|Community 442]]
+- [[_COMMUNITY_Community 443|Community 443]]
+- [[_COMMUNITY_Community 444|Community 444]]
+- [[_COMMUNITY_Community 445|Community 445]]
+- [[_COMMUNITY_Community 446|Community 446]]
+- [[_COMMUNITY_Community 447|Community 447]]
+- [[_COMMUNITY_Community 448|Community 448]]
+- [[_COMMUNITY_Community 449|Community 449]]
+- [[_COMMUNITY_Community 450|Community 450]]
+- [[_COMMUNITY_Community 451|Community 451]]
+- [[_COMMUNITY_Community 452|Community 452]]
+- [[_COMMUNITY_Community 453|Community 453]]
+- [[_COMMUNITY_Community 454|Community 454]]
+- [[_COMMUNITY_Community 455|Community 455]]
+- [[_COMMUNITY_Community 456|Community 456]]
+- [[_COMMUNITY_Community 457|Community 457]]
+- [[_COMMUNITY_Community 458|Community 458]]
+- [[_COMMUNITY_Community 459|Community 459]]
+- [[_COMMUNITY_Community 460|Community 460]]
+- [[_COMMUNITY_Community 461|Community 461]]
+- [[_COMMUNITY_Community 462|Community 462]]
+- [[_COMMUNITY_Community 463|Community 463]]
+- [[_COMMUNITY_Community 464|Community 464]]
+- [[_COMMUNITY_Community 465|Community 465]]
+- [[_COMMUNITY_Community 466|Community 466]]
+- [[_COMMUNITY_Community 467|Community 467]]
+- [[_COMMUNITY_Community 468|Community 468]]
+- [[_COMMUNITY_Community 469|Community 469]]
+- [[_COMMUNITY_Community 470|Community 470]]
+- [[_COMMUNITY_Community 471|Community 471]]
+- [[_COMMUNITY_Community 472|Community 472]]
+- [[_COMMUNITY_Community 473|Community 473]]
+- [[_COMMUNITY_Community 474|Community 474]]
+- [[_COMMUNITY_Community 475|Community 475]]
+- [[_COMMUNITY_Community 476|Community 476]]
+- [[_COMMUNITY_Community 477|Community 477]]
+- [[_COMMUNITY_Community 478|Community 478]]
+- [[_COMMUNITY_Community 479|Community 479]]
+- [[_COMMUNITY_Community 480|Community 480]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `cn()` - 162 edges
-2. `requireAdminRequest()` - 122 edges
-3. `adminDcMutate()` - 110 edges
-4. `Mutations` - 80 edges
-5. `adminDcQuery()` - 66 edges
-6. `formatUuid()` - 44 edges
-7. `Queries` - 44 edges
+1. `cn()` - 173 edges
+2. `requireAdminRequest()` - 139 edges
+3. `adminDcMutate()` - 135 edges
+4. `Mutations` - 93 edges
+5. `adminDcQuery()` - 79 edges
+6. `Queries` - 61 edges
+7. `formatUuid()` - 52 edges
 8. `verifyIdToken()` - 37 edges
-9. `compilerOptions` - 16 edges
-10. `useFormulaCalc()` - 15 edges
+9. `getLearnerSession()` - 26 edges
+10. `LearnerPage()` - 20 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `AdminCoursesPage()` --calls--> `adminDcQuery()`  [INFERRED]
@@ -431,167 +509,167 @@
   app/(admin)/layout.tsx → lib/admin/auth.ts
 - `ModeButton()` --calls--> `cn()`  [EXTRACTED]
   app/(auth)/sign-in/page.tsx → lib/utils.ts
-- `FormulasPage()` --calls--> `listUserFavorites()`  [INFERRED]
-  app/(platform)/formulas/page.tsx → lib/firebase/favorites.ts
-- `FormulasPage()` --calls--> `getLearnerSession()`  [INFERRED]
-  app/(platform)/formulas/page.tsx → lib/firebase/learner-session.ts
+- `CertificatePage()` --calls--> `adminDcQuery()`  [INFERRED]
+  app/(platform)/certificates/[slug]/page.tsx → lib/firebase/admin-dc.ts
+- `CertificatePage()` --calls--> `getLearnerSession()`  [INFERRED]
+  app/(platform)/certificates/[slug]/page.tsx → lib/firebase/learner-session.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (398 total, 190 thin omitted)
+## Communities (476 total, 238 thin omitted)
 
 ### Community 0 - "Community 0"
-Cohesion: 0.01
-Nodes (381): AddQuestionToQuizData, AddQuestionToQuizRef, AddQuestionToQuizVariables, AdminCohortStatsData, AdminCohortStatsRef, AdminCountQuestionsData, AdminCountQuestionsRef, AdminListCoursesData (+373 more)
+Cohesion: 0.00
+Nodes (472): AddCohortInstructorData, AddCohortInstructorRef, AddCohortInstructorVariables, AddCohortMembershipData, AddCohortMembershipRef, AddCohortMembershipVariables, AddQuestionToQuizData, AddQuestionToQuizRef (+464 more)
 
 ### Community 1 - "Community 1"
-Cohesion: 0.05
-Nodes (60): requireAdminRequest(), rowsToCsv(), DELETE(), PUT(), FormulaSectionsData, GET(), DELETE(), PUT() (+52 more)
+Cohesion: 0.04
+Nodes (66): requireAdminRequest(), DELETE(), PUT(), FormulaSectionsData, GET(), DELETE(), PUT(), DELETE() (+58 more)
 
 ### Community 3 - "Community 3"
-Cohesion: 0.05
-Nodes (63): adminCohortStats(), adminCohortStatsRef(), adminListCourses(), adminListCoursesRef(), adminListGlossaryTerms(), adminListGlossaryTermsRef(), adminListQuizQuestionUsage(), adminListQuizQuestionUsageRef() (+55 more)
+Cohesion: 0.04
+Nodes (77): adminListCohorts(), adminListCohortsRef(), adminListQuizQuestionUsage(), adminListQuizQuestionUsageRef(), completeQuizAttempt(), completeQuizAttemptRef(), connectorConfig, createContentSourceLink() (+69 more)
 
 ### Community 4 - "Community 4"
-Cohesion: 0.05
-Nodes (62): adminListQuizQuestionUsage(), adminListQuizQuestionUsageRef(), completeQuizAttempt(), completeQuizAttemptRef(), connectorConfig, createContentSourceLink(), createContentSourceLinkRef(), createFormula() (+54 more)
+Cohesion: 0.04
+Nodes (78): adminListCohorts(), adminListCohortsRef(), adminListQuizQuestionUsage(), adminListQuizQuestionUsageRef(), completeQuizAttempt(), completeQuizAttemptRef(), connectorConfig, createContentSourceLink() (+70 more)
 
 ### Community 5 - "Community 5"
-Cohesion: 0.05
-Nodes (37): buildFolderBreadcrumbs(), buildFolderOptions(), CollectionViewMode, Course, DetailsTabPanel(), DRIVE_VIEW_LABELS, escapeRegExp(), formatBytes() (+29 more)
+Cohesion: 0.04
+Nodes (30): CollectionViewMode, Course, DetailCard(), DRIVE_VIEW_LABELS, KindBadge(), LIBRARY_VIEWS, LibraryStatChip(), LibraryView (+22 more)
 
 ### Community 6 - "Community 6"
-Cohesion: 0.20
-Nodes (20): ALLOWED_IMAGE_TYPES, buildFirebaseStorageUrl(), DELETE(), deleteStoredAvatar(), extensionForContentType(), POST(), requireAvatarUser(), FieldValue (+12 more)
+Cohesion: 0.10
+Nodes (27): COLUMN_ALIASES, CsvPreviewResult, csvLessonRowSchema, LessonCsvPreviewResult, normalizeColumnName(), REQUIRED_COLUMNS, parseDocxLessons(), DocxParseResult (+19 more)
 
 ### Community 7 - "Community 7"
-Cohesion: 0.10
-Nodes (28): fetchAdminMaterialFolders(), fetchAdminMaterialLibrary(), findMaterialById(), GET(), POST(), POST(), DELETE(), PATCH() (+20 more)
+Cohesion: 0.13
+Nodes (30): fetchAdminMaterialFolders(), fetchAdminMaterialLibrary(), findMaterialById(), parseGsPath(), GET(), POST(), DELETE(), PATCH() (+22 more)
 
 ### Community 8 - "Community 8"
 Cohesion: 0.06
-Nodes (27): LessonBuilderEditor, LessonBuilderEditorHandle, computeFilterCounts(), CourseData, formatBytes(), getLessonReadinessTone(), KIND_FILTERS, LessonData (+19 more)
+Nodes (40): LessonBuilderEditor, computeFilterCounts(), CourseData, formatBytes(), getLessonReadinessTone(), getLessonSidebarInsight(), KIND_FILTERS, LessonData (+32 more)
 
 ### Community 9 - "Community 9"
-Cohesion: 0.07
-Nodes (29): Course, CourseEditForm(), CourseNode(), EditTarget, Lesson, LessonEditForm(), LessonRow(), LessonVersion (+21 more)
+Cohesion: 0.14
+Nodes (26): AdminSession, addCohortInstructor(), addCohortMember(), canManageCohort(), CohortInstructorMember, CohortMember, CohortOwner, deleteCohort() (+18 more)
 
 ### Community 10 - "Community 10"
-Cohesion: 0.06
-Nodes (29): BLOCK_LIBRARY, blockCategoryBorderClass(), BlockEditorCard(), EditorButton(), FormulaLibraryItem, getFilteredMaterialsForBlock(), GlossaryLibraryItem, InlineInsertRail() (+21 more)
+Cohesion: 0.05
+Nodes (30): BLOCK_LIBRARY, blockCategoryBorderClass(), BlockEditorCard(), EditorButton(), FormulaLibraryItem, getFilteredMaterialsForBlock(), GlossaryLibraryItem, InlineInsertRail() (+22 more)
 
 ### Community 11 - "Community 11"
-Cohesion: 0.23
-Nodes (14): parseGsPath(), DELETE(), GET(), buildAdminApp(), getAdminApp(), getAdminStorage(), loadAdminAppModule(), loadMaterialBuffer() (+6 more)
+Cohesion: 0.25
+Nodes (12): uploadSourceBuffer(), computeMaterialLibraryCounts(), fetchAdminMaterialTags(), listAdminMaterials(), deriveTitleFromFileName(), GET(), ingestSourceMaterial(), isFormDataFile() (+4 more)
 
 ### Community 12 - "Community 12"
-Cohesion: 0.08
-Nodes (21): AttachQuizModal(), CourseOption, CalculatorAccessSettings(), DEFAULTS, Props, Toggle(), adminFetch(), AnswerChoice (+13 more)
+Cohesion: 0.04
+Nodes (42): AttachQuizModal(), CourseOption, CalculatorAccessSettings(), DEFAULTS, Props, Toggle(), adminFetch(), Course (+34 more)
 
 ### Community 13 - "Community 13"
 Cohesion: 0.13
-Nodes (27): createBlockId(), createDefaultLessonBlock(), createStructuredLessonDocument(), defaultTitleForBlock(), emptyTipTapDocument(), getLessonReadinessReport(), hasMeaningfulRichText(), LessonAudioBlock (+19 more)
+Nodes (28): createBlockId(), createDefaultLessonBlock(), createStructuredLessonDocument(), defaultTitleForBlock(), emptyTipTapDocument(), LessonAudioBlock, LessonBlockBase, LessonCalloutBlock (+20 more)
 
 ### Community 14 - "Community 14"
 Cohesion: 0.07
 Nodes (28): dependencies, clsx, csv-parse, csv-stringify, @dnd-kit/core, @dnd-kit/sortable, @dnd-kit/utilities, docx (+20 more)
 
 ### Community 15 - "Community 15"
-Cohesion: 0.10
-Nodes (34): appendToMode(), consumeChoiceRow(), consumeQuestionRow(), consumeQuestionTable(), consumeQuestionText(), DocxParseResult, extractSegments(), finalizeQuestion() (+26 more)
+Cohesion: 0.13
+Nodes (23): appendToMode(), consumeChoiceRow(), consumeQuestionRow(), consumeQuestionTable(), consumeQuestionText(), inferCorrectLetters(), isSectionHeader(), ParseContext (+15 more)
 
 ### Community 16 - "Community 16"
-Cohesion: 0.10
-Nodes (27): buildPreviewSnippet(), buildSearchableFields(), compareDates(), compareNumbers(), deriveDisplayStatus(), escapeRegExp(), extractActivities(), extractLinkSummary() (+19 more)
+Cohesion: 0.09
+Nodes (28): buildPreviewSnippet(), buildSearchableFields(), compareDates(), compareNumbers(), deriveDisplayStatus(), escapeRegExp(), extractActivities(), extractLinkSummary() (+20 more)
 
 ### Community 17 - "Community 17"
 Cohesion: 0.07
-Nodes (29): ActionBtn(), AdminFormula, AdminSection, CalcMeta, CalcSetupEditor(), CalcVariable, DIFFICULTY_CONFIG, EditorTab (+21 more)
+Nodes (27): ActionBtn(), AdminFormula, AdminSection, CalcMeta, CalcSetupEditor(), CalcVariable, DIFFICULTY_CONFIG, EditorTab (+19 more)
 
 ### Community 18 - "Community 18"
-Cohesion: 0.15
-Nodes (18): CsvLessonRow, DIFFICULTIES, LESSON_TYPES, ParsedGlossaryRow, ParsedQuizQuestion, ParsedWhobenefitsRow, parseLessonCsv(), parseMultiSection() (+10 more)
+Cohesion: 0.13
+Nodes (20): CsvLessonRow, DIFFICULTIES, LESSON_TYPES, ParsedGlossaryRow, ParsedQuizQuestion, ParsedWhobenefitsRow, parseLessonCsv(), parseMultiSection() (+12 more)
 
 ### Community 19 - "Community 19"
-Cohesion: 0.09
-Nodes (33): DELETE(), PUT(), updateSchema, GET(), noteSchema, POST(), GET(), DELETE() (+25 more)
+Cohesion: 0.06
+Nodes (49): POST(), DELETE(), PUT(), updateSchema, GET(), noteSchema, POST(), GET() (+41 more)
 
 ### Community 20 - "Community 20"
-Cohesion: 0.21
-Nodes (7): AdminPageHeader(), AdminPageHeaderProps, CurriculumTree(), GlossaryManager(), QuizManagementPanel(), AdminCoursesPage(), AdminQuizzesPage()
+Cohesion: 0.10
+Nodes (38): CalcEngineResult, CalcEngineState, useFormulaCalculationEngine(), BasicCalculator(), CalcMode, FormulaCalculatorBody(), FormulaCalculatorModeTabs(), useFormulaCalculatorSessionSync() (+30 more)
 
 ### Community 21 - "Community 21"
-Cohesion: 0.08
-Nodes (25): SignOutButton(), DashboardPage(), getLatestAttempt(), LatestAttempt, signOut(), getLearnerSession(), LearnerSession, PlatformLayout() (+17 more)
+Cohesion: 0.10
+Nodes (21): NormalizedAttemptReview, NormalizedAttemptReviewChoice, getLearnerSession(), CertificatePrintButton(), ProfilePage(), SettingsClient(), AttemptReviewClient(), AttemptReviewClientProps (+13 more)
 
 ### Community 22 - "Community 22"
-Cohesion: 0.12
-Nodes (19): ALIASES, GlossaryImportRow, GlossaryParseResult, parseGlossaryCsv(), isHeadingOrBold(), parseDefinitionBlocks(), parseGlossaryDocx(), parseTable() (+11 more)
+Cohesion: 0.13
+Nodes (17): ALIASES, GlossaryImportRow, GlossaryParseResult, parseGlossaryCsv(), isHeadingOrBold(), parseDefinitionBlocks(), parseGlossaryDocx(), parseTable() (+9 more)
 
 ### Community 23 - "Community 23"
-Cohesion: 0.06
-Nodes (33): AddMode, AnswerChoice, DEFAULT_CHOICES, DIFFICULTIES, LessonQuizPanel(), LETTERS, Question, QuestionCard() (+25 more)
-
-### Community 24 - "Community 24"
-Cohesion: 0.10
-Nodes (21): DomainCombobox(), DomainComboboxProps, DEFAULT_CHOICES, ManualQuestionPanel(), ManualQuestionPanelProps, Quiz, BankCandidate, BankPhase (+13 more)
-
-### Community 25 - "Community 25"
-Cohesion: 0.14
-Nodes (25): FormulaSectionsData, GET(), CoursesPage(), getCourses(), FormulasPage(), getFormulaSectionsData(), mapFormulaSections(), DEV_COURSES (+17 more)
-
-### Community 26 - "Community 26"
-Cohesion: 0.09
-Nodes (16): CourseImportPanel(), DropZone(), ImportResult, ParsedLesson, ParsedModule, Phase, PreviewResult, Tab (+8 more)
-
-### Community 27 - "Community 27"
-Cohesion: 0.09
-Nodes (17): CsvImportPanelProps, ErrorRow, InputMode, PreviewResult, PreviewRow, QUESTION_TYPES, VALID_DIFFICULTIES, VALID_DOMAINS (+9 more)
-
-### Community 28 - "Community 28"
-Cohesion: 0.11
-Nodes (14): AdminLayout(), adminItems, DesktopSidebarMode, LearnerProgressCard(), NavItem, navItems, NavLink(), RolePill() (+6 more)
-
-### Community 29 - "Community 29"
-Cohesion: 0.23
-Nodes (6): AuthShell(), AuthShellProps, resetPassword(), ArrowRight(), ChevronLeft(), ShieldCheck()
-
-### Community 30 - "Community 30"
-Cohesion: 0.10
-Nodes (16): AdminPortal(), NoticeState, NoticeTone, AdminOverview, emptyAdminOverview, emptyQuizTotals, loadAdminOverview(), AdminDashboard() (+8 more)
-
-### Community 31 - "Community 31"
-Cohesion: 0.10
-Nodes (26): bestMatchScore(), compareBySort(), compareText(), filterAndSortQuestionBankCandidates(), includesQuery(), parseTopicTags(), QuestionBankCandidate, QuestionBankContext (+18 more)
-
-### Community 32 - "Community 32"
-Cohesion: 0.12
-Nodes (19): bulkPublishLessonsSchema, courseUpdateSchema, createLessonSchema, deleteCourseCascade(), deleteCourseSchema, deleteLessonsCascade(), deleteLessonsSchema, deleteModuleSchema (+11 more)
-
-### Community 33 - "Community 33"
-Cohesion: 0.10
-Nodes (19): CompassHeader(), CompassMode, DrillExamplesPanel(), DrillVerdict, DrillView(), EXAMPLE_DIFFICULTY_CONFIG, ExampleDifficulty, Formula (+11 more)
-
-### Community 34 - "Community 34"
-Cohesion: 0.14
-Nodes (12): CsvImportPanel(), ParsedSection, CheckRow(), DiffBadge(), DocxImportClient(), ImportMode, ImportResult, ParseResult (+4 more)
-
-### Community 35 - "Community 35"
-Cohesion: 0.19
-Nodes (12): AuthFlowError, AuthFlowErrorKind, AuthFlowErrorOptions, buildGoogleSignInError(), completeAppSignIn(), getErrorCode(), getIdToken(), signInWithGoogle() (+4 more)
-
-### Community 36 - "Community 36"
-Cohesion: 0.18
-Nodes (11): CalcEngineResult, CalcEngineState, FormulaCalcContextValue, FormulaResultPanelProps, FormulaVariableHelperProps, FormulaCalculatorConfig, FormulaOutput, FormulaVariable (+3 more)
-
-### Community 37 - "Community 37"
 Cohesion: 0.18
 Nodes (17): baseMediaMetadata(), commandSucceeds(), detectMetadata(), detectWhisperBinary(), DIFFICULTY_SIGNALS, DOMAIN_KEYWORDS, getPositiveNumberEnv(), ingestBuffer() (+9 more)
 
+### Community 24 - "Community 24"
+Cohesion: 0.10
+Nodes (15): AdminFeedback(), AdminLayout(), adminItems, DesktopSidebarMode, NavItem, navItems, NavLink(), RolePill() (+7 more)
+
+### Community 25 - "Community 25"
+Cohesion: 0.12
+Nodes (23): FormulaSectionsData, GET(), FormulasPage(), getFormulaSectionsData(), mapFormulaSections(), StructuredLessonDocument, DEV_COURSES, DEV_FORMULA_SECTIONS (+15 more)
+
+### Community 26 - "Community 26"
+Cohesion: 0.20
+Nodes (15): dedupeCohortsById(), getCohortMemberIds(), loadInstructorCohorts(), summarizeCohort(), rowsToCsv(), CohortScope, deriveScopeFromCohorts(), resolveCohortScope() (+7 more)
+
+### Community 27 - "Community 27"
+Cohesion: 0.12
+Nodes (8): CsvImportPanelProps, ErrorRow, InputMode, PreviewResult, PreviewRow, QUESTION_TYPES, VALID_DIFFICULTIES, VALID_DOMAINS
+
+### Community 28 - "Community 28"
+Cohesion: 0.10
+Nodes (7): benefits, capabilities, heroStats, learningPaths, proof, steps, valueStrip
+
+### Community 29 - "Community 29"
+Cohesion: 0.13
+Nodes (13): AuthShell(), AuthShellProps, resetPassword(), getLocalhostSignInUrl(), getUnauthorizedDomainError(), LoginMode, ModeButton(), SignInForm() (+5 more)
+
+### Community 30 - "Community 30"
+Cohesion: 0.25
+Nodes (12): POST(), bodySchema, bulkAssignSchema, bulkStatusSchema, uuidSchema, adminDcExecute(), getAdminAppForDataConnect(), getAdminDc() (+4 more)
+
+### Community 31 - "Community 31"
+Cohesion: 0.28
+Nodes (8): filterAndSortQuestionBankCandidates(), AdminQuestionRecord, GET(), LessonQuizRecord, normalizeFilters(), QuizQuestionUsageRecord, searchParamsSchema, uuidSchema
+
+### Community 32 - "Community 32"
+Cohesion: 0.11
+Nodes (21): bulkPublishLessonsSchema, courseUpdateSchema, createLessonSchema, deleteCourseCascade(), deleteCourseSchema, deleteLessonsCascade(), deleteLessonsSchema, deleteModuleSchema (+13 more)
+
+### Community 33 - "Community 33"
+Cohesion: 0.10
+Nodes (20): CompassHeader(), CompassMode, DrillExamplesPanel(), DrillVerdict, DrillView(), EXAMPLE_DIFFICULTY_CONFIG, ExampleDifficulty, Formula (+12 more)
+
+### Community 34 - "Community 34"
+Cohesion: 0.05
+Nodes (56): GET(), ByteRange, parseByteRange(), CompletionAttempt, applyLessonProgressOperation(), AttemptReview, AttemptReviewAccessStatus, AttemptReviewAnswerChoice (+48 more)
+
+### Community 35 - "Community 35"
+Cohesion: 0.14
+Nodes (17): AuthFlowError, AuthFlowErrorKind, AuthFlowErrorOptions, buildGoogleSignInError(), completeAppSignIn(), getErrorCode(), getIdToken(), signIn() (+9 more)
+
+### Community 36 - "Community 36"
+Cohesion: 0.29
+Nodes (5): MaterialLibraryRecord, AUDIO_EXTENSIONS, IMAGE_EXTENSIONS, SourceMaterialKind, VIDEO_EXTENSIONS
+
+### Community 37 - "Community 37"
+Cohesion: 0.09
+Nodes (16): CourseImportPanel(), DropZone(), ImportResult, ParsedLesson, ParsedModule, Phase, PreviewResult, Tab (+8 more)
+
 ### Community 38 - "Community 38"
-Cohesion: 0.17
-Nodes (20): canonicalizePunctuation(), createQuestionDedupSet(), ExistingQuestionRecord, isDuplicateQuestionText(), loadExistingQuestionDedupSet(), loadExistingQuestions(), normalizeQuestionTextForDedup(), rememberQuestionText() (+12 more)
+Cohesion: 0.11
+Nodes (19): inter, metadata, persistThemePreference(), BrowserNotificationStatus, DEFAULT_SETTINGS, LearnerProfileSettings, applyReducedMotion(), applyTheme() (+11 more)
 
 ### Community 39 - "Community 39"
 Cohesion: 0.19
@@ -602,120 +680,120 @@ Cohesion: 0.10
 Nodes (19): compilerOptions, allowJs, esModuleInterop, incremental, isolatedModules, jsx, lib, module (+11 more)
 
 ### Community 41 - "Community 41"
-Cohesion: 0.29
-Nodes (5): MaterialLibraryRecord, AUDIO_EXTENSIONS, IMAGE_EXTENSIONS, SourceMaterialKind, VIDEO_EXTENSIONS
+Cohesion: 0.15
+Nodes (23): previewAssessmentCsv(), canonicalizePunctuation(), createQuestionDedupSet(), ExistingQuestionRecord, isDuplicateQuestionText(), loadExistingQuestionDedupSet(), loadExistingQuestionMap(), loadExistingQuestions() (+15 more)
 
 ### Community 42 - "Community 42"
-Cohesion: 0.22
-Nodes (14): previewAssessmentCsv(), docxParseResultToCsvPreview(), getCorrectAnswers(), hasLegacyQuestionHeaders(), mapSectionToDomain(), normalizeCorrectAnswers(), normalizeQuestionTableRecord(), parseDocxQuestions() (+6 more)
+Cohesion: 0.12
+Nodes (16): createCohort(), loadAdminCohorts(), loadScopedCohorts(), GET(), POST(), adminRoles, answerChoiceSchema, cohortInstructorSchema (+8 more)
 
 ### Community 43 - "Community 43"
-Cohesion: 0.11
-Nodes (6): benefits, capabilities, learningPaths, proof, steps, valueStrip
+Cohesion: 0.06
+Nodes (32): AdminPortal(), NoticeState, NoticeTone, DomainCombobox(), DomainComboboxProps, DEFAULT_CHOICES, ManualQuestionPanel(), ManualQuestionPanelProps (+24 more)
 
 ### Community 44 - "Community 44"
 Cohesion: 0.11
 Nodes (18): author, browser, default, description, engines, node, exports, ./package.json (+10 more)
 
 ### Community 45 - "Community 45"
-Cohesion: 0.18
-Nodes (13): getLessonSidebarInsight(), lessonMatchesFilter(), LessonPreviewValidationPanel(), LessonSidebarButton(), getQuizReadiness(), QuizReadinessState, QuizDetailPanel(), LessonPreflightInput (+5 more)
+Cohesion: 0.40
+Nodes (5): AdminListSourceMaterials, Return Type, Using `AdminListSourceMaterials`'s action shortcut function, Using `AdminListSourceMaterials`'s `QueryRef` function, Variables
 
 ### Community 46 - "Community 46"
-Cohesion: 0.14
-Nodes (12): FormulaItem, FormulaQuickRef(), FormulaQuickRefProps, FormulaSectionData, authHeaders(), DiffFilter, QuestionState, QuizCalculatorLauncherButton() (+4 more)
+Cohesion: 0.10
+Nodes (16): FormulaItem, FormulaQuickRef(), FormulaQuickRefProps, FormulaSectionData, ProgressBar(), ProgressBarProps, DiffFilter, QuestionState (+8 more)
 
 ### Community 47 - "Community 47"
-Cohesion: 0.14
-Nodes (11): listUserFavorites(), Attempt, AttemptResponse, FavoriteFormula, FavoriteGlossaryTerm, getCoachingMessage(), getFavoriteFormulas(), getFavoriteGlossaryTerms() (+3 more)
+Cohesion: 0.16
+Nodes (22): DELETE(), favoriteSchema, GET(), POST(), serializeFavorites(), requireLearnerRequest(), getUserActivityHistory(), deleteUserFavorite() (+14 more)
 
 ### Community 48 - "Community 48"
-Cohesion: 0.20
-Nodes (8): signIn(), getLocalhostSignInUrl(), getUnauthorizedDomainError(), LoginMode, ModeButton(), SignInForm(), UnauthorizedDomainNotice(), GraduationCap()
+Cohesion: 0.22
+Nodes (11): fetchCourseOutline(), fetchLesson(), fetchPublishedGlossaryTerms(), getNormalizedDevLesson(), LessonData, LessonPage(), LessonRecord, getDevLessonById() (+3 more)
 
 ### Community 49 - "Community 49"
-Cohesion: 0.06
-Nodes (34): LessonData, LessonStudentPreview(), Props, QuizInfo, PLACEHOLDER_EXAMPLES, Props, auth, firebaseConfig (+26 more)
+Cohesion: 0.08
+Nodes (21): LessonData, LessonStudentPreview(), Props, QuizInfo, auth, firebaseConfig, LessonBlock, ExternalVideoFromUrl() (+13 more)
 
 ### Community 50 - "Community 50"
-Cohesion: 0.21
-Nodes (11): GlossaryHighlightExtension, glossaryPluginKey, buildGlossaryRegex(), buildTermsMap(), GlossarySpan(), GlossaryTermData, TooltipCardProps, GlossaryTooltipState (+3 more)
+Cohesion: 0.17
+Nodes (8): PLACEHOLDER_EXAMPLES, Props, VideoLinkInput(), isEmbeddableVideoUrl(), VideoMeta, VideoProvider, LessonExternalVideo(), Props
 
 ### Community 51 - "Community 51"
-Cohesion: 0.13
-Nodes (16): AdminSession, canAccess(), decodeSessionCookieValue(), ensureDataConnectUser(), isAdminRole(), requireAdminPage(), resolveAdminRole(), ROLE_RANK (+8 more)
+Cohesion: 0.12
+Nodes (16): BankCandidate, BankPhase, DIFFICULTIES, DOCX_FLOW_STEPS, DocxFlowStep, DocxImportFlow(), DocxPhase, DuplicateIncludeSection() (+8 more)
 
 ### Community 52 - "Community 52"
-Cohesion: 0.16
-Nodes (16): POST(), bodySchema, bulkAssignSchema, bulkStatusSchema, uuidSchema, adminDcExecute(), getAdminAppForDataConnect(), getAdminDc() (+8 more)
+Cohesion: 0.47
+Nodes (4): setUserRole(), DecodedIdTokenPayload, decodeIdTokenPayload(), POST()
 
 ### Community 53 - "Community 53"
-Cohesion: 0.16
-Nodes (11): metadata, persistThemePreference(), DEFAULT_SETTINGS, LearnerProfileSettings, SettingsClient(), applyTheme(), getStoredTheme(), ThemeController() (+3 more)
+Cohesion: 0.40
+Nodes (5): GetPublishedCourseBySlug, Return Type, Using `GetPublishedCourseBySlug`'s action shortcut function, Using `GetPublishedCourseBySlug`'s `QueryRef` function, Variables
 
 ### Community 54 - "Community 54"
-Cohesion: 0.29
-Nodes (15): ALLOWED_FNS, consume(), evalExpression(), parseAdditive(), ParseError, parseIdent(), parseMultip(), parseNumber() (+7 more)
+Cohesion: 0.11
+Nodes (12): StudyMomentum(), Attempt, AttemptResponse, FavoriteFormula, FavoriteGlossaryTerm, getCoachingMessage(), getFavoriteFormulas(), getFavoriteGlossaryTerms() (+4 more)
 
 ### Community 55 - "Community 55"
-Cohesion: 0.18
-Nodes (8): AngleMode, BASE_ROWS, BasicCalculatorProps, CalcBtn(), CalcButton, FN_TOKENS, formatResult(), SCI_ROWS
+Cohesion: 0.20
+Nodes (17): buildAdminApp(), FieldValue, getAdminApp(), getAdminFirestore(), loadAdminAppModule(), loadFirestoreModule(), DEFAULT_PROFILE_SETTINGS, getUserProfileSettings() (+9 more)
 
 ### Community 56 - "Community 56"
-Cohesion: 0.29
-Nodes (8): csvLessonRowSchema, LessonCsvPreviewResult, normalizeColumnName(), parseDocxLessons(), DocxTableParseResult, parseDocxTableRows(), parseHtmlTableRows(), POST()
+Cohesion: 0.24
+Nodes (8): DocxImportClient(), QuestionBankClient(), Question, QuestionBankPageClient(), QuizOption, getPageData(), Question, QuestionBankPage()
 
 ### Community 57 - "Community 57"
 Cohesion: 0.17
 Nodes (12): devDependencies, eslint, eslint-config-next, firebase-tools, postcss, tailwindcss, @tailwindcss/postcss, tsx (+4 more)
 
 ### Community 58 - "Community 58"
-Cohesion: 0.22
-Nodes (7): FormulaCalcContext, FormulaCalculatorProvider(), FormulaItem, FormulaSection, ProviderProps, resolveConfig(), parseFormulaCalculatorConfig()
+Cohesion: 0.10
+Nodes (13): SignOutButton(), signOut(), LearnerSession, GlossaryTerm, GlossaryViewer(), Note, TermCard(), ProfileClient() (+5 more)
 
 ### Community 59 - "Community 59"
-Cohesion: 0.23
-Nodes (8): CohortStatsPage(), computeDomainStats(), computeQuestionStats(), computeStudentStats(), DomainStat, getCohortStats(), QuestionStat, StudentStat
+Cohesion: 0.27
+Nodes (6): ExamsPage(), loadExamCatalog(), GET(), deriveExamCatalog(), ExamCatalogItem, getExamCatalog()
 
 ### Community 60 - "Community 60"
-Cohesion: 0.29
-Nodes (10): DELETE(), favoriteSchema, GET(), POST(), serializeFavorites(), deleteUserFavorite(), favoriteDocId(), FavoriteItemType (+2 more)
+Cohesion: 0.27
+Nodes (10): LearnerSourceMaterial, listLearnerSourceMaterials(), fileTypeLabel(), formatFileSize(), groupResourcesByFolder(), loadLearnerResources(), ResourceGroup, ResourceRow() (+2 more)
 
 ### Community 61 - "Community 61"
-Cohesion: 0.25
-Nodes (5): ProgressBar(), ProgressBarProps, DOMAIN_PILLS, QuizHeader(), QuizHeaderProps
+Cohesion: 0.19
+Nodes (13): StudyRhythmData, LearnerProgressCard(), LearnerProfileSettings, ReminderAfterDays, deriveStudyReminder(), getReminderStorageKey(), getUtcDayKey(), StudyReminderInputs (+5 more)
 
 ### Community 62 - "Community 62"
-Cohesion: 0.10
-Nodes (18): COLUMN_ALIASES, CsvPreviewResult, REQUIRED_COLUMNS, QuestionPreviewRowInput, adminRoles, analyticsExportSchema, answerChoiceSchema, contentStatusSchema (+10 more)
+Cohesion: 0.17
+Nodes (16): emptyQuizTotals, loadAdminOverview(), AdminDashboard(), buildQuizDashboardData(), QuestionCorrectnessRecord, QuizDashboardBase, QuizDashboardData, QuizDashboardSummary (+8 more)
 
 ### Community 63 - "Community 63"
-Cohesion: 0.25
-Nodes (6): CourseEnrollmentClient(), Lesson, LessonProgress, Module, Props, ProgressMeter()
+Cohesion: 0.10
+Nodes (20): CoursesPage(), getCourses(), getLatestAttempt(), LatestAttempt, DashboardPage(), getDashboardCatalog(), getDashboardQuizzes(), getLatestAttempt() (+12 more)
 
 ### Community 64 - "Community 64"
-Cohesion: 0.20
-Nodes (7): PageState, QuizEngine(), QuizSession, DOMAIN_ICONS, DomainBreakdown, QuizResults(), QuizResultsProps
+Cohesion: 0.32
+Nodes (5): CohortManager(), CohortManagerProps, CohortMembershipEditor(), CohortSummary, CohortManagePage()
 
 ### Community 65 - "Community 65"
-Cohesion: 0.26
-Nodes (13): canListenOnPort(), cwd, envPath, execFileAsync, findAvailablePort(), getEmulatorPort(), isPortListening(), main() (+5 more)
+Cohesion: 0.23
+Nodes (15): canListenOnPort(), cwd, envPath, execFileAsync, findAvailablePort(), isPortListening(), main(), openBrowser() (+7 more)
 
 ### Community 66 - "Community 66"
-Cohesion: 0.29
-Nodes (10): dcMutate(), extractFormulas(), extractQArray(), FormulaData, getAdminToken(), HTML_PATH, main(), parseAnswerLetters() (+2 more)
+Cohesion: 0.33
+Nodes (8): extractFormulas(), extractQArray(), FormulaData, HTML_PATH, main(), parseAnswerLetters(), RawQuestion, stripChoicePrefix()
 
 ### Community 67 - "Community 67"
-Cohesion: 0.26
-Nodes (10): AnswerPanel(), AnswerPanelProps, AnswerChoiceRecord, evaluateAnswer(), EvaluationResult, QuestionRecord, scoreAnswer(), ScoreResult (+2 more)
+Cohesion: 0.21
+Nodes (11): GlossaryHighlightExtension, glossaryPluginKey, buildGlossaryRegex(), buildTermsMap(), GlossarySpan(), GlossaryTermData, TooltipCardProps, GlossaryTooltipState (+3 more)
 
 ### Community 68 - "Community 68"
-Cohesion: 0.38
-Nodes (9): uploadSourceBuffer(), fetchAdminMaterialTags(), deriveTitleFromFileName(), ingestSourceMaterial(), isFormDataFile(), isMultipartFormData(), parseTagsValue(), parseTitlesJson() (+1 more)
+Cohesion: 0.29
+Nodes (8): DetailsTabPanel(), formatBytes(), formatDateTime(), isDocxMaterial(), isPdfMaterial(), isTranscribableMediaMaterial(), MaterialPreviewPane(), PreviewTabPanel()
 
 ### Community 69 - "Community 69"
-Cohesion: 0.29
-Nodes (4): GlossaryTerm, GlossaryViewer(), Note, EmptyState()
+Cohesion: 0.12
+Nodes (17): CertificateCourse, CertificateEligibility, CertificateLessonProgress, CertificateProgressData, deriveCertificateEligibility(), getCourseCertificateEligibility(), isPublishedCertificateCourse(), getDevCourseBySlug() (+9 more)
 
 ### Community 70 - "Community 70"
 Cohesion: 0.20
@@ -726,44 +804,40 @@ Cohesion: 0.33
 Nodes (7): createImpactTemplate(), createTableTemplate(), dataCell(), GET(), HEADERS, impactQuestionTable(), SAMPLE_ROWS
 
 ### Community 72 - "Community 72"
-Cohesion: 0.40
-Nodes (5): authHeaders(), LessonNotesPanel(), NoteEntry, relativeTime(), SaveStatus
+Cohesion: 0.33
+Nodes (6): buildFolderBreadcrumbs(), buildFolderOptions(), MaterialsPanel(), MoveMaterialSelect(), MoveToFolderDialog(), parseLibraryView()
 
 ### Community 73 - "Community 73"
 Cohesion: 0.40
-Nodes (3): computeMaterialLibraryCounts(), listAdminMaterials(), normalizeText()
+Nodes (5): GetUserFavoritesByType, Return Type, Using `GetUserFavoritesByType`'s action shortcut function, Using `GetUserFavoritesByType`'s `QueryRef` function, Variables
 
 ### Community 74 - "Community 74"
-Cohesion: 0.29
-Nodes (5): Role, ROLE_BADGE, ROLES, User, UsersManagementPanel()
+Cohesion: 0.40
+Nodes (5): ListPublishedGlossaryTerms, Return Type, Using `ListPublishedGlossaryTerms`'s action shortcut function, Using `ListPublishedGlossaryTerms`'s `QueryRef` function, Variables
 
 ### Community 75 - "Community 75"
-Cohesion: 0.24
-Nodes (18): useFormulaCalculationEngine(), BasicCalculator(), CalcMode, FormulaCalculatorBody(), FormulaCalculatorModeTabs(), useFormulaCalculatorSessionSync(), useFormulaCalculatorShell(), FormulaCalculatorPanel() (+10 more)
-
-### Community 76 - "Community 76"
-Cohesion: 0.29
-Nodes (5): DIFF_OPTIONS, DiffFilter, DOMAIN_OPTIONS, FilterPanel(), FilterPanelProps
+Cohesion: 0.13
+Nodes (23): ALLOWED_FNS, consume(), evalExpression(), parseAdditive(), ParseError, parseIdent(), parseMultip(), parseNumber() (+15 more)
 
 ### Community 77 - "Community 77"
-Cohesion: 0.50
-Nodes (4): QuestionBankPageClient(), getPageData(), Question, QuestionBankPage()
+Cohesion: 0.40
+Nodes (5): GetAttemptReview, Return Type, Using `GetAttemptReview`'s action shortcut function, Using `GetAttemptReview`'s `QueryRef` function, Variables
 
 ### Community 78 - "Community 78"
 Cohesion: 0.40
-Nodes (5): RawAnswerChoice, RawQuestion, SafeAnswerChoice, sanitizeChoices(), sanitizeQuestion()
+Nodes (5): GetLearnerCatalog, Return Type, Using `GetLearnerCatalog`'s action shortcut function, Using `GetLearnerCatalog`'s `QueryRef` function, Variables
 
 ### Community 79 - "Community 79"
 Cohesion: 0.33
-Nodes (5): Accessing the connector, Connecting to the local Emulator, Generated TypeScript README, Mutations, Table of Contents
+Nodes (5): Accessing the connector, Connecting to the local Emulator, Generated TypeScript README, Queries, Table of Contents
 
 ### Community 80 - "Community 80"
-Cohesion: 0.33
-Nodes (6): GetAttemptOwner, Queries, Return Type, Using `GetAttemptOwner`'s action shortcut function, Using `GetAttemptOwner`'s `QueryRef` function, Variables
+Cohesion: 0.40
+Nodes (5): GetAttemptOwner, Return Type, Using `GetAttemptOwner`'s action shortcut function, Using `GetAttemptOwner`'s `QueryRef` function, Variables
 
 ### Community 81 - "Community 81"
 Cohesion: 0.40
-Nodes (4): ChoiceButton(), ChoiceButtonProps, letterClasses, stateClasses
+Nodes (5): GetLearnerSourceMaterialAccess, Return Type, Using `GetLearnerSourceMaterialAccess`'s action shortcut function, Using `GetLearnerSourceMaterialAccess`'s `QueryRef` function, Variables
 
 ### Community 82 - "Community 82"
 Cohesion: 0.33
@@ -773,9 +847,9 @@ Nodes (5): name, overrides, @google-cloud/cloud-sql-connector, private, version
 Cohesion: 0.33
 Nodes (4): ADMIN_PATHS, AUTH_PAGES, config, PUBLIC_PATHS
 
-### Community 85 - "Community 85"
-Cohesion: 0.60
-Nodes (5): config, dcMutate(), dcQuery(), getAdminToken(), main()
+### Community 84 - "Community 84"
+Cohesion: 0.40
+Nodes (5): GetQuizSummary, Return Type, Using `GetQuizSummary`'s action shortcut function, Using `GetQuizSummary`'s `QueryRef` function, Variables
 
 ### Community 86 - "Community 86"
 Cohesion: 0.40
@@ -783,7 +857,7 @@ Nodes (5): AddQuestionToQuiz, Return Type, Using `AddQuestionToQuiz`'s action sh
 
 ### Community 87 - "Community 87"
 Cohesion: 0.40
-Nodes (5): AdminCohortStats, Return Type, Using `AdminCohortStats`'s action shortcut function, Using `AdminCohortStats`'s `QueryRef` function, Variables
+Nodes (5): ListLearnerSourceMaterials, Return Type, Using `ListLearnerSourceMaterials`'s action shortcut function, Using `ListLearnerSourceMaterials`'s `QueryRef` function, Variables
 
 ### Community 88 - "Community 88"
 Cohesion: 0.40
@@ -814,8 +888,8 @@ Cohesion: 0.40
 Nodes (5): AdminListSourceMaterialFolders, Return Type, Using `AdminListSourceMaterialFolders`'s action shortcut function, Using `AdminListSourceMaterialFolders`'s `QueryRef` function, Variables
 
 ### Community 95 - "Community 95"
-Cohesion: 0.40
-Nodes (5): AdminListSourceMaterials, Return Type, Using `AdminListSourceMaterials`'s action shortcut function, Using `AdminListSourceMaterials`'s `QueryRef` function, Variables
+Cohesion: 0.12
+Nodes (19): AnswerPanel(), AnswerPanelProps, ChoiceButton(), ChoiceButtonProps, letterClasses, stateClasses, AnswerChoiceRecord, evaluateAnswer() (+11 more)
 
 ### Community 96 - "Community 96"
 Cohesion: 0.40
@@ -846,8 +920,8 @@ Cohesion: 0.40
 Nodes (5): CreateCourse, Return Type, Using `CreateCourse`'s action shortcut function, Using `CreateCourse`'s `MutationRef` function, Variables
 
 ### Community 103 - "Community 103"
-Cohesion: 0.40
-Nodes (5): CreateCustomDomain, Return Type, Using `CreateCustomDomain`'s action shortcut function, Using `CreateCustomDomain`'s `MutationRef` function, Variables
+Cohesion: 0.20
+Nodes (8): CsvImportPanel(), ParsedSection, CheckRow(), DiffBadge(), ImportMode, ImportResult, ParseResult, Phase
 
 ### Community 104 - "Community 104"
 Cohesion: 0.40
@@ -870,8 +944,8 @@ Cohesion: 0.40
 Nodes (5): CreateIngestionJob, Return Type, Using `CreateIngestionJob`'s action shortcut function, Using `CreateIngestionJob`'s `MutationRef` function, Variables
 
 ### Community 109 - "Community 109"
-Cohesion: 0.40
-Nodes (5): CreateLesson, Return Type, Using `CreateLesson`'s action shortcut function, Using `CreateLesson`'s `MutationRef` function, Variables
+Cohesion: 0.18
+Nodes (11): CreateLesson, DeleteSourceLinksForLesson, Mutations, Return Type, Return Type, Using `CreateLesson`'s action shortcut function, Using `CreateLesson`'s `MutationRef` function, Using `DeleteSourceLinksForLesson`'s action shortcut function (+3 more)
 
 ### Community 110 - "Community 110"
 Cohesion: 0.40
@@ -993,6 +1067,10 @@ Nodes (5): DeleteQuizAttemptsForQuiz, Return Type, Using `DeleteQuizAttemptsForQ
 Cohesion: 0.40
 Nodes (5): DeleteQuizQuestionsForQuestion, Return Type, Using `DeleteQuizQuestionsForQuestion`'s action shortcut function, Using `DeleteQuizQuestionsForQuestion`'s `MutationRef` function, Variables
 
+### Community 140 - "Community 140"
+Cohesion: 0.40
+Nodes (5): ListPublishedQuizzes, Return Type, Using `ListPublishedQuizzes`'s action shortcut function, Using `ListPublishedQuizzes`'s `QueryRef` function, Variables
+
 ### Community 141 - "Community 141"
 Cohesion: 0.40
 Nodes (5): DeleteQuizResponsesForQuiz, Return Type, Using `DeleteQuizResponsesForQuiz`'s action shortcut function, Using `DeleteQuizResponsesForQuiz`'s `MutationRef` function, Variables
@@ -1003,7 +1081,7 @@ Nodes (5): DeleteSourceLinksForCourse, Return Type, Using `DeleteSourceLinksForC
 
 ### Community 143 - "Community 143"
 Cohesion: 0.40
-Nodes (5): DeleteSourceLinksForLesson, Return Type, Using `DeleteSourceLinksForLesson`'s action shortcut function, Using `DeleteSourceLinksForLesson`'s `MutationRef` function, Variables
+Nodes (5): finalizeQuestion(), flushQuestion(), normalizeText(), parseDifficulty(), startQuestion()
 
 ### Community 144 - "Community 144"
 Cohesion: 0.40
@@ -1135,7 +1213,7 @@ Nodes (5): GetUserFavorites, Return Type, Using `GetUserFavorites`'s action shor
 
 ### Community 176 - "Community 176"
 Cohesion: 0.40
-Nodes (5): GetUserFavoritesByType, Return Type, Using `GetUserFavoritesByType`'s action shortcut function, Using `GetUserFavoritesByType`'s `QueryRef` function, Variables
+Nodes (5): AdminCohortStats, Return Type, Using `AdminCohortStats`'s action shortcut function, Using `AdminCohortStats`'s `QueryRef` function, Variables
 
 ### Community 177 - "Community 177"
 Cohesion: 0.40
@@ -1159,7 +1237,7 @@ Nodes (5): ListPublishedCourses, Return Type, Using `ListPublishedCourses`'s act
 
 ### Community 182 - "Community 182"
 Cohesion: 0.40
-Nodes (5): ListPublishedGlossaryTerms, Return Type, Using `ListPublishedGlossaryTerms`'s action shortcut function, Using `ListPublishedGlossaryTerms`'s `QueryRef` function, Variables
+Nodes (5): RecordDailyActivity, Return Type, Using `RecordDailyActivity`'s action shortcut function, Using `RecordDailyActivity`'s `MutationRef` function, Variables
 
 ### Community 183 - "Community 183"
 Cohesion: 0.40
@@ -1218,8 +1296,8 @@ Cohesion: 0.40
 Nodes (5): Return Type, UpsertUserFavorite, Using `UpsertUserFavorite`'s action shortcut function, Using `UpsertUserFavorite`'s `MutationRef` function, Variables
 
 ### Community 197 - "Community 197"
-Cohesion: 0.40
-Nodes (5): Return Type, UpdateUserRole, Using `UpdateUserRole`'s action shortcut function, Using `UpdateUserRole`'s `MutationRef` function, Variables
+Cohesion: 0.20
+Nodes (10): ListCohortsForInstructor, Return Type, Return Type, UpdateUserRole, Using `ListCohortsForInstructor`'s action shortcut function, Using `ListCohortsForInstructor`'s `QueryRef` function, Using `UpdateUserRole`'s action shortcut function, Using `UpdateUserRole`'s `MutationRef` function (+2 more)
 
 ### Community 198 - "Community 198"
 Cohesion: 0.40
@@ -1262,28 +1340,148 @@ Cohesion: 0.40
 Nodes (5): DeleteQuizQuestionsForQuiz, Return Type, Using `DeleteQuizQuestionsForQuiz`'s action shortcut function, Using `DeleteQuizQuestionsForQuiz`'s `MutationRef` function, Variables
 
 ### Community 208 - "Community 208"
-Cohesion: 0.83
-Nodes (3): dcMutate(), getAdminToken(), main()
+Cohesion: 0.40
+Nodes (5): Return Type, UpdateUserCourseProgress, Using `UpdateUserCourseProgress`'s action shortcut function, Using `UpdateUserCourseProgress`'s `MutationRef` function, Variables
+
+### Community 209 - "Community 209"
+Cohesion: 0.04
+Nodes (42): confirmDialog(), ConfirmRequest, toast(), ToastItem, ToastType, AdminPageHeader(), AdminPageHeaderProps, AssignedRow (+34 more)
+
+### Community 219 - "Community 219"
+Cohesion: 0.06
+Nodes (33): AddMode, AnswerChoice, DEFAULT_CHOICES, DIFFICULTIES, LessonQuizPanel(), LETTERS, Question, QuestionCard() (+25 more)
+
+### Community 221 - "Community 221"
+Cohesion: 0.23
+Nodes (11): Accumulator, aggregateCohortEngagement(), CohortEngagementInput, createAccumulator(), EngagementDirectoryUser, LearnerEngagement, CohortEngagementPanel(), CohortEngagementPanelProps (+3 more)
+
+### Community 223 - "Community 223"
+Cohesion: 0.44
+Nodes (8): ALLOWED_IMAGE_TYPES, buildFirebaseStorageUrl(), DELETE(), deleteStoredAvatar(), extensionForContentType(), POST(), requireAvatarUser(), updateUserAvatarStoragePath()
+
+### Community 224 - "Community 224"
+Cohesion: 0.67
+Nodes (4): extractSegments(), parseCellLines(), parseTableRows(), stripTags()
+
+### Community 229 - "Community 229"
+Cohesion: 0.20
+Nodes (7): PageState, QuizEngine(), QuizSession, DOMAIN_ICONS, DomainBreakdown, QuizResults(), QuizResultsProps
+
+### Community 234 - "Community 234"
+Cohesion: 0.15
+Nodes (14): canAccess(), decodeSessionCookieValue(), ensureDataConnectUser(), isAdminRole(), requireAdminPage(), resolveAdminRole(), ROLE_RANK, summarizeLearnerProgress() (+6 more)
+
+### Community 236 - "Community 236"
+Cohesion: 0.27
+Nodes (9): ACCEPTED_EXTENSIONS, ACCEPTED_TYPES, FILE_TYPE_ICONS, FileDropZone(), FileDropZoneProps, formatBytes(), getExtension(), IconComp (+1 more)
+
+### Community 238 - "Community 238"
+Cohesion: 0.40
+Nodes (5): AddCohortInstructor, Return Type, Using `AddCohortInstructor`'s action shortcut function, Using `AddCohortInstructor`'s `MutationRef` function, Variables
+
+### Community 239 - "Community 239"
+Cohesion: 0.40
+Nodes (5): AddCohortMembership, Return Type, Using `AddCohortMembership`'s action shortcut function, Using `AddCohortMembership`'s `MutationRef` function, Variables
+
+### Community 243 - "Community 243"
+Cohesion: 0.40
+Nodes (5): AdminGetAttemptReview, Return Type, Using `AdminGetAttemptReview`'s action shortcut function, Using `AdminGetAttemptReview`'s `QueryRef` function, Variables
+
+### Community 250 - "Community 250"
+Cohesion: 0.29
+Nodes (5): DIFF_OPTIONS, DiffFilter, DOMAIN_OPTIONS, FilterPanel(), FilterPanelProps
+
+### Community 251 - "Community 251"
+Cohesion: 0.40
+Nodes (5): AdminListCohorts, Return Type, Using `AdminListCohorts`'s action shortcut function, Using `AdminListCohorts`'s `QueryRef` function, Variables
+
+### Community 254 - "Community 254"
+Cohesion: 0.40
+Nodes (5): CompleteLessonProgress, Return Type, Using `CompleteLessonProgress`'s action shortcut function, Using `CompleteLessonProgress`'s `MutationRef` function, Variables
+
+### Community 260 - "Community 260"
+Cohesion: 0.40
+Nodes (5): CreateCohort, Return Type, Using `CreateCohort`'s action shortcut function, Using `CreateCohort`'s `MutationRef` function, Variables
+
+### Community 261 - "Community 261"
+Cohesion: 0.40
+Nodes (5): GetUserActivityHistory, Return Type, Using `GetUserActivityHistory`'s action shortcut function, Using `GetUserActivityHistory`'s `QueryRef` function, Variables
+
+### Community 267 - "Community 267"
+Cohesion: 0.40
+Nodes (5): Return Type, UpdateLessonPlayback, Using `UpdateLessonPlayback`'s action shortcut function, Using `UpdateLessonPlayback`'s `MutationRef` function, Variables
+
+### Community 270 - "Community 270"
+Cohesion: 0.40
+Nodes (5): CreateCustomDomain, Return Type, Using `CreateCustomDomain`'s action shortcut function, Using `CreateCustomDomain`'s `MutationRef` function, Variables
+
+### Community 274 - "Community 274"
+Cohesion: 0.40
+Nodes (5): GetLearnerProfile, Return Type, Using `GetLearnerProfile`'s action shortcut function, Using `GetLearnerProfile`'s `QueryRef` function, Variables
+
+### Community 277 - "Community 277"
+Cohesion: 0.40
+Nodes (5): DeleteCohort, Return Type, Using `DeleteCohort`'s action shortcut function, Using `DeleteCohort`'s `MutationRef` function, Variables
+
+### Community 278 - "Community 278"
+Cohesion: 0.40
+Nodes (5): DeleteCohortInstructorsForCohort, Return Type, Using `DeleteCohortInstructorsForCohort`'s action shortcut function, Using `DeleteCohortInstructorsForCohort`'s `MutationRef` function, Variables
+
+### Community 280 - "Community 280"
+Cohesion: 0.40
+Nodes (5): DeleteCohortMembershipsForCohort, Return Type, Using `DeleteCohortMembershipsForCohort`'s action shortcut function, Using `DeleteCohortMembershipsForCohort`'s `MutationRef` function, Variables
+
+### Community 283 - "Community 283"
+Cohesion: 0.40
+Nodes (5): GetCohortAttempts, Return Type, Using `GetCohortAttempts`'s action shortcut function, Using `GetCohortAttempts`'s `QueryRef` function, Variables
+
+### Community 286 - "Community 286"
+Cohesion: 0.40
+Nodes (5): GetCohortDetail, Return Type, Using `GetCohortDetail`'s action shortcut function, Using `GetCohortDetail`'s `QueryRef` function, Variables
+
+### Community 289 - "Community 289"
+Cohesion: 0.40
+Nodes (5): GetCohortEngagement, Return Type, Using `GetCohortEngagement`'s action shortcut function, Using `GetCohortEngagement`'s `QueryRef` function, Variables
+
+### Community 290 - "Community 290"
+Cohesion: 0.40
+Nodes (5): GetCohortMemberIds, Return Type, Using `GetCohortMemberIds`'s action shortcut function, Using `GetCohortMemberIds`'s `QueryRef` function, Variables
+
+### Community 292 - "Community 292"
+Cohesion: 0.40
+Nodes (5): GetLearnerProgressDetail, Return Type, Using `GetLearnerProgressDetail`'s action shortcut function, Using `GetLearnerProgressDetail`'s `QueryRef` function, Variables
+
+### Community 293 - "Community 293"
+Cohesion: 0.40
+Nodes (5): RemoveCohortInstructor, Return Type, Using `RemoveCohortInstructor`'s action shortcut function, Using `RemoveCohortInstructor`'s `MutationRef` function, Variables
+
+### Community 298 - "Community 298"
+Cohesion: 0.40
+Nodes (5): RemoveCohortMembership, Return Type, Using `RemoveCohortMembership`'s action shortcut function, Using `RemoveCohortMembership`'s `MutationRef` function, Variables
+
+### Community 301 - "Community 301"
+Cohesion: 0.40
+Nodes (5): Return Type, UpdateCohort, Using `UpdateCohort`'s action shortcut function, Using `UpdateCohort`'s `MutationRef` function, Variables
 
 ## Knowledge Gaps
-- **1369 isolated node(s):** `QuestionStat`, `StudentStat`, `DomainStat`, `Question`, `LoginMode` (+1364 more)
+- **1660 isolated node(s):** `Question`, `LoginMode`, `LearnerProfile`, `LatestAttempt`, `LatestAttempt` (+1655 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **190 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **238 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `cn()` connect `Community 9` to `Community 2`, `Community 5`, `Community 7`, `Community 8`, `Community 10`, `Community 12`, `Community 17`, `Community 20`, `Community 21`, `Community 22`, `Community 23`, `Community 24`, `Community 26`, `Community 27`, `Community 28`, `Community 31`, `Community 33`, `Community 34`, `Community 36`, `Community 45`, `Community 46`, `Community 48`, `Community 49`, `Community 53`, `Community 55`, `Community 63`, `Community 64`, `Community 67`, `Community 69`, `Community 72`, `Community 75`, `Community 76`, `Community 81`?**
-  _High betweenness centrality (0.033) - this node is a cross-community bridge._
-- **Why does `Mutations` connect `Community 79` to `Community 86`, `Community 99`, `Community 100`, `Community 101`, `Community 102`, `Community 103`, `Community 104`, `Community 105`, `Community 106`, `Community 107`, `Community 108`, `Community 109`, `Community 110`, `Community 111`, `Community 112`, `Community 113`, `Community 114`, `Community 115`, `Community 116`, `Community 117`, `Community 118`, `Community 119`, `Community 120`, `Community 121`, `Community 122`, `Community 123`, `Community 124`, `Community 125`, `Community 126`, `Community 127`, `Community 128`, `Community 129`, `Community 130`, `Community 131`, `Community 132`, `Community 133`, `Community 134`, `Community 135`, `Community 136`, `Community 137`, `Community 138`, `Community 139`, `Community 141`, `Community 142`, `Community 143`, `Community 144`, `Community 145`, `Community 146`, `Community 147`, `Community 148`, `Community 149`, `Community 150`, `Community 151`, `Community 152`, `Community 183`, `Community 184`, `Community 185`, `Community 186`, `Community 187`, `Community 188`, `Community 189`, `Community 190`, `Community 191`, `Community 192`, `Community 193`, `Community 194`, `Community 195`, `Community 196`, `Community 197`, `Community 198`, `Community 199`, `Community 200`, `Community 201`, `Community 202`, `Community 203`, `Community 204`, `Community 205`, `Community 206`, `Community 207`?**
-  _High betweenness centrality (0.031) - this node is a cross-community bridge._
-- **Why does `Queries` connect `Community 80` to `Community 153`, `Community 154`, `Community 155`, `Community 156`, `Community 157`, `Community 158`, `Community 159`, `Community 160`, `Community 161`, `Community 162`, `Community 163`, `Community 164`, `Community 165`, `Community 166`, `Community 167`, `Community 168`, `Community 169`, `Community 170`, `Community 171`, `Community 172`, `Community 173`, `Community 174`, `Community 175`, `Community 176`, `Community 177`, `Community 178`, `Community 179`, `Community 180`, `Community 181`, `Community 182`, `Community 79`, `Community 87`, `Community 88`, `Community 89`, `Community 90`, `Community 91`, `Community 92`, `Community 93`, `Community 94`, `Community 95`, `Community 96`, `Community 97`, `Community 98`?**
+- **Why does `cn()` connect `Community 12` to `Community 2`, `Community 5`, `Community 7`, `Community 8`, `Community 10`, `Community 17`, `Community 20`, `Community 21`, `Community 22`, `Community 24`, `Community 29`, `Community 33`, `Community 35`, `Community 37`, `Community 38`, `Community 43`, `Community 46`, `Community 49`, `Community 50`, `Community 51`, `Community 54`, `Community 56`, `Community 58`, `Community 61`, `Community 63`, `Community 64`, `Community 69`, `Community 72`, `Community 75`, `Community 209`, `Community 219`, `Community 95`, `Community 229`, `Community 103`, `Community 236`, `Community 250`?**
+  _High betweenness centrality (0.036) - this node is a cross-community bridge._
+- **Why does `adminDcMutate()` connect `Community 1` to `Community 32`, `Community 34`, `Community 66`, `Community 39`, `Community 7`, `Community 9`, `Community 234`, `Community 42`, `Community 41`, `Community 11`, `Community 47`, `Community 18`, `Community 19`, `Community 52`, `Community 25`, `Community 30`?**
+  _High betweenness centrality (0.030) - this node is a cross-community bridge._
+- **Why does `Mutations` connect `Community 109` to `Community 79`, `Community 86`, `Community 99`, `Community 100`, `Community 101`, `Community 102`, `Community 104`, `Community 105`, `Community 106`, `Community 107`, `Community 108`, `Community 110`, `Community 111`, `Community 112`, `Community 113`, `Community 114`, `Community 115`, `Community 116`, `Community 117`, `Community 118`, `Community 119`, `Community 120`, `Community 121`, `Community 122`, `Community 123`, `Community 124`, `Community 125`, `Community 126`, `Community 127`, `Community 128`, `Community 129`, `Community 130`, `Community 131`, `Community 132`, `Community 133`, `Community 134`, `Community 135`, `Community 136`, `Community 137`, `Community 138`, `Community 139`, `Community 141`, `Community 142`, `Community 144`, `Community 145`, `Community 146`, `Community 147`, `Community 148`, `Community 149`, `Community 150`, `Community 151`, `Community 152`, `Community 182`, `Community 183`, `Community 184`, `Community 185`, `Community 186`, `Community 187`, `Community 188`, `Community 189`, `Community 190`, `Community 191`, `Community 192`, `Community 193`, `Community 194`, `Community 195`, `Community 196`, `Community 197`, `Community 198`, `Community 199`, `Community 200`, `Community 201`, `Community 202`, `Community 203`, `Community 204`, `Community 205`, `Community 206`, `Community 207`, `Community 208`, `Community 238`, `Community 239`, `Community 254`, `Community 260`, `Community 267`, `Community 270`, `Community 277`, `Community 278`, `Community 280`, `Community 293`, `Community 298`, `Community 301`?**
   _High betweenness centrality (0.021) - this node is a cross-community bridge._
 - **Are the 29 inferred relationships involving `requireAdminRequest()` (e.g. with `POST()` and `POST()`) actually correct?**
   _`requireAdminRequest()` has 29 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 31 inferred relationships involving `adminDcMutate()` (e.g. with `POST()` and `POST()`) actually correct?**
   _`adminDcMutate()` has 31 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 2 inferred relationships involving `adminDcQuery()` (e.g. with `AdminCoursesPage()` and `POST()`) actually correct?**
-  _`adminDcQuery()` has 2 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `QuestionStat`, `StudentStat`, `DomainStat` to the rest of the system?**
-  _1369 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Are the 3 inferred relationships involving `adminDcQuery()` (e.g. with `AdminCoursesPage()` and `POST()`) actually correct?**
+  _`adminDcQuery()` has 3 INFERRED edges - model-reasoned connections that need verification._
+- **What connects `Question`, `LoginMode`, `LearnerProfile` to the rest of the system?**
+  _1660 weakly-connected nodes found - possible documentation gaps or missing edges._

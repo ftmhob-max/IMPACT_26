@@ -1,6 +1,27 @@
+// Backend API route: app/api/quiz/attempts/[attemptId]/complete/route.ts
 import { NextResponse, type NextRequest } from "next/server";
 import { verifyIdToken } from "@/lib/firebase/auth-server";
-import { adminDcQuery, adminDcMutate } from "@/lib/firebase/admin-dc";
+import { adminDcQuery } from "@/lib/firebase/admin-dc";
+import { recordDailyActivitySafely } from "@/lib/firebase/daily-activity";
+import {
+  completeQuizAttempt,
+  deriveQuizCompletion,
+  type QuizCompletionQuestion,
+  type QuizCompletionResponse,
+} from "@/lib/firebase/learner-portal";
+
+interface CompletionAttempt {
+  id: string;
+  status: string;
+  questionOrder: string;
+  user: { id: string };
+  quiz: {
+    id: string;
+    passingScore: number | null;
+    quizQuestions_on_quiz: QuizCompletionQuestion[];
+  };
+  quizResponses_on_attempt: QuizCompletionResponse[];
+}
 
 export async function POST(
   request: NextRequest,
@@ -12,7 +33,7 @@ export async function POST(
     const userId = decoded.uid;
 
     // ── Fetch attempt with all responses ────────────────────────────────────
-    const { quizAttempt } = await adminDcQuery<{ quizAttempt: any }>(
+    const { quizAttempt } = await adminDcQuery<{ quizAttempt: CompletionAttempt | null }>(
       "GetAttemptForCompletion",
       { attemptId }
     );
@@ -28,33 +49,30 @@ export async function POST(
     }
 
     // ── Tally scores ─────────────────────────────────────────────────────────
-    const responses: Array<{ pointsEarned: number | null; pointsPossible: number | null; question: { domain: string } }> =
-      quizAttempt.quizResponses_on_attempt ?? [];
-
-    const scoreRaw = responses.reduce((sum, r) => sum + (r.pointsEarned ?? 0), 0);
-    const scoreMax = responses.reduce((sum, r) => sum + (r.pointsPossible ?? 0), 0);
-    const scorePct = scoreMax > 0 ? Math.round((scoreRaw / scoreMax) * 10000) / 100 : 0;
+    const {
+      scoreRaw,
+      scoreMax,
+      scorePct,
+      domainBreakdown,
+    } = deriveQuizCompletion(
+      quizAttempt.questionOrder,
+      quizAttempt.quiz.quizQuestions_on_quiz,
+      quizAttempt.quizResponses_on_attempt,
+    );
     const passed = quizAttempt.quiz.passingScore != null
       ? scorePct >= quizAttempt.quiz.passingScore
       : null;
 
     // ── Mark attempt completed ───────────────────────────────────────────────
-    await adminDcMutate("CompleteQuizAttempt", {
+    await completeQuizAttempt({
       id: attemptId,
       scoreRaw,
       scoreMax,
       scorePct,
       passed: passed ?? false,
+      completedAt: new Date().toISOString(),
     });
-
-    // ── Per-domain breakdown ─────────────────────────────────────────────────
-    const domainBreakdown: Record<string, { earned: number; possible: number }> = {};
-    for (const r of responses) {
-      const domain = r.question?.domain ?? "unknown";
-      if (!domainBreakdown[domain]) domainBreakdown[domain] = { earned: 0, possible: 0 };
-      domainBreakdown[domain].earned += r.pointsEarned ?? 0;
-      domainBreakdown[domain].possible += r.pointsPossible ?? 0;
-    }
+    await recordDailyActivitySafely(userId);
 
     return NextResponse.json({ attemptId, scoreRaw, scoreMax, scorePct, passed, domainBreakdown });
   } catch (err) {

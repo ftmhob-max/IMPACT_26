@@ -1,3 +1,5 @@
+// Front-end learner progress page: app/(platform)/progress/page.tsx
+
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
@@ -20,6 +22,10 @@ import { dedupeFormulaSections } from "@/lib/utils";
 import { DOMAINS, type Domain } from "@/lib/utils";
 import { ProfileSection } from "@/components/profile/ProfileSection";
 import { LessonNotesPanel } from "@/components/profile/LessonNotesPanel";
+import { StudyMomentum } from "@/components/platform/StudyMomentum";
+import { getCourseCertificateEligibility } from "@/lib/firebase/certificates";
+import { getLearnerCatalog } from "@/lib/firebase/learner-portal";
+import { getStudyRhythm } from "@/lib/firebase/study-rhythm";
 
 interface AttemptResponse {
   isCorrect: boolean | null;
@@ -76,6 +82,8 @@ async function getProgressData(userId: string) {
 async function getFavoriteFormulas(userId: string): Promise<FavoriteFormula[]> {
   const favorites = await listUserFavorites(userId, "formula");
   if (favorites.length === 0) return [];
+  const developmentFormulaSections =
+    process.env.NODE_ENV === "development" ? DEV_FORMULA_SECTIONS : [];
 
   try {
     const data = await adminDcQuery<{
@@ -104,7 +112,9 @@ async function getFavoriteFormulas(userId: string): Promise<FavoriteFormula[]> {
               formulas: section.formulas_on_section,
             }))
           ).map((section) => ({ formulas_on_section: section.formulas }))
-        : DEV_FORMULA_SECTIONS.map((section) => ({ formulas_on_section: section.formulas }))
+        : developmentFormulaSections.map((section) => ({
+            formulas_on_section: section.formulas,
+          }))
     ).flatMap((section) => section.formulas_on_section);
 
     const favoriteIds = new Set(favorites.map((favorite) => favorite.itemId));
@@ -118,6 +128,7 @@ async function getFavoriteFormulas(userId: string): Promise<FavoriteFormula[]> {
         expression: formula.expression,
       }));
   } catch {
+    if (process.env.NODE_ENV !== "development") return [];
     const favoriteIds = new Set(favorites.map((favorite) => favorite.itemId));
     return DEV_FORMULA_SECTIONS.flatMap((section) => section.formulas)
       .filter((formula) => favoriteIds.has(formula.id))
@@ -163,11 +174,21 @@ export default async function ProfilePage() {
   const session = await getLearnerSession();
   if (!session) redirect("/sign-in");
 
-  const [attempts, favoriteFormulas, favoriteGlossaryTerms] = await Promise.all([
+  const [attempts, favoriteFormulas, favoriteGlossaryTerms, studyRhythm, catalog] = await Promise.all([
     getProgressData(session.uid),
     getFavoriteFormulas(session.uid),
     getFavoriteGlossaryTerms(session.uid),
+    getStudyRhythm(session.uid).catch(() => null),
+    getLearnerCatalog(session.uid).catch(() => []),
   ]);
+  const certificateResults = await Promise.all(
+    catalog.map((course) => getCourseCertificateEligibility(session.uid, course.slug)),
+  );
+  const earnedCertificates = certificateResults.flatMap((result) =>
+    result.course && result.eligibility?.eligible
+      ? [{ course: result.course, issueDate: result.eligibility.issueDate }]
+      : [],
+  );
 
   const totalAttempts = attempts.length;
   const passed = attempts.filter((attempt) => attempt.passed).length;
@@ -241,6 +262,42 @@ export default async function ProfilePage() {
         strongestDomainLabel={strongestDomain?.label ?? null}
         nextAction={nextAction}
       />
+
+      {studyRhythm ? <StudyMomentum studyRhythm={studyRhythm} /> : null}
+
+      {earnedCertificates.length > 0 ? (
+        <SectionPanel
+          className="mb-6"
+          title="Course certificates"
+          description="Print certificates for completed learning paths."
+        >
+          <div className="divide-y divide-slate-100">
+            {earnedCertificates.map(({ course, issueDate }) => (
+              <div
+                key={course.id}
+                className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div>
+                  <p className="text-sm font-extrabold text-slate-900">{course.title}</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Issued{" "}
+                    {issueDate
+                      ? new Date(issueDate).toLocaleDateString("en-US", {
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                        })
+                      : "upon completion"}
+                  </p>
+                </div>
+                <PrimaryAction href={`/certificates/${course.slug}`}>
+                  View certificate
+                </PrimaryAction>
+              </div>
+            ))}
+          </div>
+        </SectionPanel>
+      ) : null}
 
       <ReadinessPlan
         totalAttempts={totalAttempts}
@@ -772,7 +829,7 @@ function AttemptTable({ attempts }: { attempts: Attempt[] }) {
               </span>
             )}
           </div>
-          <Link href={`/quiz/${attempt.id}`} className="shrink-0 text-xs font-semibold text-[#185FA5] hover:underline">
+          <Link href={`/quiz/${attempt.id}/review`} className="shrink-0 text-xs font-semibold text-[#185FA5] hover:underline">
             Review
           </Link>
         </div>

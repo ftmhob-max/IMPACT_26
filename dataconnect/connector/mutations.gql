@@ -1,3 +1,4 @@
+# Backend Data Connect operations: dataconnect/connector/mutations.gql
 # ─── User management ─────────────────────────────────────────────────────────
 
 # Called from Clerk/Firebase Auth webhook on user creation
@@ -433,12 +434,77 @@ mutation EnrollInCourse($userId: String!, $courseId: UUID!) @auth(level: NO_ACCE
   })
 }
 
-mutation UpsertLessonProgress($userId: String!, $lessonId: UUID!, $status: String!, $videoPositionSeconds: Int) @auth(level: NO_ACCESS) {
+# Narrow course-progress timestamp update used by learner portal services.
+mutation UpdateUserCourseProgress(
+  $userId: String!
+  $courseId: UUID!
+  $lastAccessedAt: Date
+  $completedAt: Date
+) @auth(level: NO_ACCESS) {
+  userCourseProgress_upsert(data: {
+    user: { id: $userId }
+    course: { id: $courseId }
+    lastAccessedAt: $lastAccessedAt
+    completedAt: $completedAt
+  })
+}
+
+mutation UpsertLessonProgress(
+  $userId: String!
+  $lessonId: UUID!
+  $status: String!
+  $videoPositionSeconds: Int
+  $completedAt: Date
+) @auth(level: NO_ACCESS) {
   userLessonProgress_upsert(data: {
     user: { id: $userId }
     lesson: { id: $lessonId }
     status: $status
     videoPositionSeconds: $videoPositionSeconds
+    completedAt: $completedAt
+  })
+}
+
+# Playback writes intentionally omit status and completedAt. On insert the schema
+# supplies in_progress; on update a delayed playback request cannot undo completion.
+mutation UpdateLessonPlayback(
+  $userId: String!
+  $lessonId: UUID!
+  $videoPositionSeconds: Int
+) @auth(level: NO_ACCESS) {
+  userLessonProgress_upsert(data: {
+    user: { id: $userId }
+    lesson: { id: $lessonId }
+    videoPositionSeconds: $videoPositionSeconds
+  })
+}
+
+# This is the only learner-portal mutation that marks lesson progress completed.
+mutation CompleteLessonProgress(
+  $userId: String!
+  $lessonId: UUID!
+  $videoPositionSeconds: Int
+  $completedAt: Date!
+) @auth(level: NO_ACCESS) {
+  userLessonProgress_upsert(data: {
+    user: { id: $userId }
+    lesson: { id: $lessonId }
+    status: "completed"
+    videoPositionSeconds: $videoPositionSeconds
+    completedAt: $completedAt
+  })
+}
+
+# Upsert one activity row per learner and UTC date.
+mutation RecordDailyActivity(
+  $userId: String!
+  $activityDate: String!
+  $lastActivityAt: Date!
+) @auth(level: NO_ACCESS) {
+  dailyActivity_upsert(data: {
+    user: { id: $userId }
+    activityDate: $activityDate
+    lastActivityAt: $lastActivityAt
   })
 }
 
@@ -467,13 +533,21 @@ mutation UpsertQuizResponse($attemptId: UUID!, $questionId: UUID!, $selectedLett
   })
 }
 
-mutation CompleteQuizAttempt($id: UUID!, $scoreRaw: Float!, $scoreMax: Float!, $scorePct: Float!, $passed: Boolean!) @auth(level: NO_ACCESS) {
+mutation CompleteQuizAttempt(
+  $id: UUID!
+  $scoreRaw: Float!
+  $scoreMax: Float!
+  $scorePct: Float!
+  $passed: Boolean!
+  $completedAt: Date!
+) @auth(level: NO_ACCESS) {
   quizAttempt_update(id: $id, data: {
     status: "completed"
     scoreRaw: $scoreRaw
     scoreMax: $scoreMax
     scorePct: $scorePct
     passed: $passed
+    completedAt: $completedAt
   })
 }
 
@@ -692,6 +766,67 @@ mutation CreateCustomDomain($id: UUID!, $name: String!, $createdById: String) @a
     id: $id
     name: $name
     createdBy: { id: $createdById }
+  })
+}
+
+# ─── Cohort management (admin/instructor only) ────────────────────────────────
+
+mutation CreateCohort($id: UUID!, $name: String!, $description: String, $createdById: String!) @auth(level: NO_ACCESS) {
+  cohort_insert(data: {
+    id: $id
+    name: $name
+    description: $description
+    createdBy: { id: $createdById }
+  })
+}
+
+# Also used to archive/restore by setting or clearing archivedAt.
+mutation UpdateCohort($id: UUID!, $name: String, $description: String, $archivedAt: Date, $updatedAt: Date!) @auth(level: NO_ACCESS) {
+  cohort_update(id: $id, data: {
+    name: $name
+    description: $description
+    archivedAt: $archivedAt
+    updatedAt: $updatedAt
+  })
+}
+
+mutation DeleteCohort($id: UUID!) @auth(level: NO_ACCESS) {
+  cohort_delete(id: $id)
+}
+
+mutation DeleteCohortMembershipsForCohort($cohortId: UUID!) @auth(level: NO_ACCESS) {
+  cohortMembership_deleteMany(where: { cohort: { id: { eq: $cohortId } } })
+}
+
+mutation DeleteCohortInstructorsForCohort($cohortId: UUID!) @auth(level: NO_ACCESS) {
+  cohortInstructor_deleteMany(where: { cohort: { id: { eq: $cohortId } } })
+}
+
+mutation AddCohortMembership($cohortId: UUID!, $userId: String!) @auth(level: NO_ACCESS) {
+  cohortMembership_upsert(data: {
+    cohort: { id: $cohortId }
+    user: { id: $userId }
+  })
+}
+
+mutation RemoveCohortMembership($cohortId: UUID!, $userId: String!) @auth(level: NO_ACCESS) {
+  cohortMembership_deleteMany(where: {
+    cohort: { id: { eq: $cohortId } }
+    user: { id: { eq: $userId } }
+  })
+}
+
+mutation AddCohortInstructor($cohortId: UUID!, $instructorId: String!) @auth(level: NO_ACCESS) {
+  cohortInstructor_upsert(data: {
+    cohort: { id: $cohortId }
+    instructor: { id: $instructorId }
+  })
+}
+
+mutation RemoveCohortInstructor($cohortId: UUID!, $instructorId: String!) @auth(level: NO_ACCESS) {
+  cohortInstructor_deleteMany(where: {
+    cohort: { id: { eq: $cohortId } }
+    instructor: { id: { eq: $instructorId } }
   })
 }
 

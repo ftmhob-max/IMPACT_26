@@ -21,6 +21,7 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { toast } from "@/components/admin/AdminFeedback";
 import { LessonBuilderEditor, type LessonBuilderEditorHandle } from "@/components/admin/LessonBuilderEditor";
 import { LessonStudentPreview } from "@/components/admin/LessonStudentPreview";
 import { LessonQuizPanel } from "@/components/admin/LessonQuizPanel";
@@ -117,7 +118,6 @@ export function LessonPlanDetailView({
   const [activeTab, setActiveTab] = useState<TabId>("content");
   const [outlineFilter, setOutlineFilter] = useState<OutlineFilter>("all");
   const [focusMode, setFocusMode] = useState(false);
-  const [notice, setNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [draftContentByLessonId, setDraftContentByLessonId] = useState<Record<string, string>>({});
   // @dnd-kit generates aria-describedby IDs using a global counter that differs between
   // SSR and client, causing hydration mismatches. Only render DnD wrappers after mount.
@@ -162,8 +162,7 @@ export function LessonPlanDetailView({
   }, [focusMode]);
 
   function showNotice(type: "success" | "error", text: string) {
-    setNotice({ type, text });
-    setTimeout(() => setNotice(null), 4000);
+    toast(type, text);
   }
 
   function handleContentChange(lessonId: string, contentJson: string) {
@@ -480,16 +479,6 @@ export function LessonPlanDetailView({
           </div>
         </div>
       </header>
-
-      {notice && (
-        <div
-          role={notice.type === "error" ? "alert" : undefined}
-          className={`flex items-center gap-2 px-5 py-2 text-xs font-medium ${notice.type === "success" ? "bg-emerald-50 text-emerald-800 border-b border-emerald-200" : "bg-red-50 text-red-700 border-b border-red-200"}`}
-        >
-          {notice.type === "success" ? <Icons.Check size={13} /> : <Icons.X size={13} />}
-          {notice.text}
-        </div>
-      )}
 
       <div className="flex flex-1 flex-col overflow-visible lg:flex-row lg:overflow-hidden">
         {mobileOutlineOpen && (
@@ -1817,7 +1806,7 @@ function ResourcesTab({
       } catch {
         if (text) message = text;
       }
-      alert(message);
+      toast("error", message);
     }
     setBusy(false);
   }

@@ -1,3 +1,5 @@
+// Backend bulk source-material actions: app/api/admin/materials/bulk/route.ts
+
 import { randomUUID } from "crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
@@ -13,7 +15,7 @@ const bulkSchema = z.object({
   tags: z.array(z.string().trim()).optional(),
   courseId: z.string().trim().min(1).optional().nullable(),
   lessonId: z.string().trim().min(1).optional().nullable(),
-  visibility: z.string().trim().optional(),
+  visibility: z.enum(["admin", "learner"]).optional(),
 });
 
 export async function POST(request: NextRequest) {

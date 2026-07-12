@@ -1,27 +1,42 @@
 // Front-end/back-end shared: learner profile settings persisted in Firestore.
-import { FieldValue, getAdminFirestore } from "@/lib/firebase/admin-firestore";
+import { FieldValue, getAdminFirestore } from "@/lib/firebase/admin";
 
 export type LearnerProfileSettings = {
   defaultStudyGoal: string;
   defaultSessionLength: number;
+  remindersEnabled: boolean;
+  reminderAfterDays: ReminderAfterDays;
+  browserNotificationsEnabled: boolean;
   compactSidebar: boolean;
   reducedMotion: boolean;
-  theme: "light" | "dark";
+  // "system" follows the operating-system color scheme; "light"/"dark" are explicit.
+  theme: "light" | "dark" | "system";
   formulaHelperDefaultOpen: boolean;
   calculatorPrecision: string;
 };
 
+export const REMINDER_AFTER_DAY_PRESETS = [1, 2, 3, 7] as const;
+export type ReminderAfterDays = (typeof REMINDER_AFTER_DAY_PRESETS)[number];
+
 export const DEFAULT_PROFILE_SETTINGS: LearnerProfileSettings = {
   defaultStudyGoal: "Complete one lesson or quiz",
   defaultSessionLength: 30,
+  remindersEnabled: true,
+  reminderAfterDays: 3,
+  browserNotificationsEnabled: false,
   compactSidebar: false,
   reducedMotion: false,
-  theme: "light",
+  // New learners inherit their operating-system preference by default.
+  theme: "system",
   formulaHelperDefaultOpen: true,
   calculatorPrecision: "2",
 };
 
 const SETTINGS_COLLECTION = "userProfileSettings";
+
+function isReminderAfterDays(value: unknown): value is ReminderAfterDays {
+  return REMINDER_AFTER_DAY_PRESETS.some((preset) => preset === value);
+}
 
 export function normalizeProfileSettings(input: Record<string, unknown> | null | undefined): LearnerProfileSettings {
   const source = input ?? {};
@@ -32,13 +47,25 @@ export function normalizeProfileSettings(input: Record<string, unknown> | null |
     defaultSessionLength: typeof source.defaultSessionLength === "number" && Number.isFinite(source.defaultSessionLength)
       ? Math.min(180, Math.max(10, Math.round(source.defaultSessionLength)))
       : DEFAULT_PROFILE_SETTINGS.defaultSessionLength,
+    remindersEnabled: typeof source.remindersEnabled === "boolean"
+      ? source.remindersEnabled
+      : DEFAULT_PROFILE_SETTINGS.remindersEnabled,
+    reminderAfterDays: isReminderAfterDays(source.reminderAfterDays)
+      ? source.reminderAfterDays
+      : DEFAULT_PROFILE_SETTINGS.reminderAfterDays,
+    browserNotificationsEnabled: typeof source.browserNotificationsEnabled === "boolean"
+      ? source.browserNotificationsEnabled
+      : DEFAULT_PROFILE_SETTINGS.browserNotificationsEnabled,
     compactSidebar: typeof source.compactSidebar === "boolean"
       ? source.compactSidebar
       : DEFAULT_PROFILE_SETTINGS.compactSidebar,
     reducedMotion: typeof source.reducedMotion === "boolean"
       ? source.reducedMotion
       : DEFAULT_PROFILE_SETTINGS.reducedMotion,
-    theme: source.theme === "dark" ? "dark" : DEFAULT_PROFILE_SETTINGS.theme,
+    theme:
+      source.theme === "dark" || source.theme === "light" || source.theme === "system"
+        ? source.theme
+        : DEFAULT_PROFILE_SETTINGS.theme,
     formulaHelperDefaultOpen: typeof source.formulaHelperDefaultOpen === "boolean"
       ? source.formulaHelperDefaultOpen
       : DEFAULT_PROFILE_SETTINGS.formulaHelperDefaultOpen,

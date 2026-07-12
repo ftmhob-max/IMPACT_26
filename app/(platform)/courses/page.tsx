@@ -1,3 +1,5 @@
+// Front-end learner course catalog: app/(platform)/courses/page.tsx
+
 import Link from "next/link";
 import {
   EmptyState,
@@ -11,30 +13,37 @@ import {
 } from "@/components/ui/LearnerPrimitives";
 import { adminDcQuery } from "@/lib/firebase/admin-dc";
 import { getLearnerSession } from "@/lib/firebase/learner-session";
-import { getDevPublishedCourses } from "@/lib/dev-content";
+import {
+  deriveCatalogMetrics,
+  getLearnerCatalog,
+  listPublishedLearnerCatalog,
+  type LearnerCatalogCourse,
+} from "@/lib/firebase/learner-portal";
+import { getDevLearnerCatalogCourses } from "@/lib/dev-content";
 import { ensureDevDataSeeded } from "@/lib/dev-seed";
-import { isDevelopmentEnvironment } from "@/lib/dev-gate";
 import * as Icons from "@/components/ui/Icons";
 
-async function getCourses() {
-  try {
-    type CoursesData = {
-      courses: Array<{ id: string; slug: string; title: string; description?: string | null; thumbnailUrl?: string | null }>;
-    };
+const isDevEnvironment = process.env.NODE_ENV === "development";
 
-    if (isDevelopmentEnvironment()) {
+async function getCourses(userId: string | null): Promise<LearnerCatalogCourse[]> {
+  try {
+    if (isDevEnvironment) {
       await ensureDevDataSeeded().catch(() => null);
     }
 
-    let data = await adminDcQuery<CoursesData>("ListPublishedCourses");
-    if (data.courses.length === 0 && isDevelopmentEnvironment()) {
-      data = await adminDcQuery<CoursesData>("ListPublishedCourses").catch((): CoursesData => ({ courses: [] }));
-      if (data.courses.length > 0) return data.courses;
-      return getDevPublishedCourses();
+    const loadCatalog = () =>
+      userId ? getLearnerCatalog(userId) : listPublishedLearnerCatalog();
+    let courses = await loadCatalog();
+    if (courses.length === 0 && isDevEnvironment) {
+      courses = await loadCatalog().catch((): LearnerCatalogCourse[] => []);
+      if (courses.length > 0) return courses;
+      return deriveCatalogMetrics(getDevLearnerCatalogCourses(), [], []);
     }
-    return data.courses;
+    return courses;
   } catch {
-    return isDevelopmentEnvironment() ? getDevPublishedCourses() : [];
+    return isDevEnvironment
+      ? deriveCatalogMetrics(getDevLearnerCatalogCourses(), [], [])
+      : [];
   }
 }
 
@@ -57,10 +66,10 @@ async function getLatestAttempt(userId: string): Promise<LatestAttempt | null> {
 export default async function CoursesPage() {
   const session = await getLearnerSession();
   const [courses, latestAttempt] = await Promise.all([
-    getCourses(),
+    getCourses(session?.uid ?? null),
     session ? getLatestAttempt(session.uid) : Promise.resolve(null),
   ]);
-  const firstCourse = courses[0] as { slug: string } | undefined;
+  const firstCourse = courses[0];
 
   return (
     <LearnerPage>
@@ -85,8 +94,8 @@ export default async function CoursesPage() {
           <PlacementPanel latestAttempt={latestAttempt} firstCourseSlug={firstCourse?.slug ?? null} />
 
           <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
-            {(courses as Array<{ id: string; slug: string; title: string; description?: string; thumbnailUrl?: string }>).map((course, index) => (
-              <CourseCard key={course.id} course={course} index={index} />
+            {courses.map((course) => (
+              <CourseCard key={course.id} course={course} />
             ))}
           </div>
         </>
@@ -176,23 +185,26 @@ function GuideStep({ label, title, detail }: { label: string; title: string; det
   );
 }
 
-function CourseCard({
-  course,
-  index,
-}: {
-  course: { slug: string; title: string; description?: string; thumbnailUrl?: string };
-  index: number;
-}) {
-  const progressWidth = index === 0 ? "w-[68%]" : index === 1 ? "w-[42%]" : "w-[24%]";
-  const focus = index === 0 ? "Foundation path" : index === 1 ? "Case practice" : "Readiness review";
+function CourseCard({ course }: { course: LearnerCatalogCourse }) {
+  const { completedLessons, progressPercent, totalDurationSeconds, totalLessons } = course.metrics;
+  const progressState =
+    totalLessons === 0
+      ? "No lessons"
+      : completedLessons === 0
+        ? "Not started"
+        : completedLessons === totalLessons
+          ? "Complete"
+          : "In progress";
+  const progressTone = progressState === "Complete" ? "green" : progressState === "In progress" ? "amber" : "blue";
+  const durationMinutes = Math.ceil(totalDurationSeconds / 60);
 
   return (
     <Link
       href={`/courses/${course.slug}`}
-      className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#185FA5] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2"
+      className="group overflow-hidden rounded-lg border border-[var(--impact-border)] bg-[var(--impact-surface)] shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#185FA5] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#185FA5] focus-visible:ring-offset-2"
     >
       {course.thumbnailUrl ? (
-        <div className="aspect-[16/9] bg-slate-100">
+        <div className="aspect-[16/9] bg-[var(--impact-surface-muted)]">
           <img
             src={course.thumbnailUrl}
             alt={course.title}
@@ -200,45 +212,53 @@ function CourseCard({
           />
         </div>
       ) : (
-        <div className="border-b border-slate-100 bg-[linear-gradient(135deg,#f8fbff_0%,#eef6ff_56%,#f5fbf7_100%)] px-5 py-5">
+        // Token-driven banner so the header surface matches the card body in both themes.
+        <div className="border-b border-[var(--impact-border)] bg-[var(--impact-surface-inset)] px-5 py-5">
           <div className="flex items-start justify-between gap-4">
-            <div className="rounded-lg border border-[#b8d7f0] bg-white/80 p-3 text-[#185FA5] shadow-sm">
+            <div className="rounded-lg border border-[var(--impact-brand-border)] bg-[var(--impact-surface)] p-3 text-[var(--impact-blue)] shadow-sm">
               <Icons.BookOpen size={30} />
             </div>
-            <StatusBadge tone="blue">Self-paced</StatusBadge>
-          </div>
-          <div className="mt-5">
-            <div className="mb-2 flex items-center justify-between text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500">
-              <span>{focus}</span>
-              <span>Start ready</span>
-            </div>
-            <div className="h-2 overflow-hidden rounded-full bg-white shadow-inner">
-              <div className={`h-full rounded-full bg-[#67c58e] ${progressWidth}`} />
-            </div>
+            <StatusBadge tone="blue">
+              {totalLessons} lesson{totalLessons === 1 ? "" : "s"}
+            </StatusBadge>
           </div>
         </div>
       )}
 
       <div className="p-5">
         <div className="mb-3 flex flex-wrap gap-2">
-          <StatusBadge tone="blue">Philadelphia scenarios</StatusBadge>
-          <StatusBadge tone="slate">Rubric review</StatusBadge>
+          <StatusBadge tone={progressTone}>{progressState}</StatusBadge>
+          <StatusBadge tone="slate">
+            {course.modules_on_course.length} module{course.modules_on_course.length === 1 ? "" : "s"}
+          </StatusBadge>
         </div>
-        <h2 className="text-lg font-extrabold leading-snug tracking-[-0.01em] text-slate-950 group-hover:text-[#185FA5]">
+        <h2 className="text-lg font-extrabold leading-snug tracking-[-0.01em] text-[var(--impact-ink)] group-hover:text-[#185FA5]">
           {course.title}
         </h2>
         {course.description && (
-          <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-500">{course.description}</p>
+          <p className="mt-2 line-clamp-3 text-sm leading-6 text-[var(--impact-faint)]">{course.description}</p>
         )}
-        <div className="mt-5 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4">
-          <CourseSignal label="Cases" value="Evidence" />
-          <CourseSignal label="Formula" value="Compass" />
-          <CourseSignal label="Review" value="Rubric" />
+        <div className="mt-5">
+          <div className="mb-2 flex items-center justify-between gap-3 text-xs font-bold text-[var(--impact-muted)]">
+            <span>{completedLessons} of {totalLessons} lessons completed</span>
+            <span>{progressPercent}%</span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-[var(--impact-surface-muted)]">
+            <div
+              className="h-full rounded-full bg-[#67c58e] transition-[width]"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
         </div>
-        <div className="mt-5 flex items-center justify-between rounded-lg border border-[#b8d7f0] bg-[#f8fbff] px-3 py-2.5">
-          <span className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">View modules</span>
+        <div className="mt-5 grid grid-cols-3 gap-2 border-t border-[var(--impact-border)] pt-4">
+          <CourseSignal label="Lessons" value={`${completedLessons}/${totalLessons}`} />
+          <CourseSignal label="Progress" value={progressState} />
+          <CourseSignal label="Duration" value={durationMinutes > 0 ? `${durationMinutes} min` : "—"} />
+        </div>
+        <div className="mt-5 flex items-center justify-between rounded-lg border border-[var(--impact-brand-border)] bg-[var(--impact-brand-soft)] px-3 py-2.5">
+          <span className="text-xs font-bold uppercase tracking-[0.08em] text-[var(--impact-muted)]">View modules</span>
           <div className="flex items-center gap-1.5 text-sm font-bold text-[#185FA5]">
-            Start
+            {completedLessons > 0 ? "Continue" : "Start"}
             <Icons.ArrowRight size={16} />
           </div>
         </div>
@@ -249,9 +269,9 @@ function CourseCard({
 
 function CourseSignal({ label, value }: { label: string; value: string }) {
   return (
-    <div className="min-w-0 rounded-md bg-slate-50 px-2.5 py-2">
-      <p className="text-[10px] font-extrabold uppercase tracking-[0.08em] text-slate-500">{label}</p>
-      <p className="mt-1 truncate text-xs font-bold text-slate-800">{value}</p>
+    <div className="min-w-0 rounded-md bg-[var(--impact-surface-muted)] px-2.5 py-2">
+      <p className="text-[10px] font-extrabold uppercase tracking-[0.08em] text-[var(--impact-faint)]">{label}</p>
+      <p className="mt-1 truncate text-xs font-bold text-[var(--impact-ink)]">{value}</p>
     </div>
   );
 }

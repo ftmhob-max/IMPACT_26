@@ -4,7 +4,13 @@ import { useCallback, useEffect, useState } from "react";
 import * as Icons from "@/components/ui/Icons";
 import { cn, DOMAINS } from "@/lib/utils";
 import { DomainBadge } from "@/components/ui/DomainBadge";
+import { DifficultyBadge } from "@/components/ui/DifficultyBadge";
 import { CsvImportPanel } from "@/components/admin/CsvImportPanel";
+import {
+  ImportCollapsibleSection,
+  ImportStepPill,
+  ImportSummaryCard,
+} from "@/components/admin/import/ImportUiPrimitives";
 import { useDomains } from "@/lib/hooks/useDomains";
 
 // ─── Shared types ─────────────────────────────────────────────────────────────
@@ -42,21 +48,10 @@ const PLACEHOLDER_QUIZ_ID = "00000000-0000-0000-0000-000000000001";
 
 const DIFFICULTIES = ["easy", "proficient", "expert"] as const;
 const MAX_ERRORS = 5;
+const DOCX_FLOW_STEPS = ["preview", "configure", "importing", "done"] as const;
+type DocxFlowStep = (typeof DOCX_FLOW_STEPS)[number];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function DiffBadge({ diff }: { diff: string }) {
-  const map: Record<string, string> = {
-    easy: "bg-emerald-50 text-emerald-700",
-    proficient: "bg-amber-50 text-amber-700",
-    expert: "bg-red-50 text-red-700",
-  };
-  return (
-    <span className={cn("rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase", map[diff] ?? "bg-slate-100 text-slate-500")}>
-      {diff}
-    </span>
-  );
-}
 
 // ─── Duplicate include section ────────────────────────────────────────────────
 
@@ -262,22 +257,11 @@ function DocxImportFlow({ onImported }: { onImported: (msg: string, quizId?: str
 
       {/* Phase stepper */}
       {phase !== "upload" && (
-        <div className="flex items-center gap-1.5 text-xs text-slate-400">
-          {(["preview", "configure", "importing", "done"] as const).map((p, i) => {
-            const labels: Record<string, string> = { preview: "Preview", configure: "Configure", importing: "Import", done: "Done" };
-            const order = ["preview", "configure", "importing", "done"].indexOf(phase);
-            const isCurrent = phase === p;
-            const isDone = order > i;
-            return (
-              <span key={p} className="flex items-center gap-1">
-                {i > 0 && <span className="text-slate-200">›</span>}
-                <span className={cn("font-semibold", isCurrent ? "text-[#185FA5]" : isDone ? "text-emerald-600" : "text-slate-300")}>
-                  {labels[p]}
-                </span>
-              </span>
-            );
-          })}
-        </div>
+        <ImportStepPill<DocxFlowStep>
+          current={phase === "importing" ? "importing" : phase === "done" ? "done" : phase}
+          steps={[...DOCX_FLOW_STEPS]}
+          labels={{ preview: "Preview", configure: "Configure", importing: "Import", done: "Done" }}
+        />
       )}
 
       {/* Error */}
@@ -326,35 +310,33 @@ function DocxImportFlow({ onImported }: { onImported: (msg: string, quizId?: str
       {/* Preview */}
       {phase === "preview" && preview && (
         <div className="space-y-4">
-          <div className="flex flex-wrap gap-2">
-            <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">
-              {preview.validRows.length} new question{preview.validRows.length !== 1 ? "s" : ""}
-            </span>
-            {preview.duplicates.filter((d) => d.existingQuestionId).length > 0 && (
-              <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700">
-                {preview.duplicates.filter((d) => d.existingQuestionId).length} already in bank
-              </span>
-            )}
-            {preview.errors.length > 0 && (
-              <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-700">
-                {preview.errors.length} error{preview.errors.length !== 1 ? "s" : ""}
-              </span>
-            )}
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            <ImportSummaryCard label="New questions" value={preview.validRows.length} />
+            <ImportSummaryCard
+              label="Already in bank"
+              value={preview.duplicates.filter((duplicate) => duplicate.existingQuestionId).length}
+              warn={preview.duplicates.some((duplicate) => duplicate.existingQuestionId)}
+            />
+            <ImportSummaryCard label="Errors" value={preview.errors.length} warn={preview.errors.length > 0} />
           </div>
 
           {preview.errors.length > 0 && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-3 space-y-1.5">
-              <p className="text-xs font-bold text-red-800 flex items-center gap-1.5">
-                <Icons.AlertTriangle size={13} />
-                Validation errors (these rows will be skipped):
-              </p>
-              {preview.errors.slice(0, MAX_ERRORS).map((err, i) => (
-                <p key={i} className="text-xs text-red-700 pl-5">Row {err.row} · {err.field}: {err.message}</p>
-              ))}
-              {preview.errors.length > MAX_ERRORS && (
-                <p className="text-xs text-red-600 pl-5 font-semibold">…and {preview.errors.length - MAX_ERRORS} more</p>
-              )}
-            </div>
+            <ImportCollapsibleSection
+              title={`${preview.errors.length} validation error${preview.errors.length !== 1 ? "s" : ""} (rows skipped)`}
+              defaultOpen
+              variant="error"
+            >
+              <div className="space-y-1.5 bg-white px-4 py-3">
+                {preview.errors.slice(0, MAX_ERRORS).map((err, index) => (
+                  <p key={index} className="text-xs text-red-700">
+                    Row {err.row} · {err.field}: {err.message}
+                  </p>
+                ))}
+                {preview.errors.length > MAX_ERRORS && (
+                  <p className="text-xs font-semibold text-red-600">…and {preview.errors.length - MAX_ERRORS} more</p>
+                )}
+              </div>
+            </ImportCollapsibleSection>
           )}
 
           {/* Duplicate include section */}
@@ -372,7 +354,7 @@ function DocxImportFlow({ onImported }: { onImported: (msg: string, quizId?: str
                   <span className="text-[10px] font-bold text-slate-400 mt-0.5 w-5 shrink-0 text-right">{idx + 1}</span>
                   <p className="flex-1 text-xs text-slate-700 line-clamp-2">{row.question_text}</p>
                   <div className="flex items-center gap-1 shrink-0">
-                    <DiffBadge diff={row.difficulty} />
+                    <DifficultyBadge difficulty={row.difficulty} className="text-[9px] px-1.5 py-0.5" />
                     <DomainBadge domain={row.domain} />
                   </div>
                 </div>
@@ -769,7 +751,7 @@ function FromBankFlow({ onImported }: { onImported: (msg: string, quizId?: strin
                     />
                     <span className="flex-1 text-xs text-slate-700 line-clamp-2">{c.questionText}</span>
                     <div className="flex items-center gap-1 shrink-0">
-                      <DiffBadge diff={c.difficulty} />
+                      <DifficultyBadge difficulty={c.difficulty} className="text-[9px] px-1.5 py-0.5" />
                       <DomainBadge domain={c.domain} />
                       {c.usageCount > 0 && (
                         <span className="text-[9px] text-slate-400">{c.usageCount}×</span>

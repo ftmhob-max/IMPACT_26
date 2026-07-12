@@ -1,8 +1,7 @@
+import { notFound } from "next/navigation";
 import { LessonPlanDetailView } from "@/components/admin/LessonPlanDetailView";
 import { adminDcQuery } from "@/lib/firebase/admin-dc";
 import { formatUuid } from "@/lib/utils";
-import * as Icons from "@/components/ui/Icons";
-import Link from "next/link";
 
 async function fetchCourseDetail(courseId: string) {
   try {
@@ -119,23 +118,10 @@ export default async function CourseDetailPage({
   const [{ courseId }, { lesson: initialLessonId }] = await Promise.all([params, searchParams]);
   const data = await fetchCourseDetail(courseId);
 
+  // Unknown (or unavailable) course routes through the shared admin not-found
+  // boundary for visual parity with the rest of the Teacher Portal.
   if (!data) {
-    return (
-      <div className="mx-auto max-w-3xl px-4 py-12 text-center sm:px-6 sm:py-16">
-        <Icons.GraduationCap size={40} className="mx-auto text-slate-200 mb-4" />
-        <h1 className="text-xl font-bold text-slate-900">Course not found</h1>
-        <p className="mt-2 text-sm text-slate-500">
-          This course may not exist or the server is unavailable.
-        </p>
-        <Link
-          href="/admin/courses"
-          className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#185FA5] hover:underline"
-        >
-          <Icons.ArrowLeft size={14} />
-          Back to all courses
-        </Link>
-      </div>
-    );
+    notFound();
   }
 
   return <LessonPlanDetailView course={data.course} initialModules={data.modules} initialLessonId={initialLessonId} />;

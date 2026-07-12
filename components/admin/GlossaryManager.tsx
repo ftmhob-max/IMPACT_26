@@ -3,10 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as Icons from "@/components/ui/Icons";
 import { cn } from "@/lib/utils";
+import { toast } from "@/components/admin/AdminFeedback";
 import { GlossaryImportPanel } from "@/components/admin/GlossaryImportPanel";
 import { DomainCombobox } from "@/components/admin/DomainCombobox";
 import { DomainBadge } from "@/components/ui/DomainBadge";
 import { FieldHint } from "@/components/ui/FieldHint";
+import { EmptyState } from "@/components/admin/EmptyState";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -34,7 +36,6 @@ export function GlossaryManager() {
   const [selected, setSelected] = useState<GlossaryTerm | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [showImport, setShowImport] = useState(false);
-  const [notice, setNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
@@ -49,8 +50,7 @@ export function GlossaryManager() {
   useEffect(() => { load(); }, [load]);
 
   function showNotice(type: "success" | "error", text: string) {
-    setNotice({ type, text });
-    setTimeout(() => setNotice(null), 4000);
+    toast(type, text);
   }
 
   function enterSelectMode() {
@@ -243,14 +243,6 @@ export function GlossaryManager() {
           />
         )}
 
-        {/* Notice */}
-        {notice && (
-          <div className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium ${notice.type === "success" ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
-            {notice.type === "success" ? <Icons.Check size={13} /> : <Icons.X size={13} />}
-            {notice.text}
-          </div>
-        )}
-
         {/* Create form */}
         {showCreate && (
           <TermForm
@@ -279,12 +271,15 @@ export function GlossaryManager() {
             Loading glossary…
           </div>
         ) : filtered.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
-            <Icons.BookOpen size={36} className="mx-auto text-slate-200 mb-3" />
-            <p className="text-sm text-slate-400">
-              {terms.length === 0 ? "No terms yet. Create the first one." : "No terms match your filters."}
-            </p>
-          </div>
+          <EmptyState
+            icon={<Icons.BookOpen size={36} />}
+            title={terms.length === 0 ? "No terms yet." : "No terms match your filters."}
+            hint={
+              terms.length === 0
+                ? "Create the first glossary term to get started."
+                : "Try adjusting your search or filters."
+            }
+          />
         ) : (
           <div className="space-y-4 overflow-y-auto pb-4">
             {letters.map((letter) => (
